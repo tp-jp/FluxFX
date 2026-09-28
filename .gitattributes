@@ -1,0 +1,4 @@
+*.asset filter=vrc eol=lf text
+*.prefab filter=vrc eol=lf text
+*.unity filter=vrc eol=lf text
+LightingData.asset binary

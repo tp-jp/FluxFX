@@ -1,0 +1,26 @@
+{
+  "name": "com.tplab.flux.fx",
+  "displayName": "FluxFx",
+  "version": "0.0.1",
+  "unity": "2022.3",
+  "description": "GPU particle and visual effects framework powered by Flux.",
+  "gitDependencies": {},
+  "vpmDependencies": {
+    "com.vrchat.worlds": "^3.10.5",
+    "com.tplab.sceneflow": "^2.1.0",
+    "com.tplab.flux": "^0.0.1"
+  },
+  "author": {
+    "name": "tp.jp",
+    "url": "https://github.com/tp-jp"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {},
+  "samples": [
+    {
+      "displayName": "Sample",
+      "description": "A sample demonstrating how to use this package.",
+      "path": "Samples~/Sample"
+    }
+  ]
+}

@@ -62,3 +62,11 @@ crashlytics-build.properties
 Assets/PackageMakerWindowData.asset*
 .idea
 .vscode
+
+# UdonSharp
+/[Aa]ssets/UdonSharp 1.meta
+/[Aa]ssets/SerializedUdonPrograms/**
+!/[Aa]ssets/SerializedUdonPrograms/.gitkeep
+
+# ClientSimStorage
+/ClientSimStorage/
