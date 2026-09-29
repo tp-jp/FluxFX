@@ -1,11 +1,11 @@
 {
-    "name": "TpLab.Flux.Fx.Tests.Udon",
-    "rootNamespace": "TpLab.Flux.Fx.Tests.Udon",
+    "name": "TpLab.Flux.FX.Udon",
+    "rootNamespace": "TpLab.Flux.FX.Udon",
     "references": [
         "GUID:3c1bc1267eab5884ebe7f232c09ee0d9",
         "GUID:99835874ee819da44948776e0df4ff1d",
-        "GUID:feb8e02395fe8224f87734c491ab4177",
-        "GUID:cc13a6d5d1369cd40a486c91c1698c21"
+        "GUID:f70a94b0bedfa8ec50ed757f72032810",
+        "GUID:feb8e02395fe8224f87734c491ab4177"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

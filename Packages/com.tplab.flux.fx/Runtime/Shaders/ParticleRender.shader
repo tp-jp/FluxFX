@@ -1,4 +1,4 @@
-Shader "FluxFX/Tests/ParticleRender"
+Shader "FluxFX/ParticleRender"
 {
     Properties
     {
