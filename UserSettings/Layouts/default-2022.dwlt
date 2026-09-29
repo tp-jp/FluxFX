@@ -118,7 +118,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 100}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 1
-  controlID: 98
+  controlID: 137
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_MinSize: {x: 400, y: 100}
   m_MaxSize: {x: 32384, y: 16192}
   vertical: 0
-  controlID: 99
+  controlID: 138
 --- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -217,8 +217,8 @@ MonoBehaviour:
     y: 655
     width: 856
     height: 292
-  m_MinSize: {x: 100, y: 100}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 101, y: 121}
+  m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 13}
   m_Panes:
   - {fileID: 16}
@@ -245,8 +245,8 @@ MonoBehaviour:
     y: 0
     width: 257
     height: 947
-  m_MinSize: {x: 200, y: 200}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 202, y: 221}
+  m_MaxSize: {x: 4002, y: 4021}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -999,7 +999,7 @@ MonoBehaviour:
     m_OverlaysVisible: 1
   m_LockTracker:
     m_IsLocked: 0
-  m_LastSelectedObjectID: 38474
+  m_LastSelectedObjectID: -23242
 --- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1038,9 +1038,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 202bfdff
-      m_LastClickedID: -185568
-      m_ExpandedIDs: 24d4feff3cd4feff78d4feffc8e0feff1ee1feff1ce4feffd4faffffd06000003e9600004a960000
+      m_SelectedIDs: 36a5ffff
+      m_LastClickedID: -23242
+      m_ExpandedIDs: 36a5ffffd4faffff0461000010610000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1109,8 +1109,7 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SkipHidden: 0
     m_SearchArea: 1
-    m_Folders:
-    - Packages/com.tplab.flux.fx/Editor
+    m_Folders: []
     m_Globs: []
     m_OriginalText: 
     m_ImportLogFlags: 0
@@ -1126,7 +1125,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 22410000
     m_LastClickedID: 16674
-    m_ExpandedIDs: 000000008a6100008c6100008e61000090610000926100009461000096610000986100009a6100009c6100009e610000a0610000a2610000
+    m_ExpandedIDs: 0000000006620000086200000a6200000c6200000e62000010620000126200001462000016620000186200001a6200001c6200001e620000206200002262000024620000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1154,21 +1153,21 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: ffffffff000000008a6100008c6100008e610000926100009461000096610000986100009a6100009c6100009e610000a2610000c0630000c8630000ca630000cac7000020c80000ffffff7f
+    m_ExpandedIDs: ffffffff0000000006620000086200000c6200000e62000010620000126200001462000016620000186200001a6200001c6200001e620000206200002262000024620000ffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: 
-      m_OriginalName: 
+      m_Name: FluxParticleSystemEditor
+      m_OriginalName: FluxParticleSystemEditor
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 0
+      m_UserData: 39588
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 11
+      m_OriginalEventType: 0
       m_IsRenamingFilename: 1
       m_ClientGUIView: {fileID: 11}
     m_SearchString: 

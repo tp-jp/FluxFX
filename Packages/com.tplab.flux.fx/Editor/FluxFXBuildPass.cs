@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
@@ -16,26 +18,80 @@ namespace TpLab.Flux.FX.Editor
 
         public override void Execute(SceneFlowContext context)
         {
-            var simulations = Object.FindObjectsOfType<FluxParticleSimulation>(true);
+            var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
 
-            foreach (var simulation in simulations)
+            foreach (var authoring in authorings)
             {
-                var gameObject = simulation.gameObject;
+                var particleSystem = authoring.GetComponent<FluxParticleSystem>();
 
-                var gravity = gameObject.GetComponent<FluxParticleGravity>();
-                var drag = gameObject.GetComponent<FluxParticleDrag>();
-                var noise = gameObject.GetComponent<FluxParticleNoise>();
-                var vortex = gameObject.GetComponent<FluxParticleVortex>();
+                if (particleSystem == null) continue;
 
-                simulation.SetProgramVariable("gravity", gravity != null && gravity.enabled ? gravity.Gravity : Vector3.zero);
-                simulation.SetProgramVariable("drag", drag != null && drag.enabled ? drag.Drag : 0.0f);
-                simulation.SetProgramVariable("noiseStrength", noise != null && noise.enabled ? noise.Strength : 0.0f);
-                simulation.SetProgramVariable("noiseScale", noise != null && noise.enabled ? noise.Scale : 0.0f);
-                simulation.SetProgramVariable("noiseSpeed", noise != null && noise.enabled ? noise.Speed : 0.0f);
-                simulation.SetProgramVariable("vortexCenter", vortex != null && vortex.enabled ? vortex.Center : Vector3.zero);
-                simulation.SetProgramVariable("vortexAxis", vortex != null && vortex.enabled ? vortex.Axis.normalized : Vector3.up);
-                simulation.SetProgramVariable("vortexStrength", vortex != null && vortex.enabled ? vortex.Strength : 0.0f);
+                var parameters = CompileParameters(authoring);
+                var json = parameters.ToString(Formatting.None);
+
+                particleSystem.SetProgramVariable("compiledParameters", json);
             }
+        }
+
+        JObject CompileParameters(FluxParticleAuthoring authoring)
+        {
+            var parameters = new JObject();
+
+            AddGravity(parameters, authoring.Gravity);
+            AddDrag(parameters, authoring.Drag);
+            AddNoise(parameters, authoring.Noise);
+            AddVortex(parameters, authoring.Vortex);
+
+            return parameters;
+        }
+
+        void AddGravity(JObject parameters, GravitySettings gravity)
+        {
+            if (!gravity.Enabled) return;
+
+            parameters["gravity"] = new JObject
+            {
+                ["x"] = gravity.Gravity.x,
+                ["y"] = gravity.Gravity.y,
+                ["z"] = gravity.Gravity.z
+            };
+        }
+
+        void AddDrag(JObject parameters, DragSettings drag)
+        {
+            if (!drag.Enabled) return;
+
+            parameters["drag"] = drag.Drag;
+        }
+
+        void AddNoise(JObject parameters, NoiseSettings noise)
+        {
+            if (!noise.Enabled) return;
+
+            parameters["noise"] = new JObject
+            {
+                ["strength"] = noise.Strength,
+                ["scale"] = noise.Scale,
+                ["speed"] = noise.Speed
+            };
+        }
+
+        void AddVortex(JObject parameters, VortexSettings vortex)
+        {
+            if (!vortex.Enabled) return;
+
+            var axis = vortex.Axis.normalized;
+
+            parameters["vortex"] = new JObject
+            {
+                ["centerX"] = vortex.Center.x,
+                ["centerY"] = vortex.Center.y,
+                ["centerZ"] = vortex.Center.z,
+                ["axisX"] = axis.x,
+                ["axisY"] = axis.y,
+                ["axisZ"] = axis.z,
+                ["strength"] = vortex.Strength
+            };
         }
     }
 }

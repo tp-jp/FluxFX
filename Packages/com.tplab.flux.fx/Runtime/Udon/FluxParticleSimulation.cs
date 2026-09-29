@@ -2,6 +2,7 @@
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
@@ -23,31 +24,14 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         FluxKernel visualUpdateKernel;
 
-        [SerializeField]
-        Vector3 gravity;
-
-        [SerializeField]
-        float drag;
-
-        [SerializeField]
-        float noiseStrength;
-
-        [SerializeField]
-        float noiseScale;
-
-        [SerializeField]
-        float noiseSpeed;
-
-        [SerializeField]
-        Vector3 vortexCenter;
-
-        [SerializeField]
-        Vector3 vortexAxis;
-
-        [SerializeField]
-        float vortexStrength;
-
         float _simulationTime;
+        float _noiseSpeed;
+
+        [PublicAPI]
+        public void Initialize(DataDictionary parameters)
+        {
+            ApplyVelocityParameters(parameters);
+        }
 
         [PublicAPI]
         public void Simulate(float deltaTime)
@@ -66,19 +50,93 @@ namespace TpLab.Flux.FX.Udon
             particleState.SwapSimulation();
         }
 
+        void ApplyVelocityParameters(DataDictionary parameters)
+        {
+            ApplyGravity(parameters);
+            ApplyDrag(parameters);
+            ApplyNoise(parameters);
+            ApplyVortex(parameters);
+        }
+
+        void ApplyGravity(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("gravity", out var token))
+            {
+                velocityUpdateKernel.SetVector("_Gravity", Vector4.zero);
+                return;
+            }
+
+            var gravity = token.DataDictionary;
+
+            velocityUpdateKernel.SetVector("_Gravity", new Vector4(
+                (float)gravity["x"].Double,
+                (float)gravity["y"].Double,
+                (float)gravity["z"].Double,
+                0));
+        }
+
+        void ApplyDrag(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("drag", out var token))
+            {
+                velocityUpdateKernel.SetFloat("_Drag", 0);
+                return;
+            }
+
+            velocityUpdateKernel.SetFloat("_Drag", (float)token.Double);
+        }
+
+        void ApplyNoise(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("noise", out var token))
+            {
+                velocityUpdateKernel.SetFloat("_NoiseStrength", 0);
+                velocityUpdateKernel.SetFloat("_NoiseScale", 0);
+                _noiseSpeed = 0;
+                return;
+            }
+
+            var noise = token.DataDictionary;
+
+            velocityUpdateKernel.SetFloat("_NoiseStrength", (float)noise["strength"].Double);
+            velocityUpdateKernel.SetFloat("_NoiseScale", (float)noise["scale"].Double);
+
+            _noiseSpeed = (float)noise["speed"].Double;
+        }
+
+        void ApplyVortex(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("vortex", out var token))
+            {
+                velocityUpdateKernel.SetVector("_VortexCenter", Vector4.zero);
+                velocityUpdateKernel.SetVector("_VortexAxis", Vector4.zero);
+                velocityUpdateKernel.SetFloat("_VortexStrength", 0);
+                return;
+            }
+
+            var vortex = token.DataDictionary;
+
+            velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(
+                (float)vortex["centerX"].Double,
+                (float)vortex["centerY"].Double,
+                (float)vortex["centerZ"].Double,
+                0));
+
+            velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(
+                (float)vortex["axisX"].Double,
+                (float)vortex["axisY"].Double,
+                (float)vortex["axisZ"].Double,
+                0));
+
+            velocityUpdateKernel.SetFloat("_VortexStrength", (float)vortex["strength"].Double);
+        }
+
         void UpdateVelocity(float deltaTime)
         {
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             velocityUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
-            velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
-            velocityUpdateKernel.SetFloat("_Drag", drag);
-            velocityUpdateKernel.SetFloat("_NoiseStrength", noiseStrength);
-            velocityUpdateKernel.SetFloat("_NoiseScale", noiseScale);
-            velocityUpdateKernel.SetFloat("_NoiseTime", _simulationTime * noiseSpeed);
-            velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));
-            velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(vortexAxis.x, vortexAxis.y, vortexAxis.z, 0));
-            velocityUpdateKernel.SetFloat("_VortexStrength", vortexStrength);
+            velocityUpdateKernel.SetFloat("_NoiseTime", _simulationTime * _noiseSpeed);
             velocityUpdateKernel.SetBuffer("_PositionTex", particleState.CurrentPosition);
             velocityUpdateKernel.Dispatch(particleState.CurrentVelocity, particleState.NextVelocity);
         }
