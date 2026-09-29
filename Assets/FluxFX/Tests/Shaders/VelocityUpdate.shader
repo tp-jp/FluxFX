@@ -26,6 +26,10 @@ Shader "FluxFX/Tests/VelocityUpdate"
             sampler2D_float _PositionTex;
 
             float4 _Gravity;
+            float _Drag;
+            float _NoiseStrength;
+            float _NoiseScale;
+            float _NoiseTime;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnCount;
@@ -63,6 +67,19 @@ Shader "FluxFX/Tests/VelocityUpdate"
                 );
             }
 
+            float3 EvaluateNoise(float3 position)
+            {
+                float3 p = position * _NoiseScale;
+
+                float3 noise;
+
+                noise.x = sin(p.y * 1.37 + p.z * 0.73 + _NoiseTime);
+                noise.y = sin(p.z * 1.11 + p.x * 1.53 + _NoiseTime * 1.17);
+                noise.z = sin(p.x * 0.91 + p.y * 1.29 + _NoiseTime * 0.83);
+
+                return noise;
+            }
+
             float4 frag(v2f_img i) : SV_Target
             {
                 uint index = FluxGetDestinationIndex(i.uv);
@@ -89,6 +106,12 @@ Shader "FluxFX/Tests/VelocityUpdate"
                     return 0;
 
                 velocity.xyz += _Gravity.xyz * _DeltaTime;
+
+                float3 noise = EvaluateNoise(position.xyz);
+                velocity.xyz += noise * _NoiseStrength * _DeltaTime;
+
+                float dragFactor = exp(-_Drag * _DeltaTime);
+                velocity.xyz *= dragFactor;
 
                 return velocity;
             }

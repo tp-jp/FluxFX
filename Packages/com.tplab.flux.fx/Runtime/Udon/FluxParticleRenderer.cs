@@ -28,7 +28,7 @@ namespace TpLab.Flux.FX.Udon
         {
             SetBuffer("_PositionTex", state.CurrentPosition);
             SetBuffer("_VelocityTex", state.CurrentVelocity);
-            SetBuffer("_VisualTex", state.Visual);
+            SetBuffer("_VisualTex", state.CurrentVisual);
 
             var texture = state.CurrentPosition.Texture;
 

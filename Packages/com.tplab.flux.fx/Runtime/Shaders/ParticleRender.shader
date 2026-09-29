@@ -63,11 +63,21 @@ Shader "FluxFX/ParticleRender"
                     return o;
                 }
 
-                float size = visual.a;
+                float normalizedAge = saturate(age / lifetime);
+
+                float3 startColor = visual.rgb;
+                float startSize = visual.a;
+
+                float sizeOverLifetime = 1.0 - normalizedAge;
+                float colorOverLifetime = 1.0 - normalizedAge;
+
+                float size = startSize * sizeOverLifetime;
+                float3 color = startColor * colorOverLifetime;
+
                 float3 worldPosition = position.xyz + v.vertex.xyz * size;
 
                 o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
-                o.color = float4(visual.rgb, 1);
+                o.color = float4(color, 1);
 
                 return o;
             }

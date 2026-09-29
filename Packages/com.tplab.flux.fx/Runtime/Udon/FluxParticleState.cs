@@ -21,12 +21,17 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer velocityBufferB;
 
         [SerializeField]
-        FluxBuffer visualBuffer;
+        FluxBuffer visualBufferA;
+
+        [SerializeField]
+        FluxBuffer visualBufferB;
 
         FluxBuffer _currentPositionBuffer;
         FluxBuffer _nextPositionBuffer;
         FluxBuffer _currentVelocityBuffer;
         FluxBuffer _nextVelocityBuffer;
+        FluxBuffer _currentVisualBuffer;
+        FluxBuffer _nextVisualBuffer;
 
         [PublicAPI]
         public FluxBuffer CurrentPosition => _currentPositionBuffer;
@@ -41,7 +46,10 @@ namespace TpLab.Flux.FX.Udon
         public FluxBuffer NextVelocity => _nextVelocityBuffer;
 
         [PublicAPI]
-        public FluxBuffer Visual => visualBuffer;
+        public FluxBuffer CurrentVisual => _currentVisualBuffer;
+
+        [PublicAPI]
+        public FluxBuffer NextVisual => _nextVisualBuffer;
 
         [PublicAPI]
         public void Initialize(int count)
@@ -50,16 +58,19 @@ namespace TpLab.Flux.FX.Udon
             positionBufferB.SetCount(count);
             velocityBufferA.SetCount(count);
             velocityBufferB.SetCount(count);
-            visualBuffer.SetCount(count);
+            visualBufferA.SetCount(count);
+            visualBufferB.SetCount(count);
 
             _currentPositionBuffer = positionBufferA;
             _nextPositionBuffer = positionBufferB;
             _currentVelocityBuffer = velocityBufferA;
             _nextVelocityBuffer = velocityBufferB;
+            _currentVisualBuffer = visualBufferA;
+            _nextVisualBuffer = visualBufferB;
         }
 
         [PublicAPI]
-        public void Swap()
+        public void SwapSimulation()
         {
             var positionTemp = _currentPositionBuffer;
             _currentPositionBuffer = _nextPositionBuffer;
@@ -68,6 +79,14 @@ namespace TpLab.Flux.FX.Udon
             var velocityTemp = _currentVelocityBuffer;
             _currentVelocityBuffer = _nextVelocityBuffer;
             _nextVelocityBuffer = velocityTemp;
+        }
+
+        [PublicAPI]
+        public void SwapVisual()
+        {
+            var visualTemp = _currentVisualBuffer;
+            _currentVisualBuffer = _nextVisualBuffer;
+            _nextVisualBuffer = visualTemp;
         }
     }
 }
