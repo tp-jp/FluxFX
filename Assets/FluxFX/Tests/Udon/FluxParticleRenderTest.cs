@@ -8,67 +8,84 @@ namespace TpLab.Flux.FX.Tests.Udon
     public class FluxParticleRenderTest : UdonSharpBehaviour
     {
         const int ParticleCount = 64;
-        const int Columns = 8;
-        const float Spacing = 0.3f;
-        const float Height = 1.2f;
 
         [SerializeField]
-        FluxBuffer positionBufferA;
+        FluxParticleState particleState;
 
         [SerializeField]
-        FluxBuffer positionBufferB;
+        FluxParticleEmitter particleEmitter;
 
         [SerializeField]
-        FluxUpload upload;
+        FluxUpload positionUpload;
 
         [SerializeField]
-        FluxKernel updateKernel;
+        FluxUpload velocityUpload;
+
+        [SerializeField]
+        FluxUpload visualUpload;
+
+        [SerializeField]
+        FluxKernel velocityUpdateKernel;
+
+        [SerializeField]
+        FluxKernel positionUpdateKernel;
 
         [SerializeField]
         FluxParticleRenderer particleRenderer;
 
-        FluxBuffer _currentBuffer;
-        FluxBuffer _nextBuffer;
-
         void Start()
         {
-            positionBufferA.SetCount(ParticleCount);
-            positionBufferB.SetCount(ParticleCount);
+            particleState.Initialize(ParticleCount);
 
             var positions = new Vector4[ParticleCount];
+            var velocities = new Vector4[ParticleCount];
+            var visuals = new Vector4[ParticleCount];
 
             for (var i = 0; i < ParticleCount; i++)
             {
-                var x = i % Columns;
-                var y = i / Columns;
+                positions[i] = Vector4.zero;
+                velocities[i] = Vector4.zero;
 
-                positions[i] = new Vector4(
-                    (x - 3.5f) * Spacing,
-                    Height + (y - 3.5f) * Spacing,
-                    0,
-                    1
+                var t = (float)i / (ParticleCount - 1);
+                var size = 0.5f + t * 1.5f;
+
+                visuals[i] = new Vector4(
+                    1.0f - t,
+                    t,
+                    0.25f,
+                    size
                 );
             }
 
-            upload.Upload(positions, positionBufferA);
-
-            _currentBuffer = positionBufferA;
-            _nextBuffer = positionBufferB;
+            positionUpload.Upload(positions, particleState.CurrentPosition);
+            velocityUpload.Upload(velocities, particleState.CurrentVelocity);
+            visualUpload.Upload(visuals, particleState.Visual);
 
             particleRenderer.Initialize(ParticleCount);
-            particleRenderer.SetPositionBuffer(_currentBuffer);
+            particleRenderer.SetState(particleState);
         }
 
         void Update()
         {
-            updateKernel.SetFloat("_DeltaTime", Time.deltaTime);
-            updateKernel.Dispatch(_currentBuffer, _nextBuffer);
+            var deltaTime = Time.deltaTime;
 
-            var temp = _currentBuffer;
-            _currentBuffer = _nextBuffer;
-            _nextBuffer = temp;
+            particleEmitter.UpdateEmission(deltaTime);
 
-            particleRenderer.SetPositionBuffer(_currentBuffer);
+            velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
+            velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            velocityUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
+            velocityUpdateKernel.SetVector("_Gravity", new Vector4(0, -1.0f, 0, 0));
+            velocityUpdateKernel.SetBuffer("_PositionTex", particleState.CurrentPosition);
+            velocityUpdateKernel.Dispatch(particleState.CurrentVelocity, particleState.NextVelocity);
+
+            positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
+            positionUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
+            positionUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
+            positionUpdateKernel.Dispatch(particleState.CurrentPosition, particleState.NextPosition);
+
+            particleState.Swap();
+
+            particleRenderer.SetState(particleState);
         }
     }
 }

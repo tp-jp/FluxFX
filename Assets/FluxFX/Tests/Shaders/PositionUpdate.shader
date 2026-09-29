@@ -1,9 +1,10 @@
-Shader "FluxFX/Tests/ParticleUpdate"
+Shader "FluxFX/Tests/PositionUpdate"
 {
     Properties
     {
         _MainTex ("Position", 2D) = "black" {}
         _VelocityTex ("Velocity", 2D) = "black" {}
+        _CurrentVelocityTex ("Current Velocity", 2D) = "black" {}
     }
 
     SubShader
@@ -24,6 +25,7 @@ Shader "FluxFX/Tests/ParticleUpdate"
 
             sampler2D_float _MainTex;
             sampler2D_float _VelocityTex;
+            sampler2D_float _CurrentVelocityTex;
 
             float _DeltaTime;
 
@@ -37,9 +39,20 @@ Shader "FluxFX/Tests/ParticleUpdate"
                 float2 sourceUV = FluxGetSourceUV(index);
 
                 float4 position = tex2D(_MainTex, sourceUV);
-                float3 velocity = tex2D(_VelocityTex, sourceUV).xyz;
+                float4 velocity = tex2D(_VelocityTex, sourceUV);
+                float4 currentVelocity = tex2D(_CurrentVelocityTex, sourceUV);
 
-                position.xyz += velocity * _DeltaTime;
+                bool wasActive = currentVelocity.w > 0;
+                bool isActive = velocity.w > 0;
+
+                if (!wasActive && isActive)
+                    return float4(0, 1.2, 0, 0);
+
+                if (!isActive)
+                    return 0;
+
+                position.xyz += velocity.xyz * _DeltaTime;
+                position.w += _DeltaTime;
 
                 return position;
             }

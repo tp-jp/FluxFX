@@ -1,4 +1,5 @@
-﻿using TpLab.Flux.Udon;
+﻿using JetBrains.Annotations;
+using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
 
@@ -15,27 +16,31 @@ namespace TpLab.Flux.FX.Udon
 
         Material _material;
 
-        #region Public API
-
+        [PublicAPI]
         public void Initialize(int capacity)
         {
             meshFilter.mesh = CreateParticleMesh(capacity);
             _material = meshRenderer.material;
         }
 
-        public void SetPositionBuffer(FluxBuffer buffer)
+        [PublicAPI]
+        public void SetState(FluxParticleState state)
         {
-            var texture = buffer.Texture;
+            SetBuffer("_PositionTex", state.CurrentPosition);
+            SetBuffer("_VelocityTex", state.CurrentVelocity);
+            SetBuffer("_VisualTex", state.Visual);
 
-            _material.SetTexture("_PositionTex", texture);
-            _material.SetFloat("_FluxSourceCount", buffer.Count);
+            var texture = state.CurrentPosition.Texture;
+
+            _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
             _material.SetFloat("_FluxSourceWidth", texture.width);
             _material.SetFloat("_FluxSourceHeight", texture.height);
         }
 
-        #endregion
-
-        #region Private Methods
+        void SetBuffer(string name, FluxBuffer buffer)
+        {
+            _material.SetTexture(name, buffer.Texture);
+        }
 
         Mesh CreateParticleMesh(int capacity)
         {
@@ -77,7 +82,5 @@ namespace TpLab.Flux.FX.Udon
 
             return mesh;
         }
-
-        #endregion
     }
 }
