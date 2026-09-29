@@ -38,6 +38,15 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         float noiseSpeed;
 
+        [SerializeField]
+        Vector3 vortexCenter;
+
+        [SerializeField]
+        Vector3 vortexAxis;
+
+        [SerializeField]
+        float vortexStrength;
+
         float _simulationTime;
 
         [PublicAPI]
@@ -67,6 +76,9 @@ namespace TpLab.Flux.FX.Udon
             velocityUpdateKernel.SetFloat("_NoiseStrength", noiseStrength);
             velocityUpdateKernel.SetFloat("_NoiseScale", noiseScale);
             velocityUpdateKernel.SetFloat("_NoiseTime", _simulationTime * noiseSpeed);
+            velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));
+            velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(vortexAxis.x, vortexAxis.y, vortexAxis.z, 0));
+            velocityUpdateKernel.SetFloat("_VortexStrength", vortexStrength);
             velocityUpdateKernel.SetBuffer("_PositionTex", particleState.CurrentPosition);
             velocityUpdateKernel.Dispatch(particleState.CurrentVelocity, particleState.NextVelocity);
         }

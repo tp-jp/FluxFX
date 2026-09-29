@@ -1260,7 +1260,6 @@ GameObject:
   - component: {fileID: 1524821719}
   - component: {fileID: 1524821721}
   - component: {fileID: 1524821720}
-  - component: {fileID: 1524821722}
   - component: {fileID: 1524821723}
   - component: {fileID: 1524821724}
   m_Layer: 0
@@ -1347,19 +1346,9 @@ MonoBehaviour:
   noiseStrength: 2
   noiseScale: 1
   noiseSpeed: 1
---- !u!114 &1524821722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1524821718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62cd7f89aab3cfc42a039a0571712c04, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gravity: {x: 0, y: -1, z: 0}
+  vortexCenter: {x: 0, y: 0, z: 0}
+  vortexAxis: {x: 0, y: 0, z: 0}
+  vortexStrength: 0
 --- !u!114 &1524821723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1372,7 +1361,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 618e32d63cff73e4881928ee7f965410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drag: 0.5
+  drag: 0.1
 --- !u!114 &1524821724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1382,12 +1371,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1524821718}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7f50f13cd4636aa46b92301a58d8da75, type: 3}
+  m_Script: {fileID: 11500000, guid: ed31291d66883b54c9925a3ff5510c3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strength: 1
-  scale: 1
-  speed: 1
+  center: {x: 0, y: 1.2, z: 0}
+  axis: {x: 0, y: 1, z: 0}
+  strength: 3
 --- !u!1 &1663340799
 GameObject:
   m_ObjectHideFlags: 0

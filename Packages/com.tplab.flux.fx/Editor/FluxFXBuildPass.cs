@@ -25,13 +25,17 @@ namespace TpLab.Flux.FX.Editor
                 var gravity = gameObject.GetComponent<FluxParticleGravity>();
                 var drag = gameObject.GetComponent<FluxParticleDrag>();
                 var noise = gameObject.GetComponent<FluxParticleNoise>();
+                var vortex = gameObject.GetComponent<FluxParticleVortex>();
 
-                simulation.SetProgramVariable("gravity", gravity != null ? gravity.Gravity : Vector3.zero);
-                simulation.SetProgramVariable("drag", drag != null ? drag.Drag : 0.0f);
-                simulation.SetProgramVariable("noiseStrength", noise != null ? noise.Strength : 0.0f);
-                simulation.SetProgramVariable("noiseScale", noise != null ? noise.Scale : 0.0f);
-                simulation.SetProgramVariable("noiseSpeed", noise != null ? noise.Speed : 0.0f);
-            }            
+                simulation.SetProgramVariable("gravity", gravity != null && gravity.enabled ? gravity.Gravity : Vector3.zero);
+                simulation.SetProgramVariable("drag", drag != null && drag.enabled ? drag.Drag : 0.0f);
+                simulation.SetProgramVariable("noiseStrength", noise != null && noise.enabled ? noise.Strength : 0.0f);
+                simulation.SetProgramVariable("noiseScale", noise != null && noise.enabled ? noise.Scale : 0.0f);
+                simulation.SetProgramVariable("noiseSpeed", noise != null && noise.enabled ? noise.Speed : 0.0f);
+                simulation.SetProgramVariable("vortexCenter", vortex != null && vortex.enabled ? vortex.Center : Vector3.zero);
+                simulation.SetProgramVariable("vortexAxis", vortex != null && vortex.enabled ? vortex.Axis.normalized : Vector3.up);
+                simulation.SetProgramVariable("vortexStrength", vortex != null && vortex.enabled ? vortex.Strength : 0.0f);
+            }
         }
     }
 }

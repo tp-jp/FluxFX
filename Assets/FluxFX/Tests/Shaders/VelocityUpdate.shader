@@ -30,6 +30,9 @@ Shader "FluxFX/Tests/VelocityUpdate"
             float _NoiseStrength;
             float _NoiseScale;
             float _NoiseTime;
+            float4 _VortexCenter;
+            float4 _VortexAxis;
+            float _VortexStrength;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnCount;
@@ -80,6 +83,24 @@ Shader "FluxFX/Tests/VelocityUpdate"
                 return noise;
             }
 
+            float3 EvaluateVortex(float3 position)
+            {
+                float3 offset = position - _VortexCenter.xyz;
+
+                float axialDistance = dot(offset, _VortexAxis.xyz);
+                float3 radialOffset = offset - _VortexAxis.xyz * axialDistance;
+
+                float radialLength = length(radialOffset);
+
+                if (radialLength <= 0.0001)
+                    return 0;
+
+                float3 radialDirection = radialOffset / radialLength;
+                float3 tangent = cross(_VortexAxis.xyz, radialDirection);
+
+                return tangent * _VortexStrength;
+            }
+
             float4 frag(v2f_img i) : SV_Target
             {
                 uint index = FluxGetDestinationIndex(i.uv);
@@ -109,6 +130,9 @@ Shader "FluxFX/Tests/VelocityUpdate"
 
                 float3 noise = EvaluateNoise(position.xyz);
                 velocity.xyz += noise * _NoiseStrength * _DeltaTime;
+
+                float3 vortex = EvaluateVortex(position.xyz);
+                velocity.xyz += vortex * _DeltaTime;
 
                 float dragFactor = exp(-_Drag * _DeltaTime);
                 velocity.xyz *= dragFactor;
