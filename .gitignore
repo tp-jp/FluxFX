@@ -70,3 +70,6 @@ Assets/PackageMakerWindowData.asset*
 
 # ClientSimStorage
 /ClientSimStorage/
+
+# Unity user-specific settings
+/UserSettings/
