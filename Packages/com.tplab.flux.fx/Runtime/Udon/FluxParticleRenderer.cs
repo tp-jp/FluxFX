@@ -50,7 +50,9 @@ namespace TpLab.Flux.FX.Udon
             }
 
             if (particleMaterial != null)
+            {
                 meshRenderer.sharedMaterial = particleMaterial;
+            }
 
             _material = meshRenderer.material;
 
@@ -155,7 +157,9 @@ namespace TpLab.Flux.FX.Udon
             mesh.name = "Flux Particle Mesh";
 
             if (vertexCount > MaxUInt16VertexCount)
+            {
                 mesh.indexFormat = IndexFormat.UInt32;
+            }
 
             mesh.vertices = vertices;
             mesh.uv2 = uv2;
@@ -202,35 +206,49 @@ namespace TpLab.Flux.FX.Udon
                     uv2[vertexIndex] = particleData;
 
                     if (hasNormals)
+                    {
                         normals[vertexIndex] = sourceNormals[i];
-
+                    }
                     if (hasTangents)
+                    {
                         tangents[vertexIndex] = sourceTangents[i];
-
+                    }
                     if (hasUV)
+                    {
                         uv[vertexIndex] = sourceUV[i];
+                    }
                 }
 
                 for (var i = 0; i < sourceTriangleCount; i++)
+                {
                     triangles[triangleOffset + i] = vertexOffset + sourceTriangles[i];
+                }
             }
 
             var mesh = new Mesh();
             mesh.name = "Flux Particle Mesh";
 
             if (vertexCount > MaxUInt16VertexCount)
+            {
                 mesh.indexFormat = IndexFormat.UInt32;
+            }
 
             mesh.vertices = vertices;
 
             if (hasNormals)
+            {
                 mesh.normals = normals;
+            }
 
             if (hasTangents)
+            {
                 mesh.tangents = tangents;
+            }
 
             if (hasUV)
+            {
                 mesh.uv = uv;
+            }
 
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
