@@ -1,4 +1,4 @@
-Shader "FluxFX/Tests/VelocityUpdate"
+Shader "FluxFX/ParticleVelocityUpdate"
 {
     Properties
     {
@@ -33,6 +33,8 @@ Shader "FluxFX/Tests/VelocityUpdate"
             float4 _VortexCenter;
             float4 _VortexAxis;
             float _VortexStrength;
+            float _Lifetime;
+            float _InitialSpeed;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnCount;
@@ -54,19 +56,27 @@ Shader "FluxFX/Tests/VelocityUpdate"
                 return false;
             }
 
+            float3 CreateSpawnDirection(uint index)
+            {
+                float goldenAngle = 2.39996323;
+                float y = 1.0 - 2.0 * ((index + 0.5) / _FluxDestinationCount);
+                float radius = sqrt(max(0.0, 1.0 - y * y));
+                float angle = index * goldenAngle;
+
+                return float3(
+                    cos(angle) * radius,
+                    y,
+                    sin(angle) * radius
+                );
+            }
+
             float4 CreateSpawnVelocity(uint index)
             {
-                float angle = index * 2.39996323;
-                float horizontal = cos(angle) * 0.8;
-                float depth = sin(angle) * 0.8;
-                float vertical = 1.5 + (index % 8) * 0.1;
-                float lifetime = 2.0 + (index % 16) * 0.1;
+                float3 direction = CreateSpawnDirection(index);
 
                 return float4(
-                    horizontal,
-                    vertical,
-                    depth,
-                    lifetime
+                    direction * _InitialSpeed,
+                    _Lifetime
                 );
             }
 

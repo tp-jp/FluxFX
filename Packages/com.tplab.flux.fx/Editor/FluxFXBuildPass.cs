@@ -6,6 +6,7 @@ using TpLab.Flux.FX.Udon;
 using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
 using UnityEngine;
+using RenderSettings = TpLab.Flux.FX.Scripts.RenderSettings;
 
 namespace TpLab.Flux.FX.Editor
 {
@@ -37,12 +38,47 @@ namespace TpLab.Flux.FX.Editor
         {
             var parameters = new JObject();
 
+            AddEmission(parameters, authoring.Emission);
+            AddLifetime(parameters, authoring.Lifetime);
+            AddShape(parameters, authoring.Shape);
+            AddInitialVelocity(parameters, authoring.InitialVelocity);
             AddGravity(parameters, authoring.Gravity);
             AddDrag(parameters, authoring.Drag);
             AddNoise(parameters, authoring.Noise);
             AddVortex(parameters, authoring.Vortex);
+            AddRender(parameters, authoring.Render);
 
             return parameters;
+        }
+
+        void AddEmission(JObject parameters, EmissionSettings emission)
+        {
+            parameters["emission"] = new JObject
+            {
+                ["rate"] = emission.Rate
+            };
+        }
+
+        void AddLifetime(JObject parameters, LifetimeSettings lifetime)
+        {
+            parameters["lifetime"] = lifetime.Lifetime;
+        }
+
+        void AddShape(JObject parameters, ShapeSettings shape)
+        {
+            parameters["shape"] = new JObject
+            {
+                ["type"] = (int)shape.Type,
+                ["radius"] = shape.Radius
+            };
+        }
+
+        void AddInitialVelocity(JObject parameters, InitialVelocitySettings initialVelocity)
+        {
+            parameters["initialVelocity"] = new JObject
+            {
+                ["speed"] = initialVelocity.Speed
+            };
         }
 
         void AddGravity(JObject parameters, GravitySettings gravity)
@@ -92,6 +128,37 @@ namespace TpLab.Flux.FX.Editor
                 ["axisZ"] = axis.z,
                 ["strength"] = vortex.Strength
             };
+        }
+
+        void AddRender(JObject parameters, RenderSettings render)
+        {
+            var settings = new JObject
+            {
+                ["startColorR"] = render.StartColor.r,
+                ["startColorG"] = render.StartColor.g,
+                ["startColorB"] = render.StartColor.b,
+                ["startSize"] = render.StartSize
+            };
+
+            if (render.ColorOverLifetime.Enabled)
+            {
+                settings["colorOverLifetime"] = new JObject
+                {
+                    ["endColorR"] = render.ColorOverLifetime.EndColor.r,
+                    ["endColorG"] = render.ColorOverLifetime.EndColor.g,
+                    ["endColorB"] = render.ColorOverLifetime.EndColor.b
+                };
+            }
+
+            if (render.SizeOverLifetime.Enabled)
+            {
+                settings["sizeOverLifetime"] = new JObject
+                {
+                    ["endSize"] = render.SizeOverLifetime.EndSize
+                };
+            }
+
+            parameters["render"] = settings;
         }
     }
 }

@@ -1,4 +1,4 @@
-Shader "FluxFX/Tests/PositionUpdate"
+Shader "FluxFX/ParticlePositionUpdate"
 {
     Properties
     {
@@ -27,7 +27,33 @@ Shader "FluxFX/Tests/PositionUpdate"
             sampler2D_float _VelocityTex;
             sampler2D_float _CurrentVelocityTex;
 
+            float _ShapeType;
+            float _ShapeRadius;
             float _DeltaTime;
+
+            float3 CreateSpawnDirection(uint index)
+            {
+                float goldenAngle = 2.39996323;
+                float y = 1.0 - 2.0 * ((index + 0.5) / _FluxDestinationCount);
+                float radius = sqrt(max(0.0, 1.0 - y * y));
+                float angle = index * goldenAngle;
+
+                return float3(
+                    cos(angle) * radius,
+                    y,
+                    sin(angle) * radius
+                );
+            }
+
+            float3 CreateSpawnPosition(uint index)
+            {
+                if (_ShapeType < 0.5)
+                    return 0;
+
+                float3 direction = CreateSpawnDirection(index);
+
+                return direction * _ShapeRadius;
+            }
 
             float4 frag(v2f_img i) : SV_Target
             {
@@ -46,7 +72,7 @@ Shader "FluxFX/Tests/PositionUpdate"
                 bool isActive = velocity.w > 0;
 
                 if (!wasActive && isActive)
-                    return float4(0, 1.2, 0, 0);
+                    return float4(CreateSpawnPosition(index), 0);
 
                 if (!isActive)
                     return 0;

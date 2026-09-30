@@ -2,6 +2,7 @@
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
@@ -16,11 +17,53 @@ namespace TpLab.Flux.FX.Udon
 
         Material _material;
 
+        Vector4 _endColor;
+        float _endSize;
+        float _colorOverLifetimeEnabled;
+        float _sizeOverLifetimeEnabled;
+
         [PublicAPI]
         public void Initialize(int capacity)
         {
             meshFilter.mesh = CreateParticleMesh(capacity);
             _material = meshRenderer.material;
+
+            ApplyRenderParameters();
+        }
+
+        [PublicAPI]
+        public void SetRenderParameters(DataDictionary parameters)
+        {
+            if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
+            {
+                var color = colorToken.DataDictionary;
+
+                _endColor = new Vector4(
+                    (float)color["endColorR"].Double,
+                    (float)color["endColorG"].Double,
+                    (float)color["endColorB"].Double,
+                    1);
+
+                _colorOverLifetimeEnabled = 1;
+            }
+            else
+            {
+                _endColor = Vector4.one;
+                _colorOverLifetimeEnabled = 0;
+            }
+
+            if (parameters.TryGetValue("sizeOverLifetime", out var sizeToken))
+            {
+                var size = sizeToken.DataDictionary;
+
+                _endSize = (float)size["endSize"].Double;
+                _sizeOverLifetimeEnabled = 1;
+            }
+            else
+            {
+                _endSize = 0;
+                _sizeOverLifetimeEnabled = 0;
+            }
         }
 
         [PublicAPI]
@@ -35,6 +78,14 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
             _material.SetFloat("_FluxSourceWidth", texture.width);
             _material.SetFloat("_FluxSourceHeight", texture.height);
+        }
+
+        void ApplyRenderParameters()
+        {
+            _material.SetVector("_EndColor", _endColor);
+            _material.SetFloat("_EndSize", _endSize);
+            _material.SetFloat("_ColorOverLifetimeEnabled", _colorOverLifetimeEnabled);
+            _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);
         }
 
         void SetBuffer(string name, FluxBuffer buffer)

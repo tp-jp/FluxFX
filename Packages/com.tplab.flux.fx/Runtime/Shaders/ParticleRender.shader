@@ -30,6 +30,11 @@ Shader "FluxFX/ParticleRender"
             sampler2D_float _VelocityTex;
             sampler2D_float _VisualTex;
 
+            float4 _EndColor;
+            float _EndSize;
+            float _ColorOverLifetimeEnabled;
+            float _SizeOverLifetimeEnabled;
+
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -68,11 +73,14 @@ Shader "FluxFX/ParticleRender"
                 float3 startColor = visual.rgb;
                 float startSize = visual.a;
 
-                float sizeOverLifetime = 1.0 - normalizedAge;
-                float colorOverLifetime = 1.0 - normalizedAge;
+                float3 color = startColor;
+                float size = startSize;
 
-                float size = startSize * sizeOverLifetime;
-                float3 color = startColor * colorOverLifetime;
+                if (_ColorOverLifetimeEnabled > 0.5)
+                    color = lerp(startColor, _EndColor.rgb, normalizedAge);
+
+                if (_SizeOverLifetimeEnabled > 0.5)
+                    size = lerp(startSize, _EndSize, normalizedAge);
 
                 float3 worldPosition = position.xyz + v.vertex.xyz * size;
 

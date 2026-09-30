@@ -1,12 +1,23 @@
 using System;
 using UnityEngine;
-using VRC.SDKBase;
 
 namespace TpLab.Flux.FX.Scripts
 {
     [DisallowMultipleComponent]
-    public class FluxParticleAuthoring : MonoBehaviour, IEditorOnly
+    public class FluxParticleAuthoring : MonoBehaviour
     {
+        [SerializeField]
+        EmissionSettings emission = new EmissionSettings();
+
+        [SerializeField]
+        LifetimeSettings lifetime = new LifetimeSettings();
+
+        [SerializeField]
+        ShapeSettings shape = new ShapeSettings();
+
+        [SerializeField]
+        InitialVelocitySettings initialVelocity = new InitialVelocitySettings();
+
         [SerializeField]
         GravitySettings gravity = new GravitySettings();
 
@@ -19,6 +30,17 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         VortexSettings vortex = new VortexSettings();
 
+        [SerializeField]
+        RenderSettings render = new RenderSettings();
+
+        public EmissionSettings Emission => emission;
+
+        public LifetimeSettings Lifetime => lifetime;
+
+        public ShapeSettings Shape => shape;
+
+        public InitialVelocitySettings InitialVelocity => initialVelocity;
+
         public GravitySettings Gravity => gravity;
 
         public DragSettings Drag => drag;
@@ -26,6 +48,59 @@ namespace TpLab.Flux.FX.Scripts
         public NoiseSettings Noise => noise;
 
         public VortexSettings Vortex => vortex;
+
+        public RenderSettings Render => render;
+    }
+
+    public enum FluxParticleShapeType
+    {
+        Point,
+        Sphere
+    }
+
+    [Serializable]
+    public class EmissionSettings
+    {
+        [SerializeField]
+        [Min(0)]
+        float rate = 8.0f;
+
+        public float Rate => rate;
+    }
+
+    [Serializable]
+    public class LifetimeSettings
+    {
+        [SerializeField]
+        [Min(0)]
+        float lifetime = 3.0f;
+
+        public float Lifetime => lifetime;
+    }
+
+    [Serializable]
+    public class ShapeSettings
+    {
+        [SerializeField]
+        FluxParticleShapeType type;
+
+        [SerializeField]
+        [Min(0)]
+        float radius = 1.0f;
+
+        public FluxParticleShapeType Type => type;
+
+        public float Radius => radius;
+    }
+
+    [Serializable]
+    public class InitialVelocitySettings
+    {
+        [SerializeField]
+        [Min(0)]
+        float speed = 1.0f;
+
+        public float Speed => speed;
     }
 
     [Serializable]
@@ -107,5 +182,59 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 Axis => axis;
 
         public float Strength => strength;
+    }
+
+    [Serializable]
+    public class RenderSettings
+    {
+        [SerializeField]
+        Color startColor = Color.white;
+
+        [SerializeField]
+        [Min(0)]
+        float startSize = 1.0f;
+
+        [SerializeField]
+        ColorOverLifetimeSettings colorOverLifetime = new ColorOverLifetimeSettings();
+
+        [SerializeField]
+        SizeOverLifetimeSettings sizeOverLifetime = new SizeOverLifetimeSettings();
+
+        public Color StartColor => startColor;
+
+        public float StartSize => startSize;
+
+        public ColorOverLifetimeSettings ColorOverLifetime => colorOverLifetime;
+
+        public SizeOverLifetimeSettings SizeOverLifetime => sizeOverLifetime;
+    }
+
+    [Serializable]
+    public class ColorOverLifetimeSettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        Color endColor = Color.white;
+
+        public bool Enabled => enabled;
+
+        public Color EndColor => endColor;
+    }
+
+    [Serializable]
+    public class SizeOverLifetimeSettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        [Min(0)]
+        float endSize;
+
+        public bool Enabled => enabled;
+
+        public float EndSize => endSize;
     }
 }

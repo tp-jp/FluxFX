@@ -286,38 +286,6 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 41551549}
   initialCount: 64
---- !u!1 &60922095
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 60922096}
-  m_Layer: 0
-  m_Name: FluxFxRuntimeTests
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &60922096
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 60922095}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1217573529}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &358170787
 GameObject:
   m_ObjectHideFlags: 0
@@ -661,7 +629,6 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 763353639}
-  emissionRate: 8
 --- !u!1 &785121123
 GameObject:
   m_ObjectHideFlags: 0
@@ -1115,7 +1082,7 @@ Transform:
   - {fileID: 1524821719}
   - {fileID: 2048430191}
   - {fileID: 1663340800}
-  m_Father: {fileID: 60922096}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1217573530
 MonoBehaviour:
@@ -1129,8 +1096,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 571358e415308e2448dcad23a70cd1f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  emission:
+    rate: 8
+  lifetime:
+    lifetime: 2
+  shape:
+    type: 0
+    radius: 1
+  initialVelocity:
+    speed: 1
   gravity:
-    enabled: 1
+    enabled: 0
     gravity: {x: 0, y: -1, z: 0}
   drag:
     enabled: 0
@@ -1145,6 +1121,15 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     axis: {x: 0, y: 1, z: 0}
     strength: 1
+  render:
+    startColor: {r: 1, g: 1, b: 1, a: 1}
+    startSize: 1
+    colorOverLifetime:
+      enabled: 0
+      endColor: {r: 1, g: 1, b: 1, a: 1}
+    sizeOverLifetime:
+      enabled: 0
+      endSize: 2
 --- !u!114 &1217573531
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -2287,4 +2272,4 @@ SceneRoots:
   - {fileID: 1787983411}
   - {fileID: 7606902903243430487}
   - {fileID: 358170790}
-  - {fileID: 60922096}
+  - {fileID: 1217573529}

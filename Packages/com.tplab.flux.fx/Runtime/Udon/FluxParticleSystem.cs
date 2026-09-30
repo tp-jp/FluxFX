@@ -63,7 +63,54 @@ namespace TpLab.Flux.FX.Udon
         {
             if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var result)) return;
 
-            particleSimulation.Initialize(result.DataDictionary);
+            var parameters = result.DataDictionary;
+
+            InitializeEmitter(parameters);
+            InitializeSimulation(parameters);
+            InitializeRenderer(parameters);
+        }
+
+        void InitializeEmitter(DataDictionary parameters)
+        {
+            var emission = parameters["emission"].DataDictionary;
+            var emissionRate = (float)emission["rate"].Double;
+
+            particleEmitter.Initialize(emissionRate);
+        }
+
+        void InitializeSimulation(DataDictionary parameters)
+        {
+            particleSimulation.Initialize(parameters);
+
+            var lifetime = (float)parameters["lifetime"].Double;
+
+            var shape = parameters["shape"].DataDictionary;
+            var shapeType = (int)shape["type"].Double;
+            var shapeRadius = (float)shape["radius"].Double;
+
+            var initialVelocity = parameters["initialVelocity"].DataDictionary;
+            var initialSpeed = (float)initialVelocity["speed"].Double;
+
+            particleSimulation.SetSpawnParameters(
+                lifetime,
+                shapeType,
+                shapeRadius,
+                initialSpeed);
+        }
+
+        void InitializeRenderer(DataDictionary parameters)
+        {
+            var render = parameters["render"].DataDictionary;
+
+            var startColor = new Color(
+                (float)render["startColorR"].Double,
+                (float)render["startColorG"].Double,
+                (float)render["startColorB"].Double);
+
+            var startSize = (float)render["startSize"].Double;
+
+            particleSimulation.SetVisualSpawnParameters(startColor, startSize);
+            particleRenderer.SetRenderParameters(render);
         }
     }
 }

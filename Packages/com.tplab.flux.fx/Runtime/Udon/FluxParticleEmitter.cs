@@ -7,10 +7,7 @@ namespace TpLab.Flux.FX.Udon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleEmitter : UdonSharpBehaviour
     {
-        [SerializeField]
-        [Min(0)]
-        float emissionRate = 8.0f;
-
+        float _emissionRate;
         float _emissionAccumulator;
         int _spawnSequence;
 
@@ -21,9 +18,15 @@ namespace TpLab.Flux.FX.Udon
         public int SpawnCount { get; private set; }
 
         [PublicAPI]
+        public void Initialize(float emissionRate)
+        {
+            _emissionRate = emissionRate;
+        }
+
+        [PublicAPI]
         public void UpdateEmission(float deltaTime)
         {
-            _emissionAccumulator += deltaTime * emissionRate;
+            _emissionAccumulator += deltaTime * _emissionRate;
 
             SpawnCount = Mathf.FloorToInt(_emissionAccumulator);
 

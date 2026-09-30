@@ -34,6 +34,23 @@ namespace TpLab.Flux.FX.Udon
         }
 
         [PublicAPI]
+        public void SetSpawnParameters(float lifetime, int shapeType, float shapeRadius, float initialSpeed)
+        {
+            velocityUpdateKernel.SetFloat("_Lifetime", lifetime);
+            velocityUpdateKernel.SetFloat("_InitialSpeed", initialSpeed);
+
+            positionUpdateKernel.SetFloat("_ShapeType", shapeType);
+            positionUpdateKernel.SetFloat("_ShapeRadius", shapeRadius);
+        }
+
+        [PublicAPI]
+        public void SetVisualSpawnParameters(Color startColor, float startSize)
+        {
+            visualUpdateKernel.SetVector("_StartColor", startColor);
+            visualUpdateKernel.SetFloat("_StartSize", startSize);
+        }
+
+        [PublicAPI]
         public void Simulate(float deltaTime)
         {
             _simulationTime += deltaTime;
