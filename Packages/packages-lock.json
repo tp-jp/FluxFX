@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.tplab.flux": {
-      "version": "file:D:/unity/projects/worlds/Flux/Packages/com.tplab.flux/com.tplab.flux-0.0.1.tgz",
+      "version": "file:LocalPackages/com.tplab.flux-0.0.1.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {}
