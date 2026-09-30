@@ -1,4 +1,5 @@
 using System;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Scripts
@@ -188,6 +189,15 @@ namespace TpLab.Flux.FX.Scripts
     public class RenderSettings
     {
         [SerializeField]
+        FluxParticleRenderMode mode;
+
+        [SerializeField]
+        Mesh mesh;
+
+        [SerializeField]
+        Material material;
+
+        [SerializeField]
         Color startColor = Color.white;
 
         [SerializeField]
@@ -199,6 +209,12 @@ namespace TpLab.Flux.FX.Scripts
 
         [SerializeField]
         SizeOverLifetimeSettings sizeOverLifetime = new SizeOverLifetimeSettings();
+
+        public FluxParticleRenderMode Mode => mode;
+
+        public Mesh Mesh => mesh;
+
+        public Material Material => material;
 
         public Color StartColor => startColor;
 

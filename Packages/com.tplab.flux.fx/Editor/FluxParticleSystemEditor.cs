@@ -28,7 +28,6 @@ namespace TpLab.Flux.FX.Editor
         {
             var particleSystem = (FluxParticleSystem)target;
             var authoring = particleSystem.GetComponent<FluxParticleAuthoring>();
-
             if (authoring == null) return;
 
             _authoringObject = new SerializedObject(authoring);
@@ -50,10 +49,7 @@ namespace TpLab.Flux.FX.Editor
 
             if (_authoringObject == null)
             {
-                EditorGUILayout.HelpBox(
-                    "FluxParticleAuthoring is required on the same GameObject.",
-                    MessageType.Error);
-
+                EditorGUILayout.HelpBox("FluxParticleAuthoring is required on the same GameObject.", MessageType.Error);
                 serializedObject.ApplyModifiedProperties();
                 return;
             }
@@ -64,7 +60,7 @@ namespace TpLab.Flux.FX.Editor
             DrawEmission();
             DrawShape();
             DrawVelocity();
-            DrawRender();
+            DrawRenderer();
 
             _authoringObject.ApplyModifiedProperties();
             serializedObject.ApplyModifiedProperties();
@@ -81,8 +77,8 @@ namespace TpLab.Flux.FX.Editor
         void DrawEmission()
         {
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
 
+            EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"));
         }
 
@@ -90,11 +86,7 @@ namespace TpLab.Flux.FX.Editor
         {
             EditorGUILayout.Space();
 
-            _shapeExpanded = EditorGUILayout.Foldout(
-                _shapeExpanded,
-                "Shape",
-                true);
-
+            _shapeExpanded = EditorGUILayout.Foldout(_shapeExpanded, "Shape", true);
             if (!_shapeExpanded) return;
 
             EditorGUI.indentLevel++;
@@ -113,18 +105,12 @@ namespace TpLab.Flux.FX.Editor
         {
             EditorGUILayout.Space();
 
-            _velocityExpanded = EditorGUILayout.Foldout(
-                _velocityExpanded,
-                "Velocity",
-                true);
-
+            _velocityExpanded = EditorGUILayout.Foldout(_velocityExpanded, "Velocity", true);
             if (!_velocityExpanded) return;
 
             EditorGUI.indentLevel++;
 
-            EditorGUILayout.PropertyField(
-                _initialVelocity.FindPropertyRelative("speed"),
-                new GUIContent("Initial Speed"));
+            EditorGUILayout.PropertyField(_initialVelocity.FindPropertyRelative("speed"), new GUIContent("Initial Speed"));
 
             EditorGUILayout.Space();
 
@@ -136,31 +122,39 @@ namespace TpLab.Flux.FX.Editor
             EditorGUI.indentLevel--;
         }
 
-        void DrawRender()
+        void DrawRenderer()
         {
             EditorGUILayout.Space();
 
-            _renderExpanded = EditorGUILayout.Foldout(
-                _renderExpanded,
-                "Render",
-                true);
-
+            _renderExpanded = EditorGUILayout.Foldout(_renderExpanded, "Renderer", true);
             if (!_renderExpanded) return;
 
             EditorGUI.indentLevel++;
+
+            var mode = _render.FindPropertyRelative("mode");
+            var mesh = _render.FindPropertyRelative("mesh");
+
+            EditorGUILayout.PropertyField(mode);
+
+            if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
+            {
+                EditorGUILayout.PropertyField(mesh);
+
+                if (mesh.objectReferenceValue == null)
+                    EditorGUILayout.HelpBox("Mesh is required for Mesh render mode.", MessageType.Error);
+            }
+
+            EditorGUILayout.PropertyField(_render.FindPropertyRelative("material"));
+
+            EditorGUILayout.Space();
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("startColor"));
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("startSize"));
 
             EditorGUILayout.Space();
 
-            DrawModule(
-                "Color over Lifetime",
-                _render.FindPropertyRelative("colorOverLifetime"));
-
-            DrawModule(
-                "Size over Lifetime",
-                _render.FindPropertyRelative("sizeOverLifetime"));
+            DrawModule("Color over Lifetime", _render.FindPropertyRelative("colorOverLifetime"));
+            DrawModule("Size over Lifetime", _render.FindPropertyRelative("sizeOverLifetime"));
 
             EditorGUI.indentLevel--;
         }
@@ -171,10 +165,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            enabled.boolValue = EditorGUILayout.ToggleLeft(
-                label,
-                enabled.boolValue,
-                EditorStyles.boldLabel);
+            enabled.boolValue = EditorGUILayout.ToggleLeft(label, enabled.boolValue, EditorStyles.boldLabel);
 
             if (enabled.boolValue)
             {
@@ -185,8 +176,7 @@ namespace TpLab.Flux.FX.Editor
 
                 property.NextVisible(true);
 
-                while (property.NextVisible(false) &&
-                       !SerializedProperty.EqualContents(property, endProperty))
+                while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
                 {
                     if (property.name == "enabled") continue;
 

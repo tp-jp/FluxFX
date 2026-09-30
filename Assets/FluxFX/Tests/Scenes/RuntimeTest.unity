@@ -1122,14 +1122,17 @@ MonoBehaviour:
     axis: {x: 0, y: 1, z: 0}
     strength: 1
   render:
+    mode: 1
+    mesh: {fileID: 4300000, guid: e2c669382bf700942b6ace021258ec4a, type: 2}
+    material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
     startColor: {r: 1, g: 1, b: 1, a: 1}
-    startSize: 1
+    startSize: 0.1
     colorOverLifetime:
-      enabled: 0
-      endColor: {r: 1, g: 1, b: 1, a: 1}
+      enabled: 1
+      endColor: {r: 0.57078075, g: 0, b: 1, a: 1}
     sizeOverLifetime:
-      enabled: 0
-      endSize: 2
+      enabled: 1
+      endSize: 1
 --- !u!114 &1217573531
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -1410,7 +1413,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
+  - {fileID: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1489,6 +1492,9 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 1663340803}
   meshFilter: {fileID: 1663340802}
   meshRenderer: {fileID: 1663340801}
+  renderMode: 0
+  sourceMesh: {fileID: 4300000, guid: 680ee5a1c6fcd7046bde90a112cb792d, type: 2}
+  particleMaterial: {fileID: 0}
 --- !u!1 &1787983409
 GameObject:
   m_ObjectHideFlags: 0

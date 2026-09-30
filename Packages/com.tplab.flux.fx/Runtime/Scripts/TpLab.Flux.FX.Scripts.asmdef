@@ -1,7 +1,9 @@
 {
     "name": "TpLab.Flux.FX.Scripts",
     "rootNamespace": "TpLab.Flux.FX.Scripts",
-    "references": [],
+    "references": [
+        "GUID:cc13a6d5d1369cd40a486c91c1698c21"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

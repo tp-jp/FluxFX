@@ -21,6 +21,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
 
             #include "UnityCG.cginc"
             #include "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl"
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl"
 
             sampler2D_float _MainTex;
             sampler2D_float _PositionTex;
@@ -56,23 +57,12 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return false;
             }
 
-            float3 CreateSpawnDirection(uint index)
-            {
-                float goldenAngle = 2.39996323;
-                float y = 1.0 - 2.0 * ((index + 0.5) / _FluxDestinationCount);
-                float radius = sqrt(max(0.0, 1.0 - y * y));
-                float angle = index * goldenAngle;
-
-                return float3(
-                    cos(angle) * radius,
-                    y,
-                    sin(angle) * radius
-                );
-            }
-
             float4 CreateSpawnVelocity(uint index)
             {
-                float3 direction = CreateSpawnDirection(index);
+                float3 direction = FluxFXCreateSpawnDirection(
+                    index,
+                    (uint)_FluxDestinationCount
+                );
 
                 return float4(
                     direction * _InitialSpeed,
