@@ -76,7 +76,11 @@ namespace TpLab.Flux.FX.Editor
 
             var type = (FluxParticleShapeType)_shape.FindPropertyRelative("type").enumValueIndex;
 
-            if (type == FluxParticleShapeType.Sphere)
+            if (type == FluxParticleShapeType.Point)
+            {
+                DrawPointShapeGizmo();
+            }
+            else if (type == FluxParticleShapeType.Sphere)
             {
                 DrawSphereShapeGizmo();
             }
@@ -433,6 +437,20 @@ namespace TpLab.Flux.FX.Editor
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        void DrawPointShapeGizmo()
+        {
+            var particleSystem = (FluxParticleSystem)target;
+            var position = particleSystem.transform.position;
+            var size = HandleUtility.GetHandleSize(position) * 0.08f;
+
+            Handles.DotHandleCap(
+                0,
+                position,
+                Quaternion.identity,
+                size,
+                EventType.Repaint);
         }
 
         void DrawSphereShapeGizmo()
