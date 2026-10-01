@@ -28,9 +28,21 @@ namespace TpLab.Flux.FX.Editor
 
         void AddEmission(JObject parameters, EmissionSettings emission)
         {
+            var bursts = new JArray();
+
+            foreach (var burst in emission.Bursts)
+            {
+                bursts.Add(new JObject
+                {
+                    ["time"] = burst.Time,
+                    ["count"] = burst.Count
+                });
+            }
+
             parameters["emission"] = new JObject
             {
-                ["rate"] = emission.Rate
+                ["rate"] = emission.Rate,
+                ["bursts"] = bursts
             };
         }
 

@@ -113,7 +113,28 @@ namespace TpLab.Flux.FX.Scripts
         [Min(0)]
         float rate = 8.0f;
 
+        [SerializeField]
+        BurstSettings[] bursts = Array.Empty<BurstSettings>();
+
         public float Rate => rate;
+
+        public BurstSettings[] Bursts => bursts;
+    }
+
+    [Serializable]
+    public class BurstSettings
+    {
+        [SerializeField]
+        [Min(0)]
+        float time;
+
+        [SerializeField]
+        [Min(1)]
+        int count = 1;
+
+        public float Time => time;
+
+        public int Count => count;
     }
 
     [Serializable]

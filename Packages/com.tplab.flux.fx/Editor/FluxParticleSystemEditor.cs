@@ -83,6 +83,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"));
+            EditorGUILayout.PropertyField(_emission.FindPropertyRelative("bursts"), true);
         }
 
         void DrawLifetime()

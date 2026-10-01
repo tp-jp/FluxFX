@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿﻿using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 
@@ -9,6 +9,10 @@ namespace TpLab.Flux.FX.Udon
     {
         float _emissionRate;
         float _emissionAccumulator;
+        float _emissionTime;
+        float[] _burstTimes;
+        int[] _burstCounts;
+        int _nextBurstIndex;
         int _spawnSequence;
 
         [PublicAPI]
@@ -18,23 +22,57 @@ namespace TpLab.Flux.FX.Udon
         public int SpawnCount { get; private set; }
 
         [PublicAPI]
-        public void Initialize(float emissionRate)
+        public void Initialize(float emissionRate, float[] burstTimes, int[] burstCounts)
         {
             _emissionRate = emissionRate;
+            _burstTimes = burstTimes;
+            _burstCounts = burstCounts;
         }
 
         [PublicAPI]
         public void UpdateEmission(float deltaTime)
         {
+            var previousTime = _emissionTime;
+            _emissionTime += deltaTime;
+
             _emissionAccumulator += deltaTime * _emissionRate;
 
-            SpawnCount = Mathf.FloorToInt(_emissionAccumulator);
+            var rateSpawnCount = Mathf.FloorToInt(_emissionAccumulator);
 
-            if (SpawnCount > 0)
-                _emissionAccumulator -= SpawnCount;
+            if (rateSpawnCount > 0)
+            {
+                _emissionAccumulator -= rateSpawnCount;
+            }
+
+            var burstSpawnCount = GetBurstSpawnCount(previousTime, _emissionTime);
 
             SpawnStart = _spawnSequence;
+            SpawnCount = rateSpawnCount + burstSpawnCount;
             _spawnSequence += SpawnCount;
+        }
+
+        int GetBurstSpawnCount(float previousTime, float currentTime)
+        {
+            var spawnCount = 0;
+
+            while (_nextBurstIndex < _burstTimes.Length)
+            {
+                var burstTime = _burstTimes[_nextBurstIndex];
+
+                if (burstTime > currentTime)
+                {
+                    break;
+                }
+
+                if (burstTime >= previousTime)
+                {
+                    spawnCount += _burstCounts[_nextBurstIndex];
+                }
+
+                _nextBurstIndex++;
+            }
+
+            return spawnCount;
         }
     }
 }
