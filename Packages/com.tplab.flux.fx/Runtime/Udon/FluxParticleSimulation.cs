@@ -65,6 +65,7 @@ namespace TpLab.Flux.FX.Udon
             velocityUpdateKernel.SetFloat("_LifetimeMax", lifetimeMax);
             velocityUpdateKernel.SetFloat("_InitialSpeedMin", initialSpeedMin);
             velocityUpdateKernel.SetFloat("_InitialSpeedMax", initialSpeedMax);
+            velocityUpdateKernel.SetFloat("_ShapeType", shapeType);
 
             positionUpdateKernel.SetFloat("_ShapeType", shapeType);
             positionUpdateKernel.SetFloat("_ShapeRadius", shapeRadius);

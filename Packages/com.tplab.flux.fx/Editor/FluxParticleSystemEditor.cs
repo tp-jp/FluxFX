@@ -74,11 +74,16 @@ namespace TpLab.Flux.FX.Editor
 
             _authoringObject.Update();
 
-            var type = _shape.FindPropertyRelative("type");
+            var type = (FluxParticleShapeType)_shape.FindPropertyRelative("type").enumValueIndex;
 
-            if ((FluxParticleShapeType)type.enumValueIndex != FluxParticleShapeType.Sphere) return;
-
-            DrawSphereShapeGizmo();
+            if (type == FluxParticleShapeType.Sphere)
+            {
+                DrawSphereShapeGizmo();
+            }
+            else if (type == FluxParticleShapeType.Hemisphere)
+            {
+                DrawHemisphereShapeGizmo();
+            }
         }
 
         void DrawMain()
@@ -135,7 +140,8 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.PropertyField(type);
 
-            if ((FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Sphere)
+            if ((FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Sphere ||
+                (FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Hemisphere)
             {
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("radius"));
             }
@@ -430,6 +436,37 @@ namespace TpLab.Flux.FX.Editor
             EditorGUI.BeginChangeCheck();
 
             var newRadius = Handles.RadiusHandle(Quaternion.identity, Vector3.zero, radius.floatValue);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                radius.floatValue = Mathf.Max(0, newRadius);
+                _authoringObject.ApplyModifiedProperties();
+            }
+
+            Handles.matrix = previousMatrix;
+        }
+
+        void DrawHemisphereShapeGizmo()
+        {
+            var particleSystem = (FluxParticleSystem)target;
+            var radius = _shape.FindPropertyRelative("radius");
+            var previousMatrix = Handles.matrix;
+
+            Handles.matrix = particleSystem.transform.localToWorldMatrix;
+
+            Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
+            Handles.DrawWireArc(Vector3.zero, Vector3.forward, Vector3.right, 180, radius.floatValue);
+            Handles.DrawWireArc(Vector3.zero, Vector3.right, Vector3.forward, -180, radius.floatValue);
+
+            EditorGUI.BeginChangeCheck();
+
+            var newRadius = Handles.ScaleSlider(
+                radius.floatValue,
+                Vector3.zero,
+                Vector3.up,
+                Quaternion.identity,
+                radius.floatValue,
+                0);
 
             if (EditorGUI.EndChangeCheck())
             {

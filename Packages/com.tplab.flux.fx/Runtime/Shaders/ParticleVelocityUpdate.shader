@@ -38,6 +38,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float _LifetimeMax;
             float _InitialSpeedMin;
             float _InitialSpeedMax;
+            float _ShapeType;
             float _SimulationSpace;
             float4 _SystemRotation;
             float _DeltaTime;
@@ -84,6 +85,11 @@ Shader "FluxFX/ParticleVelocityUpdate"
                     index,
                     (uint)_FluxDestinationCount
                 );
+
+                if (_ShapeType > 1.5)
+                {
+                    direction.y = abs(direction.y);
+                }
 
                 float initialSpeed = lerp(
                     _InitialSpeedMin,

@@ -58,6 +58,11 @@ Shader "FluxFX/ParticlePositionUpdate"
                     (uint)_FluxDestinationCount
                 );
 
+                if (_ShapeType > 1.5)
+                {
+                    direction.y = abs(direction.y);
+                }
+
                 float3 position = direction * _ShapeRadius;
 
                 if (_SimulationSpace > 0.5)
