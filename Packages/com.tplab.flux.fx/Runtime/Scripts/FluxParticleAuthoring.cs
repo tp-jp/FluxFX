@@ -64,6 +64,42 @@ namespace TpLab.Flux.FX.Scripts
         Sphere
     }
 
+    public enum FluxParticleStartSizeMode
+    {
+        Constant,
+        RandomBetweenTwoConstants
+    }
+
+    public enum FluxParticleStartColorMode
+    {
+        Constant,
+        RandomBetweenTwoConstants
+    }
+
+    public enum FluxParticleStartLifetimeMode
+    {
+        Constant,
+        RandomBetweenTwoConstants
+    }
+
+    public enum FluxParticleInitialSpeedMode
+    {
+        Constant,
+        RandomBetweenTwoConstants
+    }
+
+    public enum FluxParticleColorOverLifetimeMode
+    {
+        Linear,
+        Gradient
+    }
+
+    public enum FluxParticleSizeOverLifetimeMode
+    {
+        Linear,
+        Curve
+    }
+
     [Serializable]
     public class EmissionSettings
     {
@@ -81,7 +117,24 @@ namespace TpLab.Flux.FX.Scripts
         [Min(0)]
         float lifetime = 3.0f;
 
+        [SerializeField]
+        FluxParticleStartLifetimeMode mode;
+
+        [SerializeField]
+        [Min(0)]
+        float min = 1.0f;
+
+        [SerializeField]
+        [Min(0)]
+        float max = 3.0f;
+
         public float Lifetime => lifetime;
+
+        public FluxParticleStartLifetimeMode Mode => mode;
+
+        public float Min => min;
+
+        public float Max => max;
     }
 
     [Serializable]
@@ -106,7 +159,24 @@ namespace TpLab.Flux.FX.Scripts
         [Min(0)]
         float speed = 1.0f;
 
+        [SerializeField]
+        FluxParticleInitialSpeedMode mode;
+
+        [SerializeField]
+        [Min(0)]
+        float min = 0.5f;
+
+        [SerializeField]
+        [Min(0)]
+        float max = 1.0f;
+
         public float Speed => speed;
+
+        public FluxParticleInitialSpeedMode Mode => mode;
+
+        public float Min => min;
+
+        public float Max => max;
     }
 
     [Serializable]
@@ -206,8 +276,28 @@ namespace TpLab.Flux.FX.Scripts
         Color startColor = Color.white;
 
         [SerializeField]
+        FluxParticleStartColorMode startColorMode;
+
+        [SerializeField]
+        Color startColorMin = Color.white;
+
+        [SerializeField]
+        Color startColorMax = Color.white;
+
+        [SerializeField]
         [Min(0)]
         float startSize = 1.0f;
+
+        [SerializeField]
+        FluxParticleStartSizeMode startSizeMode;
+
+        [SerializeField]
+        [Min(0)]
+        float startSizeMin = 0.5f;
+
+        [SerializeField]
+        [Min(0)]
+        float startSizeMax = 1.0f;
 
         [SerializeField]
         Vector3 startRotation;
@@ -226,7 +316,19 @@ namespace TpLab.Flux.FX.Scripts
 
         public Color StartColor => startColor;
 
+        public FluxParticleStartColorMode StartColorMode => startColorMode;
+
+        public Color StartColorMin => startColorMin;
+
+        public Color StartColorMax => startColorMax;
+
         public float StartSize => startSize;
+
+        public FluxParticleStartSizeMode StartSizeMode => startSizeMode;
+
+        public float StartSizeMin => startSizeMin;
+
+        public float StartSizeMax => startSizeMax;
 
         public Vector3 StartRotation => startRotation;
 
@@ -242,11 +344,21 @@ namespace TpLab.Flux.FX.Scripts
         bool enabled;
 
         [SerializeField]
+        FluxParticleColorOverLifetimeMode mode;
+
+        [SerializeField]
         Color endColor = Color.white;
+
+        [SerializeField]
+        Gradient gradient = new Gradient();
 
         public bool Enabled => enabled;
 
+        public FluxParticleColorOverLifetimeMode Mode => mode;
+
         public Color EndColor => endColor;
+
+        public Gradient Gradient => gradient;
     }
 
     [Serializable]
@@ -256,11 +368,21 @@ namespace TpLab.Flux.FX.Scripts
         bool enabled;
 
         [SerializeField]
+        FluxParticleSizeOverLifetimeMode mode;
+
+        [SerializeField]
         [Min(0)]
         float endSize;
 
+        [SerializeField]
+        AnimationCurve curve = AnimationCurve.Linear(0, 1, 1, 1);
+
         public bool Enabled => enabled;
 
+        public FluxParticleSizeOverLifetimeMode Mode => mode;
+
         public float EndSize => endSize;
+
+        public AnimationCurve Curve => curve;
     }
 }

@@ -53,20 +53,34 @@ namespace TpLab.Flux.FX.Udon
         }
 
         [PublicAPI]
-        public void SetSpawnParameters(float lifetime, int shapeType, float shapeRadius, float initialSpeed)
+        public void SetSpawnParameters(
+            float lifetimeMin,
+            float lifetimeMax,
+            int shapeType,
+            float shapeRadius,
+            float initialSpeedMin,
+            float initialSpeedMax)
         {
-            velocityUpdateKernel.SetFloat("_Lifetime", lifetime);
-            velocityUpdateKernel.SetFloat("_InitialSpeed", initialSpeed);
+            velocityUpdateKernel.SetFloat("_LifetimeMin", lifetimeMin);
+            velocityUpdateKernel.SetFloat("_LifetimeMax", lifetimeMax);
+            velocityUpdateKernel.SetFloat("_InitialSpeedMin", initialSpeedMin);
+            velocityUpdateKernel.SetFloat("_InitialSpeedMax", initialSpeedMax);
 
             positionUpdateKernel.SetFloat("_ShapeType", shapeType);
             positionUpdateKernel.SetFloat("_ShapeRadius", shapeRadius);
         }
 
         [PublicAPI]
-        public void SetVisualSpawnParameters(Color startColor, float startSize)
+        public void SetVisualSpawnParameters(
+            Color startColorMin,
+            Color startColorMax,
+            float startSizeMin,
+            float startSizeMax)
         {
-            visualUpdateKernel.SetVector("_StartColor", startColor);
-            visualUpdateKernel.SetFloat("_StartSize", startSize);
+            visualUpdateKernel.SetVector("_StartColorMin", startColorMin);
+            visualUpdateKernel.SetVector("_StartColorMax", startColorMax);
+            visualUpdateKernel.SetFloat("_StartSizeMin", startSizeMin);
+            visualUpdateKernel.SetFloat("_StartSizeMax", startSizeMax);
         }
 
         [PublicAPI]
@@ -187,6 +201,8 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdateVisual()
         {
+            visualUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            visualUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             visualUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
             visualUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
             visualUpdateKernel.Dispatch(particleState.CurrentVisual, particleState.NextVisual);

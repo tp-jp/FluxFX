@@ -73,3 +73,6 @@ Assets/PackageMakerWindowData.asset*
 
 # Unity user-specific settings
 /UserSettings/
+
+# FluxFX build-generated lifetime LUTs
+/Assets/FluxFX/Generated/

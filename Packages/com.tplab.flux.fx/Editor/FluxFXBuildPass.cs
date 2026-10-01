@@ -19,6 +19,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var compiler = new FluxParticleCompiler();
+            var lutBaker = new FluxParticleLutBaker();
 
             foreach (var authoring in authorings)
             {
@@ -38,10 +39,14 @@ namespace TpLab.Flux.FX.Editor
                 var renderMode = authoring.Render.Mode;
                 var sourceMesh = authoring.Render.Mesh;
                 var particleMaterial = authoring.Render.Material;
+                var colorOverLifetimeLut = lutBaker.BakeColorOverLifetime(authoring);
+                var sizeOverLifetimeLut = lutBaker.BakeSizeOverLifetime(authoring);
 
                 particleRenderer.SetProgramVariable("renderMode", renderMode);
                 particleRenderer.SetProgramVariable("sourceMesh", sourceMesh);
                 particleRenderer.SetProgramVariable("particleMaterial", particleMaterial);
+                particleRenderer.SetProgramVariable("colorOverLifetimeLut", colorOverLifetimeLut);
+                particleRenderer.SetProgramVariable("sizeOverLifetimeLut", sizeOverLifetimeLut);
             }
         }
     }

@@ -1101,11 +1101,17 @@ MonoBehaviour:
     rate: 8
   lifetime:
     lifetime: 2
+    mode: 0
+    min: 1
+    max: 3
   shape:
     type: 0
     radius: 1
   initialVelocity:
     speed: 1
+    mode: 0
+    min: 0.5
+    max: 1
   gravity:
     enabled: 0
     gravity: {x: 0, y: -1, z: 0}
@@ -1126,15 +1132,77 @@ MonoBehaviour:
     mode: 0
     mesh: {fileID: 4300000, guid: e2c669382bf700942b6ace021258ec4a, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
-    startColor: {r: 1, g: 1, b: 1, a: 1}
+    startColor: {r: 1, g: 0.4292453, b: 0.4292453, a: 1}
+    startColorMode: 0
+    startColorMin: {r: 1, g: 1, b: 1, a: 1}
+    startColorMax: {r: 1, g: 0, b: 0, a: 1}
     startSize: 1
+    startSizeMode: 0
+    startSizeMin: 0.5
+    startSizeMax: 1
     startRotation: {x: 0, y: 45, z: 0}
     colorOverLifetime:
       enabled: 1
+      mode: 1
       endColor: {r: 0.57078075, g: 0, b: 1, a: 1}
+      gradient:
+        serializedVersion: 2
+        key0: {r: 1, g: 0, b: 0, a: 1}
+        key1: {r: 1, g: 1, b: 1, a: 1}
+        key2: {r: 1, g: 1, b: 1, a: 1}
+        key3: {r: 0, g: 0, b: 0, a: 0}
+        key4: {r: 0, g: 0, b: 0, a: 0}
+        key5: {r: 0, g: 0, b: 0, a: 0}
+        key6: {r: 0, g: 0, b: 0, a: 0}
+        key7: {r: 0, g: 0, b: 0, a: 0}
+        ctime0: 0
+        ctime1: 65535
+        ctime2: 65535
+        ctime3: 0
+        ctime4: 0
+        ctime5: 0
+        ctime6: 0
+        ctime7: 0
+        atime0: 0
+        atime1: 65535
+        atime2: 65535
+        atime3: 0
+        atime4: 0
+        atime5: 0
+        atime6: 0
+        atime7: 0
+        m_Mode: 0
+        m_ColorSpace: 0
+        m_NumColorKeys: 2
+        m_NumAlphaKeys: 2
     sizeOverLifetime:
       enabled: 0
+      mode: 0
       endSize: 1
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
 --- !u!114 &1217573531
 MonoBehaviour:
   m_ObjectHideFlags: 2
@@ -1497,6 +1565,8 @@ MonoBehaviour:
   renderMode: 0
   sourceMesh: {fileID: 4300000, guid: 680ee5a1c6fcd7046bde90a112cb792d, type: 2}
   particleMaterial: {fileID: 0}
+  colorOverLifetimeLut: {fileID: 0}
+  sizeOverLifetimeLut: {fileID: 0}
 --- !u!1 &1787983409
 GameObject:
   m_ObjectHideFlags: 0

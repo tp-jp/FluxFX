@@ -73,7 +73,7 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.LabelField("Main", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
-            EditorGUILayout.PropertyField(_lifetime.FindPropertyRelative("lifetime"));
+            DrawLifetime();
             EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
         }
 
@@ -83,6 +83,29 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"));
+        }
+
+        void DrawLifetime()
+        {
+            var mode = _lifetime.FindPropertyRelative("mode");
+
+            EditorGUILayout.PropertyField(mode, new GUIContent("Start Lifetime Mode"));
+
+            if ((FluxParticleStartLifetimeMode)mode.enumValueIndex == FluxParticleStartLifetimeMode.Constant)
+            {
+                EditorGUILayout.PropertyField(
+                    _lifetime.FindPropertyRelative("lifetime"),
+                    new GUIContent("Start Lifetime"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(
+                    _lifetime.FindPropertyRelative("min"),
+                    new GUIContent("Start Lifetime Min"));
+                EditorGUILayout.PropertyField(
+                    _lifetime.FindPropertyRelative("max"),
+                    new GUIContent("Start Lifetime Max"));
+            }
         }
 
         void DrawShape()
@@ -115,7 +138,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUI.indentLevel++;
 
-            EditorGUILayout.PropertyField(_initialVelocity.FindPropertyRelative("speed"), new GUIContent("Initial Speed"));
+            DrawInitialSpeed();
 
             EditorGUILayout.Space();
 
@@ -125,6 +148,29 @@ namespace TpLab.Flux.FX.Editor
             DrawModule("Vortex", _vortex);
 
             EditorGUI.indentLevel--;
+        }
+
+        void DrawInitialSpeed()
+        {
+            var mode = _initialVelocity.FindPropertyRelative("mode");
+
+            EditorGUILayout.PropertyField(mode, new GUIContent("Initial Speed Mode"));
+
+            if ((FluxParticleInitialSpeedMode)mode.enumValueIndex == FluxParticleInitialSpeedMode.Constant)
+            {
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("speed"),
+                    new GUIContent("Initial Speed"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("min"),
+                    new GUIContent("Initial Speed Min"));
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("max"),
+                    new GUIContent("Initial Speed Max"));
+            }
         }
 
         void DrawRenderer()
@@ -155,8 +201,8 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space();
 
-            EditorGUILayout.PropertyField(_render.FindPropertyRelative("startColor"));
-            EditorGUILayout.PropertyField(_render.FindPropertyRelative("startSize"));
+            DrawStartColor();
+            DrawStartSize();
 
             if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
             {
@@ -165,10 +211,122 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space();
 
-            DrawModule("Color over Lifetime", _render.FindPropertyRelative("colorOverLifetime"));
-            DrawModule("Size over Lifetime", _render.FindPropertyRelative("sizeOverLifetime"));
+            DrawColorOverLifetime();
+            DrawSizeOverLifetime();
 
             EditorGUI.indentLevel--;
+        }
+
+        void DrawStartSize()
+        {
+            var startSizeMode = _render.FindPropertyRelative("startSizeMode");
+
+            EditorGUILayout.PropertyField(
+                startSizeMode,
+                new GUIContent("Start Size Mode"));
+
+            if ((FluxParticleStartSizeMode)startSizeMode.enumValueIndex == FluxParticleStartSizeMode.Constant)
+            {
+                EditorGUILayout.PropertyField(_render.FindPropertyRelative("startSize"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(
+                    _render.FindPropertyRelative("startSizeMin"),
+                    new GUIContent("Start Size Min"));
+                EditorGUILayout.PropertyField(
+                    _render.FindPropertyRelative("startSizeMax"),
+                    new GUIContent("Start Size Max"));
+            }
+        }
+
+        void DrawStartColor()
+        {
+            var startColorMode = _render.FindPropertyRelative("startColorMode");
+
+            EditorGUILayout.PropertyField(
+                startColorMode,
+                new GUIContent("Start Color Mode"));
+
+            if ((FluxParticleStartColorMode)startColorMode.enumValueIndex == FluxParticleStartColorMode.Constant)
+            {
+                EditorGUILayout.PropertyField(_render.FindPropertyRelative("startColor"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(
+                    _render.FindPropertyRelative("startColorMin"),
+                    new GUIContent("Start Color Min"));
+                EditorGUILayout.PropertyField(
+                    _render.FindPropertyRelative("startColorMax"),
+                    new GUIContent("Start Color Max"));
+            }
+        }
+
+        void DrawColorOverLifetime()
+        {
+            var module = _render.FindPropertyRelative("colorOverLifetime");
+            var enabled = module.FindPropertyRelative("enabled");
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            enabled.boolValue = EditorGUILayout.ToggleLeft(
+                "Color over Lifetime",
+                enabled.boolValue,
+                EditorStyles.boldLabel);
+
+            if (enabled.boolValue)
+            {
+                EditorGUI.indentLevel++;
+
+                var mode = module.FindPropertyRelative("mode");
+                EditorGUILayout.PropertyField(mode);
+
+                if ((FluxParticleColorOverLifetimeMode)mode.enumValueIndex == FluxParticleColorOverLifetimeMode.Linear)
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endColor"));
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("gradient"));
+                }
+
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawSizeOverLifetime()
+        {
+            var module = _render.FindPropertyRelative("sizeOverLifetime");
+            var enabled = module.FindPropertyRelative("enabled");
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            enabled.boolValue = EditorGUILayout.ToggleLeft(
+                "Size over Lifetime",
+                enabled.boolValue,
+                EditorStyles.boldLabel);
+
+            if (enabled.boolValue)
+            {
+                EditorGUI.indentLevel++;
+
+                var mode = module.FindPropertyRelative("mode");
+                EditorGUILayout.PropertyField(mode);
+
+                if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endSize"));
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
+                }
+
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.EndVertical();
         }
 
         void DrawModule(string label, SerializedProperty module)

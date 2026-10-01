@@ -30,6 +30,14 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         Material particleMaterial;
 
+        [HideInInspector]
+        [SerializeField]
+        Texture2D colorOverLifetimeLut;
+
+        [HideInInspector]
+        [SerializeField]
+        Texture2D sizeOverLifetimeLut;
+
         Material _material;
 
         Vector4 _endColor;
@@ -37,6 +45,8 @@ namespace TpLab.Flux.FX.Udon
         float _endSize;
         float _colorOverLifetimeEnabled;
         float _sizeOverLifetimeEnabled;
+        float _colorOverLifetimeMode;
+        float _sizeOverLifetimeMode;
         float _simulationSpace;
 
         [PublicAPI]
@@ -86,11 +96,18 @@ namespace TpLab.Flux.FX.Udon
                     1);
 
                 _colorOverLifetimeEnabled = 1;
+                _colorOverLifetimeMode = 0;
+
+                if (color.TryGetValue("mode", out var modeToken))
+                {
+                    _colorOverLifetimeMode = (float)modeToken.Double;
+                }
             }
             else
             {
                 _endColor = Vector4.one;
                 _colorOverLifetimeEnabled = 0;
+                _colorOverLifetimeMode = 0;
             }
 
             if (parameters.TryGetValue("sizeOverLifetime", out var sizeToken))
@@ -99,11 +116,18 @@ namespace TpLab.Flux.FX.Udon
 
                 _endSize = (float)size["endSize"].Double;
                 _sizeOverLifetimeEnabled = 1;
+                _sizeOverLifetimeEnabled = 1;
+
+                if (size.TryGetValue("mode", out var modeToken))
+                {
+                    _sizeOverLifetimeMode = (float)modeToken.Double;
+                }
             }
             else
             {
                 _endSize = 0;
                 _sizeOverLifetimeEnabled = 0;
+                _sizeOverLifetimeMode = 0;
             }
         }
 
@@ -123,12 +147,18 @@ namespace TpLab.Flux.FX.Udon
 
         void ApplyRenderParameters()
         {
+            var mode = (int)renderMode;
             _material.SetVector("_EndColor", _endColor);
             _material.SetVector("_StartRotation", _startRotation);
             _material.SetFloat("_EndSize", _endSize);
             _material.SetFloat("_ColorOverLifetimeEnabled", _colorOverLifetimeEnabled);
             _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);
+            _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
+            _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);
             _material.SetFloat("_SimulationSpace", _simulationSpace);
+            _material.SetFloat("_RenderMode", mode);
+            _material.SetTexture("_ColorOverLifetimeLut", colorOverLifetimeLut);
+            _material.SetTexture("_SizeOverLifetimeLut", sizeOverLifetimeLut);
         }
 
         void SetBuffer(string name, FluxBuffer buffer)

@@ -22,13 +22,18 @@ Shader "FluxFX/ParticleVisualUpdate"
 
             #include "UnityCG.cginc"
             #include "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl"
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl"
 
             sampler2D_float _MainTex;
             sampler2D_float _CurrentVelocityTex;
             sampler2D_float _VelocityTex;
 
-            float4 _StartColor;
-            float _StartSize;
+            float4 _StartColorMin;
+            float4 _StartColorMax;
+            float _StartSizeMin;
+            float _StartSizeMax;
+            float _SpawnStart;
+            float _SpawnCount;
 
             float4 frag(v2f_img i) : SV_Target
             {
@@ -47,7 +52,23 @@ Shader "FluxFX/ParticleVisualUpdate"
                 bool isActive = velocity.w > 0;
 
                 if (!wasActive && isActive)
-                    return float4(_StartColor.rgb, _StartSize);
+                {
+                    uint spawnSequence = FluxFXGetSpawnSequence(
+                        index,
+                        (uint)_FluxDestinationCount,
+                        (uint)_SpawnStart,
+                        (uint)_SpawnCount);
+                    float3 startColor = lerp(
+                        _StartColorMin.rgb,
+                        _StartColorMax.rgb,
+                        FluxFXRandom01(spawnSequence * 2u + 1u));
+                    float startSize = lerp(
+                        _StartSizeMin,
+                        _StartSizeMax,
+                        FluxFXRandom01(spawnSequence));
+
+                    return float4(startColor, startSize);
+                }
 
                 return visual;
             }

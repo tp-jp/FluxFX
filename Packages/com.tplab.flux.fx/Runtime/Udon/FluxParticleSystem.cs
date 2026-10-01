@@ -87,6 +87,18 @@ namespace TpLab.Flux.FX.Udon
             particleSimulation.SetSimulationSpace(simulationSpace);
 
             var lifetime = (float)parameters["lifetime"].Double;
+            var lifetimeMin = lifetime;
+            var lifetimeMax = lifetime;
+
+            if (parameters.TryGetValue("lifetimeMin", out var lifetimeMinToken))
+            {
+                lifetimeMin = (float)lifetimeMinToken.Double;
+            }
+
+            if (parameters.TryGetValue("lifetimeMax", out var lifetimeMaxToken))
+            {
+                lifetimeMax = (float)lifetimeMaxToken.Double;
+            }
 
             var shape = parameters["shape"].DataDictionary;
             var shapeType = (int)shape["type"].Double;
@@ -94,12 +106,26 @@ namespace TpLab.Flux.FX.Udon
 
             var initialVelocity = parameters["initialVelocity"].DataDictionary;
             var initialSpeed = (float)initialVelocity["speed"].Double;
+            var initialSpeedMin = initialSpeed;
+            var initialSpeedMax = initialSpeed;
+
+            if (initialVelocity.TryGetValue("speedMin", out var initialSpeedMinToken))
+            {
+                initialSpeedMin = (float)initialSpeedMinToken.Double;
+            }
+
+            if (initialVelocity.TryGetValue("speedMax", out var initialSpeedMaxToken))
+            {
+                initialSpeedMax = (float)initialSpeedMaxToken.Double;
+            }
 
             particleSimulation.SetSpawnParameters(
-                lifetime,
+                lifetimeMin,
+                lifetimeMax,
                 shapeType,
                 shapeRadius,
-                initialSpeed);
+                initialSpeedMin,
+                initialSpeedMax);
         }
 
         void InitializeRenderer(DataDictionary parameters)
@@ -111,10 +137,44 @@ namespace TpLab.Flux.FX.Udon
                 (float)render["startColorR"].Double,
                 (float)render["startColorG"].Double,
                 (float)render["startColorB"].Double);
+            var startColorMin = startColor;
+            var startColorMax = startColor;
+
+            if (render.TryGetValue("startColorMinR", out var startColorMinRToken))
+            {
+                startColorMin = new Color(
+                    (float)startColorMinRToken.Double,
+                    (float)render["startColorMinG"].Double,
+                    (float)render["startColorMinB"].Double);
+            }
+
+            if (render.TryGetValue("startColorMaxR", out var startColorMaxRToken))
+            {
+                startColorMax = new Color(
+                    (float)startColorMaxRToken.Double,
+                    (float)render["startColorMaxG"].Double,
+                    (float)render["startColorMaxB"].Double);
+            }
 
             var startSize = (float)render["startSize"].Double;
+            var startSizeMin = startSize;
+            var startSizeMax = startSize;
 
-            particleSimulation.SetVisualSpawnParameters(startColor, startSize);
+            if (render.TryGetValue("startSizeMin", out var startSizeMinToken))
+            {
+                startSizeMin = (float)startSizeMinToken.Double;
+            }
+
+            if (render.TryGetValue("startSizeMax", out var startSizeMaxToken))
+            {
+                startSizeMax = (float)startSizeMaxToken.Double;
+            }
+
+            particleSimulation.SetVisualSpawnParameters(
+                startColorMin,
+                startColorMax,
+                startSizeMin,
+                startSizeMax);
             particleRenderer.SetSimulationSpace(simulationSpace);
             particleRenderer.SetRenderParameters(render);
         }

@@ -15,4 +15,24 @@ float3 FluxFXCreateSpawnDirection(uint index, uint count)
     );
 }
 
+uint FluxFXGetSpawnSequence(uint index, uint capacity, uint spawnStart, uint spawnCount)
+{
+    for (uint i = spawnCount; i > 0; i--)
+    {
+        uint sequence = spawnStart + i - 1;
+
+        if (sequence % capacity == index)
+        {
+            return sequence;
+        }
+    }
+
+    return 0;
+}
+
+float FluxFXRandom01(uint value)
+{
+    return frac(sin((float)value * 12.9898) * 43758.5453);
+}
+
 #endif

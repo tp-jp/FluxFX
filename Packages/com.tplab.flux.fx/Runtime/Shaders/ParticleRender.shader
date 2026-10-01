@@ -5,6 +5,8 @@ Shader "FluxFX/ParticleRender"
         _PositionTex ("Position", 2D) = "black" {}
         _VelocityTex ("Velocity", 2D) = "black" {}
         _VisualTex ("Visual", 2D) = "white" {}
+        _ColorOverLifetimeLut ("Color over Lifetime LUT", 2D) = "white" {}
+        _SizeOverLifetimeLut ("Size over Lifetime LUT", 2D) = "white" {}
     }
 
     SubShader
@@ -24,13 +26,18 @@ Shader "FluxFX/ParticleRender"
             sampler2D_float _PositionTex;
             sampler2D_float _VelocityTex;
             sampler2D_float _VisualTex;
+            sampler2D _ColorOverLifetimeLut;
+            sampler2D _SizeOverLifetimeLut;
 
             float4 _EndColor;
             float3 _StartRotation;
             float _EndSize;
             float _ColorOverLifetimeEnabled;
             float _SizeOverLifetimeEnabled;
+            float _ColorOverLifetimeMode;
+            float _SizeOverLifetimeMode;
             float _SimulationSpace;
+            float _RenderMode;
 
             struct appdata
             {
@@ -92,6 +99,14 @@ Shader "FluxFX/ParticleRender"
                 return position;
             }
 
+            float3 GetBillboardVertex(float2 vertex, float size)
+            {
+                float3 cameraRight = UNITY_MATRIX_I_V._m00_m10_m20;
+                float3 cameraUp = UNITY_MATRIX_I_V._m01_m11_m21;
+
+                return (cameraRight * vertex.x + cameraUp * vertex.y) * size;
+            }
+
             v2f vert(appdata v)
             {
                 v2f o;
@@ -121,16 +136,39 @@ Shader "FluxFX/ParticleRender"
 
                 if (_ColorOverLifetimeEnabled > 0.5)
                 {
-                    color = lerp(startColor, _EndColor.rgb, normalizedAge);
+                    if (_ColorOverLifetimeMode > 0.5)
+                    {
+                        color = tex2Dlod(_ColorOverLifetimeLut, float4(normalizedAge, 0.5, 0, 0)).rgb;
+                    }
+                    else
+                    {
+                        color = lerp(startColor, _EndColor.rgb, normalizedAge);
+                    }
                 }
 
                 if (_SizeOverLifetimeEnabled > 0.5)
                 {
-                    size = lerp(startSize, _EndSize, normalizedAge);
+                    if (_SizeOverLifetimeMode > 0.5)
+                    {
+                        size = startSize * tex2Dlod(_SizeOverLifetimeLut, float4(normalizedAge, 0.5, 0, 0)).r;
+                    }
+                    else
+                    {
+                        size = lerp(startSize, _EndSize, normalizedAge);
+                    }
                 }
 
-                float3 rotation = radians(_StartRotation);
-                float3 particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
+                float3 particleVertex;
+                if (_RenderMode < 0.5)
+                {
+                    particleVertex = GetBillboardVertex(v.vertex.xy, size);
+                }
+                else
+                {
+                    float3 rotation = radians(_StartRotation);
+                    particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
+                }
+
                 if (_SimulationSpace > 0.5)
                 {
                     float3 worldPosition = position.xyz + particleVertex;
@@ -138,8 +176,16 @@ Shader "FluxFX/ParticleRender"
                 }
                 else
                 {
-                    float3 localPosition = position.xyz + particleVertex;
-                    o.vertex = UnityObjectToClipPos(float4(localPosition, 1));
+                    if (_RenderMode < 0.5)
+                    {
+                        float3 worldPosition = mul(unity_ObjectToWorld, float4(position.xyz, 1)).xyz + particleVertex;
+                        o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                    }
+                    else
+                    {
+                        float3 localPosition = position.xyz + particleVertex;
+                        o.vertex = UnityObjectToClipPos(float4(localPosition, 1));
+                    }
                 }
                 o.color = float4(color, 1);
 
