@@ -418,14 +418,24 @@ namespace TpLab.Flux.FX.Editor
         void DrawSphereShapeGizmo()
         {
             var particleSystem = (FluxParticleSystem)target;
-            var radius = _shape.FindPropertyRelative("radius").floatValue;
+            var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
             Handles.matrix = particleSystem.transform.localToWorldMatrix;
 
-            Handles.DrawWireDisc(Vector3.zero, Vector3.right, radius);
-            Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius);
-            Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius);
+            Handles.DrawWireDisc(Vector3.zero, Vector3.right, radius.floatValue);
+            Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
+            Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius.floatValue);
+
+            EditorGUI.BeginChangeCheck();
+
+            var newRadius = Handles.RadiusHandle(Quaternion.identity, Vector3.zero, radius.floatValue);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                radius.floatValue = Mathf.Max(0, newRadius);
+                _authoringObject.ApplyModifiedProperties();
+            }
 
             Handles.matrix = previousMatrix;
         }
