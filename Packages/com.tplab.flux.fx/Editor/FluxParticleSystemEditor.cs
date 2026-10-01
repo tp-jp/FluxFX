@@ -88,6 +88,10 @@ namespace TpLab.Flux.FX.Editor
             {
                 DrawCircleShapeGizmo();
             }
+            else if (type == FluxParticleShapeType.Box)
+            {
+                DrawBoxShapeGizmo();
+            }
         }
 
         void DrawMain()
@@ -141,14 +145,19 @@ namespace TpLab.Flux.FX.Editor
             EditorGUI.indentLevel++;
 
             var type = _shape.FindPropertyRelative("type");
+            var shapeType = (FluxParticleShapeType)type.enumValueIndex;
 
             EditorGUILayout.PropertyField(type);
 
-            if ((FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Sphere ||
-                (FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Hemisphere ||
-                (FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Circle)
+            if (shapeType == FluxParticleShapeType.Sphere ||
+                shapeType == FluxParticleShapeType.Hemisphere ||
+                shapeType == FluxParticleShapeType.Circle)
             {
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("radius"));
+            }
+            else if (shapeType == FluxParticleShapeType.Box)
+            {
+                EditorGUILayout.PropertyField(_shape.FindPropertyRelative("size"));
             }
 
             EditorGUI.indentLevel--;
@@ -505,6 +514,57 @@ namespace TpLab.Flux.FX.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 radius.floatValue = Mathf.Max(0, newRadius);
+                _authoringObject.ApplyModifiedProperties();
+            }
+
+            Handles.matrix = previousMatrix;
+        }
+
+        void DrawBoxShapeGizmo()
+        {
+            var particleSystem = (FluxParticleSystem)target;
+            var size = _shape.FindPropertyRelative("size");
+            var previousMatrix = Handles.matrix;
+
+            Handles.matrix = particleSystem.transform.localToWorldMatrix;
+
+            var currentSize = size.vector3Value;
+            Handles.DrawWireCube(Vector3.zero, currentSize);
+
+            EditorGUI.BeginChangeCheck();
+
+            var halfSize = currentSize * 0.5f;
+
+            var newHalfX = Handles.ScaleSlider(
+                halfSize.x,
+                Vector3.zero,
+                Vector3.right,
+                Quaternion.identity,
+                halfSize.x,
+                0);
+
+            var newHalfY = Handles.ScaleSlider(
+                halfSize.y,
+                Vector3.zero,
+                Vector3.up,
+                Quaternion.identity,
+                halfSize.y,
+                0);
+
+            var newHalfZ = Handles.ScaleSlider(
+                halfSize.z,
+                Vector3.zero,
+                Vector3.forward,
+                Quaternion.identity,
+                halfSize.z,
+                0);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                size.vector3Value = new Vector3(
+                    Mathf.Max(0, newHalfX * 2.0f),
+                    Mathf.Max(0, newHalfY * 2.0f),
+                    Mathf.Max(0, newHalfZ * 2.0f));
                 _authoringObject.ApplyModifiedProperties();
             }
 

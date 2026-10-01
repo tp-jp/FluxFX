@@ -30,6 +30,7 @@ Shader "FluxFX/ParticlePositionUpdate"
 
             float _ShapeType;
             float _ShapeRadius;
+            float4 _ShapeSize;
             float _SimulationSpace;
             float4 _SystemPosition;
             float4 _SystemRotation;
@@ -43,7 +44,7 @@ Shader "FluxFX/ParticlePositionUpdate"
 
             float3 CreateShapeDirection(uint index)
             {
-                if (_ShapeType > 2.5)
+                if (_ShapeType > 2.5 && _ShapeType < 3.5)
                 {
                     float angle = ((float)index / (float)_FluxDestinationCount) * UNITY_TWO_PI;
 
@@ -55,12 +56,37 @@ Shader "FluxFX/ParticlePositionUpdate"
                     (uint)_FluxDestinationCount
                 );
 
-                if (_ShapeType > 1.5)
+                if (_ShapeType > 1.5 && _ShapeType < 2.5)
                 {
                     direction.y = abs(direction.y);
                 }
 
                 return direction;
+            }
+
+            float3 CreateBoxSpawnPosition(uint index)
+            {
+                uint face = index % 6u;
+                float u = FluxFXRandom01(index * 2u) * 2.0 - 1.0;
+                float v = FluxFXRandom01(index * 2u + 1u) * 2.0 - 1.0;
+                float3 halfSize = _ShapeSize.xyz * 0.5;
+
+                if (face == 0u)
+                    return float3(halfSize.x, u * halfSize.y, v * halfSize.z);
+
+                if (face == 1u)
+                    return float3(-halfSize.x, u * halfSize.y, v * halfSize.z);
+
+                if (face == 2u)
+                    return float3(u * halfSize.x, halfSize.y, v * halfSize.z);
+
+                if (face == 3u)
+                    return float3(u * halfSize.x, -halfSize.y, v * halfSize.z);
+
+                if (face == 4u)
+                    return float3(u * halfSize.x, v * halfSize.y, halfSize.z);
+
+                return float3(u * halfSize.x, v * halfSize.y, -halfSize.z);
             }
 
             float3 CreateSpawnPosition(uint index)
@@ -75,7 +101,16 @@ Shader "FluxFX/ParticlePositionUpdate"
                     return 0;
                 }
 
-                float3 position = CreateShapeDirection(index) * _ShapeRadius;
+                float3 position;
+
+                if (_ShapeType > 3.5)
+                {
+                    position = CreateBoxSpawnPosition(index);
+                }
+                else
+                {
+                    position = CreateShapeDirection(index) * _ShapeRadius;
+                }
 
                 if (_SimulationSpace > 0.5)
                 {

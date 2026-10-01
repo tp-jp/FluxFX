@@ -63,7 +63,8 @@ namespace TpLab.Flux.FX.Scripts
         Point,
         Sphere,
         Hemisphere,
-        Circle
+        Circle,
+        Box
     }
 
     public enum FluxParticleStartSizeMode
@@ -176,9 +177,14 @@ namespace TpLab.Flux.FX.Scripts
         [Min(0)]
         float radius = 1.0f;
 
+        [SerializeField]
+        Vector3 size = Vector3.one;
+
         public FluxParticleShapeType Type => type;
 
         public float Radius => radius;
+
+        public Vector3 Size => size;
     }
 
     [Serializable]

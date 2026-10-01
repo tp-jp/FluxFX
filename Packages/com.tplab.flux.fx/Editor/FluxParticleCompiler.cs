@@ -65,7 +65,10 @@ namespace TpLab.Flux.FX.Editor
             parameters["shape"] = new JObject
             {
                 ["type"] = (int)shape.Type,
-                ["radius"] = shape.Radius
+                ["radius"] = shape.Radius,
+                ["sizeX"] = shape.Size.x,
+                ["sizeY"] = shape.Size.y,
+                ["sizeZ"] = shape.Size.z
             };
         }
 

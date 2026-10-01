@@ -67,8 +67,35 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
+            float3 CreateBoxSpawnDirection(uint index)
+            {
+                uint face = index % 6u;
+
+                if (face == 0u)
+                    return float3(1, 0, 0);
+
+                if (face == 1u)
+                    return float3(-1, 0, 0);
+
+                if (face == 2u)
+                    return float3(0, 1, 0);
+
+                if (face == 3u)
+                    return float3(0, -1, 0);
+
+                if (face == 4u)
+                    return float3(0, 0, 1);
+
+                return float3(0, 0, -1);
+            }
+
             float3 CreateShapeDirection(uint index)
             {
+                if (_ShapeType > 3.5)
+                {
+                    return CreateBoxSpawnDirection(index);
+                }
+
                 if (_ShapeType > 2.5)
                 {
                     float angle = ((float)index / (float)_FluxDestinationCount) * UNITY_TWO_PI;

@@ -114,6 +114,10 @@ namespace TpLab.Flux.FX.Udon
             var shape = parameters["shape"].DataDictionary;
             var shapeType = (int)shape["type"].Double;
             var shapeRadius = (float)shape["radius"].Double;
+            var shapeSize = new Vector3(
+                (float)shape["sizeX"].Double,
+                (float)shape["sizeY"].Double,
+                (float)shape["sizeZ"].Double);
 
             var initialVelocity = parameters["initialVelocity"].DataDictionary;
             var initialSpeed = (float)initialVelocity["speed"].Double;
@@ -135,6 +139,7 @@ namespace TpLab.Flux.FX.Udon
                 lifetimeMax,
                 shapeType,
                 shapeRadius,
+                shapeSize,
                 initialSpeedMin,
                 initialSpeedMax);
         }
