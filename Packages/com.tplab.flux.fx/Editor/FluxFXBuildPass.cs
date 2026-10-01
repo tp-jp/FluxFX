@@ -41,13 +41,17 @@ namespace TpLab.Flux.FX.Editor
                 var particleMaterial = authoring.Render.Material;
                 var colorOverLifetimeLut = lutBaker.BakeColorOverLifetime(authoring);
                 var sizeOverLifetimeLut = lutBaker.BakeSizeOverLifetime(authoring);
+                var rotationOverLifetimeLut = lutBaker.BakeRotationOverLifetime(authoring);
 
                 particleRenderer.SetProgramVariable("renderMode", renderMode);
                 particleRenderer.SetProgramVariable("sourceMesh", sourceMesh);
                 particleRenderer.SetProgramVariable("particleMaterial", particleMaterial);
                 particleRenderer.SetProgramVariable("colorOverLifetimeLut", colorOverLifetimeLut);
                 particleRenderer.SetProgramVariable("sizeOverLifetimeLut", sizeOverLifetimeLut);
+                particleRenderer.SetProgramVariable("rotationOverLifetimeLut", rotationOverLifetimeLut);
             }
+
+            UnityEditor.AssetDatabase.SaveAssets();
         }
     }
 }

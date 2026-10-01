@@ -100,6 +100,12 @@ namespace TpLab.Flux.FX.Scripts
         Curve
     }
 
+    public enum FluxParticleRotationOverLifetimeMode
+    {
+        Linear,
+        Curve
+    }
+
     [Serializable]
     public class EmissionSettings
     {
@@ -308,6 +314,9 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         SizeOverLifetimeSettings sizeOverLifetime = new SizeOverLifetimeSettings();
 
+        [SerializeField]
+        RotationOverLifetimeSettings rotationOverLifetime = new RotationOverLifetimeSettings();
+
         public FluxParticleRenderMode Mode => mode;
 
         public Mesh Mesh => mesh;
@@ -335,6 +344,8 @@ namespace TpLab.Flux.FX.Scripts
         public ColorOverLifetimeSettings ColorOverLifetime => colorOverLifetime;
 
         public SizeOverLifetimeSettings SizeOverLifetime => sizeOverLifetime;
+
+        public RotationOverLifetimeSettings RotationOverLifetime => rotationOverLifetime;
     }
 
     [Serializable]
@@ -382,6 +393,30 @@ namespace TpLab.Flux.FX.Scripts
         public FluxParticleSizeOverLifetimeMode Mode => mode;
 
         public float EndSize => endSize;
+
+        public AnimationCurve Curve => curve;
+    }
+
+    [Serializable]
+    public class RotationOverLifetimeSettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        FluxParticleRotationOverLifetimeMode mode;
+
+        [SerializeField]
+        float endRotation;
+
+        [SerializeField]
+        AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
+
+        public bool Enabled => enabled;
+
+        public FluxParticleRotationOverLifetimeMode Mode => mode;
+
+        public float EndRotation => endRotation;
 
         public AnimationCurve Curve => curve;
     }

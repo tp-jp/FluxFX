@@ -59,6 +59,30 @@ namespace TpLab.Flux.FX.Editor
             return texture;
         }
 
+        public Texture2D BakeRotationOverLifetime(FluxParticleAuthoring authoring)
+        {
+            var settings = authoring.Render.RotationOverLifetime;
+            if (!settings.Enabled || settings.Mode != FluxParticleRotationOverLifetimeMode.Curve)
+            {
+                DeleteLut(authoring, "RotationOverLifetime");
+                return null;
+            }
+
+            var texture = CreateLut(authoring, "RotationOverLifetime");
+            if (texture == null) return null;
+
+            for (var i = 0; i < LutResolution; i++)
+            {
+                var normalizedAge = i / (float)(LutResolution - 1);
+                texture.SetPixel(i, 0, new Color(settings.Curve.Evaluate(normalizedAge), 0, 0, 1));
+            }
+
+            texture.Apply(false, false);
+            EditorUtility.SetDirty(texture);
+
+            return texture;
+        }
+
         Texture2D CreateLut(FluxParticleAuthoring authoring, string type)
         {
             EnsureGeneratedDirectory();

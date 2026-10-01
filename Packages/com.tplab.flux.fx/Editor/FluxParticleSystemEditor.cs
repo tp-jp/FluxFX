@@ -214,6 +214,11 @@ namespace TpLab.Flux.FX.Editor
             DrawColorOverLifetime();
             DrawSizeOverLifetime();
 
+            if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Billboard)
+            {
+                DrawRotationOverLifetime();
+            }
+
             EditorGUI.indentLevel--;
         }
 
@@ -320,6 +325,40 @@ namespace TpLab.Flux.FX.Editor
                 }
                 else
                 {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
+                }
+
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawRotationOverLifetime()
+        {
+            var module = _render.FindPropertyRelative("rotationOverLifetime");
+            var enabled = module.FindPropertyRelative("enabled");
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            enabled.boolValue = EditorGUILayout.ToggleLeft(
+                "Rotation over Lifetime",
+                enabled.boolValue,
+                EditorStyles.boldLabel);
+
+            if (enabled.boolValue)
+            {
+                EditorGUI.indentLevel++;
+
+                var mode = module.FindPropertyRelative("mode");
+                EditorGUILayout.PropertyField(mode);
+
+                if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Linear)
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
                     EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
                 }
 

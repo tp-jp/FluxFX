@@ -175,6 +175,15 @@ namespace TpLab.Flux.FX.Editor
                 };
             }
 
+            if (render.RotationOverLifetime.Enabled)
+            {
+                settings["rotationOverLifetime"] = new JObject
+                {
+                    ["mode"] = (int)render.RotationOverLifetime.Mode,
+                    ["endRotation"] = render.RotationOverLifetime.EndRotation
+                };
+            }
+
             parameters["render"] = settings;
         }
     }

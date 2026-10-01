@@ -7,6 +7,7 @@ Shader "FluxFX/ParticleRender"
         _VisualTex ("Visual", 2D) = "white" {}
         _ColorOverLifetimeLut ("Color over Lifetime LUT", 2D) = "white" {}
         _SizeOverLifetimeLut ("Size over Lifetime LUT", 2D) = "white" {}
+        _RotationOverLifetimeLut ("Rotation over Lifetime LUT", 2D) = "white" {}
     }
 
     SubShader
@@ -28,6 +29,7 @@ Shader "FluxFX/ParticleRender"
             sampler2D_float _VisualTex;
             sampler2D _ColorOverLifetimeLut;
             sampler2D _SizeOverLifetimeLut;
+            sampler2D _RotationOverLifetimeLut;
 
             float4 _EndColor;
             float3 _StartRotation;
@@ -36,6 +38,9 @@ Shader "FluxFX/ParticleRender"
             float _SizeOverLifetimeEnabled;
             float _ColorOverLifetimeMode;
             float _SizeOverLifetimeMode;
+            float _EndBillboardRotation;
+            float _RotationOverLifetimeEnabled;
+            float _RotationOverLifetimeMode;
             float _SimulationSpace;
             float _RenderMode;
 
@@ -107,6 +112,18 @@ Shader "FluxFX/ParticleRender"
                 return (cameraRight * vertex.x + cameraUp * vertex.y) * size;
             }
 
+            float2 Rotate2D(float2 value, float angle)
+            {
+                float s;
+                float c;
+                sincos(angle, s, c);
+
+                return float2(
+                    value.x * c - value.y * s,
+                    value.x * s + value.y * c
+                );
+            }
+
             v2f vert(appdata v)
             {
                 v2f o;
@@ -161,7 +178,27 @@ Shader "FluxFX/ParticleRender"
                 float3 particleVertex;
                 if (_RenderMode < 0.5)
                 {
-                    particleVertex = GetBillboardVertex(v.vertex.xy, size);
+                    float billboardRotation = 0;
+
+                    if (_RotationOverLifetimeEnabled > 0.5)
+                    {
+                        if (_RotationOverLifetimeMode > 0.5)
+                        {
+                            billboardRotation = radians(
+                                _EndBillboardRotation
+                                * tex2Dlod(
+                                    _RotationOverLifetimeLut,
+                                    float4(normalizedAge, 0.5, 0, 0)).r);
+                        }
+                        else
+                        {
+                            billboardRotation = radians(_EndBillboardRotation * normalizedAge);
+                        }
+                    }
+
+                    particleVertex = GetBillboardVertex(
+                        Rotate2D(v.vertex.xy, billboardRotation),
+                        size);
                 }
                 else
                 {

@@ -38,6 +38,10 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         Texture2D sizeOverLifetimeLut;
 
+        [HideInInspector]
+        [SerializeField]
+        Texture2D rotationOverLifetimeLut;
+
         Material _material;
 
         Vector4 _endColor;
@@ -47,6 +51,9 @@ namespace TpLab.Flux.FX.Udon
         float _sizeOverLifetimeEnabled;
         float _colorOverLifetimeMode;
         float _sizeOverLifetimeMode;
+        float _endBillboardRotation;
+        float _rotationOverLifetimeEnabled;
+        float _rotationOverLifetimeMode;
         float _simulationSpace;
 
         [PublicAPI]
@@ -116,7 +123,7 @@ namespace TpLab.Flux.FX.Udon
 
                 _endSize = (float)size["endSize"].Double;
                 _sizeOverLifetimeEnabled = 1;
-                _sizeOverLifetimeEnabled = 1;
+                _sizeOverLifetimeMode = 0;
 
                 if (size.TryGetValue("mode", out var modeToken))
                 {
@@ -128,6 +135,26 @@ namespace TpLab.Flux.FX.Udon
                 _endSize = 0;
                 _sizeOverLifetimeEnabled = 0;
                 _sizeOverLifetimeMode = 0;
+            }
+
+            if (parameters.TryGetValue("rotationOverLifetime", out var rotationToken))
+            {
+                var rotation = rotationToken.DataDictionary;
+
+                _endBillboardRotation = (float)rotation["endRotation"].Double;
+                _rotationOverLifetimeEnabled = 1;
+                _rotationOverLifetimeMode = 0;
+
+                if (rotation.TryGetValue("mode", out var modeToken))
+                {
+                    _rotationOverLifetimeMode = (float)modeToken.Double;
+                }
+            }
+            else
+            {
+                _endBillboardRotation = 0;
+                _rotationOverLifetimeEnabled = 0;
+                _rotationOverLifetimeMode = 0;
             }
         }
 
@@ -155,10 +182,14 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);
             _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
             _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);
+            _material.SetFloat("_EndBillboardRotation", _endBillboardRotation);
+            _material.SetFloat("_RotationOverLifetimeEnabled", _rotationOverLifetimeEnabled);
+            _material.SetFloat("_RotationOverLifetimeMode", _rotationOverLifetimeMode);
             _material.SetFloat("_SimulationSpace", _simulationSpace);
             _material.SetFloat("_RenderMode", mode);
             _material.SetTexture("_ColorOverLifetimeLut", colorOverLifetimeLut);
             _material.SetTexture("_SizeOverLifetimeLut", sizeOverLifetimeLut);
+            _material.SetTexture("_RotationOverLifetimeLut", rotationOverLifetimeLut);
         }
 
         void SetBuffer(string name, FluxBuffer buffer)
