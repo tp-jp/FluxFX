@@ -1098,7 +1098,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationSpace: 0
   emission:
-    rate: 0
+    rate: 5
     bursts:
     - time: 1
       count: 10

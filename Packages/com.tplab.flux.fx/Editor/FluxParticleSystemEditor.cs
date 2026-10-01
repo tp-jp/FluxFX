@@ -68,6 +68,19 @@ namespace TpLab.Flux.FX.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
+        void OnSceneGUI()
+        {
+            if (_authoringObject == null) return;
+
+            _authoringObject.Update();
+
+            var type = _shape.FindPropertyRelative("type");
+
+            if ((FluxParticleShapeType)type.enumValueIndex != FluxParticleShapeType.Sphere) return;
+
+            DrawSphereShapeGizmo();
+        }
+
         void DrawMain()
         {
             EditorGUILayout.LabelField("Main", EditorStyles.boldLabel);
@@ -400,6 +413,21 @@ namespace TpLab.Flux.FX.Editor
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        void DrawSphereShapeGizmo()
+        {
+            var particleSystem = (FluxParticleSystem)target;
+            var radius = _shape.FindPropertyRelative("radius").floatValue;
+            var previousMatrix = Handles.matrix;
+
+            Handles.matrix = particleSystem.transform.localToWorldMatrix;
+
+            Handles.DrawWireDisc(Vector3.zero, Vector3.right, radius);
+            Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius);
+            Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius);
+
+            Handles.matrix = previousMatrix;
         }
     }
 }
