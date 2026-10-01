@@ -14,6 +14,7 @@ namespace TpLab.Flux.FX.Editor
 
         SerializedObject _authoringObject;
 
+        SerializedProperty _simulationSpace;
         SerializedProperty _emission;
         SerializedProperty _lifetime;
         SerializedProperty _shape;
@@ -32,6 +33,7 @@ namespace TpLab.Flux.FX.Editor
 
             _authoringObject = new SerializedObject(authoring);
 
+            _simulationSpace = _authoringObject.FindProperty("simulationSpace");
             _emission = _authoringObject.FindProperty("emission");
             _lifetime = _authoringObject.FindProperty("lifetime");
             _shape = _authoringObject.FindProperty("shape");
@@ -72,6 +74,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
             EditorGUILayout.PropertyField(_lifetime.FindPropertyRelative("lifetime"));
+            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
         }
 
         void DrawEmission()
@@ -96,7 +99,9 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.PropertyField(type);
 
             if ((FluxParticleShapeType)type.enumValueIndex == FluxParticleShapeType.Sphere)
+            {
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("radius"));
+            }
 
             EditorGUI.indentLevel--;
         }
@@ -141,7 +146,9 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(mesh);
 
                 if (mesh.objectReferenceValue == null)
+                {
                     EditorGUILayout.HelpBox("Mesh is required for Mesh render mode.", MessageType.Error);
+                }
             }
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("material"));
@@ -150,6 +157,11 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("startColor"));
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("startSize"));
+
+            if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
+            {
+                EditorGUILayout.PropertyField(_render.FindPropertyRelative("startRotation"));
+            }
 
             EditorGUILayout.Space();
 
@@ -178,7 +190,10 @@ namespace TpLab.Flux.FX.Editor
 
                 while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
                 {
-                    if (property.name == "enabled") continue;
+                    if (property.name == "enabled")
+                    {
+                        continue;
+                    }
 
                     EditorGUILayout.PropertyField(property, true);
                 }

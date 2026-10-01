@@ -8,6 +8,9 @@ namespace TpLab.Flux.FX.Scripts
     public class FluxParticleAuthoring : MonoBehaviour
     {
         [SerializeField]
+        FluxParticleSimulationSpace simulationSpace;
+
+        [SerializeField]
         EmissionSettings emission = new EmissionSettings();
 
         [SerializeField]
@@ -33,6 +36,8 @@ namespace TpLab.Flux.FX.Scripts
 
         [SerializeField]
         RenderSettings render = new RenderSettings();
+
+        public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
 
         public EmissionSettings Emission => emission;
 
@@ -205,6 +210,9 @@ namespace TpLab.Flux.FX.Scripts
         float startSize = 1.0f;
 
         [SerializeField]
+        Vector3 startRotation;
+
+        [SerializeField]
         ColorOverLifetimeSettings colorOverLifetime = new ColorOverLifetimeSettings();
 
         [SerializeField]
@@ -219,6 +227,8 @@ namespace TpLab.Flux.FX.Scripts
         public Color StartColor => startColor;
 
         public float StartSize => startSize;
+
+        public Vector3 StartRotation => startRotation;
 
         public ColorOverLifetimeSettings ColorOverLifetime => colorOverLifetime;
 

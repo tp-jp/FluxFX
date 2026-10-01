@@ -9,17 +9,12 @@ Shader "FluxFX/ParticleRender"
 
     SubShader
     {
-        Tags
-        {
-            "RenderType" = "Opaque"
-        }
-
+        Tags { "RenderType" = "Opaque" }
         Cull Off
 
         Pass
         {
             HLSLPROGRAM
-
             #pragma vertex vert
             #pragma fragment frag
 
@@ -31,9 +26,11 @@ Shader "FluxFX/ParticleRender"
             sampler2D_float _VisualTex;
 
             float4 _EndColor;
+            float3 _StartRotation;
             float _EndSize;
             float _ColorOverLifetimeEnabled;
             float _SizeOverLifetimeEnabled;
+            float _SimulationSpace;
 
             struct appdata
             {
@@ -46,6 +43,54 @@ Shader "FluxFX/ParticleRender"
                 float4 vertex : SV_POSITION;
                 float4 color : COLOR;
             };
+
+            float3 RotateX(float3 position, float angle)
+            {
+                float s;
+                float c;
+                sincos(angle, s, c);
+
+                return float3(
+                    position.x,
+                    position.y * c - position.z * s,
+                    position.y * s + position.z * c
+                );
+            }
+
+            float3 RotateY(float3 position, float angle)
+            {
+                float s;
+                float c;
+                sincos(angle, s, c);
+
+                return float3(
+                    position.x * c + position.z * s,
+                    position.y,
+                    -position.x * s + position.z * c
+                );
+            }
+
+            float3 RotateZ(float3 position, float angle)
+            {
+                float s;
+                float c;
+                sincos(angle, s, c);
+
+                return float3(
+                    position.x * c - position.y * s,
+                    position.x * s + position.y * c,
+                    position.z
+                );
+            }
+
+            float3 RotateEuler(float3 position, float3 rotation)
+            {
+                position = RotateX(position, rotation.x);
+                position = RotateY(position, rotation.y);
+                position = RotateZ(position, rotation.z);
+
+                return position;
+            }
 
             v2f vert(appdata v)
             {
@@ -69,22 +114,33 @@ Shader "FluxFX/ParticleRender"
                 }
 
                 float normalizedAge = saturate(age / lifetime);
-
                 float3 startColor = visual.rgb;
                 float startSize = visual.a;
-
                 float3 color = startColor;
                 float size = startSize;
 
                 if (_ColorOverLifetimeEnabled > 0.5)
+                {
                     color = lerp(startColor, _EndColor.rgb, normalizedAge);
+                }
 
                 if (_SizeOverLifetimeEnabled > 0.5)
+                {
                     size = lerp(startSize, _EndSize, normalizedAge);
+                }
 
-                float3 worldPosition = position.xyz + v.vertex.xyz * size;
-
-                o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                float3 rotation = radians(_StartRotation);
+                float3 particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
+                if (_SimulationSpace > 0.5)
+                {
+                    float3 worldPosition = position.xyz + particleVertex;
+                    o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                }
+                else
+                {
+                    float3 localPosition = position.xyz + particleVertex;
+                    o.vertex = UnityObjectToClipPos(float4(localPosition, 1));
+                }
                 o.color = float4(color, 1);
 
                 return o;
@@ -94,7 +150,6 @@ Shader "FluxFX/ParticleRender"
             {
                 return i.color;
             }
-
             ENDHLSL
         }
     }

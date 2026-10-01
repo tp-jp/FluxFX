@@ -8,7 +8,10 @@ namespace TpLab.Flux.FX.Editor
     {
         public string Compile(FluxParticleAuthoring authoring)
         {
-            var parameters = new JObject();
+            var parameters = new JObject
+            {
+                ["simulationSpace"] = (int)authoring.SimulationSpace
+            };
 
             AddEmission(parameters, authoring.Emission);
             AddLifetime(parameters, authoring.Lifetime);
@@ -109,7 +112,10 @@ namespace TpLab.Flux.FX.Editor
                 ["startColorR"] = render.StartColor.r,
                 ["startColorG"] = render.StartColor.g,
                 ["startColorB"] = render.StartColor.b,
-                ["startSize"] = render.StartSize
+                ["startSize"] = render.StartSize,
+                ["startRotationX"] = render.StartRotation.x,
+                ["startRotationY"] = render.StartRotation.y,
+                ["startRotationZ"] = render.StartRotation.z
             };
 
             if (render.ColorOverLifetime.Enabled)

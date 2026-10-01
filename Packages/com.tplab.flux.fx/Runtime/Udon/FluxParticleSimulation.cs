@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -31,6 +31,25 @@ namespace TpLab.Flux.FX.Udon
         public void Initialize(DataDictionary parameters)
         {
             ApplyVelocityParameters(parameters);
+        }
+
+        [PublicAPI]
+        public void SetSimulationSpace(int simulationSpace)
+        {
+            velocityUpdateKernel.SetFloat("_SimulationSpace", simulationSpace);
+            positionUpdateKernel.SetFloat("_SimulationSpace", simulationSpace);
+        }
+
+        [PublicAPI]
+        public void SetSystemTransform(Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            var rotationVector = new Vector4(rotation.x, rotation.y, rotation.z, rotation.w);
+
+            velocityUpdateKernel.SetVector("_SystemRotation", rotationVector);
+
+            positionUpdateKernel.SetVector("_SystemPosition", new Vector4(position.x, position.y, position.z, 0));
+            positionUpdateKernel.SetVector("_SystemRotation", rotationVector);
+            positionUpdateKernel.SetVector("_SystemScale", new Vector4(scale.x, scale.y, scale.z, 0));
         }
 
         [PublicAPI]

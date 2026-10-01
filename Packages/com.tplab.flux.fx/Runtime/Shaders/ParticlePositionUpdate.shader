@@ -30,19 +30,44 @@ Shader "FluxFX/ParticlePositionUpdate"
 
             float _ShapeType;
             float _ShapeRadius;
+            float _SimulationSpace;
+            float4 _SystemPosition;
+            float4 _SystemRotation;
+            float4 _SystemScale;
             float _DeltaTime;
+
+            float3 RotateVector(float3 value, float4 rotation)
+            {
+                return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
+            }
 
             float3 CreateSpawnPosition(uint index)
             {
                 if (_ShapeType < 0.5)
+                {
+                    if (_SimulationSpace > 0.5)
+                    {
+                        return _SystemPosition.xyz;
+                    }
+
                     return 0;
+                }
 
                 float3 direction = FluxFXCreateSpawnDirection(
                     index,
                     (uint)_FluxDestinationCount
                 );
 
-                return direction * _ShapeRadius;
+                float3 position = direction * _ShapeRadius;
+
+                if (_SimulationSpace > 0.5)
+                {
+                    position *= _SystemScale.xyz;
+                    position = RotateVector(position, _SystemRotation);
+                    position += _SystemPosition.xyz;
+                }
+
+                return position;
             }
 
             float4 frag(v2f_img i) : SV_Target

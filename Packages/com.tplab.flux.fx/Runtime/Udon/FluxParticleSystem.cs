@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -55,6 +55,7 @@ namespace TpLab.Flux.FX.Udon
             var deltaTime = Time.deltaTime;
 
             particleEmitter.UpdateEmission(deltaTime);
+            particleSimulation.SetSystemTransform(transform.position, transform.rotation, transform.lossyScale);
             particleSimulation.Simulate(deltaTime);
             particleRenderer.SetState(particleState);
         }
@@ -80,7 +81,10 @@ namespace TpLab.Flux.FX.Udon
 
         void InitializeSimulation(DataDictionary parameters)
         {
+            var simulationSpace = (int)parameters["simulationSpace"].Double;
+
             particleSimulation.Initialize(parameters);
+            particleSimulation.SetSimulationSpace(simulationSpace);
 
             var lifetime = (float)parameters["lifetime"].Double;
 
@@ -100,6 +104,7 @@ namespace TpLab.Flux.FX.Udon
 
         void InitializeRenderer(DataDictionary parameters)
         {
+            var simulationSpace = (int)parameters["simulationSpace"].Double;
             var render = parameters["render"].DataDictionary;
 
             var startColor = new Color(
@@ -110,6 +115,7 @@ namespace TpLab.Flux.FX.Udon
             var startSize = (float)render["startSize"].Double;
 
             particleSimulation.SetVisualSpawnParameters(startColor, startSize);
+            particleRenderer.SetSimulationSpace(simulationSpace);
             particleRenderer.SetRenderParameters(render);
         }
     }

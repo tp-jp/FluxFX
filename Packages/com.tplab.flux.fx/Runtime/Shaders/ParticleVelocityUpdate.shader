@@ -36,6 +36,8 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float _VortexStrength;
             float _Lifetime;
             float _InitialSpeed;
+            float _SimulationSpace;
+            float4 _SystemRotation;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnCount;
@@ -57,6 +59,11 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return false;
             }
 
+            float3 RotateVector(float3 value, float4 rotation)
+            {
+                return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
+            }
+
             float4 CreateSpawnVelocity(uint index)
             {
                 float3 direction = FluxFXCreateSpawnDirection(
@@ -64,10 +71,14 @@ Shader "FluxFX/ParticleVelocityUpdate"
                     (uint)_FluxDestinationCount
                 );
 
-                return float4(
-                    direction * _InitialSpeed,
-                    _Lifetime
-                );
+                float3 velocity = direction * _InitialSpeed;
+
+                if (_SimulationSpace > 0.5)
+                {
+                    velocity = RotateVector(velocity, _SystemRotation);
+                }
+
+                return float4(velocity, _Lifetime);
             }
 
             float3 EvaluateNoise(float3 position)

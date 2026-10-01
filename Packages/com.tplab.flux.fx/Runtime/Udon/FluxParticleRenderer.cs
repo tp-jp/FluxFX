@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -33,9 +33,11 @@ namespace TpLab.Flux.FX.Udon
         Material _material;
 
         Vector4 _endColor;
+        Vector3 _startRotation;
         float _endSize;
         float _colorOverLifetimeEnabled;
         float _sizeOverLifetimeEnabled;
+        float _simulationSpace;
 
         [PublicAPI]
         public void Initialize(int capacity)
@@ -60,8 +62,19 @@ namespace TpLab.Flux.FX.Udon
         }
 
         [PublicAPI]
+        public void SetSimulationSpace(int simulationSpace)
+        {
+            _simulationSpace = simulationSpace;
+        }
+
+        [PublicAPI]
         public void SetRenderParameters(DataDictionary parameters)
         {
+            _startRotation = new Vector3(
+                (float)parameters["startRotationX"].Double,
+                (float)parameters["startRotationY"].Double,
+                (float)parameters["startRotationZ"].Double);
+
             if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
             {
                 var color = colorToken.DataDictionary;
@@ -111,9 +124,11 @@ namespace TpLab.Flux.FX.Udon
         void ApplyRenderParameters()
         {
             _material.SetVector("_EndColor", _endColor);
+            _material.SetVector("_StartRotation", _startRotation);
             _material.SetFloat("_EndSize", _endSize);
             _material.SetFloat("_ColorOverLifetimeEnabled", _colorOverLifetimeEnabled);
             _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);
+            _material.SetFloat("_SimulationSpace", _simulationSpace);
         }
 
         void SetBuffer(string name, FluxBuffer buffer)
@@ -209,10 +224,12 @@ namespace TpLab.Flux.FX.Udon
                     {
                         normals[vertexIndex] = sourceNormals[i];
                     }
+
                     if (hasTangents)
                     {
                         tangents[vertexIndex] = sourceTangents[i];
                     }
+
                     if (hasUV)
                     {
                         uv[vertexIndex] = sourceUV[i];
