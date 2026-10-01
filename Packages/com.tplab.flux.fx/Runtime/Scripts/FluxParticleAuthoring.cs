@@ -62,7 +62,8 @@ namespace TpLab.Flux.FX.Scripts
     {
         Point,
         Sphere,
-        Hemisphere
+        Hemisphere,
+        Circle
     }
 
     public enum FluxParticleStartSizeMode

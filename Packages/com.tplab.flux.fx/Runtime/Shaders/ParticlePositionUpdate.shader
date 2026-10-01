@@ -41,16 +41,13 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
-            float3 CreateSpawnPosition(uint index)
+            float3 CreateShapeDirection(uint index)
             {
-                if (_ShapeType < 0.5)
+                if (_ShapeType > 2.5)
                 {
-                    if (_SimulationSpace > 0.5)
-                    {
-                        return _SystemPosition.xyz;
-                    }
+                    float angle = ((float)index / (float)_FluxDestinationCount) * UNITY_TWO_PI;
 
-                    return 0;
+                    return float3(cos(angle), 0, sin(angle));
                 }
 
                 float3 direction = FluxFXCreateSpawnDirection(
@@ -63,7 +60,22 @@ Shader "FluxFX/ParticlePositionUpdate"
                     direction.y = abs(direction.y);
                 }
 
-                float3 position = direction * _ShapeRadius;
+                return direction;
+            }
+
+            float3 CreateSpawnPosition(uint index)
+            {
+                if (_ShapeType < 0.5)
+                {
+                    if (_SimulationSpace > 0.5)
+                    {
+                        return _SystemPosition.xyz;
+                    }
+
+                    return 0;
+                }
+
+                float3 position = CreateShapeDirection(index) * _ShapeRadius;
 
                 if (_SimulationSpace > 0.5)
                 {
