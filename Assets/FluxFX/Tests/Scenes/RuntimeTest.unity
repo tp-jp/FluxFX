@@ -1025,7 +1025,7 @@ MonoBehaviour:
     min: 1
     max: 5
   shape:
-    type: 0
+    type: 2
     radius: 1
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
@@ -1040,7 +1040,7 @@ MonoBehaviour:
     enabled: 0
     drag: 0.5
   noise:
-    enabled: 1
+    enabled: 0
     strength: 1
     scale: 1
     speed: 1

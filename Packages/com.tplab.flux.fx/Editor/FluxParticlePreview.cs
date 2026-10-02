@@ -45,6 +45,7 @@ namespace TpLab.Flux.FX.Editor
         double _previousTime;
 
         float _emissionAccumulator;
+        float _simulationTime;
         int _spawnCursor;
         int _spawnSeed;
 
@@ -69,12 +70,6 @@ namespace TpLab.Flux.FX.Editor
                 return;
             }
 
-            if (_authoring.Shape.Type != FluxParticleShapeType.Point)
-            {
-                Debug.LogWarning("[FluxFX] Preview v0 currently supports Point shape only.", _particleSystem);
-                return;
-            }
-
             if (!CreateMaterials())
             {
                 DisposeMaterials();
@@ -89,6 +84,7 @@ namespace TpLab.Flux.FX.Editor
             CreatePreviewObject();
 
             _emissionAccumulator = 0;
+            _simulationTime = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
             _previousTime = EditorApplication.timeSinceStartup;
@@ -118,6 +114,7 @@ namespace TpLab.Flux.FX.Editor
             DisposeMaterials();
 
             _emissionAccumulator = 0;
+            _simulationTime = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
         }
@@ -148,6 +145,8 @@ namespace TpLab.Flux.FX.Editor
             _previousTime = currentTime;
 
             if (deltaTime <= 0) return;
+
+            _simulationTime += deltaTime;
 
             UpdatePreviewTransform();
             Simulate(deltaTime);
@@ -216,6 +215,40 @@ namespace TpLab.Flux.FX.Editor
                 speedMax = Mathf.Max(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);
             }
 
+            var gravity = _authoring.Gravity.Enabled
+                ? _authoring.Gravity.Gravity
+                : Vector3.zero;
+
+            var drag = _authoring.Drag.Enabled
+                ? _authoring.Drag.Drag
+                : 0;
+
+            var noiseStrength = _authoring.Noise.Enabled
+                ? _authoring.Noise.Strength
+                : 0;
+
+            var noiseScale = _authoring.Noise.Enabled
+                ? _authoring.Noise.Scale
+                : 0;
+
+            var noiseTime = _authoring.Noise.Enabled
+                ? _simulationTime * _authoring.Noise.Speed
+                : 0;
+
+            var vortexCenter = _authoring.Vortex.Enabled
+                ? _authoring.Vortex.Center
+                : Vector3.zero;
+
+            var vortexAxis = _authoring.Vortex.Enabled
+                ? _authoring.Vortex.Axis
+                : Vector3.zero;
+
+            var vortexStrength = _authoring.Vortex.Enabled
+                ? _authoring.Vortex.Strength
+                : 0;
+
+            var systemRotation = _particleSystem.transform.rotation;
+
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);
             _velocityMaterial.SetFloat("_SpawnStart", spawnStart);
             _velocityMaterial.SetFloat("_SpawnSeedStart", spawnSeedStart);
@@ -224,33 +257,48 @@ namespace TpLab.Flux.FX.Editor
             _velocityMaterial.SetFloat("_LifetimeMax", lifetimeMax);
             _velocityMaterial.SetFloat("_InitialSpeedMin", speedMin);
             _velocityMaterial.SetFloat("_InitialSpeedMax", speedMax);
-            _velocityMaterial.SetFloat("_ShapeType", (int)FluxParticleShapeType.Point);
-            _velocityMaterial.SetFloat("_SimulationSpace", (int)FluxParticleSimulationSpace.Local);
-            _velocityMaterial.SetVector("_SystemRotation", new Vector4(0, 0, 0, 1));
-            _velocityMaterial.SetVector("_Gravity", Vector4.zero);
-            _velocityMaterial.SetFloat("_Drag", 0);
-            _velocityMaterial.SetFloat("_NoiseStrength", 0);
-            _velocityMaterial.SetFloat("_NoiseScale", 0);
-            _velocityMaterial.SetFloat("_NoiseTime", 0);
-            _velocityMaterial.SetVector("_VortexCenter", Vector4.zero);
-            _velocityMaterial.SetVector("_VortexAxis", Vector4.zero);
-            _velocityMaterial.SetFloat("_VortexStrength", 0);
+            _velocityMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
+            _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
+            _velocityMaterial.SetVector(
+                "_SystemRotation",
+                new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
+            _velocityMaterial.SetVector("_Gravity", gravity);
+            _velocityMaterial.SetFloat("_Drag", drag);
+            _velocityMaterial.SetFloat("_NoiseStrength", noiseStrength);
+            _velocityMaterial.SetFloat("_NoiseScale", noiseScale);
+            _velocityMaterial.SetFloat("_NoiseTime", noiseTime);
+            _velocityMaterial.SetVector("_VortexCenter", vortexCenter);
+            _velocityMaterial.SetVector("_VortexAxis", vortexAxis);
+            _velocityMaterial.SetFloat("_VortexStrength", vortexStrength);
             _velocityMaterial.SetTexture("_PositionTex", _currentPosition);
         }
 
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)
         {
+            var shapeSize = _authoring.Shape.Size;
+
+            var systemTransform = _particleSystem.transform;
+            var systemPosition = systemTransform.position;
+            var systemRotation = systemTransform.rotation;
+            var systemScale = systemTransform.lossyScale;
+
             _positionMaterial.SetFloat("_DeltaTime", deltaTime);
             _positionMaterial.SetFloat("_SpawnStart", spawnStart);
             _positionMaterial.SetFloat("_SpawnSeedStart", spawnSeedStart);
             _positionMaterial.SetFloat("_SpawnCount", spawnCount);
-            _positionMaterial.SetFloat("_ShapeType", (int)FluxParticleShapeType.Point);
-            _positionMaterial.SetFloat("_ShapeRadius", 0);
-            _positionMaterial.SetVector("_ShapeSize", Vector4.zero);
-            _positionMaterial.SetFloat("_SimulationSpace", (int)FluxParticleSimulationSpace.Local);
-            _positionMaterial.SetVector("_SystemPosition", Vector4.zero);
-            _positionMaterial.SetVector("_SystemRotation", new Vector4(0, 0, 0, 1));
-            _positionMaterial.SetVector("_SystemScale", Vector4.one);
+            _positionMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
+            _positionMaterial.SetFloat("_ShapeRadius", _authoring.Shape.Radius);
+            _positionMaterial.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
+            _positionMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
+            _positionMaterial.SetVector(
+                "_SystemPosition",
+                new Vector4(systemPosition.x, systemPosition.y, systemPosition.z, 0));
+            _positionMaterial.SetVector(
+                "_SystemRotation",
+                new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
+            _positionMaterial.SetVector(
+                "_SystemScale",
+                new Vector4(systemScale.x, systemScale.y, systemScale.z, 0));
             _positionMaterial.SetTexture("_VelocityTex", _nextVelocity);
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }
@@ -296,7 +344,7 @@ namespace TpLab.Flux.FX.Editor
             _renderMaterial.SetFloat("_FluxSourceWidth", _textureSize);
             _renderMaterial.SetFloat("_FluxSourceHeight", _textureSize);
 
-            _renderMaterial.SetFloat("_SimulationSpace", (int)FluxParticleSimulationSpace.Local);
+            _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _renderMaterial.SetFloat("_RenderMode", (int)FluxParticleRenderMode.Billboard);
 
             _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", 0);
@@ -495,12 +543,22 @@ namespace TpLab.Flux.FX.Editor
         {
             if (_previewObject == null) return;
 
-            var sourceTransform = _particleSystem.transform;
             var previewTransform = _previewObject.transform;
 
-            previewTransform.position = sourceTransform.position;
-            previewTransform.rotation = sourceTransform.rotation;
-            previewTransform.localScale = sourceTransform.lossyScale;
+            if (_authoring.SimulationSpace == FluxParticleSimulationSpace.Local)
+            {
+                var sourceTransform = _particleSystem.transform;
+
+                previewTransform.position = sourceTransform.position;
+                previewTransform.rotation = sourceTransform.rotation;
+                previewTransform.localScale = sourceTransform.lossyScale;
+            }
+            else
+            {
+                previewTransform.position = Vector3.zero;
+                previewTransform.rotation = Quaternion.identity;
+                previewTransform.localScale = Vector3.one;
+            }
         }
 
         void SwapSimulation()
