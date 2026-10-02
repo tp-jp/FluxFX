@@ -36,25 +36,24 @@ Shader "FluxFX/ParticlePositionUpdate"
             float4 _SystemRotation;
             float4 _SystemScale;
             float _DeltaTime;
+            float _SpawnStart;
+            float _SpawnCount;
 
             float3 RotateVector(float3 value, float4 rotation)
             {
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
-            float3 CreateShapeDirection(uint index)
+            float3 CreateShapeDirection(uint spawnSequence)
             {
                 if (_ShapeType > 2.5 && _ShapeType < 3.5)
                 {
-                    float angle = ((float)index / (float)_FluxDestinationCount) * UNITY_TWO_PI;
+                    float angle = spawnSequence * 2.39996323;
 
                     return float3(cos(angle), 0, sin(angle));
                 }
 
-                float3 direction = FluxFXCreateSpawnDirection(
-                    index,
-                    (uint)_FluxDestinationCount
-                );
+                float3 direction = FluxFXCreateSpawnDirection(spawnSequence);
 
                 if (_ShapeType > 1.5 && _ShapeType < 2.5)
                 {
@@ -64,11 +63,11 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return direction;
             }
 
-            float3 CreateBoxSpawnPosition(uint index)
+            float3 CreateBoxSpawnPosition(uint spawnSequence)
             {
-                uint face = index % 6u;
-                float u = FluxFXRandom01(index * 2u) * 2.0 - 1.0;
-                float v = FluxFXRandom01(index * 2u + 1u) * 2.0 - 1.0;
+                uint face = spawnSequence % 6u;
+                float u = FluxFXRandom01(spawnSequence * 2u) * 2.0 - 1.0;
+                float v = FluxFXRandom01(spawnSequence * 2u + 1u) * 2.0 - 1.0;
                 float3 halfSize = _ShapeSize.xyz * 0.5;
 
                 if (face == 0u)
@@ -89,7 +88,7 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return float3(u * halfSize.x, v * halfSize.y, -halfSize.z);
             }
 
-            float3 CreateSpawnPosition(uint index)
+            float3 CreateSpawnPosition(uint spawnSequence)
             {
                 if (_ShapeType < 0.5)
                 {
@@ -105,11 +104,11 @@ Shader "FluxFX/ParticlePositionUpdate"
 
                 if (_ShapeType > 3.5)
                 {
-                    position = CreateBoxSpawnPosition(index);
+                    position = CreateBoxSpawnPosition(spawnSequence);
                 }
                 else
                 {
-                    position = CreateShapeDirection(index) * _ShapeRadius;
+                    position = CreateShapeDirection(spawnSequence) * _ShapeRadius;
                 }
 
                 if (_SimulationSpace > 0.5)
@@ -139,7 +138,15 @@ Shader "FluxFX/ParticlePositionUpdate"
                 bool isActive = velocity.w > 0;
 
                 if (!wasActive && isActive)
-                    return float4(CreateSpawnPosition(index), 0);
+                {
+                    uint spawnSequence = FluxFXGetSpawnSequence(
+                        index,
+                        (uint)_FluxDestinationCount,
+                        (uint)_SpawnStart,
+                        (uint)_SpawnCount);
+
+                    return float4(CreateSpawnPosition(spawnSequence), 0);
+                }
 
                 if (!isActive)
                     return 0;

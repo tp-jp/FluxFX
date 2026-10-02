@@ -67,9 +67,9 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
-            float3 CreateBoxSpawnDirection(uint index)
+            float3 CreateBoxSpawnDirection(uint spawnSequence)
             {
-                uint face = index % 6u;
+                uint face = spawnSequence % 6u;
 
                 if (face == 0u)
                     return float3(1, 0, 0);
@@ -89,24 +89,21 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return float3(0, 0, -1);
             }
 
-            float3 CreateShapeDirection(uint index)
+            float3 CreateShapeDirection(uint spawnSequence)
             {
                 if (_ShapeType > 3.5)
                 {
-                    return CreateBoxSpawnDirection(index);
+                    return CreateBoxSpawnDirection(spawnSequence);
                 }
 
                 if (_ShapeType > 2.5)
                 {
-                    float angle = ((float)index / (float)_FluxDestinationCount) * UNITY_TWO_PI;
+                    float angle = spawnSequence * 2.39996323;
 
                     return float3(cos(angle), 0, sin(angle));
                 }
 
-                float3 direction = FluxFXCreateSpawnDirection(
-                    index,
-                    (uint)_FluxDestinationCount
-                );
+                float3 direction = FluxFXCreateSpawnDirection(spawnSequence);
 
                 if (_ShapeType > 1.5)
                 {
@@ -130,7 +127,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
                     (uint)_FluxDestinationCount,
                     (uint)_SpawnStart,
                     (uint)_SpawnCount);
-                float3 direction = CreateShapeDirection(index);
+                float3 direction = CreateShapeDirection(spawnSequence);
 
                 float initialSpeed = lerp(
                     _InitialSpeedMin,

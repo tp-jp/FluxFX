@@ -197,6 +197,8 @@ namespace TpLab.Flux.FX.Udon
         void UpdatePosition(float deltaTime)
         {
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
+            positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            positionUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             positionUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
             positionUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
             positionUpdateKernel.Dispatch(particleState.CurrentPosition, particleState.NextPosition);
