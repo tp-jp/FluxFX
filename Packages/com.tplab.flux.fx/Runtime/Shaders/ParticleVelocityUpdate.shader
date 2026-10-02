@@ -51,15 +51,21 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 uint spawnStart = (uint)_SpawnStart;
                 uint spawnCount = (uint)_SpawnCount;
 
-                for (uint i = 0; i < spawnCount; i++)
-                {
-                    uint spawnIndex = (spawnStart + i) % capacity;
+                if (spawnCount == 0u)
+                    return false;
 
-                    if (spawnIndex == index)
-                        return true;
+                if (spawnCount >= capacity)
+                    return true;
+
+                uint startIndex = spawnStart % capacity;
+                uint endIndex = (startIndex + spawnCount) % capacity;
+
+                if (startIndex < endIndex)
+                {
+                    return index >= startIndex && index < endIndex;
                 }
 
-                return false;
+                return index >= startIndex || index < endIndex;
             }
 
             float3 RotateVector(float3 value, float4 rotation)
