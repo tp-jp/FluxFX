@@ -10,8 +10,8 @@ namespace TpLab.Flux.FX.Editor
 {
     public sealed class FluxParticlePreview : IDisposable
     {
-        const int MaxPreviewParticleCount = 65536;
         const int SpawnSeedPeriod = 1048576;
+        const int MaxUInt16VertexCount = 65535;
 
         readonly FluxParticleSystem _particleSystem;
         readonly FluxParticleAuthoring _authoring;
@@ -57,6 +57,9 @@ namespace TpLab.Flux.FX.Editor
         int _particleCount;
         int _textureSize;
 
+        FluxParticleRenderMode _currentRenderMode;
+        Mesh _currentSourceMesh;
+
         public bool IsPlaying { get; private set; }
 
         public FluxParticlePreview(FluxParticleSystem particleSystem, FluxParticleAuthoring authoring)
@@ -75,13 +78,19 @@ namespace TpLab.Flux.FX.Editor
                 return;
             }
 
+            if (_authoring.Render.Mode == FluxParticleRenderMode.Mesh && _authoring.Render.Mesh == null)
+            {
+                Debug.LogWarning("[FluxFX] Preview requires a mesh for Mesh render mode.", _particleSystem);
+                return;
+            }
+
             if (!CreateMaterials())
             {
                 DisposeMaterials();
                 return;
             }
 
-            _particleCount = Mathf.Min(_particleSystem.ParticleCount, MaxPreviewParticleCount);
+            _particleCount = _particleSystem.ParticleCount;
             _textureSize = Mathf.CeilToInt(Mathf.Sqrt(_particleCount));
 
             CreateTextures();
@@ -124,6 +133,7 @@ namespace TpLab.Flux.FX.Editor
             _simulationTime = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
+            _currentSourceMesh = null;
         }
 
         public void Dispose()
@@ -155,6 +165,7 @@ namespace TpLab.Flux.FX.Editor
 
             _simulationTime += deltaTime;
 
+            UpdatePreviewMesh();
             UpdatePreviewTransform();
             Simulate(deltaTime);
 
@@ -355,8 +366,9 @@ namespace TpLab.Flux.FX.Editor
             _renderMaterial.SetFloat("_FluxSourceWidth", _textureSize);
             _renderMaterial.SetFloat("_FluxSourceHeight", _textureSize);
 
+            _renderMaterial.SetVector("_StartRotation", _authoring.Render.StartRotation);
             _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
-            _renderMaterial.SetFloat("_RenderMode", (int)FluxParticleRenderMode.Billboard);
+            _renderMaterial.SetFloat("_RenderMode", (int)_authoring.Render.Mode);
         }
 
         void ApplyColorOverLifetime()
@@ -538,15 +550,47 @@ namespace TpLab.Flux.FX.Editor
             _meshFilter = _previewObject.AddComponent<MeshFilter>();
             _meshRenderer = _previewObject.AddComponent<MeshRenderer>();
 
-            _mesh = CreateBillboardMesh(_particleCount);
-            _meshFilter.sharedMesh = _mesh;
             _meshRenderer.sharedMaterial = _renderMaterial;
 
+            RebuildPreviewMesh();
             UpdatePreviewTransform();
             ApplyRenderState();
         }
 
-        Mesh CreateBillboardMesh(int capacity)
+        void UpdatePreviewMesh()
+        {
+            var renderMode = _authoring.Render.Mode;
+            var sourceMesh = _authoring.Render.Mesh;
+
+            if (renderMode == _currentRenderMode && sourceMesh == _currentSourceMesh) return;
+
+            RebuildPreviewMesh();
+        }
+
+        void RebuildPreviewMesh()
+        {
+            if (_mesh != null)
+            {
+                Object.DestroyImmediate(_mesh);
+                _mesh = null;
+            }
+
+            _currentRenderMode = _authoring.Render.Mode;
+            _currentSourceMesh = _authoring.Render.Mesh;
+
+            if (_currentRenderMode == FluxParticleRenderMode.Mesh && _currentSourceMesh != null)
+            {
+                _mesh = CreateParticleMesh(_currentSourceMesh, _particleCount);
+            }
+            else
+            {
+                _mesh = CreateParticleMesh(_particleCount);
+            }
+
+            _meshFilter.sharedMesh = _mesh;
+        }
+
+        Mesh CreateParticleMesh(int capacity)
         {
             var vertexCount = capacity * 4;
             var vertices = new Vector3[vertexCount];
@@ -582,12 +626,103 @@ namespace TpLab.Flux.FX.Editor
             mesh.name = "FluxFX Preview Mesh";
             mesh.hideFlags = HideFlags.HideAndDontSave;
 
-            if (vertexCount > 65535)
+            if (vertexCount > MaxUInt16VertexCount)
             {
                 mesh.indexFormat = IndexFormat.UInt32;
             }
 
             mesh.vertices = vertices;
+            mesh.uv2 = uv2;
+            mesh.triangles = triangles;
+            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+
+            return mesh;
+        }
+
+        Mesh CreateParticleMesh(Mesh source, int capacity)
+        {
+            var sourceVertices = source.vertices;
+            var sourceNormals = source.normals;
+            var sourceTangents = source.tangents;
+            var sourceUV = source.uv;
+            var sourceTriangles = source.triangles;
+
+            var sourceVertexCount = sourceVertices.Length;
+            var sourceTriangleCount = sourceTriangles.Length;
+            var vertexCount = sourceVertexCount * capacity;
+
+            var hasNormals = sourceNormals.Length == sourceVertexCount;
+            var hasTangents = sourceTangents.Length == sourceVertexCount;
+            var hasUV = sourceUV.Length == sourceVertexCount;
+
+            var vertices = new Vector3[vertexCount];
+            var normals = hasNormals ? new Vector3[vertexCount] : null;
+            var tangents = hasTangents ? new Vector4[vertexCount] : null;
+            var uv = hasUV ? new Vector2[vertexCount] : null;
+            var uv2 = new Vector2[vertexCount];
+            var triangles = new int[sourceTriangleCount * capacity];
+
+            for (var particleIndex = 0; particleIndex < capacity; particleIndex++)
+            {
+                var vertexOffset = particleIndex * sourceVertexCount;
+                var triangleOffset = particleIndex * sourceTriangleCount;
+                var particleData = new Vector2(particleIndex, 0);
+
+                for (var i = 0; i < sourceVertexCount; i++)
+                {
+                    var vertexIndex = vertexOffset + i;
+
+                    vertices[vertexIndex] = sourceVertices[i];
+                    uv2[vertexIndex] = particleData;
+
+                    if (hasNormals)
+                    {
+                        normals[vertexIndex] = sourceNormals[i];
+                    }
+
+                    if (hasTangents)
+                    {
+                        tangents[vertexIndex] = sourceTangents[i];
+                    }
+
+                    if (hasUV)
+                    {
+                        uv[vertexIndex] = sourceUV[i];
+                    }
+                }
+
+                for (var i = 0; i < sourceTriangleCount; i++)
+                {
+                    triangles[triangleOffset + i] = vertexOffset + sourceTriangles[i];
+                }
+            }
+
+            var mesh = new Mesh();
+            mesh.name = "FluxFX Preview Mesh";
+            mesh.hideFlags = HideFlags.HideAndDontSave;
+
+            if (vertexCount > MaxUInt16VertexCount)
+            {
+                mesh.indexFormat = IndexFormat.UInt32;
+            }
+
+            mesh.vertices = vertices;
+
+            if (hasNormals)
+            {
+                mesh.normals = normals;
+            }
+
+            if (hasTangents)
+            {
+                mesh.tangents = tangents;
+            }
+
+            if (hasUV)
+            {
+                mesh.uv = uv;
+            }
+
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
             mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);

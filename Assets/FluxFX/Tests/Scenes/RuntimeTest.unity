@@ -1015,7 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 571358e415308e2448dcad23a70cd1f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simulationSpace: 0
+  simulationSpace: 1
   emission:
     rate: 250000
     bursts: []
@@ -1051,7 +1051,7 @@ MonoBehaviour:
     strength: 2
   render:
     mode: 0
-    mesh: {fileID: 4300000, guid: e2c669382bf700942b6ace021258ec4a, type: 2}
+    mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
     startColor: {r: 1, g: 0, b: 0, a: 1}
     startColorMode: 1
@@ -1093,7 +1093,7 @@ MonoBehaviour:
         atime6: 0
         atime7: 0
         m_Mode: 0
-        m_ColorSpace: 0
+        m_ColorSpace: -1
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
     sizeOverLifetime:
