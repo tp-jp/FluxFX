@@ -1,9 +1,9 @@
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.Udon;
 using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
-using UdonSharpEditor;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor
@@ -28,6 +28,20 @@ namespace TpLab.Flux.FX.Editor
 
                 var compiledParameters = compiler.Compile(authoring);
                 particleSystem.SetProgramVariable("compiledParameters", compiledParameters);
+
+                var particleState = authoring.GetComponentInChildren<FluxParticleState>(true);
+                if (particleState == null)
+                {
+                    Debug.LogError($"[FluxFX] FluxParticleState was not found on '{authoring.name}'.", authoring);
+                    continue;
+                }
+
+                var buffers = particleState.GetComponentsInChildren<FluxBuffer>(true);
+
+                foreach (var buffer in buffers)
+                {
+                    buffer.SetProgramVariable("initialCount", particleSystem.ParticleCount);
+                }
 
                 var particleRenderer = authoring.GetComponentInChildren<FluxParticleRenderer>(true);
                 if (particleRenderer == null)

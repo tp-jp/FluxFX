@@ -204,7 +204,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 26550152}
-  initialCount: 65536
+  initialCount: 64
 --- !u!1 &41551547
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,7 +285,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 41551549}
-  initialCount: 65536
+  initialCount: 64
 --- !u!1 &358170787
 GameObject:
   m_ObjectHideFlags: 0
@@ -793,7 +793,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1023137029}
-  initialCount: 65536
+  initialCount: 64
 --- !u!1 &1034251896
 GameObject:
   m_ObjectHideFlags: 0
@@ -1048,7 +1048,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1119965958}
-  initialCount: 65536
+  initialCount: 64
 --- !u!1 &1217573528
 GameObject:
   m_ObjectHideFlags: 0
@@ -1100,7 +1100,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationSpace: 0
   emission:
-    rate: 5
+    rate: 10
     bursts:
     - time: 1
       count: 10
@@ -1288,7 +1288,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1217573531}
-  particleCount: 64
+  particleCount: 16384
   particleState: {fileID: 463588773}
   particleEmitter: {fileID: 763353640}
   particleSimulation: {fileID: 1524821721}
@@ -1456,7 +1456,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1358347373}
-  initialCount: 65536
+  initialCount: 64
 --- !u!1 &1524821718
 GameObject:
   m_ObjectHideFlags: 0
@@ -2025,7 +2025,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 2081118390}
-  initialCount: 65536
+  initialCount: 64
 --- !u!114 &3231720197660963110
 MonoBehaviour:
   m_ObjectHideFlags: 0
