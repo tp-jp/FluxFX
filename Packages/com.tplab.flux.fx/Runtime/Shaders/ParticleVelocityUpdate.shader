@@ -105,7 +105,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
 
                 if (_ShapeType > 2.5)
                 {
-                    float angle = spawnSeed * 2.39996323;
+                    float angle = FluxFXCreateSpawnAngle(spawnSeed);
 
                     return float3(cos(angle), 0, sin(angle));
                 }
