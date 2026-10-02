@@ -25,6 +25,8 @@ namespace TpLab.Flux.FX.Editor
         SerializedProperty _vortex;
         SerializedProperty _render;
 
+        FluxParticlePreview _preview;
+
         void OnEnable()
         {
             var particleSystem = (FluxParticleSystem)target;
@@ -43,6 +45,14 @@ namespace TpLab.Flux.FX.Editor
             _noise = _authoringObject.FindProperty("noise");
             _vortex = _authoringObject.FindProperty("vortex");
             _render = _authoringObject.FindProperty("render");
+
+            _preview = new FluxParticlePreview(particleSystem, authoring);
+        }
+
+        void OnDisable()
+        {
+            _preview?.Dispose();
+            _preview = null;
         }
 
         public override void OnInspectorGUI()
@@ -58,6 +68,7 @@ namespace TpLab.Flux.FX.Editor
 
             _authoringObject.Update();
 
+            DrawPreview();
             DrawMain();
             DrawEmission();
             DrawShape();
@@ -96,6 +107,48 @@ namespace TpLab.Flux.FX.Editor
             {
                 DrawBoxShapeGizmo();
             }
+        }
+
+        void DrawPreview()
+        {
+            EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
+
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                if (_preview != null && _preview.IsPlaying)
+                {
+                    if (GUILayout.Button("Stop"))
+                    {
+                        _preview.Stop();
+                    }
+
+                    if (GUILayout.Button("Restart"))
+                    {
+                        _authoringObject.ApplyModifiedProperties();
+                        serializedObject.ApplyModifiedProperties();
+                        _preview.Restart();
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button("Preview"))
+                    {
+                        _authoringObject.ApplyModifiedProperties();
+                        serializedObject.ApplyModifiedProperties();
+                        _preview?.Play();
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            EditorGUILayout.HelpBox(
+                "Preview v0: Point / Rate / Lifetime / Initial Speed / Start Color / Start Size / Billboard",
+                MessageType.Info);
+
+            EditorGUILayout.Space();
         }
 
         void DrawMain()
