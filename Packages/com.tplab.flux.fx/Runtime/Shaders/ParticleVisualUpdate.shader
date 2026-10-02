@@ -33,6 +33,7 @@ Shader "FluxFX/ParticleVisualUpdate"
             float _StartSizeMin;
             float _StartSizeMax;
             float _SpawnStart;
+            float _SpawnSeedStart;
             float _SpawnCount;
 
             float4 frag(v2f_img i) : SV_Target
@@ -53,19 +54,21 @@ Shader "FluxFX/ParticleVisualUpdate"
 
                 if (!wasActive && isActive)
                 {
-                    uint spawnSequence = FluxFXGetSpawnSequence(
+                    uint spawnSeed = FluxFXGetSpawnSeed(
                         index,
                         (uint)_FluxDestinationCount,
                         (uint)_SpawnStart,
-                        (uint)_SpawnCount);
+                        (uint)_SpawnSeedStart);
+
                     float3 startColor = lerp(
                         _StartColorMin.rgb,
                         _StartColorMax.rgb,
-                        FluxFXRandom01(spawnSequence * 2u + 1u));
+                        FluxFXRandom01(spawnSeed * 2u + 1u));
+
                     float startSize = lerp(
                         _StartSizeMin,
                         _StartSizeMax,
-                        FluxFXRandom01(spawnSequence));
+                        FluxFXRandom01(spawnSeed));
 
                     return float4(startColor, startSize);
                 }

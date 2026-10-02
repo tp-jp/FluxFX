@@ -188,6 +188,7 @@ namespace TpLab.Flux.FX.Udon
         {
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            velocityUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             velocityUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             velocityUpdateKernel.SetFloat("_NoiseTime", _simulationTime * _noiseSpeed);
             velocityUpdateKernel.SetBuffer("_PositionTex", particleState.CurrentPosition);
@@ -198,6 +199,7 @@ namespace TpLab.Flux.FX.Udon
         {
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            positionUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             positionUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             positionUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
             positionUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
@@ -207,6 +209,7 @@ namespace TpLab.Flux.FX.Udon
         void UpdateVisual()
         {
             visualUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            visualUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             visualUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             visualUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
             visualUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);

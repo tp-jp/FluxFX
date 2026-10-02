@@ -37,6 +37,7 @@ Shader "FluxFX/ParticlePositionUpdate"
             float4 _SystemScale;
             float _DeltaTime;
             float _SpawnStart;
+            float _SpawnSeedStart;
             float _SpawnCount;
 
             float3 RotateVector(float3 value, float4 rotation)
@@ -44,16 +45,16 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
-            float3 CreateShapeDirection(uint spawnSequence)
+            float3 CreateShapeDirection(uint spawnSeed)
             {
                 if (_ShapeType > 2.5 && _ShapeType < 3.5)
                 {
-                    float angle = spawnSequence * 2.39996323;
+                    float angle = spawnSeed * 2.39996323;
 
                     return float3(cos(angle), 0, sin(angle));
                 }
 
-                float3 direction = FluxFXCreateSpawnDirection(spawnSequence);
+                float3 direction = FluxFXCreateSpawnDirection(spawnSeed);
 
                 if (_ShapeType > 1.5 && _ShapeType < 2.5)
                 {
@@ -63,11 +64,11 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return direction;
             }
 
-            float3 CreateBoxSpawnPosition(uint spawnSequence)
+            float3 CreateBoxSpawnPosition(uint spawnSeed)
             {
-                uint face = spawnSequence % 6u;
-                float u = FluxFXRandom01(spawnSequence * 2u) * 2.0 - 1.0;
-                float v = FluxFXRandom01(spawnSequence * 2u + 1u) * 2.0 - 1.0;
+                uint face = spawnSeed % 6u;
+                float u = FluxFXRandom01(spawnSeed * 2u) * 2.0 - 1.0;
+                float v = FluxFXRandom01(spawnSeed * 2u + 1u) * 2.0 - 1.0;
                 float3 halfSize = _ShapeSize.xyz * 0.5;
 
                 if (face == 0u)
@@ -88,7 +89,7 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return float3(u * halfSize.x, v * halfSize.y, -halfSize.z);
             }
 
-            float3 CreateSpawnPosition(uint spawnSequence)
+            float3 CreateSpawnPosition(uint spawnSeed)
             {
                 if (_ShapeType < 0.5)
                 {
@@ -104,11 +105,11 @@ Shader "FluxFX/ParticlePositionUpdate"
 
                 if (_ShapeType > 3.5)
                 {
-                    position = CreateBoxSpawnPosition(spawnSequence);
+                    position = CreateBoxSpawnPosition(spawnSeed);
                 }
                 else
                 {
-                    position = CreateShapeDirection(spawnSequence) * _ShapeRadius;
+                    position = CreateShapeDirection(spawnSeed) * _ShapeRadius;
                 }
 
                 if (_SimulationSpace > 0.5)
@@ -139,13 +140,13 @@ Shader "FluxFX/ParticlePositionUpdate"
 
                 if (!wasActive && isActive)
                 {
-                    uint spawnSequence = FluxFXGetSpawnSequence(
+                    uint spawnSeed = FluxFXGetSpawnSeed(
                         index,
                         (uint)_FluxDestinationCount,
                         (uint)_SpawnStart,
-                        (uint)_SpawnCount);
+                        (uint)_SpawnSeedStart);
 
-                    return float4(CreateSpawnPosition(spawnSequence), 0);
+                    return float4(CreateSpawnPosition(spawnSeed), 0);
                 }
 
                 if (!isActive)

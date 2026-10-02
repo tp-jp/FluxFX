@@ -1025,7 +1025,7 @@ MonoBehaviour:
     min: 1
     max: 3
   shape:
-    type: 1
+    type: 2
     radius: 1
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
@@ -1199,7 +1199,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1217573531}
-  particleCount: 16384
+  particleCount: 65536
   particleState: {fileID: 463588773}
   particleEmitter: {fileID: 763353640}
   particleSimulation: {fileID: 1524821721}

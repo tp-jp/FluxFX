@@ -77,7 +77,7 @@ namespace TpLab.Flux.FX.Udon
                 burstCounts[i] = (int)burst["count"].Double;
             }
 
-            particleEmitter.Initialize(emissionRate, burstTimes, burstCounts);
+            particleEmitter.Initialize(emissionRate, burstTimes, burstCounts, particleCount);
         }
 
         void InitializeSimulation(DataDictionary parameters)

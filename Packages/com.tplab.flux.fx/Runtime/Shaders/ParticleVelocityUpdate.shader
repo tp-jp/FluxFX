@@ -43,6 +43,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float4 _SystemRotation;
             float _DeltaTime;
             float _SpawnStart;
+            float _SpawnSeedStart;
             float _SpawnCount;
 
             bool ShouldSpawn(uint index)
@@ -73,9 +74,9 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
             }
 
-            float3 CreateBoxSpawnDirection(uint spawnSequence)
+            float3 CreateBoxSpawnDirection(uint spawnSeed)
             {
-                uint face = spawnSequence % 6u;
+                uint face = spawnSeed % 6u;
 
                 if (face == 0u)
                     return float3(1, 0, 0);
@@ -95,21 +96,21 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return float3(0, 0, -1);
             }
 
-            float3 CreateShapeDirection(uint spawnSequence)
+            float3 CreateShapeDirection(uint spawnSeed)
             {
                 if (_ShapeType > 3.5)
                 {
-                    return CreateBoxSpawnDirection(spawnSequence);
+                    return CreateBoxSpawnDirection(spawnSeed);
                 }
 
                 if (_ShapeType > 2.5)
                 {
-                    float angle = spawnSequence * 2.39996323;
+                    float angle = spawnSeed * 2.39996323;
 
                     return float3(cos(angle), 0, sin(angle));
                 }
 
-                float3 direction = FluxFXCreateSpawnDirection(spawnSequence);
+                float3 direction = FluxFXCreateSpawnDirection(spawnSeed);
 
                 if (_ShapeType > 1.5)
                 {
@@ -119,26 +120,26 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return direction;
             }
 
-            float EvaluateSpawnLifetime(uint spawnSequence)
+            float EvaluateSpawnLifetime(uint spawnSeed)
             {
-                float random = FluxFXRandom01(spawnSequence * 3u + 2u);
+                float random = FluxFXRandom01(spawnSeed * 3u + 2u);
 
                 return lerp(_LifetimeMin, _LifetimeMax, random);
             }
 
             float4 CreateSpawnVelocity(uint index)
             {
-                uint spawnSequence = FluxFXGetSpawnSequence(
+                uint spawnSeed = FluxFXGetSpawnSeed(
                     index,
                     (uint)_FluxDestinationCount,
                     (uint)_SpawnStart,
-                    (uint)_SpawnCount);
-                float3 direction = CreateShapeDirection(spawnSequence);
+                    (uint)_SpawnSeedStart);
+                float3 direction = CreateShapeDirection(spawnSeed);
 
                 float initialSpeed = lerp(
                     _InitialSpeedMin,
                     _InitialSpeedMax,
-                    FluxFXRandom01(spawnSequence * 4u + 3u));
+                    FluxFXRandom01(spawnSeed * 4u + 3u));
                 float3 velocity = direction * initialSpeed;
 
                 if (_SimulationSpace > 0.5)
@@ -146,7 +147,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
                     velocity = RotateVector(velocity, _SystemRotation);
                 }
 
-                return float4(velocity, EvaluateSpawnLifetime(spawnSequence));
+                return float4(velocity, EvaluateSpawnLifetime(spawnSeed));
             }
 
             float3 EvaluateNoise(float3 position)

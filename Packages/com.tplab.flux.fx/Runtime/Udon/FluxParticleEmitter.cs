@@ -1,4 +1,4 @@
-﻿﻿using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 
@@ -7,26 +7,34 @@ namespace TpLab.Flux.FX.Udon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleEmitter : UdonSharpBehaviour
     {
+        const int SpawnSeedPeriod = 1048576;
+
         float _emissionRate;
         float _emissionAccumulator;
         float _emissionTime;
         float[] _burstTimes;
         int[] _burstCounts;
         int _nextBurstIndex;
-        int _spawnSequence;
+        int _particleCount;
+        int _spawnCursor;
+        int _spawnSeed;
 
         [PublicAPI]
         public int SpawnStart { get; private set; }
 
         [PublicAPI]
+        public int SpawnSeedStart { get; private set; }
+
+        [PublicAPI]
         public int SpawnCount { get; private set; }
 
         [PublicAPI]
-        public void Initialize(float emissionRate, float[] burstTimes, int[] burstCounts)
+        public void Initialize(float emissionRate, float[] burstTimes, int[] burstCounts, int particleCount)
         {
             _emissionRate = emissionRate;
             _burstTimes = burstTimes;
             _burstCounts = burstCounts;
+            _particleCount = particleCount;
         }
 
         [PublicAPI]
@@ -46,9 +54,12 @@ namespace TpLab.Flux.FX.Udon
 
             var burstSpawnCount = GetBurstSpawnCount(previousTime, _emissionTime);
 
-            SpawnStart = _spawnSequence;
+            SpawnStart = _spawnCursor;
+            SpawnSeedStart = _spawnSeed;
             SpawnCount = rateSpawnCount + burstSpawnCount;
-            _spawnSequence += SpawnCount;
+
+            _spawnCursor = (_spawnCursor + SpawnCount) % _particleCount;
+            _spawnSeed = (_spawnSeed + SpawnCount) % SpawnSeedPeriod;
         }
 
         int GetBurstSpawnCount(float previousTime, float currentTime)
