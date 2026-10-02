@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -23,9 +22,6 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleSimulation particleSimulation;
 
         [SerializeField]
-        FluxUpload upload;
-
-        [SerializeField]
         FluxParticleRenderer particleRenderer;
 
         [SerializeField]
@@ -37,12 +33,6 @@ namespace TpLab.Flux.FX.Udon
         void Start()
         {
             particleState.Initialize(particleCount);
-
-            var positions = new Vector4[particleCount];
-            var velocities = new Vector4[particleCount];
-
-            upload.Upload(positions, particleState.CurrentPosition);
-            upload.Upload(velocities, particleState.CurrentVelocity);
 
             InitializeCompiledParameters();
 

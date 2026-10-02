@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+﻿﻿using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -25,6 +25,9 @@ namespace TpLab.Flux.FX.Udon
 
         [SerializeField]
         FluxBuffer visualBufferB;
+
+        [SerializeField]
+        FluxKernel initializeKernel;
 
         FluxBuffer _currentPositionBuffer;
         FluxBuffer _nextPositionBuffer;
@@ -60,6 +63,13 @@ namespace TpLab.Flux.FX.Udon
             velocityBufferB.SetCount(count);
             visualBufferA.SetCount(count);
             visualBufferB.SetCount(count);
+
+            initializeKernel.Dispatch(positionBufferA);
+            initializeKernel.Dispatch(positionBufferB);
+            initializeKernel.Dispatch(velocityBufferA);
+            initializeKernel.Dispatch(velocityBufferB);
+            initializeKernel.Dispatch(visualBufferA);
+            initializeKernel.Dispatch(visualBufferB);
 
             _currentPositionBuffer = positionBufferA;
             _nextPositionBuffer = positionBufferB;
