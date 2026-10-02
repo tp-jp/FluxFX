@@ -50,7 +50,9 @@ namespace TpLab.Flux.FX.Editor
         double _previousTime;
 
         float _emissionAccumulator;
+        float _emissionTime;
         float _simulationTime;
+        int _nextBurstIndex;
         int _spawnCursor;
         int _spawnSeed;
 
@@ -99,7 +101,9 @@ namespace TpLab.Flux.FX.Editor
             CreatePreviewObject();
 
             _emissionAccumulator = 0;
+            _emissionTime = 0;
             _simulationTime = 0;
+            _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
             _previousTime = EditorApplication.timeSinceStartup;
@@ -130,7 +134,9 @@ namespace TpLab.Flux.FX.Editor
             DisposeMaterials();
 
             _emissionAccumulator = 0;
+            _emissionTime = 0;
             _simulationTime = 0;
+            _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
             _currentSourceMesh = null;
@@ -201,13 +207,43 @@ namespace TpLab.Flux.FX.Editor
 
         int UpdateEmission(float deltaTime)
         {
+            var previousTime = _emissionTime;
+            _emissionTime += deltaTime;
+
             _emissionAccumulator += deltaTime * _authoring.Emission.Rate;
 
-            var spawnCount = Mathf.FloorToInt(_emissionAccumulator);
+            var rateSpawnCount = Mathf.FloorToInt(_emissionAccumulator);
 
-            if (spawnCount > 0)
+            if (rateSpawnCount > 0)
             {
-                _emissionAccumulator -= spawnCount;
+                _emissionAccumulator -= rateSpawnCount;
+            }
+
+            var burstSpawnCount = GetBurstSpawnCount(previousTime, _emissionTime);
+
+            return rateSpawnCount + burstSpawnCount;
+        }
+
+        int GetBurstSpawnCount(float previousTime, float currentTime)
+        {
+            var bursts = _authoring.Emission.Bursts;
+            var spawnCount = 0;
+
+            while (_nextBurstIndex < bursts.Length)
+            {
+                var burst = bursts[_nextBurstIndex];
+
+                if (burst.Time > currentTime)
+                {
+                    break;
+                }
+
+                if (burst.Time >= previousTime)
+                {
+                    spawnCount += burst.Count;
+                }
+
+                _nextBurstIndex++;
             }
 
             return spawnCount;

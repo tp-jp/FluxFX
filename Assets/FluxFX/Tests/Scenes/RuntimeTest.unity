@@ -1017,8 +1017,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationSpace: 1
   emission:
-    rate: 250000
-    bursts: []
+    rate: 0
+    bursts:
+    - time: 1
+      count: 10
+    - time: 3
+      count: 30
   lifetime:
     lifetime: 4
     mode: 0
@@ -1057,7 +1061,7 @@ MonoBehaviour:
     startColorMode: 1
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
     startColorMax: {r: 0, g: 0, b: 1, a: 1}
-    startSize: 0.02
+    startSize: 0.2
     startSizeMode: 0
     startSizeMin: 0.02
     startSizeMax: 0.2
@@ -1199,7 +1203,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1217573531}
-  particleCount: 1048576
+  particleCount: 64
   particleState: {fileID: 463588773}
   particleEmitter: {fileID: 763353640}
   particleSimulation: {fileID: 1524821721}
