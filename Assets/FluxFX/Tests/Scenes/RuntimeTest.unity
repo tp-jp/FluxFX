@@ -1017,22 +1017,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationSpace: 0
   emission:
-    rate: 10000
+    rate: 250000
     bursts: []
   lifetime:
-    lifetime: 5
+    lifetime: 4
     mode: 0
     min: 1
-    max: 3
+    max: 5
   shape:
     type: 2
     radius: 1
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
-    speed: 1
+    speed: 0.5
     mode: 0
     min: 0.5
-    max: 1
+    max: 3
   gravity:
     enabled: 0
     gravity: {x: 0, y: -1, z: 0}
@@ -1040,7 +1040,7 @@ MonoBehaviour:
     enabled: 0
     drag: 0.5
   noise:
-    enabled: 0
+    enabled: 1
     strength: 1
     scale: 1
     speed: 1
@@ -1048,7 +1048,7 @@ MonoBehaviour:
     enabled: 0
     center: {x: 0, y: 0, z: 0}
     axis: {x: 0, y: 1, z: 0}
-    strength: 1
+    strength: 2
   render:
     mode: 0
     mesh: {fileID: 4300000, guid: e2c669382bf700942b6ace021258ec4a, type: 2}
@@ -1057,8 +1057,8 @@ MonoBehaviour:
     startColorMode: 1
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
     startColorMax: {r: 0, g: 0, b: 1, a: 1}
-    startSize: 1
-    startSizeMode: 1
+    startSize: 0.02
+    startSizeMode: 0
     startSizeMin: 0.02
     startSizeMax: 0.2
     startRotation: {x: 0, y: 45, z: 0}
@@ -1199,7 +1199,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1217573531}
-  particleCount: 65536
+  particleCount: 1048576
   particleState: {fileID: 463588773}
   particleEmitter: {fileID: 763353640}
   particleSimulation: {fileID: 1524821721}
@@ -2054,41 +2054,49 @@ MonoBehaviour:
   RenderReflectionIntensity: 0
   RenderSkybox: {fileID: 0}
   NetworkIDs:
-  - gameObject: {fileID: 1358347371}
-    ID: 11
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 3480278762663670689}
     ID: 14
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
     - VRC.Udon.UdonBehaviour
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1930212630}
-    ID: 16
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 2081118388}
-    ID: 17
+  - gameObject: {fileID: 1217573528}
+    ID: 15
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 1663340799}
+    ID: 16
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 1524821718}
+    ID: 17
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 763353637}
     ID: 18
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1119965956}
+  - gameObject: {fileID: 463588770}
     ID: 19
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 785121123}
+  - gameObject: {fileID: 1246352841}
+    ID: 20
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 1358347371}
+    ID: 21
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 2081118388}
     ID: 22
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 41551547}
+  - gameObject: {fileID: 1119965956}
     ID: 23
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 463588770}
+  - gameObject: {fileID: 41551547}
     ID: 24
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -2096,28 +2104,20 @@ MonoBehaviour:
     ID: 25
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 763353637}
+  - gameObject: {fileID: 26550150}
+    ID: 26
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 785121123}
+    ID: 27
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 1930212630}
     ID: 28
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1524821718}
-    ID: 29
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 1034251896}
-    ID: 30
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 26550150}
-    ID: 31
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1217573528}
-    ID: 32
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1246352841}
-    ID: 33
+    ID: 29
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}
