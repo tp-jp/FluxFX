@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-namespace TpLab.Flux.FX.Editor
+namespace TpLab.Flux.FX.Editor.Preview
 {
     public sealed class FluxParticlePreview : IDisposable
     {
