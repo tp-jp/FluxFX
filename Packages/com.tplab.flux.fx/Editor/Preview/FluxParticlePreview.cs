@@ -61,6 +61,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
         FluxParticleRenderMode _currentRenderMode;
         Mesh _currentSourceMesh;
+        Material _currentSourceMaterial;
 
         public bool IsPlaying { get; private set; }
 
@@ -140,6 +141,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _spawnCursor = 0;
             _spawnSeed = 0;
             _currentSourceMesh = null;
+            _currentSourceMaterial = null;
         }
 
         public void Dispose()
@@ -167,6 +169,11 @@ namespace TpLab.Flux.FX.Editor.Preview
             {
                 Stop();
                 return;
+            }
+
+            if (_authoring.Render.Material != _currentSourceMaterial)
+            {
+                if (!UpdatePreviewMaterial()) return;
             }
 
             var currentTime = EditorApplication.timeSinceStartup;
@@ -495,8 +502,33 @@ namespace TpLab.Flux.FX.Editor.Preview
             _visualMaterial = new Material(visualShader);
             _visualMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            _renderMaterial = new Material(_authoring.Render.Material);
+            _currentSourceMaterial = _authoring.Render.Material;
+            _renderMaterial = new Material(_currentSourceMaterial);
             _renderMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            return true;
+        }
+
+        bool UpdatePreviewMaterial()
+        {
+            var sourceMaterial = _authoring.Render.Material;
+
+            if (sourceMaterial == null)
+            {
+                Debug.LogWarning("[FluxFX] Preview requires a particle material.", _particleSystem);
+                Stop();
+                return false;
+            }
+
+            DisposeMaterial(ref _renderMaterial);
+
+            _currentSourceMaterial = sourceMaterial;
+            _renderMaterial = new Material(_currentSourceMaterial);
+            _renderMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            _meshRenderer.sharedMaterial = _renderMaterial;
+
+            ApplyRenderState();
 
             return true;
         }
