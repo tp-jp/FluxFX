@@ -22,13 +22,8 @@ namespace TpLab.Flux.FX.Editor
             var texture = CreateLut(authoring, "ColorOverLifetime");
             if (texture == null) return null;
 
-            for (var i = 0; i < LutResolution; i++)
-            {
-                var normalizedAge = i / (float)(LutResolution - 1);
-                texture.SetPixel(i, 0, settings.Gradient.Evaluate(normalizedAge));
-            }
+            UpdateColorOverLifetimeLut(texture, settings);
 
-            texture.Apply(false, false);
             EditorUtility.SetDirty(texture);
 
             return texture;
@@ -46,14 +41,8 @@ namespace TpLab.Flux.FX.Editor
             var texture = CreateLut(authoring, "SizeOverLifetime");
             if (texture == null) return null;
 
-            for (var i = 0; i < LutResolution; i++)
-            {
-                var normalizedAge = i / (float)(LutResolution - 1);
-                var sizeMultiplier = settings.Curve.Evaluate(normalizedAge);
-                texture.SetPixel(i, 0, new Color(sizeMultiplier, 0, 0, 1));
-            }
+            UpdateSizeOverLifetimeLut(texture, settings);
 
-            texture.Apply(false, false);
             EditorUtility.SetDirty(texture);
 
             return texture;
@@ -71,16 +60,58 @@ namespace TpLab.Flux.FX.Editor
             var texture = CreateLut(authoring, "RotationOverLifetime");
             if (texture == null) return null;
 
+            UpdateRotationOverLifetimeLut(texture, settings);
+
+            EditorUtility.SetDirty(texture);
+
+            return texture;
+        }
+
+        public Texture2D CreatePreviewLut(string name)
+        {
+            var texture = new Texture2D(LutResolution, 1, TextureFormat.RGBAHalf, false, true);
+            texture.name = name;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.hideFlags = HideFlags.HideAndDontSave;
+
+            return texture;
+        }
+
+        public void UpdateColorOverLifetimeLut(Texture2D texture, ColorOverLifetimeSettings settings)
+        {
             for (var i = 0; i < LutResolution; i++)
             {
                 var normalizedAge = i / (float)(LutResolution - 1);
+                texture.SetPixel(i, 0, settings.Gradient.Evaluate(normalizedAge));
+            }
+
+            texture.Apply(false, false);
+        }
+
+        public void UpdateSizeOverLifetimeLut(Texture2D texture, SizeOverLifetimeSettings settings)
+        {
+            for (var i = 0; i < LutResolution; i++)
+            {
+                var normalizedAge = i / (float)(LutResolution - 1);
+                var sizeMultiplier = settings.Curve.Evaluate(normalizedAge);
+
+                texture.SetPixel(i, 0, new Color(sizeMultiplier, 0, 0, 1));
+            }
+
+            texture.Apply(false, false);
+        }
+
+        public void UpdateRotationOverLifetimeLut(Texture2D texture, RotationOverLifetimeSettings settings)
+        {
+            for (var i = 0; i < LutResolution; i++)
+            {
+                var normalizedAge = i / (float)(LutResolution - 1);
+
                 texture.SetPixel(i, 0, new Color(settings.Curve.Evaluate(normalizedAge), 0, 0, 1));
             }
 
             texture.Apply(false, false);
-            EditorUtility.SetDirty(texture);
-
-            return texture;
         }
 
         Texture2D CreateLut(FluxParticleAuthoring authoring, string type)
@@ -97,14 +128,13 @@ namespace TpLab.Flux.FX.Editor
                 return existingTexture;
             }
 
-            var texture = new Texture2D(LutResolution, 1, TextureFormat.RGBAHalf, false, true)
-            {
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                name = Path.GetFileNameWithoutExtension(path)
-            };
+            var texture = new Texture2D(LutResolution, 1, TextureFormat.RGBAHalf, false, true);
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.name = Path.GetFileNameWithoutExtension(path);
 
             AssetDatabase.CreateAsset(texture, path);
+
             return texture;
         }
 
@@ -142,6 +172,7 @@ namespace TpLab.Flux.FX.Editor
             }
 
             var identifier = GlobalObjectId.GetGlobalObjectIdSlow(authoring).ToString();
+
             return $"{GeneratedDirectory}/{identifier}_{type}.asset";
         }
     }

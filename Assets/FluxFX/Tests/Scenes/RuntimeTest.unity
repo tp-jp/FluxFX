@@ -1093,19 +1093,19 @@ MonoBehaviour:
         atime6: 0
         atime7: 0
         m_Mode: 0
-        m_ColorSpace: -1
+        m_ColorSpace: 0
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
     sizeOverLifetime:
       enabled: 0
-      mode: 0
-      endSize: 1
+      mode: 1
+      endSize: 0.1
       curve:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: 0
-          value: 1
+          time: -0.013282776
+          value: 0.94885254
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -1113,7 +1113,7 @@ MonoBehaviour:
           inWeight: 0
           outWeight: 0
         - serializedVersion: 3
-          time: 1
+          time: 0.9819946
           value: 1
           inSlope: 0
           outSlope: 0
@@ -1126,7 +1126,7 @@ MonoBehaviour:
         m_RotationOrder: 4
     rotationOverLifetime:
       enabled: 0
-      mode: 1
+      mode: 0
       endRotation: 180
       curve:
         serializedVersion: 2

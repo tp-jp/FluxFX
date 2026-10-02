@@ -15,6 +15,7 @@ namespace TpLab.Flux.FX.Editor
 
         readonly FluxParticleSystem _particleSystem;
         readonly FluxParticleAuthoring _authoring;
+        readonly FluxParticleLutBaker _lutBaker = new FluxParticleLutBaker();
 
         GameObject _previewObject;
         MeshFilter _meshFilter;
@@ -41,6 +42,10 @@ namespace TpLab.Flux.FX.Editor
         RenderTexture _nextVelocity;
         RenderTexture _currentVisual;
         RenderTexture _nextVisual;
+
+        Texture2D _colorOverLifetimeLut;
+        Texture2D _sizeOverLifetimeLut;
+        Texture2D _rotationOverLifetimeLut;
 
         double _previousTime;
 
@@ -80,6 +85,7 @@ namespace TpLab.Flux.FX.Editor
             _textureSize = Mathf.CeilToInt(Mathf.Sqrt(_particleCount));
 
             CreateTextures();
+            CreateLuts();
             InitializeTextures();
             CreatePreviewObject();
 
@@ -111,6 +117,7 @@ namespace TpLab.Flux.FX.Editor
 
             DisposePreviewObject();
             DisposeTextures();
+            DisposeLuts();
             DisposeMaterials();
 
             _emissionAccumulator = 0;
@@ -240,7 +247,7 @@ namespace TpLab.Flux.FX.Editor
                 : Vector3.zero;
 
             var vortexAxis = _authoring.Vortex.Enabled
-                ? _authoring.Vortex.Axis
+                ? _authoring.Vortex.Axis.normalized
                 : Vector3.zero;
 
             var vortexStrength = _authoring.Vortex.Enabled
@@ -336,6 +343,10 @@ namespace TpLab.Flux.FX.Editor
 
         void ApplyRenderState()
         {
+            ApplyColorOverLifetime();
+            ApplySizeOverLifetime();
+            ApplyRotationOverLifetime();
+
             _renderMaterial.SetTexture("_PositionTex", _currentPosition);
             _renderMaterial.SetTexture("_VelocityTex", _currentVelocity);
             _renderMaterial.SetTexture("_VisualTex", _currentVisual);
@@ -346,10 +357,60 @@ namespace TpLab.Flux.FX.Editor
 
             _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _renderMaterial.SetFloat("_RenderMode", (int)FluxParticleRenderMode.Billboard);
+        }
 
-            _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", 0);
-            _renderMaterial.SetFloat("_SizeOverLifetimeEnabled", 0);
-            _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", 0);
+        void ApplyColorOverLifetime()
+        {
+            var settings = _authoring.Render.ColorOverLifetime;
+
+            _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", settings.Enabled ? 1 : 0);
+            _renderMaterial.SetFloat("_ColorOverLifetimeMode", (int)settings.Mode);
+            _renderMaterial.SetVector("_EndColor", settings.EndColor);
+
+            if (!settings.Enabled || settings.Mode != FluxParticleColorOverLifetimeMode.Gradient)
+            {
+                _renderMaterial.SetTexture("_ColorOverLifetimeLut", null);
+                return;
+            }
+
+            _lutBaker.UpdateColorOverLifetimeLut(_colorOverLifetimeLut, settings);
+            _renderMaterial.SetTexture("_ColorOverLifetimeLut", _colorOverLifetimeLut);
+        }
+
+        void ApplySizeOverLifetime()
+        {
+            var settings = _authoring.Render.SizeOverLifetime;
+
+            _renderMaterial.SetFloat("_SizeOverLifetimeEnabled", settings.Enabled ? 1 : 0);
+            _renderMaterial.SetFloat("_SizeOverLifetimeMode", (int)settings.Mode);
+            _renderMaterial.SetFloat("_EndSize", settings.EndSize);
+
+            if (!settings.Enabled || settings.Mode != FluxParticleSizeOverLifetimeMode.Curve)
+            {
+                _renderMaterial.SetTexture("_SizeOverLifetimeLut", null);
+                return;
+            }
+
+            _lutBaker.UpdateSizeOverLifetimeLut(_sizeOverLifetimeLut, settings);
+            _renderMaterial.SetTexture("_SizeOverLifetimeLut", _sizeOverLifetimeLut);
+        }
+
+        void ApplyRotationOverLifetime()
+        {
+            var settings = _authoring.Render.RotationOverLifetime;
+
+            _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", settings.Enabled ? 1 : 0);
+            _renderMaterial.SetFloat("_RotationOverLifetimeMode", (int)settings.Mode);
+            _renderMaterial.SetFloat("_EndBillboardRotation", settings.EndRotation);
+
+            if (!settings.Enabled || settings.Mode != FluxParticleRotationOverLifetimeMode.Curve)
+            {
+                _renderMaterial.SetTexture("_RotationOverLifetimeLut", null);
+                return;
+            }
+
+            _lutBaker.UpdateRotationOverLifetimeLut(_rotationOverLifetimeLut, settings);
+            _renderMaterial.SetTexture("_RotationOverLifetimeLut", _rotationOverLifetimeLut);
         }
 
         bool CreateMaterials()
@@ -368,30 +429,20 @@ namespace TpLab.Flux.FX.Editor
                 return false;
             }
 
-            _initializeMaterial = new Material(initializeShader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            _initializeMaterial = new Material(initializeShader);
+            _initializeMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            _velocityMaterial = new Material(velocityShader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            _velocityMaterial = new Material(velocityShader);
+            _velocityMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            _positionMaterial = new Material(positionShader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            _positionMaterial = new Material(positionShader);
+            _positionMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            _visualMaterial = new Material(visualShader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            _visualMaterial = new Material(visualShader);
+            _visualMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            _renderMaterial = new Material(_authoring.Render.Material)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            _renderMaterial = new Material(_authoring.Render.Material);
+            _renderMaterial.hideFlags = HideFlags.HideAndDontSave;
 
             return true;
         }
@@ -431,6 +482,13 @@ namespace TpLab.Flux.FX.Editor
             texture.Create();
 
             return texture;
+        }
+
+        void CreateLuts()
+        {
+            _colorOverLifetimeLut = _lutBaker.CreatePreviewLut("FluxFX Preview Color over Lifetime");
+            _sizeOverLifetimeLut = _lutBaker.CreatePreviewLut("FluxFX Preview Size over Lifetime");
+            _rotationOverLifetimeLut = _lutBaker.CreatePreviewLut("FluxFX Preview Rotation over Lifetime");
         }
 
         void InitializeTextures()
@@ -520,11 +578,9 @@ namespace TpLab.Flux.FX.Editor
                 triangles[triangleIndex + 5] = vertexIndex + 3;
             }
 
-            var mesh = new Mesh
-            {
-                name = "FluxFX Preview Mesh",
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            var mesh = new Mesh();
+            mesh.name = "FluxFX Preview Mesh";
+            mesh.hideFlags = HideFlags.HideAndDontSave;
 
             if (vertexCount > 65535)
             {
@@ -612,6 +668,21 @@ namespace TpLab.Flux.FX.Editor
             _nextVelocity = null;
             _currentVisual = null;
             _nextVisual = null;
+        }
+
+        void DisposeLuts()
+        {
+            DisposeTexture(ref _colorOverLifetimeLut);
+            DisposeTexture(ref _sizeOverLifetimeLut);
+            DisposeTexture(ref _rotationOverLifetimeLut);
+        }
+
+        void DisposeTexture(ref Texture2D texture)
+        {
+            if (texture == null) return;
+
+            Object.DestroyImmediate(texture);
+            texture = null;
         }
 
         void DisposeTexture(ref RenderTexture texture)
