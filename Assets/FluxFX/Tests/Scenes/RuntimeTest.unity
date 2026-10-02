@@ -1017,12 +1017,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationSpace: 1
   emission:
-    rate: 0
-    bursts:
-    - time: 1
-      count: 10
-    - time: 3
-      count: 30
+    rate: 8
+    bursts: []
   lifetime:
     lifetime: 4
     mode: 0
@@ -1203,7 +1199,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1217573531}
-  particleCount: 64
+  particleCount: 2048
   particleState: {fileID: 463588773}
   particleEmitter: {fileID: 763353640}
   particleSimulation: {fileID: 1524821721}

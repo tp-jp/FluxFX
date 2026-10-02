@@ -151,6 +151,12 @@ namespace TpLab.Flux.FX.Editor.Preview
         {
             if (!IsPlaying) return;
 
+            if (_particleSystem.ParticleCount != _particleCount)
+            {
+                Play();
+                return;
+            }
+
             if (_particleSystem == null || _authoring == null)
             {
                 Stop();
