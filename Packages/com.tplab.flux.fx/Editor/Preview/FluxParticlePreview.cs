@@ -77,13 +77,13 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             if (_authoring.Render.Material == null)
             {
-                Debug.LogWarning("[FluxFX] Preview requires a particle material.", _particleSystem);
+                Logger.LogWarning("Preview requires a particle material.", _particleSystem);
                 return;
             }
 
             if (_authoring.Render.Mode == FluxParticleRenderMode.Mesh && _authoring.Render.Mesh == null)
             {
-                Debug.LogWarning("[FluxFX] Preview requires a mesh for Mesh render mode.", _particleSystem);
+                Logger.LogWarning("Preview requires a mesh for Mesh render mode.", _particleSystem);
                 return;
             }
 
@@ -491,7 +491,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 positionShader == null ||
                 visualShader == null)
             {
-                Debug.LogError("[FluxFX] Preview shaders could not be found.", _particleSystem);
+                Logger.LogError("Preview shaders could not be found.", _particleSystem);
                 return false;
             }
 
