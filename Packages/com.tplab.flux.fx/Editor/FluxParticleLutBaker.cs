@@ -165,9 +165,7 @@ namespace TpLab.Flux.FX.Editor
 
             if (string.IsNullOrEmpty(scenePath))
             {
-                Debug.LogError(
-                    $"[FluxFX] Cannot generate {type} LUT because '{authoring.name}' is not in a saved scene.",
-                    authoring);
+                Logger.LogError($"Cannot generate {type} LUT because '{authoring.name}' is not in a saved scene.", authoring);
                 return string.Empty;
             }
 

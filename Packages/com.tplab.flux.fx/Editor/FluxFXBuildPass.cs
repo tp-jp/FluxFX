@@ -32,7 +32,7 @@ namespace TpLab.Flux.FX.Editor
                 var particleState = authoring.GetComponentInChildren<FluxParticleState>(true);
                 if (particleState == null)
                 {
-                    Debug.LogError($"[FluxFX] FluxParticleState was not found on '{authoring.name}'.", authoring);
+                    Logger.LogError($"FluxParticleState was not found on '{authoring.name}'.", authoring);
                     continue;
                 }
 
@@ -46,7 +46,7 @@ namespace TpLab.Flux.FX.Editor
                 var particleRenderer = authoring.GetComponentInChildren<FluxParticleRenderer>(true);
                 if (particleRenderer == null)
                 {
-                    Debug.LogError($"[FluxFX] FluxParticleRenderer was not found under '{authoring.name}'.", authoring);
+                    Logger.LogError($"FluxParticleRenderer was not found under '{authoring.name}'.", authoring);
                     continue;
                 }
 

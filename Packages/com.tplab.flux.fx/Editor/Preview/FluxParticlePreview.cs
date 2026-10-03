@@ -520,7 +520,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             if (sourceMaterial == null)
             {
-                Debug.LogWarning("[FluxFX] Preview requires a particle material.", _particleSystem);
+                Logger.LogWarning("Preview requires a particle material.", _particleSystem);
                 Stop();
                 return false;
             }
