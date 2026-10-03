@@ -1025,11 +1025,12 @@ MonoBehaviour:
     min: 1
     max: 5
   shape:
-    type: 0
+    type: 5
     radius: 1
+    angle: 25
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
-    speed: 0
+    speed: 1
     mode: 0
     min: 0.5
     max: 3
@@ -1037,7 +1038,7 @@ MonoBehaviour:
     enabled: 0
     gravity: {x: 0, y: -1, z: 0}
   force:
-    enabled: 1
+    enabled: 0
     force: {x: 1, y: 0, z: 0}
   drag:
     enabled: 0

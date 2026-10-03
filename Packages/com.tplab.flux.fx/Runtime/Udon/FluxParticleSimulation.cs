@@ -58,6 +58,7 @@ namespace TpLab.Flux.FX.Udon
             float lifetimeMax,
             int shapeType,
             float shapeRadius,
+            float shapeAngle,
             Vector3 shapeSize,
             float initialSpeedMin,
             float initialSpeedMax)
@@ -67,6 +68,7 @@ namespace TpLab.Flux.FX.Udon
             velocityUpdateKernel.SetFloat("_InitialSpeedMin", initialSpeedMin);
             velocityUpdateKernel.SetFloat("_InitialSpeedMax", initialSpeedMax);
             velocityUpdateKernel.SetFloat("_ShapeType", shapeType);
+            velocityUpdateKernel.SetFloat("_ShapeAngle", shapeAngle);
 
             positionUpdateKernel.SetFloat("_ShapeType", shapeType);
             positionUpdateKernel.SetFloat("_ShapeRadius", shapeRadius);

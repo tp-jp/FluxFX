@@ -219,6 +219,11 @@ namespace TpLab.Flux.FX.Editor
             {
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("size"));
             }
+            else if (shapeType == FluxParticleShapeType.Cone)
+            {
+                EditorGUILayout.PropertyField(_shape.FindPropertyRelative("radius"));
+                EditorGUILayout.PropertyField(_shape.FindPropertyRelative("angle"));
+            }
 
             EditorGUI.indentLevel--;
         }

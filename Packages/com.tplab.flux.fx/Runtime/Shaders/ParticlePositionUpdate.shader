@@ -89,6 +89,17 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return float3(u * halfSize.x, v * halfSize.y, -halfSize.z);
             }
 
+            float3 CreateConeSpawnPosition(uint spawnSeed)
+            {
+                float angle = FluxFXCreateSpawnAngle(spawnSeed);
+                float radius = sqrt(FluxFXRandom01(spawnSeed * 11u + 5u)) * _ShapeRadius;
+
+                return float3(
+                    cos(angle) * radius,
+                    0,
+                    sin(angle) * radius);
+            }
+
             float3 CreateSpawnPosition(uint spawnSeed)
             {
                 if (_ShapeType < 0.5)
@@ -103,7 +114,11 @@ Shader "FluxFX/ParticlePositionUpdate"
 
                 float3 position;
 
-                if (_ShapeType > 3.5)
+                if (_ShapeType > 4.5)
+                {
+                    position = CreateConeSpawnPosition(spawnSeed);
+                }
+                else if (_ShapeType > 3.5)
                 {
                     position = CreateBoxSpawnPosition(spawnSeed);
                 }

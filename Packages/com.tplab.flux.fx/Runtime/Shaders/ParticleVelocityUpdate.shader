@@ -40,6 +40,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float _InitialSpeedMin;
             float _InitialSpeedMax;
             float _ShapeType;
+            float _ShapeAngle;
             float _SimulationSpace;
             float4 _SystemRotation;
             float _DeltaTime;
@@ -97,8 +98,25 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return float3(0, 0, -1);
             }
 
+            float3 CreateConeSpawnDirection(uint spawnSeed)
+            {
+                float azimuth = FluxFXCreateSpawnAngle(spawnSeed);
+                float angle = radians(_ShapeAngle);
+                float radial = sin(angle);
+
+                return float3(
+                    cos(azimuth) * radial,
+                    cos(angle),
+                    sin(azimuth) * radial);
+            }
+
             float3 CreateShapeDirection(uint spawnSeed)
             {
+                if (_ShapeType > 4.5)
+                {
+                    return CreateConeSpawnDirection(spawnSeed);
+                }
+
                 if (_ShapeType > 3.5)
                 {
                     return CreateBoxSpawnDirection(spawnSeed);

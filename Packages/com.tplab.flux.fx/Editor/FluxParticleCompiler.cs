@@ -67,6 +67,7 @@ namespace TpLab.Flux.FX.Editor
             {
                 ["type"] = (int)shape.Type,
                 ["radius"] = shape.Radius,
+                ["angle"] = shape.Angle,
                 ["sizeX"] = shape.Size.x,
                 ["sizeY"] = shape.Size.y,
                 ["sizeZ"] = shape.Size.z

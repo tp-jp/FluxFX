@@ -69,7 +69,8 @@ namespace TpLab.Flux.FX.Scripts
         Sphere,
         Hemisphere,
         Circle,
-        Box
+        Box,
+        Cone
     }
 
     public enum FluxParticleStartSizeMode
@@ -183,11 +184,17 @@ namespace TpLab.Flux.FX.Scripts
         float radius = 1.0f;
 
         [SerializeField]
+        [Range(0, 90)]
+        float angle = 25.0f;
+
+        [SerializeField]
         Vector3 size = Vector3.one;
 
         public FluxParticleShapeType Type => type;
 
         public float Radius => radius;
+
+        public float Angle => angle;
 
         public Vector3 Size => size;
     }

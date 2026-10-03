@@ -104,6 +104,7 @@ namespace TpLab.Flux.FX.Udon
             var shape = parameters["shape"].DataDictionary;
             var shapeType = (int)shape["type"].Double;
             var shapeRadius = (float)shape["radius"].Double;
+            var shapeAngle = (float)shape["angle"].Double;
             var shapeSize = new Vector3(
                 (float)shape["sizeX"].Double,
                 (float)shape["sizeY"].Double,
@@ -129,6 +130,7 @@ namespace TpLab.Flux.FX.Udon
                 lifetimeMax,
                 shapeType,
                 shapeRadius,
+                shapeAngle,
                 shapeSize,
                 initialSpeedMin,
                 initialSpeedMax);
@@ -157,7 +159,7 @@ namespace TpLab.Flux.FX.Udon
             if (render.TryGetValue("startColorMaxR", out var startColorMaxRToken))
             {
                 startColorMax = new Color(
-                    (float)startColorMaxRToken.Double,
+                    (float)render["startColorMaxR"].Double,
                     (float)render["startColorMaxG"].Double,
                     (float)render["startColorMaxB"].Double);
             }
