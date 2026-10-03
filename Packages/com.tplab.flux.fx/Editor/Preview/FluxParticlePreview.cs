@@ -286,6 +286,10 @@ namespace TpLab.Flux.FX.Editor.Preview
                 ? _authoring.Gravity.Gravity
                 : Vector3.zero;
 
+            var force = _authoring.Force.Enabled
+                ? _authoring.Force.Force
+                : Vector3.zero;
+
             var drag = _authoring.Drag.Enabled
                 ? _authoring.Drag.Drag
                 : 0;
@@ -330,6 +334,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 "_SystemRotation",
                 new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
             _velocityMaterial.SetVector("_Gravity", gravity);
+            _velocityMaterial.SetVector("_Force", force);
             _velocityMaterial.SetFloat("_Drag", drag);
             _velocityMaterial.SetFloat("_NoiseStrength", noiseStrength);
             _velocityMaterial.SetFloat("_NoiseScale", noiseScale);
