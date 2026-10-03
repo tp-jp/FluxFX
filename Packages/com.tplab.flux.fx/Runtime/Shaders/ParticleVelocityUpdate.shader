@@ -27,6 +27,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             sampler2D_float _PositionTex;
 
             float4 _Gravity;
+            float4 _Force;
             float _Drag;
             float _NoiseStrength;
             float _NoiseScale;
@@ -207,6 +208,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
                     return 0;
 
                 velocity.xyz += _Gravity.xyz * _DeltaTime;
+                velocity.xyz += _Force.xyz * _DeltaTime;
 
                 float3 noise = EvaluateNoise(position.xyz);
                 velocity.xyz += noise * _NoiseStrength * _DeltaTime;

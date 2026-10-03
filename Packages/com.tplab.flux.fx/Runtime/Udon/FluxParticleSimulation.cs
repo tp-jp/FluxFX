@@ -106,6 +106,7 @@ namespace TpLab.Flux.FX.Udon
         void ApplyVelocityParameters(DataDictionary parameters)
         {
             ApplyGravity(parameters);
+            ApplyForce(parameters);
             ApplyDrag(parameters);
             ApplyNoise(parameters);
             ApplyVortex(parameters);
@@ -125,6 +126,23 @@ namespace TpLab.Flux.FX.Udon
                 (float)gravity["x"].Double,
                 (float)gravity["y"].Double,
                 (float)gravity["z"].Double,
+                0));
+        }
+
+        void ApplyForce(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("force", out var token))
+            {
+                velocityUpdateKernel.SetVector("_Force", Vector4.zero);
+                return;
+            }
+
+            var force = token.DataDictionary;
+
+            velocityUpdateKernel.SetVector("_Force", new Vector4(
+                (float)force["x"].Double,
+                (float)force["y"].Double,
+                (float)force["z"].Double,
                 0));
         }
 

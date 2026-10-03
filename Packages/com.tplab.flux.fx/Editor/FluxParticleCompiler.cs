@@ -18,6 +18,7 @@ namespace TpLab.Flux.FX.Editor
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
             AddGravity(parameters, authoring.Gravity);
+            AddForce(parameters, authoring.Force);
             AddDrag(parameters, authoring.Drag);
             AddNoise(parameters, authoring.Noise);
             AddVortex(parameters, authoring.Vortex);
@@ -98,6 +99,18 @@ namespace TpLab.Flux.FX.Editor
                 ["x"] = gravity.Gravity.x,
                 ["y"] = gravity.Gravity.y,
                 ["z"] = gravity.Gravity.z
+            };
+        }
+
+        void AddForce(JObject parameters, ForceSettings force)
+        {
+            if (!force.Enabled) return;
+
+            parameters["force"] = new JObject
+            {
+                ["x"] = force.Force.x,
+                ["y"] = force.Force.y,
+                ["z"] = force.Force.z
             };
         }
 

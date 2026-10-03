@@ -21,6 +21,7 @@ namespace TpLab.Flux.FX.Editor
         SerializedProperty _shape;
         SerializedProperty _initialVelocity;
         SerializedProperty _gravity;
+        SerializedProperty _force;
         SerializedProperty _drag;
         SerializedProperty _noise;
         SerializedProperty _vortex;
@@ -42,6 +43,7 @@ namespace TpLab.Flux.FX.Editor
             _shape = _authoringObject.FindProperty("shape");
             _initialVelocity = _authoringObject.FindProperty("initialVelocity");
             _gravity = _authoringObject.FindProperty("gravity");
+            _force = _authoringObject.FindProperty("force");
             _drag = _authoringObject.FindProperty("drag");
             _noise = _authoringObject.FindProperty("noise");
             _vortex = _authoringObject.FindProperty("vortex");
@@ -235,6 +237,7 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.Space();
 
             DrawModule("Gravity", _gravity);
+            DrawModule("Force", _force);
             DrawModule("Drag", _drag);
             DrawModule("Noise", _noise);
             DrawModule("Vortex", _vortex);

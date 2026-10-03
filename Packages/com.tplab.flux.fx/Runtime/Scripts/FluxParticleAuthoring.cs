@@ -26,6 +26,9 @@ namespace TpLab.Flux.FX.Scripts
         GravitySettings gravity = new GravitySettings();
 
         [SerializeField]
+        ForceSettings force = new ForceSettings();
+
+        [SerializeField]
         DragSettings drag = new DragSettings();
 
         [SerializeField]
@@ -48,6 +51,8 @@ namespace TpLab.Flux.FX.Scripts
         public InitialVelocitySettings InitialVelocity => initialVelocity;
 
         public GravitySettings Gravity => gravity;
+
+        public ForceSettings Force => force;
 
         public DragSettings Drag => drag;
 
@@ -226,6 +231,20 @@ namespace TpLab.Flux.FX.Scripts
         public bool Enabled => enabled;
 
         public Vector3 Gravity => gravity;
+    }
+
+    [Serializable]
+    public class ForceSettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        Vector3 force;
+
+        public bool Enabled => enabled;
+
+        public Vector3 Force => force;
     }
 
     [Serializable]
