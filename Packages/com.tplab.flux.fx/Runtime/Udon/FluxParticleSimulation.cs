@@ -112,6 +112,7 @@ namespace TpLab.Flux.FX.Udon
             ApplyDrag(parameters);
             ApplyNoise(parameters);
             ApplyVortex(parameters);
+            ApplyLimitVelocity(parameters);
         }
 
         void ApplyGravity(DataDictionary parameters)
@@ -202,6 +203,17 @@ namespace TpLab.Flux.FX.Udon
                 0));
 
             velocityUpdateKernel.SetFloat("_VortexStrength", (float)vortex["strength"].Double);
+        }
+
+        void ApplyLimitVelocity(DataDictionary parameters)
+        {
+            if (!parameters.TryGetValue("limitVelocity", out var token))
+            {
+                velocityUpdateKernel.SetFloat("_MaxSpeed", 0);
+                return;
+            }
+
+            velocityUpdateKernel.SetFloat("_MaxSpeed", (float)token.Double);
         }
 
         void UpdateVelocity(float deltaTime)

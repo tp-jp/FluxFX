@@ -35,6 +35,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float4 _VortexCenter;
             float4 _VortexAxis;
             float _VortexStrength;
+            float _MaxSpeed;
             float _LifetimeMin;
             float _LifetimeMax;
             float _InitialSpeedMin;
@@ -200,6 +201,23 @@ Shader "FluxFX/ParticleVelocityUpdate"
                 return tangent * _VortexStrength;
             }
 
+            float3 ApplyVelocityLimit(float3 velocity)
+            {
+                if (_MaxSpeed <= 0)
+                {
+                    return velocity;
+                }
+
+                float speed = length(velocity);
+
+                if (speed <= _MaxSpeed)
+                {
+                    return velocity;
+                }
+
+                return velocity * (_MaxSpeed / speed);
+            }
+
             float4 frag(v2f_img i) : SV_Target
             {
                 uint index = FluxGetDestinationIndex(i.uv);
@@ -236,6 +254,8 @@ Shader "FluxFX/ParticleVelocityUpdate"
 
                 float dragFactor = exp(-_Drag * _DeltaTime);
                 velocity.xyz *= dragFactor;
+
+                velocity.xyz = ApplyVelocityLimit(velocity.xyz);
 
                 return velocity;
             }

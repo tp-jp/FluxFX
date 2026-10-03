@@ -1026,7 +1026,7 @@ MonoBehaviour:
     max: 5
   shape:
     type: 5
-    radius: 1
+    radius: 0.5
     angle: 25
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
@@ -1038,8 +1038,8 @@ MonoBehaviour:
     enabled: 0
     gravity: {x: 0, y: -1, z: 0}
   force:
-    enabled: 0
-    force: {x: 1, y: 0, z: 0}
+    enabled: 1
+    force: {x: 0, y: 10, z: 0}
   drag:
     enabled: 0
     drag: 0.5
@@ -1053,6 +1053,9 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     axis: {x: 0, y: 1, z: 0}
     strength: 2
+  limitVelocity:
+    enabled: 1
+    maxSpeed: 2
   render:
     mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
@@ -1061,7 +1064,7 @@ MonoBehaviour:
     startColorMode: 1
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
     startColorMax: {r: 0, g: 0, b: 1, a: 1}
-    startSize: 0.2
+    startSize: 1
     startSizeMode: 0
     startSizeMin: 0.02
     startSizeMax: 0.2

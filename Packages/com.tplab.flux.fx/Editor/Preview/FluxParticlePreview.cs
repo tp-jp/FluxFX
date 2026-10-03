@@ -318,6 +318,10 @@ namespace TpLab.Flux.FX.Editor.Preview
                 ? _authoring.Vortex.Strength
                 : 0;
 
+            var maxSpeed = _authoring.LimitVelocity.Enabled
+                ? _authoring.LimitVelocity.MaxSpeed
+                : 0;
+
             var systemRotation = _particleSystem.transform.rotation;
 
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);
@@ -343,6 +347,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetVector("_VortexCenter", vortexCenter);
             _velocityMaterial.SetVector("_VortexAxis", vortexAxis);
             _velocityMaterial.SetFloat("_VortexStrength", vortexStrength);
+            _velocityMaterial.SetFloat("_MaxSpeed", maxSpeed);
             _velocityMaterial.SetTexture("_PositionTex", _currentPosition);
         }
 

@@ -27,6 +27,7 @@ namespace TpLab.Flux.FX.Editor
         SerializedProperty _drag;
         SerializedProperty _noise;
         SerializedProperty _vortex;
+        SerializedProperty _limitVelocity;
         SerializedProperty _render;
 
         FluxParticlePreview _preview;
@@ -49,6 +50,7 @@ namespace TpLab.Flux.FX.Editor
             _drag = _authoringObject.FindProperty("drag");
             _noise = _authoringObject.FindProperty("noise");
             _vortex = _authoringObject.FindProperty("vortex");
+            _limitVelocity = _authoringObject.FindProperty("limitVelocity");
             _render = _authoringObject.FindProperty("render");
 
             _preview = new FluxParticlePreview(particleSystem, authoring);
@@ -252,6 +254,7 @@ namespace TpLab.Flux.FX.Editor
             DrawModule("Drag", _drag);
             DrawModule("Noise", _noise);
             DrawModule("Vortex", _vortex);
+            DrawModule("Limit Velocity", _limitVelocity);
 
             EditorGUI.indentLevel--;
         }

@@ -38,6 +38,9 @@ namespace TpLab.Flux.FX.Scripts
         VortexSettings vortex = new VortexSettings();
 
         [SerializeField]
+        LimitVelocitySettings limitVelocity = new LimitVelocitySettings();
+
+        [SerializeField]
         RenderSettings render = new RenderSettings();
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
@@ -59,6 +62,8 @@ namespace TpLab.Flux.FX.Scripts
         public NoiseSettings Noise => noise;
 
         public VortexSettings Vortex => vortex;
+
+        public LimitVelocitySettings LimitVelocity => limitVelocity;
 
         public RenderSettings Render => render;
     }
@@ -319,6 +324,21 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 Axis => axis;
 
         public float Strength => strength;
+    }
+
+    [Serializable]
+    public class LimitVelocitySettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        [Min(0)]
+        float maxSpeed = 1.0f;
+
+        public bool Enabled => enabled;
+
+        public float MaxSpeed => maxSpeed;
     }
 
     [Serializable]

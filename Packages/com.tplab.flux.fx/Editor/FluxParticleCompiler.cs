@@ -22,6 +22,7 @@ namespace TpLab.Flux.FX.Editor
             AddDrag(parameters, authoring.Drag);
             AddNoise(parameters, authoring.Noise);
             AddVortex(parameters, authoring.Vortex);
+            AddLimitVelocity(parameters, authoring.LimitVelocity);
             AddRender(parameters, authoring.Render);
 
             return parameters.ToString(Formatting.None);
@@ -150,6 +151,13 @@ namespace TpLab.Flux.FX.Editor
                 ["axisZ"] = axis.z,
                 ["strength"] = vortex.Strength
             };
+        }
+
+        void AddLimitVelocity(JObject parameters, LimitVelocitySettings limitVelocity)
+        {
+            if (!limitVelocity.Enabled) return;
+
+            parameters["limitVelocity"] = limitVelocity.MaxSpeed;
         }
 
         void AddRender(JObject parameters, RenderSettings render)
