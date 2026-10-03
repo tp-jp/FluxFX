@@ -329,6 +329,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_InitialSpeedMin", speedMin);
             _velocityMaterial.SetFloat("_InitialSpeedMax", speedMax);
             _velocityMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
+            _velocityMaterial.SetFloat("_ShapeAngle", _authoring.Shape.Angle);
             _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _velocityMaterial.SetVector(
                 "_SystemRotation",
