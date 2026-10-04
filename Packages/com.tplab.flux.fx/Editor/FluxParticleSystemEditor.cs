@@ -10,10 +10,37 @@ namespace TpLab.Flux.FX.Editor
     public class FluxParticleSystemEditor : UnityEditor.Editor
     {
         const float ConeGizmoLength = 2.0f;
+        const float SectionHeaderHeight = 30.0f;
+        const float SectionSpacing = 6.0f;
+        const float ModuleHeaderHeight = 22.0f;
 
-        bool _shapeExpanded = true;
-        bool _velocityExpanded = true;
-        bool _renderExpanded = true;
+        const string SessionStatePrefix = "TpLab.FluxFX.ParticleSystemInspector.";
+
+        const string EmissionExpandedKey = SessionStatePrefix + "EmissionExpanded";
+        const string ShapeExpandedKey = SessionStatePrefix + "ShapeExpanded";
+        const string VelocityExpandedKey = SessionStatePrefix + "VelocityExpanded";
+        const string RendererExpandedKey = SessionStatePrefix + "RendererExpanded";
+
+        const string VelocityOverLifetimeExpandedKey = SessionStatePrefix + "VelocityOverLifetimeExpanded";
+        const string GravityExpandedKey = SessionStatePrefix + "GravityExpanded";
+        const string ForceExpandedKey = SessionStatePrefix + "ForceExpanded";
+        const string DragExpandedKey = SessionStatePrefix + "DragExpanded";
+        const string NoiseExpandedKey = SessionStatePrefix + "NoiseExpanded";
+        const string VortexExpandedKey = SessionStatePrefix + "VortexExpanded";
+        const string LimitVelocityExpandedKey = SessionStatePrefix + "LimitVelocityExpanded";
+
+        bool _emissionExpanded;
+        bool _shapeExpanded;
+        bool _velocityExpanded;
+        bool _renderExpanded;
+
+        bool _velocityOverLifetimeExpanded;
+        bool _gravityExpanded;
+        bool _forceExpanded;
+        bool _dragExpanded;
+        bool _noiseExpanded;
+        bool _vortexExpanded;
+        bool _limitVelocityExpanded;
 
         SerializedObject _authoringObject;
 
@@ -34,8 +61,14 @@ namespace TpLab.Flux.FX.Editor
 
         FluxParticlePreview _preview;
 
+        GUIStyle _sectionHeaderLabelStyle;
+        GUIStyle _sectionHeaderChevronStyle;
+        GUIStyle _moduleHeaderLabelStyle;
+
         void OnEnable()
         {
+            LoadExpandedStates();
+
             var particleSystem = (FluxParticleSystem)target;
             var authoring = particleSystem.GetComponent<FluxParticleAuthoring>();
             if (authoring == null) return;
@@ -126,7 +159,9 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawPreview()
         {
-            EditorGUILayout.LabelField("Preview", EditorStyles.boldLabel);
+            DrawSectionHeader("PREVIEW");
+
+            EditorGUILayout.Space(2);
 
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
@@ -162,13 +197,13 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.HelpBox(
                 "Preview v0: Point / Rate / Lifetime / Initial Speed / Start Color / Start Size / Billboard",
                 MessageType.Info);
-
-            EditorGUILayout.Space();
         }
 
         void DrawMain()
         {
-            EditorGUILayout.LabelField("Main", EditorStyles.boldLabel);
+            DrawSectionHeader("MAIN");
+
+            EditorGUILayout.Space(2);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent("Play On Awake"));
@@ -181,9 +216,11 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawEmission()
         {
-            EditorGUILayout.Space();
+            _emissionExpanded = DrawSectionHeader("EMISSION", _emissionExpanded, EmissionExpandedKey);
+            if (!_emissionExpanded) return;
 
-            EditorGUILayout.LabelField("Emission", EditorStyles.boldLabel);
+            EditorGUILayout.Space(2);
+
             EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"));
             EditorGUILayout.PropertyField(_emission.FindPropertyRelative("bursts"), true);
         }
@@ -213,12 +250,10 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawShape()
         {
-            EditorGUILayout.Space();
-
-            _shapeExpanded = EditorGUILayout.Foldout(_shapeExpanded, "Shape", true);
+            _shapeExpanded = DrawSectionHeader("SHAPE", _shapeExpanded, ShapeExpandedKey);
             if (!_shapeExpanded) return;
 
-            EditorGUI.indentLevel++;
+            EditorGUILayout.Space(2);
 
             var type = _shape.FindPropertyRelative("type");
             var shapeType = (FluxParticleShapeType)type.enumValueIndex;
@@ -240,32 +275,60 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("radius"));
                 EditorGUILayout.PropertyField(_shape.FindPropertyRelative("angle"));
             }
-
-            EditorGUI.indentLevel--;
         }
 
         void DrawVelocity()
         {
-            EditorGUILayout.Space();
-
-            _velocityExpanded = EditorGUILayout.Foldout(_velocityExpanded, "Velocity", true);
+            _velocityExpanded = DrawSectionHeader("VELOCITY", _velocityExpanded, VelocityExpandedKey);
             if (!_velocityExpanded) return;
 
-            EditorGUI.indentLevel++;
+            EditorGUILayout.Space(2);
 
             DrawInitialSpeed();
 
             EditorGUILayout.Space();
 
-            DrawModule("Velocity over Lifetime", _velocityOverLifetime);
-            DrawModule("Gravity", _gravity);
-            DrawModule("Force", _force);
-            DrawModule("Drag", _drag);
-            DrawModule("Noise", _noise);
-            DrawModule("Vortex", _vortex);
-            DrawModule("Limit Velocity", _limitVelocity);
+            _velocityOverLifetimeExpanded = DrawModule(
+                "Velocity over Lifetime",
+                _velocityOverLifetime,
+                _velocityOverLifetimeExpanded,
+                VelocityOverLifetimeExpandedKey);
 
-            EditorGUI.indentLevel--;
+            _gravityExpanded = DrawModule(
+                "Gravity",
+                _gravity,
+                _gravityExpanded,
+                GravityExpandedKey);
+
+            _forceExpanded = DrawModule(
+                "Force",
+                _force,
+                _forceExpanded,
+                ForceExpandedKey);
+
+            _dragExpanded = DrawModule(
+                "Drag",
+                _drag,
+                _dragExpanded,
+                DragExpandedKey);
+
+            _noiseExpanded = DrawModule(
+                "Noise",
+                _noise,
+                _noiseExpanded,
+                NoiseExpandedKey);
+
+            _vortexExpanded = DrawModule(
+                "Vortex",
+                _vortex,
+                _vortexExpanded,
+                VortexExpandedKey);
+
+            _limitVelocityExpanded = DrawModule(
+                "Limit Velocity",
+                _limitVelocity,
+                _limitVelocityExpanded,
+                LimitVelocityExpandedKey);
         }
 
         void DrawInitialSpeed()
@@ -293,12 +356,10 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawRenderer()
         {
-            EditorGUILayout.Space();
-
-            _renderExpanded = EditorGUILayout.Foldout(_renderExpanded, "Renderer", true);
+            _renderExpanded = DrawSectionHeader("RENDERER", _renderExpanded, RendererExpandedKey);
             if (!_renderExpanded) return;
 
-            EditorGUI.indentLevel++;
+            EditorGUILayout.Space(2);
 
             var mode = _render.FindPropertyRelative("mode");
             var mesh = _render.FindPropertyRelative("mesh");
@@ -336,8 +397,6 @@ namespace TpLab.Flux.FX.Editor
             {
                 DrawRotationOverLifetime();
             }
-
-            EditorGUI.indentLevel--;
         }
 
         void DrawStartSize()
@@ -486,37 +545,199 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.EndVertical();
         }
 
-        void DrawModule(string label, SerializedProperty module)
+        void DrawSectionHeader(string label)
         {
+            DrawSectionHeaderInternal(label, false, false);
+        }
+
+        bool DrawSectionHeader(string label, bool expanded, string sessionStateKey)
+        {
+            var nextExpanded = DrawSectionHeaderInternal(label, true, expanded);
+
+            if (nextExpanded != expanded)
+            {
+                SessionState.SetBool(sessionStateKey, nextExpanded);
+            }
+
+            return nextExpanded;
+        }
+
+        bool DrawSectionHeaderInternal(string label, bool collapsible, bool expanded)
+        {
+            InitializeSectionHeaderStyles();
+
+            EditorGUILayout.Space(SectionSpacing);
+
+            var rect = GUILayoutUtility.GetRect(0, SectionHeaderHeight, GUILayout.ExpandWidth(true));
+            rect.x = 0;
+            rect.width = EditorGUIUtility.currentViewWidth;
+
+            var backgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(0.18f, 0.18f, 0.18f)
+                : new Color(0.76f, 0.76f, 0.76f);
+
+            var borderColor = EditorGUIUtility.isProSkin
+                ? new Color(0.10f, 0.10f, 0.10f)
+                : new Color(0.58f, 0.58f, 0.58f);
+
+            EditorGUI.DrawRect(rect, backgroundColor);
+
+            EditorGUI.DrawRect(
+                new Rect(rect.x, rect.y, rect.width, 1),
+                borderColor);
+
+            EditorGUI.DrawRect(
+                new Rect(rect.x, rect.yMax - 1, rect.width, 1),
+                borderColor);
+
+            var chevronRect = new Rect(
+                rect.x + 12,
+                rect.y,
+                16,
+                rect.height);
+
+            if (collapsible)
+            {
+                GUI.Label(
+                    chevronRect,
+                    expanded ? "▼" : "▶",
+                    _sectionHeaderChevronStyle);
+
+                EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+            }
+
+            var labelRect = new Rect(
+                rect.x + 34,
+                rect.y,
+                rect.width - 46,
+                rect.height);
+
+            GUI.Label(labelRect, label, _sectionHeaderLabelStyle);
+
+            if (!collapsible) return expanded;
+
+            if (Event.current.type == EventType.MouseDown &&
+                Event.current.button == 0 &&
+                rect.Contains(Event.current.mousePosition))
+            {
+                expanded = !expanded;
+                Event.current.Use();
+                GUI.changed = true;
+            }
+
+            return expanded;
+        }
+
+        void InitializeSectionHeaderStyles()
+        {
+            if (_sectionHeaderLabelStyle != null) return;
+
+            _sectionHeaderLabelStyle = new GUIStyle(EditorStyles.boldLabel);
+            _sectionHeaderLabelStyle.alignment = TextAnchor.MiddleLeft;
+            _sectionHeaderLabelStyle.fontSize = 11;
+
+            _sectionHeaderChevronStyle = new GUIStyle(EditorStyles.miniLabel);
+            _sectionHeaderChevronStyle.alignment = TextAnchor.MiddleCenter;
+        }
+
+        bool DrawModule(string label, SerializedProperty module, bool expanded, string sessionStateKey)
+        {
+            InitializeModuleHeaderStyles();
+
             var enabled = module.FindPropertyRelative("enabled");
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            enabled.boolValue = EditorGUILayout.ToggleLeft(label, enabled.boolValue, EditorStyles.boldLabel);
+            var headerRect = GUILayoutUtility.GetRect(0, ModuleHeaderHeight, GUILayout.ExpandWidth(true));
 
-            if (enabled.boolValue)
+            var toggleRect = new Rect(
+                headerRect.x + 2,
+                headerRect.y + 2,
+                18,
+                headerRect.height - 4);
+
+            var labelRect = new Rect(
+                headerRect.x + 24,
+                headerRect.y,
+                headerRect.width - 26,
+                headerRect.height);
+
+            enabled.boolValue = EditorGUI.Toggle(toggleRect, enabled.boolValue);
+
+            if (labelRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.Repaint)
             {
-                EditorGUI.indentLevel++;
+                var hoverColor = EditorGUIUtility.isProSkin
+                    ? new Color(1, 1, 1, 0.04f)
+                    : new Color(0, 0, 0, 0.04f);
 
-                var property = module.Copy();
-                var endProperty = property.GetEndProperty();
+                EditorGUI.DrawRect(labelRect, hoverColor);
+            }
 
-                property.NextVisible(true);
+            GUI.Label(labelRect, label, _moduleHeaderLabelStyle);
+            EditorGUIUtility.AddCursorRect(labelRect, MouseCursor.Link);
 
-                while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
+            if (Event.current.type == EventType.MouseDown &&
+                Event.current.button == 0 &&
+                labelRect.Contains(Event.current.mousePosition))
+            {
+                expanded = !expanded;
+                SessionState.SetBool(sessionStateKey, expanded);
+                Event.current.Use();
+                GUI.changed = true;
+            }
+
+            if (expanded)
+            {
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
                 {
-                    if (property.name == "enabled")
+                    EditorGUI.indentLevel++;
+
+                    var property = module.Copy();
+                    var endProperty = property.GetEndProperty();
+
+                    property.NextVisible(true);
+
+                    while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
                     {
-                        continue;
+                        if (property.name == "enabled")
+                        {
+                            continue;
+                        }
+
+                        EditorGUILayout.PropertyField(property, true);
                     }
 
-                    EditorGUILayout.PropertyField(property, true);
+                    EditorGUI.indentLevel--;
                 }
-
-                EditorGUI.indentLevel--;
             }
 
             EditorGUILayout.EndVertical();
+
+            return expanded;
+        }
+
+        void InitializeModuleHeaderStyles()
+        {
+            if (_moduleHeaderLabelStyle != null) return;
+
+            _moduleHeaderLabelStyle = new GUIStyle(EditorStyles.boldLabel);
+            _moduleHeaderLabelStyle.alignment = TextAnchor.MiddleLeft;
+        }
+
+        void LoadExpandedStates()
+        {
+            _emissionExpanded = SessionState.GetBool(EmissionExpandedKey, false);
+            _shapeExpanded = SessionState.GetBool(ShapeExpandedKey, false);
+            _velocityExpanded = SessionState.GetBool(VelocityExpandedKey, false);
+            _renderExpanded = SessionState.GetBool(RendererExpandedKey, false);
+
+            _velocityOverLifetimeExpanded = SessionState.GetBool(VelocityOverLifetimeExpandedKey, false);
+            _gravityExpanded = SessionState.GetBool(GravityExpandedKey, false);
+            _forceExpanded = SessionState.GetBool(ForceExpandedKey, false);
+            _dragExpanded = SessionState.GetBool(DragExpandedKey, false);
+            _noiseExpanded = SessionState.GetBool(NoiseExpandedKey, false);
+            _vortexExpanded = SessionState.GetBool(VortexExpandedKey, false);
+            _limitVelocityExpanded = SessionState.GetBool(LimitVelocityExpandedKey, false);
         }
 
         void DrawPointShapeGizmo()

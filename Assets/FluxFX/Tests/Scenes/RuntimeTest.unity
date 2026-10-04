@@ -1039,7 +1039,7 @@ MonoBehaviour:
     min: 0.5
     max: 3
   velocityOverLifetime:
-    enabled: 1
+    enabled: 0
     start: {x: 0, y: 0, z: 0}
     end: {x: 0, y: 0, z: 0}
     orbital: {x: 0, y: 3.1415925, z: 0}
