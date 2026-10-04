@@ -167,10 +167,6 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawPreview()
         {
-            DrawSectionHeader("PREVIEW");
-
-            EditorGUILayout.Space(2);
-
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
                 EditorGUILayout.BeginHorizontal();
@@ -201,10 +197,6 @@ namespace TpLab.Flux.FX.Editor
 
                 EditorGUILayout.EndHorizontal();
             }
-
-            EditorGUILayout.HelpBox(
-                "Preview v0: Point / Rate / Lifetime / Initial Speed / Start Color / Start Size / Billboard",
-                MessageType.Info);
         }
 
         void DrawMain()

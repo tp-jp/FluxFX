@@ -1034,7 +1034,7 @@ MonoBehaviour:
     angle: 25
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
-    speed: 0
+    speed: 1
     mode: 0
     min: 0.5
     max: 3
