@@ -1042,7 +1042,7 @@ MonoBehaviour:
     enabled: 1
     start: {x: 0, y: 0, z: 0}
     end: {x: 0, y: 0, z: 0}
-    orbital: {x: 0, y: 6.283185, z: 0}
+    orbital: {x: 0, y: 3.1415925, z: 0}
     offset: {x: 0, y: 0, z: 0}
     radial: 0
   gravity:
