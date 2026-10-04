@@ -35,7 +35,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleNoiseParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleNoiseParametersExt
+    public static class FluxParticleNoiseParametersExtensions
     {
         /// <summary>
         /// Noiseの強度を取得します。

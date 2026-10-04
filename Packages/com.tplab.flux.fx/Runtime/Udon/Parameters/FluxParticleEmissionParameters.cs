@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleEmissionParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleEmissionParametersExt
+    public static class FluxParticleEmissionParametersExtensions
     {
         /// <summary>
         /// 1秒あたりのParticle生成数を取得します。

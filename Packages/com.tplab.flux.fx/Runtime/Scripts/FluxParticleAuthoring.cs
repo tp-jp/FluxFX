@@ -1,5 +1,6 @@
 using System;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Scripts
@@ -71,16 +72,6 @@ namespace TpLab.Flux.FX.Scripts
         public LimitVelocitySettings LimitVelocity => limitVelocity;
 
         public RenderSettings Render => render;
-    }
-
-    public enum FluxParticleShapeType
-    {
-        Point,
-        Sphere,
-        Hemisphere,
-        Circle,
-        Box,
-        Cone
     }
 
     public enum FluxParticleStartSizeMode

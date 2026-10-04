@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleGravityParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleGravityParametersExt
+    public static class FluxParticleGravityParametersExtensions
     {
         /// <summary>
         /// Particleに適用するGravityを取得します。

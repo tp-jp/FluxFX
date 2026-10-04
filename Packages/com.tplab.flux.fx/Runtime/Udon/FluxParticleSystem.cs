@@ -38,6 +38,8 @@ namespace TpLab.Flux.FX.Udon
         bool _isPlaying;
         object _emission;
         object _lifetime;
+        object _shape;
+        object _initialVelocity;
         object _gravity;
         object _force;
         object _drag;
@@ -62,6 +64,18 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
+
+        /// <summary>
+        /// ShapeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
+
+        /// <summary>
+        /// Initial VelocityのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
 
         /// <summary>
         /// GravityのRuntimeパラメーターを取得します。
@@ -207,6 +221,8 @@ namespace TpLab.Flux.FX.Udon
             var simulationSpace = (int)parameters["simulationSpace"].Double;
 
             InitializeLifetime(parameters);
+            InitializeShape(parameters);
+            InitializeInitialVelocity(parameters);
             InitializeGravity(parameters);
             InitializeForce(parameters);
             InitializeDrag(parameters);
@@ -216,6 +232,8 @@ namespace TpLab.Flux.FX.Udon
 
             particleSimulation.Initialize(
                 Lifetime,
+                Shape,
+                InitialVelocity,
                 Gravity,
                 Force,
                 Drag,
@@ -224,38 +242,6 @@ namespace TpLab.Flux.FX.Udon
                 LimitVelocity);
 
             particleSimulation.SetSimulationSpace(simulationSpace);
-
-            var shape = parameters["shape"].DataDictionary;
-            var shapeType = (int)shape["type"].Double;
-            var shapeRadius = (float)shape["radius"].Double;
-            var shapeAngle = (float)shape["angle"].Double;
-            var shapeSize = new Vector3(
-                (float)shape["sizeX"].Double,
-                (float)shape["sizeY"].Double,
-                (float)shape["sizeZ"].Double);
-
-            var initialVelocity = parameters["initialVelocity"].DataDictionary;
-            var initialSpeed = (float)initialVelocity["speed"].Double;
-            var initialSpeedMin = initialSpeed;
-            var initialSpeedMax = initialSpeed;
-
-            if (initialVelocity.TryGetValue("speedMin", out var initialSpeedMinToken))
-            {
-                initialSpeedMin = (float)initialSpeedMinToken.Double;
-            }
-
-            if (initialVelocity.TryGetValue("speedMax", out var initialSpeedMaxToken))
-            {
-                initialSpeedMax = (float)initialSpeedMaxToken.Double;
-            }
-
-            particleSimulation.SetSpawnParameters(
-                shapeType,
-                shapeRadius,
-                shapeAngle,
-                shapeSize,
-                initialSpeedMin,
-                initialSpeedMax);
         }
 
         void InitializeLifetime(DataDictionary parameters)
@@ -275,6 +261,41 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _lifetime = FluxParticleLifetimeParameters.New(lifetimeMin, lifetimeMax);
+        }
+
+        void InitializeShape(DataDictionary parameters)
+        {
+            var shape = parameters["shape"].DataDictionary;
+
+            var type = (FluxParticleShapeType)(int)shape["type"].Double;
+            var radius = (float)shape["radius"].Double;
+            var angle = (float)shape["angle"].Double;
+            var size = new Vector3(
+                (float)shape["sizeX"].Double,
+                (float)shape["sizeY"].Double,
+                (float)shape["sizeZ"].Double);
+
+            _shape = FluxParticleShapeParameters.New(type, radius, angle, size);
+        }
+
+        void InitializeInitialVelocity(DataDictionary parameters)
+        {
+            var initialVelocity = parameters["initialVelocity"].DataDictionary;
+            var speed = (float)initialVelocity["speed"].Double;
+            var min = speed;
+            var max = speed;
+
+            if (initialVelocity.TryGetValue("speedMin", out var minToken))
+            {
+                min = (float)minToken.Double;
+            }
+
+            if (initialVelocity.TryGetValue("speedMax", out var maxToken))
+            {
+                max = (float)maxToken.Double;
+            }
+
+            _initialVelocity = FluxParticleInitialVelocityParameters.New(min, max);
         }
 
         void InitializeGravity(DataDictionary parameters)

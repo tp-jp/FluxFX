@@ -33,7 +33,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleLifetimeParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleLifetimeParametersExt
+    public static class FluxParticleLifetimeParametersExtensions
     {
         /// <summary>
         /// Lifetimeの最小値を取得します。

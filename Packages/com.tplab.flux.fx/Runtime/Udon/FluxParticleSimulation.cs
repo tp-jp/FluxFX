@@ -25,6 +25,8 @@ namespace TpLab.Flux.FX.Udon
 
         float _simulationTime;
         object _lifetime;
+        object _shape;
+        object _initialVelocity;
         object _gravity;
         object _force;
         object _drag;
@@ -33,6 +35,10 @@ namespace TpLab.Flux.FX.Udon
         object _limitVelocity;
 
         FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
+
+        FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
+
+        FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
 
         FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
@@ -48,6 +54,8 @@ namespace TpLab.Flux.FX.Udon
 
         internal void Initialize(
             FluxParticleLifetimeParameters lifetime,
+            FluxParticleShapeParameters shape,
+            FluxParticleInitialVelocityParameters initialVelocity,
             FluxParticleGravityParameters gravity,
             FluxParticleForceParameters force,
             FluxParticleDragParameters drag,
@@ -56,6 +64,8 @@ namespace TpLab.Flux.FX.Udon
             FluxParticleLimitVelocityParameters limitVelocity)
         {
             _lifetime = lifetime;
+            _shape = shape;
+            _initialVelocity = initialVelocity;
             _gravity = gravity;
             _force = force;
             _drag = drag;
@@ -79,24 +89,6 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_SystemPosition", new Vector4(position.x, position.y, position.z, 0));
             positionUpdateKernel.SetVector("_SystemRotation", rotationVector);
             positionUpdateKernel.SetVector("_SystemScale", new Vector4(scale.x, scale.y, scale.z, 0));
-        }
-
-        internal void SetSpawnParameters(
-            int shapeType,
-            float shapeRadius,
-            float shapeAngle,
-            Vector3 shapeSize,
-            float initialSpeedMin,
-            float initialSpeedMax)
-        {
-            velocityUpdateKernel.SetFloat("_InitialSpeedMin", initialSpeedMin);
-            velocityUpdateKernel.SetFloat("_InitialSpeedMax", initialSpeedMax);
-            velocityUpdateKernel.SetFloat("_ShapeType", shapeType);
-            velocityUpdateKernel.SetFloat("_ShapeAngle", shapeAngle);
-
-            positionUpdateKernel.SetFloat("_ShapeType", shapeType);
-            positionUpdateKernel.SetFloat("_ShapeRadius", shapeRadius);
-            positionUpdateKernel.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
         }
 
         internal void SetVisualSpawnParameters(
@@ -138,6 +130,10 @@ namespace TpLab.Flux.FX.Udon
             {
                 velocityUpdateKernel.SetFloat("_LifetimeMin", Lifetime.GetMin());
                 velocityUpdateKernel.SetFloat("_LifetimeMax", Lifetime.GetMax());
+                velocityUpdateKernel.SetFloat("_InitialSpeedMin", InitialVelocity.GetMin());
+                velocityUpdateKernel.SetFloat("_InitialSpeedMax", InitialVelocity.GetMax());
+                velocityUpdateKernel.SetFloat("_ShapeType", Shape.GetShapeType().ToInt());
+                velocityUpdateKernel.SetFloat("_ShapeAngle", Shape.GetAngle());
             }
 
             velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
@@ -160,6 +156,15 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdatePosition(float deltaTime)
         {
+            if (particleEmitter.SpawnCount > 0)
+            {
+                var shapeSize = Shape.GetSize();
+
+                positionUpdateKernel.SetFloat("_ShapeType", Shape.GetShapeType().ToInt());
+                positionUpdateKernel.SetFloat("_ShapeRadius", Shape.GetRadius());
+                positionUpdateKernel.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
+            }
+
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             positionUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);

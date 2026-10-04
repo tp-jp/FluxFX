@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleLimitVelocityParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleLimitVelocityParametersExt
+    public static class FluxParticleLimitVelocityParametersExtensions
     {
         /// <summary>
         /// Particleの最大速度を取得します。

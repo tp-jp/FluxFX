@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleForceParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleForceParametersExt
+    public static class FluxParticleForceParametersExtensions
     {
         /// <summary>
         /// Particleに適用するForceを取得します。

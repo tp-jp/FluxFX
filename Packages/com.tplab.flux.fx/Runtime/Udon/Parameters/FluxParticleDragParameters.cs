@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleDragParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleDragParametersExt
+    public static class FluxParticleDragParametersExtensions
     {
         /// <summary>
         /// Particleに適用するDragを取得します。

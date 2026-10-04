@@ -36,7 +36,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// FluxParticleVortexParametersを操作するための拡張メソッドを提供します。
     /// </summary>
     [PublicAPI]
-    public static class FluxParticleVortexParametersExt
+    public static class FluxParticleVortexParametersExtensions
     {
         /// <summary>
         /// Vortexの中心位置を取得します。
