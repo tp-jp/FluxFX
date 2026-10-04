@@ -10,7 +10,6 @@ namespace TpLab.Flux.FX.Udon
         const int SpawnSeedPeriod = 1048576;
         const float MinDuration = 0.01f;
 
-        float _emissionRate;
         float _emissionAccumulator;
         float _emissionTime;
         float[] _burstTimes;
@@ -24,6 +23,9 @@ namespace TpLab.Flux.FX.Udon
         float _duration;
         bool _loop;
         bool _emissionCompleted;
+        object _parameters;
+
+        FluxParticleEmissionParameters Parameters => (FluxParticleEmissionParameters)_parameters;
 
         public int SpawnStart { get; private set; }
 
@@ -32,7 +34,7 @@ namespace TpLab.Flux.FX.Udon
         public int SpawnCount { get; private set; }
 
         internal void Initialize(
-            float emissionRate,
+            FluxParticleEmissionParameters parameters,
             float[] burstTimes,
             int[] burstCounts,
             int particleCount,
@@ -40,7 +42,7 @@ namespace TpLab.Flux.FX.Udon
             float duration,
             bool loop)
         {
-            _emissionRate = emissionRate;
+            _parameters = parameters;
             _burstTimes = burstTimes;
             _burstCounts = burstCounts;
             _particleCount = particleCount;
@@ -78,7 +80,7 @@ namespace TpLab.Flux.FX.Udon
                 var previousTime = _emissionTime;
 
                 _emissionTime += stepTime;
-                _emissionAccumulator += stepTime * _emissionRate;
+                _emissionAccumulator += stepTime * Parameters.GetRate();
 
                 var rateSpawnCount = Mathf.FloorToInt(_emissionAccumulator);
 

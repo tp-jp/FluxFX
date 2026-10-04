@@ -35,12 +35,19 @@ namespace TpLab.Flux.FX.Udon
         string compiledParameters;
 
         bool _isPlaying;
+        object _emission;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
         /// </summary>
         [PublicAPI]
         public int ParticleCount => particleCount;
+
+        /// <summary>
+        /// EmissionのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -133,8 +140,10 @@ namespace TpLab.Flux.FX.Udon
                 burstCounts[i] = (int)burst["count"].Double;
             }
 
+            _emission = FluxParticleEmissionParameters.New(emissionRate);
+
             particleEmitter.Initialize(
-                emissionRate,
+                Emission,
                 burstTimes,
                 burstCounts,
                 particleCount,
