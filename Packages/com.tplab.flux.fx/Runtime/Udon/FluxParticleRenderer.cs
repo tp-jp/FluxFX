@@ -46,19 +46,20 @@ namespace TpLab.Flux.FX.Udon
 
         float _colorOverLifetimeMode;
         float _sizeOverLifetimeMode;
-        float _endBillboardRotation;
-        float _rotationOverLifetimeEnabled;
         float _rotationOverLifetimeMode;
         float _simulationSpace;
         object _startRotation;
         object _colorOverLifetime;
         object _sizeOverLifetime;
+        object _rotationOverLifetime;
 
         FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
 
         FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
+
+        FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
 
         internal void Initialize(int capacity)
         {
@@ -90,11 +91,13 @@ namespace TpLab.Flux.FX.Udon
             DataDictionary parameters,
             FluxParticleStartRotationParameters startRotation,
             FluxParticleColorOverLifetimeParameters colorOverLifetime,
-            FluxParticleSizeOverLifetimeParameters sizeOverLifetime)
+            FluxParticleSizeOverLifetimeParameters sizeOverLifetime,
+            FluxParticleRotationOverLifetimeParameters rotationOverLifetime)
         {
             _startRotation = startRotation;
             _colorOverLifetime = colorOverLifetime;
             _sizeOverLifetime = sizeOverLifetime;
+            _rotationOverLifetime = rotationOverLifetime;
 
             if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
             {
@@ -132,8 +135,6 @@ namespace TpLab.Flux.FX.Udon
             {
                 var rotation = rotationToken.DataDictionary;
 
-                _endBillboardRotation = (float)rotation["endRotation"].Double;
-                _rotationOverLifetimeEnabled = 1;
                 _rotationOverLifetimeMode = 0;
 
                 if (rotation.TryGetValue("mode", out var modeToken))
@@ -143,8 +144,6 @@ namespace TpLab.Flux.FX.Udon
             }
             else
             {
-                _endBillboardRotation = 0;
-                _rotationOverLifetimeEnabled = 0;
                 _rotationOverLifetimeMode = 0;
             }
         }
@@ -164,8 +163,10 @@ namespace TpLab.Flux.FX.Udon
             _material.SetVector("_StartRotation", StartRotation.GetRotation());
             _material.SetVector("_EndColor", endColor);
             _material.SetFloat("_EndSize", SizeOverLifetime.GetEndSize());
+            _material.SetFloat("_EndBillboardRotation", RotationOverLifetime.GetEndRotation());
             _material.SetFloat("_ColorOverLifetimeEnabled", ColorOverLifetime.GetEnabled() ? 1.0f : 0.0f);
             _material.SetFloat("_SizeOverLifetimeEnabled", SizeOverLifetime.GetEnabled() ? 1.0f : 0.0f);
+            _material.SetFloat("_RotationOverLifetimeEnabled", RotationOverLifetime.GetEnabled() ? 1.0f : 0.0f);
         }
 
         void ApplyRenderParameters()
@@ -174,8 +175,6 @@ namespace TpLab.Flux.FX.Udon
 
             _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
             _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);
-            _material.SetFloat("_EndBillboardRotation", _endBillboardRotation);
-            _material.SetFloat("_RotationOverLifetimeEnabled", _rotationOverLifetimeEnabled);
             _material.SetFloat("_RotationOverLifetimeMode", _rotationOverLifetimeMode);
             _material.SetFloat("_SimulationSpace", _simulationSpace);
             _material.SetFloat("_RenderMode", mode);

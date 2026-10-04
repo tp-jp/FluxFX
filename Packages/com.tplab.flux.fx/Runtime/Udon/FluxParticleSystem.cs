@@ -51,6 +51,7 @@ namespace TpLab.Flux.FX.Udon
         object _startRotation;
         object _colorOverLifetime;
         object _sizeOverLifetime;
+        object _rotationOverLifetime;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -147,6 +148,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
+
+        /// <summary>
+        /// Rotation over LifetimeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -445,10 +452,11 @@ namespace TpLab.Flux.FX.Udon
             InitializeStartRotation(render);
             InitializeColorOverLifetime(render);
             InitializeSizeOverLifetime(render);
+            InitializeRotationOverLifetime(render);
 
             particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
             particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime, SizeOverLifetime);
+            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime, SizeOverLifetime, RotationOverLifetime);
         }
 
         void InitializeStartColor(DataDictionary render)
@@ -541,6 +549,22 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _sizeOverLifetime = FluxParticleSizeOverLifetimeParameters.New(enabled, endSize);
+        }
+
+        void InitializeRotationOverLifetime(DataDictionary render)
+        {
+            var enabled = false;
+            var endRotation = 0.0f;
+
+            if (render.TryGetValue("rotationOverLifetime", out var token))
+            {
+                var rotation = token.DataDictionary;
+
+                enabled = true;
+                endRotation = (float)rotation["endRotation"].Double;
+            }
+
+            _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
         }
     }
 }
