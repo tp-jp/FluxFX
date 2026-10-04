@@ -237,6 +237,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space(4);
 
+            EditorGUILayout.LabelField("Bursts", EditorStyles.boldLabel);
             _burstList.DoLayoutList();
         }
 
