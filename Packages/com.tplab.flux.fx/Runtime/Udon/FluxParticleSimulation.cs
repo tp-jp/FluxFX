@@ -33,6 +33,8 @@ namespace TpLab.Flux.FX.Udon
         object _noise;
         object _vortex;
         object _limitVelocity;
+        object _startColor;
+        object _startSize;
 
         FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
 
@@ -51,6 +53,10 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
 
         FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
+
+        FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
+
+        FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
 
         internal void Initialize(
             FluxParticleLifetimeParameters lifetime,
@@ -91,16 +97,10 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_SystemScale", new Vector4(scale.x, scale.y, scale.z, 0));
         }
 
-        internal void SetVisualSpawnParameters(
-            Color startColorMin,
-            Color startColorMax,
-            float startSizeMin,
-            float startSizeMax)
+        internal void SetVisualSpawnParameters(FluxParticleStartColorParameters startColor, FluxParticleStartSizeParameters startSize)
         {
-            visualUpdateKernel.SetVector("_StartColorMin", startColorMin);
-            visualUpdateKernel.SetVector("_StartColorMax", startColorMax);
-            visualUpdateKernel.SetFloat("_StartSizeMin", startSizeMin);
-            visualUpdateKernel.SetFloat("_StartSizeMax", startSizeMax);
+            _startColor = startColor;
+            _startSize = startSize;
         }
 
         internal void Simulate(float deltaTime)
@@ -176,6 +176,10 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdateVisual()
         {
+            visualUpdateKernel.SetVector("_StartColorMin", StartColor.GetMin());
+            visualUpdateKernel.SetVector("_StartColorMax", StartColor.GetMax());
+            visualUpdateKernel.SetFloat("_StartSizeMin", StartSize.GetMin());
+            visualUpdateKernel.SetFloat("_StartSizeMax", StartSize.GetMax());
             visualUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             visualUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             visualUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);

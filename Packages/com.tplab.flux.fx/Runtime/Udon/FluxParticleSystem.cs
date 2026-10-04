@@ -46,6 +46,8 @@ namespace TpLab.Flux.FX.Udon
         object _noise;
         object _vortex;
         object _limitVelocity;
+        object _startColor;
+        object _startSize;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -112,6 +114,18 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
+
+        /// <summary>
+        /// Start ColorのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
+
+        /// <summary>
+        /// Start SizeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -405,50 +419,59 @@ namespace TpLab.Flux.FX.Udon
             var simulationSpace = (int)parameters["simulationSpace"].Double;
             var render = parameters["render"].DataDictionary;
 
+            InitializeStartColor(render);
+            InitializeStartSize(render);
+
+            particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
+            particleRenderer.SetSimulationSpace(simulationSpace);
+            particleRenderer.SetRenderParameters(render);
+        }
+
+        void InitializeStartColor(DataDictionary render)
+        {
             var startColor = new Color(
                 (float)render["startColorR"].Double,
                 (float)render["startColorG"].Double,
                 (float)render["startColorB"].Double);
-            var startColorMin = startColor;
-            var startColorMax = startColor;
+            var min = startColor;
+            var max = startColor;
 
-            if (render.TryGetValue("startColorMinR", out var startColorMinRToken))
+            if (render.TryGetValue("startColorMinR", out var minToken))
             {
-                startColorMin = new Color(
-                    (float)startColorMinRToken.Double,
+                min = new Color(
+                    (float)minToken.Double,
                     (float)render["startColorMinG"].Double,
                     (float)render["startColorMinB"].Double);
             }
 
-            if (render.TryGetValue("startColorMaxR", out var startColorMaxRToken))
+            if (render.TryGetValue("startColorMaxR", out var maxToken))
             {
-                startColorMax = new Color(
-                    (float)render["startColorMaxR"].Double,
+                max = new Color(
+                    (float)maxToken.Double,
                     (float)render["startColorMaxG"].Double,
                     (float)render["startColorMaxB"].Double);
             }
 
+            _startColor = FluxParticleStartColorParameters.New(min, max);
+        }
+
+        void InitializeStartSize(DataDictionary render)
+        {
             var startSize = (float)render["startSize"].Double;
-            var startSizeMin = startSize;
-            var startSizeMax = startSize;
+            var min = startSize;
+            var max = startSize;
 
-            if (render.TryGetValue("startSizeMin", out var startSizeMinToken))
+            if (render.TryGetValue("startSizeMin", out var minToken))
             {
-                startSizeMin = (float)startSizeMinToken.Double;
+                min = (float)minToken.Double;
             }
 
-            if (render.TryGetValue("startSizeMax", out var startSizeMaxToken))
+            if (render.TryGetValue("startSizeMax", out var maxToken))
             {
-                startSizeMax = (float)startSizeMaxToken.Double;
+                max = (float)maxToken.Double;
             }
 
-            particleSimulation.SetVisualSpawnParameters(
-                startColorMin,
-                startColorMax,
-                startSizeMin,
-                startSizeMax);
-            particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render);
+            _startSize = FluxParticleStartSizeParameters.New(min, max);
         }
     }
 }
