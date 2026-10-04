@@ -12,6 +12,7 @@ namespace TpLab.Flux.FX.Editor.Preview
     {
         const int SpawnSeedPeriod = 1048576;
         const int MaxUInt16VertexCount = 65535;
+        const float MinDuration = 0.01f;
 
         readonly FluxParticleSystem _particleSystem;
         readonly FluxParticleAuthoring _authoring;
@@ -55,6 +56,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         int _nextBurstIndex;
         int _spawnCursor;
         int _spawnSeed;
+        bool _emissionCompleted;
 
         int _particleCount;
         int _textureSize;
@@ -107,6 +109,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
+            _emissionCompleted = false;
             _previousTime = EditorApplication.timeSinceStartup;
 
             IsPlaying = true;
@@ -140,6 +143,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
+            _emissionCompleted = false;
             _currentSourceMesh = null;
             _currentSourceMaterial = null;
         }
@@ -220,21 +224,49 @@ namespace TpLab.Flux.FX.Editor.Preview
 
         int UpdateEmission(float deltaTime)
         {
-            var previousTime = _emissionTime;
-            _emissionTime += deltaTime;
+            if (_emissionCompleted) return 0;
 
-            _emissionAccumulator += deltaTime * _authoring.Emission.Rate;
+            var duration = Mathf.Max(_authoring.Playback.Duration, MinDuration);
+            var spawnCount = 0;
+            var remainingTime = deltaTime;
 
-            var rateSpawnCount = Mathf.FloorToInt(_emissionAccumulator);
-
-            if (rateSpawnCount > 0)
+            while (remainingTime > 0)
             {
-                _emissionAccumulator -= rateSpawnCount;
+                var cycleRemainingTime = duration - _emissionTime;
+                var stepTime = Mathf.Min(remainingTime, cycleRemainingTime);
+                var previousTime = _emissionTime;
+
+                _emissionTime += stepTime;
+                _emissionAccumulator += stepTime * _authoring.Emission.Rate;
+
+                var rateSpawnCount = Mathf.FloorToInt(_emissionAccumulator);
+
+                if (rateSpawnCount > 0)
+                {
+                    _emissionAccumulator -= rateSpawnCount;
+                }
+
+                spawnCount += rateSpawnCount;
+                spawnCount += GetBurstSpawnCount(previousTime, _emissionTime);
+
+                remainingTime -= stepTime;
+
+                if (_emissionTime < duration)
+                {
+                    break;
+                }
+
+                if (!_authoring.Playback.Loop)
+                {
+                    _emissionCompleted = true;
+                    break;
+                }
+
+                _emissionTime = 0;
+                _nextBurstIndex = 0;
             }
 
-            var burstSpawnCount = GetBurstSpawnCount(previousTime, _emissionTime);
-
-            return rateSpawnCount + burstSpawnCount;
+            return spawnCount;
         }
 
         int GetBurstSpawnCount(float previousTime, float currentTime)

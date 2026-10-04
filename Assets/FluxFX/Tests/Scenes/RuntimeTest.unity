@@ -1018,12 +1018,10 @@ MonoBehaviour:
   simulationSpace: 1
   playback:
     duration: 2
-    loop: 1
+    loop: 0
   emission:
-    rate: 0
-    bursts:
-    - time: 0.5
-      count: 10
+    rate: 10
+    bursts: []
   lifetime:
     lifetime: 5
     mode: 0
