@@ -37,6 +37,7 @@ namespace TpLab.Flux.FX.Udon
 
         bool _isPlaying;
         object _emission;
+        object _lifetime;
         object _gravity;
 
         /// <summary>
@@ -50,6 +51,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
+
+        /// <summary>
+        /// LifetimeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
 
         /// <summary>
         /// GravityのRuntimeパラメーターを取得します。
@@ -164,24 +171,11 @@ namespace TpLab.Flux.FX.Udon
         {
             var simulationSpace = (int)parameters["simulationSpace"].Double;
 
+            InitializeLifetime(parameters);
             InitializeGravity(parameters);
 
-            particleSimulation.Initialize(parameters, Gravity);
+            particleSimulation.Initialize(parameters, Lifetime, Gravity);
             particleSimulation.SetSimulationSpace(simulationSpace);
-
-            var lifetime = (float)parameters["lifetime"].Double;
-            var lifetimeMin = lifetime;
-            var lifetimeMax = lifetime;
-
-            if (parameters.TryGetValue("lifetimeMin", out var lifetimeMinToken))
-            {
-                lifetimeMin = (float)lifetimeMinToken.Double;
-            }
-
-            if (parameters.TryGetValue("lifetimeMax", out var lifetimeMaxToken))
-            {
-                lifetimeMax = (float)lifetimeMaxToken.Double;
-            }
 
             var shape = parameters["shape"].DataDictionary;
             var shapeType = (int)shape["type"].Double;
@@ -208,14 +202,31 @@ namespace TpLab.Flux.FX.Udon
             }
 
             particleSimulation.SetSpawnParameters(
-                lifetimeMin,
-                lifetimeMax,
                 shapeType,
                 shapeRadius,
                 shapeAngle,
                 shapeSize,
                 initialSpeedMin,
                 initialSpeedMax);
+        }
+
+        void InitializeLifetime(DataDictionary parameters)
+        {
+            var lifetime = (float)parameters["lifetime"].Double;
+            var lifetimeMin = lifetime;
+            var lifetimeMax = lifetime;
+
+            if (parameters.TryGetValue("lifetimeMin", out var lifetimeMinToken))
+            {
+                lifetimeMin = (float)lifetimeMinToken.Double;
+            }
+
+            if (parameters.TryGetValue("lifetimeMax", out var lifetimeMaxToken))
+            {
+                lifetimeMax = (float)lifetimeMaxToken.Double;
+            }
+
+            _lifetime = FluxParticleLifetimeParameters.New(lifetimeMin, lifetimeMax);
         }
 
         void InitializeGravity(DataDictionary parameters)

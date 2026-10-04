@@ -26,12 +26,19 @@ namespace TpLab.Flux.FX.Udon
 
         float _simulationTime;
         float _noiseSpeed;
+        object _lifetime;
         object _gravity;
+
+        FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
 
         FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
-        internal void Initialize(DataDictionary parameters, FluxParticleGravityParameters gravity)
+        internal void Initialize(
+            DataDictionary parameters,
+            FluxParticleLifetimeParameters lifetime,
+            FluxParticleGravityParameters gravity)
         {
+            _lifetime = lifetime;
             _gravity = gravity;
 
             ApplyVelocityParameters(parameters);
@@ -55,8 +62,6 @@ namespace TpLab.Flux.FX.Udon
         }
 
         internal void SetSpawnParameters(
-            float lifetimeMin,
-            float lifetimeMax,
             int shapeType,
             float shapeRadius,
             float shapeAngle,
@@ -64,8 +69,6 @@ namespace TpLab.Flux.FX.Udon
             float initialSpeedMin,
             float initialSpeedMax)
         {
-            velocityUpdateKernel.SetFloat("_LifetimeMin", lifetimeMin);
-            velocityUpdateKernel.SetFloat("_LifetimeMax", lifetimeMax);
             velocityUpdateKernel.SetFloat("_InitialSpeedMin", initialSpeedMin);
             velocityUpdateKernel.SetFloat("_InitialSpeedMax", initialSpeedMax);
             velocityUpdateKernel.SetFloat("_ShapeType", shapeType);
@@ -200,6 +203,12 @@ namespace TpLab.Flux.FX.Udon
         void UpdateVelocity(float deltaTime)
         {
             var gravity = Gravity.GetGravity();
+
+            if (particleEmitter.SpawnCount > 0)
+            {
+                velocityUpdateKernel.SetFloat("_LifetimeMin", Lifetime.GetMin());
+                velocityUpdateKernel.SetFloat("_LifetimeMax", Lifetime.GetMax());
+            }
 
             velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);

@@ -14,6 +14,8 @@ namespace TpLab.Flux.FX.Tests.Udon
         {
             fluxParticleSystem.Emission.SetRate(100f);
             fluxParticleSystem.Gravity.SetGravity(Vector3.up * 5f);
+            fluxParticleSystem.Lifetime.SetMin(0.5f);
+            fluxParticleSystem.Lifetime.SetMax(0.5f);            
         }
     }
 }
