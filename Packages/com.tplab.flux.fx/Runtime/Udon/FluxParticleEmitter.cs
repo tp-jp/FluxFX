@@ -19,6 +19,7 @@ namespace TpLab.Flux.FX.Udon
         int _particleCount;
         int _spawnCursor;
         int _spawnSeed;
+        float _startDelay;
         float _startDelayRemaining;
         float _duration;
         bool _loop;
@@ -43,9 +44,11 @@ namespace TpLab.Flux.FX.Udon
             _burstTimes = burstTimes;
             _burstCounts = burstCounts;
             _particleCount = particleCount;
-            _startDelayRemaining = Mathf.Max(0, startDelay);
+            _startDelay = Mathf.Max(0, startDelay);
             _duration = Mathf.Max(duration, MinDuration);
             _loop = loop;
+
+            ResetPlayback();
         }
 
         internal void UpdateEmission(float deltaTime)
@@ -106,6 +109,19 @@ namespace TpLab.Flux.FX.Udon
 
             _spawnCursor = (_spawnCursor + SpawnCount) % _particleCount;
             _spawnSeed = (_spawnSeed + SpawnCount) % SpawnSeedPeriod;
+        }
+
+        internal void ResetPlayback()
+        {
+            _emissionAccumulator = 0;
+            _emissionTime = 0;
+            _startDelayRemaining = _startDelay;
+            _nextBurstIndex = 0;
+            _emissionCompleted = false;
+
+            SpawnStart = _spawnCursor;
+            SpawnSeedStart = _spawnSeed;
+            SpawnCount = 0;
         }
 
         int GetBurstSpawnCount(float previousTime, float currentTime)

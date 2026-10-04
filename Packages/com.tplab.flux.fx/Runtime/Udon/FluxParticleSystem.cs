@@ -17,6 +17,9 @@ namespace TpLab.Flux.FX.Udon
         int particleCount = 64;
 
         [SerializeField]
+        bool playOnAwake = true;
+
+        [SerializeField]
         FluxParticleState particleState;
 
         [SerializeField]
@@ -31,11 +34,41 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string compiledParameters;
 
+        bool _isPlaying;
+
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
         /// </summary>
         [PublicAPI]
         public int ParticleCount => particleCount;
+
+        /// <summary>
+        /// ParticleのEmissionを開始または再開します。
+        /// </summary>
+        [PublicAPI]
+        public void Play()
+        {
+            _isPlaying = true;
+        }
+
+        /// <summary>
+        /// ParticleのEmissionを停止します。既存のParticleはSimulationを継続します。
+        /// </summary>
+        [PublicAPI]
+        public void Stop()
+        {
+            _isPlaying = false;
+        }
+
+        /// <summary>
+        /// 既存のParticleを維持したままEmissionのタイムラインを先頭から再開します。
+        /// </summary>
+        [PublicAPI]
+        public void Restart()
+        {
+            particleEmitter.ResetPlayback();
+            _isPlaying = true;
+        }
 
         void Start()
         {
@@ -45,13 +78,15 @@ namespace TpLab.Flux.FX.Udon
 
             particleRenderer.Initialize(particleCount);
             particleRenderer.SetState(particleState);
+
+            _isPlaying = playOnAwake;
         }
 
         void Update()
         {
             var deltaTime = Time.deltaTime;
 
-            particleEmitter.UpdateEmission(deltaTime);
+            particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
             particleSimulation.SetSystemTransform(transform.position, transform.rotation, transform.lossyScale);
             particleSimulation.Simulate(deltaTime);
             particleRenderer.SetState(particleState);
