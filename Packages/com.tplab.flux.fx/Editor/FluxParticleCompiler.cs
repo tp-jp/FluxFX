@@ -13,6 +13,7 @@ namespace TpLab.Flux.FX.Editor
                 ["simulationSpace"] = (int)authoring.SimulationSpace
             };
 
+            AddPlayback(parameters, authoring.Playback);
             AddEmission(parameters, authoring.Emission);
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
@@ -26,6 +27,15 @@ namespace TpLab.Flux.FX.Editor
             AddRender(parameters, authoring.Render);
 
             return parameters.ToString(Formatting.None);
+        }
+
+        void AddPlayback(JObject parameters, PlaybackSettings playback)
+        {
+            parameters["playback"] = new JObject
+            {
+                ["duration"] = playback.Duration,
+                ["loop"] = playback.Loop
+            };
         }
 
         void AddEmission(JObject parameters, EmissionSettings emission)

@@ -63,6 +63,10 @@ namespace TpLab.Flux.FX.Udon
 
         void InitializeEmitter(DataDictionary parameters)
         {
+            var playback = parameters["playback"].DataDictionary;
+            var duration = (float)playback["duration"].Double;
+            var loop = playback["loop"].Boolean;
+
             var emission = parameters["emission"].DataDictionary;
             var emissionRate = (float)emission["rate"].Double;
             var bursts = emission["bursts"].DataList;
@@ -77,7 +81,13 @@ namespace TpLab.Flux.FX.Udon
                 burstCounts[i] = (int)burst["count"].Double;
             }
 
-            particleEmitter.Initialize(emissionRate, burstTimes, burstCounts, particleCount);
+            particleEmitter.Initialize(
+                emissionRate,
+                burstTimes,
+                burstCounts,
+                particleCount,
+                duration,
+                loop);
         }
 
         void InitializeSimulation(DataDictionary parameters)

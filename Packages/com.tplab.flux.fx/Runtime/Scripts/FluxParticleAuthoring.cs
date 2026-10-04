@@ -11,6 +11,9 @@ namespace TpLab.Flux.FX.Scripts
         FluxParticleSimulationSpace simulationSpace;
 
         [SerializeField]
+        PlaybackSettings playback = new PlaybackSettings();
+
+        [SerializeField]
         EmissionSettings emission = new EmissionSettings();
 
         [SerializeField]
@@ -44,6 +47,8 @@ namespace TpLab.Flux.FX.Scripts
         RenderSettings render = new RenderSettings();
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
+
+        public PlaybackSettings Playback => playback;
 
         public EmissionSettings Emission => emission;
 
@@ -118,6 +123,21 @@ namespace TpLab.Flux.FX.Scripts
     {
         Linear,
         Curve
+    }
+
+    [Serializable]
+    public class PlaybackSettings
+    {
+        [SerializeField]
+        [Min(0.01f)]
+        float duration = 5.0f;
+
+        [SerializeField]
+        bool loop = true;
+
+        public float Duration => duration;
+
+        public bool Loop => loop;
     }
 
     [Serializable]

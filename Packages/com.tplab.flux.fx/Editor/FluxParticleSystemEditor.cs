@@ -18,6 +18,7 @@ namespace TpLab.Flux.FX.Editor
         SerializedObject _authoringObject;
 
         SerializedProperty _simulationSpace;
+        SerializedProperty _playback;
         SerializedProperty _emission;
         SerializedProperty _lifetime;
         SerializedProperty _shape;
@@ -41,6 +42,7 @@ namespace TpLab.Flux.FX.Editor
             _authoringObject = new SerializedObject(authoring);
 
             _simulationSpace = _authoringObject.FindProperty("simulationSpace");
+            _playback = _authoringObject.FindProperty("playback");
             _emission = _authoringObject.FindProperty("emission");
             _lifetime = _authoringObject.FindProperty("lifetime");
             _shape = _authoringObject.FindProperty("shape");
@@ -167,6 +169,8 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.LabelField("Main", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
+            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("duration"), new GUIContent("Duration"));
+            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("loop"), new GUIContent("Loop"));
             DrawLifetime();
             EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
         }
