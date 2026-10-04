@@ -2,6 +2,7 @@ using TpLab.Flux.FX.Editor.Preview;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor
@@ -13,6 +14,7 @@ namespace TpLab.Flux.FX.Editor
         const float SectionHeaderHeight = 30.0f;
         const float SectionSpacing = 6.0f;
         const float ModuleHeaderHeight = 22.0f;
+        const float BurstFieldSpacing = 8.0f;
 
         const string SessionStatePrefix = "TpLab.FluxFX.ParticleSystemInspector.";
 
@@ -67,6 +69,8 @@ namespace TpLab.Flux.FX.Editor
         SerializedProperty _limitVelocity;
         SerializedProperty _render;
 
+        ReorderableList _burstList;
+
         FluxParticlePreview _preview;
 
         GUIStyle _sectionHeaderLabelStyle;
@@ -97,6 +101,8 @@ namespace TpLab.Flux.FX.Editor
             _vortex = _authoringObject.FindProperty("vortex");
             _limitVelocity = _authoringObject.FindProperty("limitVelocity");
             _render = _authoringObject.FindProperty("render");
+
+            InitializeBurstList();
 
             _preview = new FluxParticlePreview(particleSystem, authoring);
         }
@@ -227,8 +233,11 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space(2);
 
-            EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"));
-            EditorGUILayout.PropertyField(_emission.FindPropertyRelative("bursts"), true);
+            EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"), new GUIContent("Rate over Time"));
+
+            EditorGUILayout.Space(4);
+
+            _burstList.DoLayoutList();
         }
 
         void DrawLifetime()
@@ -754,6 +763,67 @@ namespace TpLab.Flux.FX.Editor
 
             _moduleHeaderLabelStyle = new GUIStyle(EditorStyles.boldLabel);
             _moduleHeaderLabelStyle.alignment = TextAnchor.MiddleLeft;
+        }
+
+        void InitializeBurstList()
+        {
+            var bursts = _emission.FindPropertyRelative("bursts");
+
+            _burstList = new ReorderableList(
+                _authoringObject,
+                bursts,
+                true,
+                true,
+                true,
+                true);
+
+            _burstList.drawHeaderCallback = rect =>
+            {
+                var fieldWidth = (rect.width - BurstFieldSpacing) * 0.5f;
+
+                var timeRect = new Rect(
+                    rect.x,
+                    rect.y,
+                    fieldWidth,
+                    rect.height);
+
+                var countRect = new Rect(
+                    timeRect.xMax + BurstFieldSpacing,
+                    rect.y,
+                    fieldWidth,
+                    rect.height);
+
+                EditorGUI.LabelField(timeRect, "Time");
+                EditorGUI.LabelField(countRect, "Count");
+            };
+
+            _burstList.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                var burst = bursts.GetArrayElementAtIndex(index);
+                var time = burst.FindPropertyRelative("time");
+                var count = burst.FindPropertyRelative("count");
+
+                rect.y += 2;
+
+                var fieldWidth = (rect.width - BurstFieldSpacing) * 0.5f;
+
+                var timeRect = new Rect(
+                    rect.x,
+                    rect.y,
+                    fieldWidth,
+                    EditorGUIUtility.singleLineHeight);
+
+                var countRect = new Rect(
+                    timeRect.xMax + BurstFieldSpacing,
+                    rect.y,
+                    fieldWidth,
+                    EditorGUIUtility.singleLineHeight);
+
+                EditorGUI.PropertyField(timeRect, time, GUIContent.none);
+                EditorGUI.PropertyField(countRect, count, GUIContent.none);
+            };
+
+            _burstList.elementHeight = EditorGUIUtility.singleLineHeight + 4;
         }
 
         void LoadExpandedStates()

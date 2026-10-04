@@ -980,7 +980,7 @@ GameObject:
   - component: {fileID: 1217573531}
   - component: {fileID: 1217573530}
   m_Layer: 0
-  m_Name: ParticleSystem
+  m_Name: FluxParticleSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1018,11 +1018,17 @@ MonoBehaviour:
   simulationSpace: 1
   playback:
     startDelay: 0
-    duration: 2
-    loop: 1
+    duration: 3
+    loop: 0
   emission:
-    rate: 10
-    bursts: []
+    rate: 0
+    bursts:
+    - time: 0
+      count: 10
+    - time: 1
+      count: 20
+    - time: 2
+      count: 30
   lifetime:
     lifetime: 5
     mode: 0
