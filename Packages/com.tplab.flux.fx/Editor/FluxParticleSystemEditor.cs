@@ -23,6 +23,7 @@ namespace TpLab.Flux.FX.Editor
         SerializedProperty _lifetime;
         SerializedProperty _shape;
         SerializedProperty _initialVelocity;
+        SerializedProperty _velocityOverLifetime;
         SerializedProperty _gravity;
         SerializedProperty _force;
         SerializedProperty _drag;
@@ -47,6 +48,7 @@ namespace TpLab.Flux.FX.Editor
             _lifetime = _authoringObject.FindProperty("lifetime");
             _shape = _authoringObject.FindProperty("shape");
             _initialVelocity = _authoringObject.FindProperty("initialVelocity");
+            _velocityOverLifetime = _authoringObject.FindProperty("velocityOverLifetime");
             _gravity = _authoringObject.FindProperty("gravity");
             _force = _authoringObject.FindProperty("force");
             _drag = _authoringObject.FindProperty("drag");
@@ -255,6 +257,7 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space();
 
+            DrawModule("Velocity over Lifetime", _velocityOverLifetime);
             DrawModule("Gravity", _gravity);
             DrawModule("Force", _force);
             DrawModule("Drag", _drag);

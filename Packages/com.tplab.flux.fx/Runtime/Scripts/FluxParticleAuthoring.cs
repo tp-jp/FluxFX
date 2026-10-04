@@ -27,6 +27,9 @@ namespace TpLab.Flux.FX.Scripts
         InitialVelocitySettings initialVelocity = new InitialVelocitySettings();
 
         [SerializeField]
+        VelocityOverLifetimeSettings velocityOverLifetime = new VelocityOverLifetimeSettings();
+
+        [SerializeField]
         GravitySettings gravity = new GravitySettings();
 
         [SerializeField]
@@ -58,6 +61,8 @@ namespace TpLab.Flux.FX.Scripts
         public ShapeSettings Shape => shape;
 
         public InitialVelocitySettings InitialVelocity => initialVelocity;
+
+        public VelocityOverLifetimeSettings VelocityOverLifetime => velocityOverLifetime;
 
         public GravitySettings Gravity => gravity;
 
@@ -246,6 +251,25 @@ namespace TpLab.Flux.FX.Scripts
         public float Min => min;
 
         public float Max => max;
+    }
+
+    [Serializable]
+    public class VelocityOverLifetimeSettings
+    {
+        [SerializeField]
+        bool enabled;
+
+        [SerializeField]
+        Vector3 start;
+
+        [SerializeField]
+        Vector3 end;
+
+        public bool Enabled => enabled;
+
+        public Vector3 Start => start;
+
+        public Vector3 End => end;
     }
 
     [Serializable]

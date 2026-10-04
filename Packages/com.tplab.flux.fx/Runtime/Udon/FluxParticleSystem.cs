@@ -272,7 +272,7 @@ namespace TpLab.Flux.FX.Udon
             InitializeLifetime(parameters);
             InitializeShape(parameters);
             InitializeInitialVelocity(parameters);
-            InitializeVelocityOverLifetime();
+            InitializeVelocityOverLifetime(parameters);
             InitializeGravity(parameters);
             InitializeForce(parameters);
             InitializeDrag(parameters);
@@ -349,9 +349,28 @@ namespace TpLab.Flux.FX.Udon
             _initialVelocity = FluxParticleInitialVelocityParameters.New(min, max);
         }
 
-        void InitializeVelocityOverLifetime()
+        void InitializeVelocityOverLifetime(DataDictionary parameters)
         {
-            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(false, Vector3.zero, Vector3.zero);
+            var enabled = false;
+            var start = Vector3.zero;
+            var end = Vector3.zero;
+
+            if (parameters.TryGetValue("velocityOverLifetime", out var token))
+            {
+                var velocity = token.DataDictionary;
+
+                enabled = true;
+                start = new Vector3(
+                    (float)velocity["startX"].Double,
+                    (float)velocity["startY"].Double,
+                    (float)velocity["startZ"].Double);
+                end = new Vector3(
+                    (float)velocity["endX"].Double,
+                    (float)velocity["endY"].Double,
+                    (float)velocity["endZ"].Double);
+            }
+
+            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(enabled, start, end);
         }
 
         void InitializeGravity(DataDictionary parameters)

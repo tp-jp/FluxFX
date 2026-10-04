@@ -18,6 +18,7 @@ namespace TpLab.Flux.FX.Editor
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
+            AddVelocityOverLifetime(parameters, authoring.VelocityOverLifetime);
             AddGravity(parameters, authoring.Gravity);
             AddForce(parameters, authoring.Force);
             AddDrag(parameters, authoring.Drag);
@@ -100,6 +101,21 @@ namespace TpLab.Flux.FX.Editor
                 ["speed"] = initialVelocity.Speed,
                 ["speedMin"] = speedMin,
                 ["speedMax"] = speedMax
+            };
+        }
+
+        void AddVelocityOverLifetime(JObject parameters, VelocityOverLifetimeSettings velocityOverLifetime)
+        {
+            if (!velocityOverLifetime.Enabled) return;
+
+            parameters["velocityOverLifetime"] = new JObject
+            {
+                ["startX"] = velocityOverLifetime.Start.x,
+                ["startY"] = velocityOverLifetime.Start.y,
+                ["startZ"] = velocityOverLifetime.Start.z,
+                ["endX"] = velocityOverLifetime.End.x,
+                ["endY"] = velocityOverLifetime.End.y,
+                ["endZ"] = velocityOverLifetime.End.z
             };
         }
 

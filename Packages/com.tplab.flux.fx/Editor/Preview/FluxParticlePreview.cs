@@ -368,6 +368,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)
         {
             var shapeSize = _authoring.Shape.Size;
+            var velocityOverLifetime = _authoring.VelocityOverLifetime;
             var systemTransform = _particleSystem.transform;
             var systemPosition = systemTransform.position;
             var systemRotation = systemTransform.rotation;
@@ -384,6 +385,9 @@ namespace TpLab.Flux.FX.Editor.Preview
             _positionMaterial.SetVector("_SystemPosition", new Vector4(systemPosition.x, systemPosition.y, systemPosition.z, 0));
             _positionMaterial.SetVector("_SystemRotation", new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
             _positionMaterial.SetVector("_SystemScale", new Vector4(systemScale.x, systemScale.y, systemScale.z, 0));
+            _positionMaterial.SetFloat("_VelocityOverLifetimeEnabled", velocityOverLifetime.Enabled ? 1.0f : 0.0f);
+            _positionMaterial.SetVector("_VelocityOverLifetimeStart", velocityOverLifetime.Start);
+            _positionMaterial.SetVector("_VelocityOverLifetimeEnd", velocityOverLifetime.End);
             _positionMaterial.SetTexture("_VelocityTex", _nextVelocity);
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }
