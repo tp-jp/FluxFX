@@ -43,7 +43,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
-      Data: 24
+      Data: 25
     - Name: 
       Entry: 7
       Data: 
@@ -730,13 +730,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _gravity
+      Data: _velocityOverLifetime
     - Name: $v
       Entry: 7
       Data: 43|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _gravity
+      Data: _velocityOverLifetime
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -778,13 +778,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _force
+      Data: _gravity
     - Name: $v
       Entry: 7
       Data: 45|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _force
+      Data: _gravity
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -826,13 +826,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _drag
+      Data: _force
     - Name: $v
       Entry: 7
       Data: 47|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _drag
+      Data: _force
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -874,13 +874,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _noise
+      Data: _drag
     - Name: $v
       Entry: 7
       Data: 49|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _noise
+      Data: _drag
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -922,13 +922,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _vortex
+      Data: _noise
     - Name: $v
       Entry: 7
       Data: 51|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _vortex
+      Data: _noise
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -970,13 +970,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _limitVelocity
+      Data: _vortex
     - Name: $v
       Entry: 7
       Data: 53|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _limitVelocity
+      Data: _vortex
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1018,13 +1018,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _startColor
+      Data: _limitVelocity
     - Name: $v
       Entry: 7
       Data: 55|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _startColor
+      Data: _limitVelocity
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1066,13 +1066,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _startSize
+      Data: _startColor
     - Name: $v
       Entry: 7
       Data: 57|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _startSize
+      Data: _startColor
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1114,13 +1114,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _startRotation
+      Data: _startSize
     - Name: $v
       Entry: 7
       Data: 59|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _startRotation
+      Data: _startSize
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1162,13 +1162,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _colorOverLifetime
+      Data: _startRotation
     - Name: $v
       Entry: 7
       Data: 61|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _colorOverLifetime
+      Data: _startRotation
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1210,13 +1210,13 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _sizeOverLifetime
+      Data: _colorOverLifetime
     - Name: $v
       Entry: 7
       Data: 63|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: _sizeOverLifetime
+      Data: _colorOverLifetime
     - Name: <UserType>k__BackingField
       Entry: 9
       Data: 35
@@ -1258,10 +1258,58 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: _rotationOverLifetime
+      Data: _sizeOverLifetime
     - Name: $v
       Entry: 7
       Data: 65|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: <Name>k__BackingField
+      Entry: 1
+      Data: _sizeOverLifetime
+    - Name: <UserType>k__BackingField
+      Entry: 9
+      Data: 35
+    - Name: <SystemType>k__BackingField
+      Entry: 9
+      Data: 35
+    - Name: <SyncMode>k__BackingField
+      Entry: 7
+      Data: System.Nullable`1[[UdonSharp.UdonSyncMode, UdonSharp.Runtime]], mscorlib
+    - Name: 
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: <IsSerialized>k__BackingField
+      Entry: 5
+      Data: false
+    - Name: _fieldAttributes
+      Entry: 7
+      Data: 66|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: _rotationOverLifetime
+    - Name: $v
+      Entry: 7
+      Data: 67|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
       Data: _rotationOverLifetime
@@ -1285,7 +1333,7 @@ MonoBehaviour:
       Data: false
     - Name: _fieldAttributes
       Entry: 7
-      Data: 66|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 68|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 0

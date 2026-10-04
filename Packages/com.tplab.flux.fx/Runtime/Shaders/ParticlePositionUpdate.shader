@@ -35,6 +35,9 @@ Shader "FluxFX/ParticlePositionUpdate"
             float4 _SystemPosition;
             float4 _SystemRotation;
             float4 _SystemScale;
+            float _VelocityOverLifetimeEnabled;
+            float4 _VelocityOverLifetimeStart;
+            float4 _VelocityOverLifetimeEnd;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnSeedStart;
@@ -137,6 +140,21 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return position;
             }
 
+            float3 EvaluateVelocityOverLifetime(float age, float lifetime)
+            {
+                if (_VelocityOverLifetimeEnabled < 0.5 || lifetime <= 0)
+                {
+                    return 0;
+                }
+
+                float normalizedAge = saturate(age / lifetime);
+
+                return lerp(
+                    _VelocityOverLifetimeStart.xyz,
+                    _VelocityOverLifetimeEnd.xyz,
+                    normalizedAge);
+            }
+
             float4 frag(v2f_img i) : SV_Target
             {
                 uint index = FluxGetDestinationIndex(i.uv);
@@ -167,7 +185,9 @@ Shader "FluxFX/ParticlePositionUpdate"
                 if (!isActive)
                     return 0;
 
-                position.xyz += velocity.xyz * _DeltaTime;
+                float3 velocityOverLifetime = EvaluateVelocityOverLifetime(position.w, velocity.w);
+
+                position.xyz += (velocity.xyz + velocityOverLifetime) * _DeltaTime;
                 position.w += _DeltaTime;
 
                 return position;

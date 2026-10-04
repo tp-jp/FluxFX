@@ -40,6 +40,7 @@ namespace TpLab.Flux.FX.Udon
         object _lifetime;
         object _shape;
         object _initialVelocity;
+        object _velocityOverLifetime;
         object _gravity;
         object _force;
         object _drag;
@@ -82,6 +83,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
+
+        /// <summary>
+        /// Velocity over LifetimeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
 
         /// <summary>
         /// GravityのRuntimeパラメーターを取得します。
@@ -265,6 +272,7 @@ namespace TpLab.Flux.FX.Udon
             InitializeLifetime(parameters);
             InitializeShape(parameters);
             InitializeInitialVelocity(parameters);
+            InitializeVelocityOverLifetime();
             InitializeGravity(parameters);
             InitializeForce(parameters);
             InitializeDrag(parameters);
@@ -276,6 +284,7 @@ namespace TpLab.Flux.FX.Udon
                 Lifetime,
                 Shape,
                 InitialVelocity,
+                VelocityOverLifetime,
                 Gravity,
                 Force,
                 Drag,
@@ -338,6 +347,11 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _initialVelocity = FluxParticleInitialVelocityParameters.New(min, max);
+        }
+
+        void InitializeVelocityOverLifetime()
+        {
+            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(false, Vector3.zero, Vector3.zero);
         }
 
         void InitializeGravity(DataDictionary parameters)

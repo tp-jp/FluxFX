@@ -27,6 +27,7 @@ namespace TpLab.Flux.FX.Udon
         object _lifetime;
         object _shape;
         object _initialVelocity;
+        object _velocityOverLifetime;
         object _gravity;
         object _force;
         object _drag;
@@ -41,6 +42,8 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
 
         FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
+
+        FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
 
         FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
@@ -62,6 +65,7 @@ namespace TpLab.Flux.FX.Udon
             FluxParticleLifetimeParameters lifetime,
             FluxParticleShapeParameters shape,
             FluxParticleInitialVelocityParameters initialVelocity,
+            FluxParticleVelocityOverLifetimeParameters velocityOverLifetime,
             FluxParticleGravityParameters gravity,
             FluxParticleForceParameters force,
             FluxParticleDragParameters drag,
@@ -72,6 +76,7 @@ namespace TpLab.Flux.FX.Udon
             _lifetime = lifetime;
             _shape = shape;
             _initialVelocity = initialVelocity;
+            _velocityOverLifetime = velocityOverLifetime;
             _gravity = gravity;
             _force = force;
             _drag = drag;
@@ -165,6 +170,12 @@ namespace TpLab.Flux.FX.Udon
                 positionUpdateKernel.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
             }
 
+            var velocityOverLifetimeStart = VelocityOverLifetime.GetStart();
+            var velocityOverLifetimeEnd = VelocityOverLifetime.GetEnd();
+
+            positionUpdateKernel.SetFloat("_VelocityOverLifetimeEnabled", VelocityOverLifetime.GetEnabled() ? 1.0f : 0.0f);
+            positionUpdateKernel.SetVector("_VelocityOverLifetimeStart", new Vector4(velocityOverLifetimeStart.x, velocityOverLifetimeStart.y, velocityOverLifetimeStart.z, 0));
+            positionUpdateKernel.SetVector("_VelocityOverLifetimeEnd", new Vector4(velocityOverLifetimeEnd.x, velocityOverLifetimeEnd.y, velocityOverLifetimeEnd.z, 0));
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             positionUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
