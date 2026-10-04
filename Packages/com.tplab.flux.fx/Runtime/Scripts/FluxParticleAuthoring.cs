@@ -265,11 +265,21 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         Vector3 end;
 
+        [SerializeField]
+        Vector3 offset;
+
+        [SerializeField]
+        float radial;
+
         public bool Enabled => enabled;
 
         public Vector3 Start => start;
 
         public Vector3 End => end;
+
+        public Vector3 Offset => offset;
+
+        public float Radial => radial;
     }
 
     [Serializable]

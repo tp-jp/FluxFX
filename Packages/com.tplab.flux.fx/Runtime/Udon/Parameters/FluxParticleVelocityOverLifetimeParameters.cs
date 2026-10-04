@@ -9,6 +9,8 @@ namespace TpLab.Flux.FX.Udon.Parameters
         Enabled,
         Start,
         End,
+        Offset,
+        Radial,
 
         Count
     }
@@ -26,6 +28,8 @@ namespace TpLab.Flux.FX.Udon.Parameters
             data[(int)FluxParticleVelocityOverLifetimeParameter.Enabled] = enabled;
             data[(int)FluxParticleVelocityOverLifetimeParameter.Start] = new DataToken(start);
             data[(int)FluxParticleVelocityOverLifetimeParameter.End] = new DataToken(end);
+            data[(int)FluxParticleVelocityOverLifetimeParameter.Offset] = new DataToken(Vector3.zero);
+            data[(int)FluxParticleVelocityOverLifetimeParameter.Radial] = 0.0f;
 
             return (FluxParticleVelocityOverLifetimeParameters)new DataList(data);
         }
@@ -101,6 +105,50 @@ namespace TpLab.Flux.FX.Udon.Parameters
         public static void SetEnd(this FluxParticleVelocityOverLifetimeParameters parameters, Vector3 end)
         {
             parameters[(int)FluxParticleVelocityOverLifetimeParameter.End] = new DataToken(end);
+        }
+
+        /// <summary>
+        /// Radial Velocityの中心Offsetを取得します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <returns>Radial Velocityの中心Offset</returns>
+        [PublicAPI]
+        public static Vector3 GetOffset(this FluxParticleVelocityOverLifetimeParameters parameters)
+        {
+            return (Vector3)parameters[(int)FluxParticleVelocityOverLifetimeParameter.Offset].Reference;
+        }
+
+        /// <summary>
+        /// Radial Velocityの中心Offsetを設定します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <param name="offset">Radial Velocityの中心Offset</param>
+        [PublicAPI]
+        public static void SetOffset(this FluxParticleVelocityOverLifetimeParameters parameters, Vector3 offset)
+        {
+            parameters[(int)FluxParticleVelocityOverLifetimeParameter.Offset] = new DataToken(offset);
+        }
+
+        /// <summary>
+        /// 中心から放射方向へ加算するVelocityを取得します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <returns>放射方向へ加算するVelocity</returns>
+        [PublicAPI]
+        public static float GetRadial(this FluxParticleVelocityOverLifetimeParameters parameters)
+        {
+            return (float)parameters[(int)FluxParticleVelocityOverLifetimeParameter.Radial].Double;
+        }
+
+        /// <summary>
+        /// 中心から放射方向へ加算するVelocityを設定します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <param name="radial">放射方向へ加算するVelocity</param>
+        [PublicAPI]
+        public static void SetRadial(this FluxParticleVelocityOverLifetimeParameters parameters, float radial)
+        {
+            parameters[(int)FluxParticleVelocityOverLifetimeParameter.Radial] = radial;
         }
     }
 }

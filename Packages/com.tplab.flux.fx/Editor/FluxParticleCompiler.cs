@@ -115,7 +115,11 @@ namespace TpLab.Flux.FX.Editor
                 ["startZ"] = velocityOverLifetime.Start.z,
                 ["endX"] = velocityOverLifetime.End.x,
                 ["endY"] = velocityOverLifetime.End.y,
-                ["endZ"] = velocityOverLifetime.End.z
+                ["endZ"] = velocityOverLifetime.End.z,
+                ["offsetX"] = velocityOverLifetime.Offset.x,
+                ["offsetY"] = velocityOverLifetime.Offset.y,
+                ["offsetZ"] = velocityOverLifetime.Offset.z,
+                ["radial"] = velocityOverLifetime.Radial
             };
         }
 

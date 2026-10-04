@@ -1039,9 +1039,11 @@ MonoBehaviour:
     min: 0.5
     max: 3
   velocityOverLifetime:
-    enabled: 0
+    enabled: 1
     start: {x: 0, y: 0, z: 0}
-    end: {x: 0, y: 5, z: 0}
+    end: {x: 0, y: 0, z: 0}
+    offset: {x: 0, y: 0, z: 0}
+    radial: 2
   gravity:
     enabled: 0
     gravity: {x: 0, y: -1, z: 0}

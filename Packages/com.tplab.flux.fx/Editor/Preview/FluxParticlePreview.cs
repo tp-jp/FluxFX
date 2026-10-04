@@ -388,6 +388,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             _positionMaterial.SetFloat("_VelocityOverLifetimeEnabled", velocityOverLifetime.Enabled ? 1.0f : 0.0f);
             _positionMaterial.SetVector("_VelocityOverLifetimeStart", velocityOverLifetime.Start);
             _positionMaterial.SetVector("_VelocityOverLifetimeEnd", velocityOverLifetime.End);
+            _positionMaterial.SetVector("_VelocityOverLifetimeOffset", velocityOverLifetime.Offset);
+            _positionMaterial.SetFloat("_VelocityOverLifetimeRadial", velocityOverLifetime.Radial);
             _positionMaterial.SetTexture("_VelocityTex", _nextVelocity);
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }

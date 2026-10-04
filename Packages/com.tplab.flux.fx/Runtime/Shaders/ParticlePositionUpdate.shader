@@ -38,6 +38,8 @@ Shader "FluxFX/ParticlePositionUpdate"
             float _VelocityOverLifetimeEnabled;
             float4 _VelocityOverLifetimeStart;
             float4 _VelocityOverLifetimeEnd;
+            float4 _VelocityOverLifetimeOffset;
+            float _VelocityOverLifetimeRadial;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnSeedStart;
@@ -140,7 +142,21 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return position;
             }
 
-            float3 EvaluateVelocityOverLifetime(float age, float lifetime)
+            float3 GetVelocityOverLifetimeCenter()
+            {
+                float3 center = _VelocityOverLifetimeOffset.xyz;
+
+                if (_SimulationSpace > 0.5)
+                {
+                    center *= _SystemScale.xyz;
+                    center = RotateVector(center, _SystemRotation);
+                    center += _SystemPosition.xyz;
+                }
+
+                return center;
+            }
+
+            float3 EvaluateVelocityOverLifetime(float3 position, float age, float lifetime)
             {
                 if (_VelocityOverLifetimeEnabled < 0.5 || lifetime <= 0)
                 {
@@ -148,11 +164,20 @@ Shader "FluxFX/ParticlePositionUpdate"
                 }
 
                 float normalizedAge = saturate(age / lifetime);
-
-                return lerp(
+                float3 velocity = lerp(
                     _VelocityOverLifetimeStart.xyz,
                     _VelocityOverLifetimeEnd.xyz,
                     normalizedAge);
+
+                float3 radialOffset = position - GetVelocityOverLifetimeCenter();
+                float radialDistance = length(radialOffset);
+
+                if (radialDistance > 0.00001)
+                {
+                    velocity += radialOffset / radialDistance * _VelocityOverLifetimeRadial;
+                }
+
+                return velocity;
             }
 
             float4 frag(v2f_img i) : SV_Target
@@ -185,7 +210,7 @@ Shader "FluxFX/ParticlePositionUpdate"
                 if (!isActive)
                     return 0;
 
-                float3 velocityOverLifetime = EvaluateVelocityOverLifetime(position.w, velocity.w);
+                float3 velocityOverLifetime = EvaluateVelocityOverLifetime(position.xyz, position.w, velocity.w);
 
                 position.xyz += (velocity.xyz + velocityOverLifetime) * _DeltaTime;
                 position.w += _DeltaTime;

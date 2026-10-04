@@ -172,10 +172,13 @@ namespace TpLab.Flux.FX.Udon
 
             var velocityOverLifetimeStart = VelocityOverLifetime.GetStart();
             var velocityOverLifetimeEnd = VelocityOverLifetime.GetEnd();
+            var velocityOverLifetimeOffset = VelocityOverLifetime.GetOffset();
 
             positionUpdateKernel.SetFloat("_VelocityOverLifetimeEnabled", VelocityOverLifetime.GetEnabled() ? 1.0f : 0.0f);
             positionUpdateKernel.SetVector("_VelocityOverLifetimeStart", new Vector4(velocityOverLifetimeStart.x, velocityOverLifetimeStart.y, velocityOverLifetimeStart.z, 0));
             positionUpdateKernel.SetVector("_VelocityOverLifetimeEnd", new Vector4(velocityOverLifetimeEnd.x, velocityOverLifetimeEnd.y, velocityOverLifetimeEnd.z, 0));
+            positionUpdateKernel.SetVector("_VelocityOverLifetimeOffset", new Vector4(velocityOverLifetimeOffset.x, velocityOverLifetimeOffset.y, velocityOverLifetimeOffset.z, 0));
+            positionUpdateKernel.SetFloat("_VelocityOverLifetimeRadial", VelocityOverLifetime.GetRadial());
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             positionUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);

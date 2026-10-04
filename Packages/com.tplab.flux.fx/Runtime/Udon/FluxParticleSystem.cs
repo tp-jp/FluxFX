@@ -354,6 +354,8 @@ namespace TpLab.Flux.FX.Udon
             var enabled = false;
             var start = Vector3.zero;
             var end = Vector3.zero;
+            var offset = Vector3.zero;
+            var radial = 0.0f;
 
             if (parameters.TryGetValue("velocityOverLifetime", out var token))
             {
@@ -368,9 +370,25 @@ namespace TpLab.Flux.FX.Udon
                     (float)velocity["endX"].Double,
                     (float)velocity["endY"].Double,
                     (float)velocity["endZ"].Double);
+
+                if (velocity.TryGetValue("offsetX", out var offsetXToken))
+                {
+                    offset = new Vector3(
+                        (float)offsetXToken.Double,
+                        (float)velocity["offsetY"].Double,
+                        (float)velocity["offsetZ"].Double);
+                }
+
+                if (velocity.TryGetValue("radial", out var radialToken))
+                {
+                    radial = (float)radialToken.Double;
+                }
             }
 
             _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(enabled, start, end);
+
+            VelocityOverLifetime.SetOffset(offset);
+            VelocityOverLifetime.SetRadial(radial);
         }
 
         void InitializeGravity(DataDictionary parameters)
