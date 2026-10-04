@@ -44,9 +44,7 @@ namespace TpLab.Flux.FX.Udon
 
         Material _material;
 
-        Vector4 _endColor;
         float _endSize;
-        float _colorOverLifetimeEnabled;
         float _sizeOverLifetimeEnabled;
         float _colorOverLifetimeMode;
         float _sizeOverLifetimeMode;
@@ -55,8 +53,11 @@ namespace TpLab.Flux.FX.Udon
         float _rotationOverLifetimeMode;
         float _simulationSpace;
         object _startRotation;
+        object _colorOverLifetime;
 
         FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
+
+        FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
 
         internal void Initialize(int capacity)
         {
@@ -84,21 +85,18 @@ namespace TpLab.Flux.FX.Udon
             _simulationSpace = simulationSpace;
         }
 
-        internal void SetRenderParameters(DataDictionary parameters, FluxParticleStartRotationParameters startRotation)
+        internal void SetRenderParameters(
+            DataDictionary parameters,
+            FluxParticleStartRotationParameters startRotation,
+            FluxParticleColorOverLifetimeParameters colorOverLifetime)
         {
             _startRotation = startRotation;
+            _colorOverLifetime = colorOverLifetime;
 
             if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
             {
                 var color = colorToken.DataDictionary;
 
-                _endColor = new Vector4(
-                    (float)color["endColorR"].Double,
-                    (float)color["endColorG"].Double,
-                    (float)color["endColorB"].Double,
-                    1);
-
-                _colorOverLifetimeEnabled = 1;
                 _colorOverLifetimeMode = 0;
 
                 if (color.TryGetValue("mode", out var modeToken))
@@ -108,8 +106,6 @@ namespace TpLab.Flux.FX.Udon
             }
             else
             {
-                _endColor = Vector4.one;
-                _colorOverLifetimeEnabled = 0;
                 _colorOverLifetimeMode = 0;
             }
 
@@ -161,19 +157,21 @@ namespace TpLab.Flux.FX.Udon
             SetBuffer("_VisualTex", state.CurrentVisual);
 
             var texture = state.CurrentPosition.Texture;
+            var endColor = ColorOverLifetime.GetEndColor();
 
             _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
             _material.SetFloat("_FluxSourceWidth", texture.width);
             _material.SetFloat("_FluxSourceHeight", texture.height);
             _material.SetVector("_StartRotation", StartRotation.GetRotation());
+            _material.SetVector("_EndColor", endColor);
+            _material.SetFloat("_ColorOverLifetimeEnabled", ColorOverLifetime.GetEnabled() ? 1.0f : 0.0f);
         }
 
         void ApplyRenderParameters()
         {
             var mode = (int)renderMode;
-            _material.SetVector("_EndColor", _endColor);
+
             _material.SetFloat("_EndSize", _endSize);
-            _material.SetFloat("_ColorOverLifetimeEnabled", _colorOverLifetimeEnabled);
             _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);
             _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
             _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);

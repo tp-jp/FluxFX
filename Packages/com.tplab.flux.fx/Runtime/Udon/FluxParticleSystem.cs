@@ -49,6 +49,7 @@ namespace TpLab.Flux.FX.Udon
         object _startColor;
         object _startSize;
         object _startRotation;
+        object _colorOverLifetime;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -133,6 +134,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
+
+        /// <summary>
+        /// Color over LifetimeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -429,10 +436,11 @@ namespace TpLab.Flux.FX.Udon
             InitializeStartColor(render);
             InitializeStartSize(render);
             InitializeStartRotation(render);
+            InitializeColorOverLifetime(render);
 
             particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
             particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render, StartRotation);
+            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime);
         }
 
         void InitializeStartColor(DataDictionary render)
@@ -490,6 +498,25 @@ namespace TpLab.Flux.FX.Udon
                 (float)render["startRotationZ"].Double);
 
             _startRotation = FluxParticleStartRotationParameters.New(rotation);
+        }
+
+        void InitializeColorOverLifetime(DataDictionary render)
+        {
+            var enabled = false;
+            var endColor = Color.white;
+
+            if (render.TryGetValue("colorOverLifetime", out var token))
+            {
+                var color = token.DataDictionary;
+
+                enabled = true;
+                endColor = new Color(
+                    (float)color["endColorR"].Double,
+                    (float)color["endColorG"].Double,
+                    (float)color["endColorB"].Double);
+            }
+
+            _colorOverLifetime = FluxParticleColorOverLifetimeParameters.New(enabled, endColor);
         }
     }
 }

@@ -1064,8 +1064,8 @@ MonoBehaviour:
     mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
-    startColor: {r: 1, g: 0, b: 0, a: 1}
-    startColorMode: 1
+    startColor: {r: 1, g: 1, b: 1, a: 1}
+    startColorMode: 0
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
     startColorMax: {r: 0, g: 0, b: 1, a: 1}
     startSize: 1
@@ -1074,13 +1074,13 @@ MonoBehaviour:
     startSizeMax: 0.2
     startRotation: {x: 0, y: 0, z: 0}
     colorOverLifetime:
-      enabled: 0
-      mode: 1
+      enabled: 1
+      mode: 0
       endColor: {r: 0.57078075, g: 0, b: 1, a: 1}
       gradient:
         serializedVersion: 2
-        key0: {r: 1, g: 0, b: 0, a: 1}
-        key1: {r: 1, g: 1, b: 1, a: 1}
+        key0: {r: 1, g: 1, b: 1, a: 1}
+        key1: {r: 1, g: 0, b: 0, a: 1}
         key2: {r: 0, g: 0, b: 0, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
