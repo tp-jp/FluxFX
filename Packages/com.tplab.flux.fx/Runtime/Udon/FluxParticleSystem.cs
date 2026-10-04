@@ -71,6 +71,7 @@ namespace TpLab.Flux.FX.Udon
         void InitializeEmitter(DataDictionary parameters)
         {
             var playback = parameters["playback"].DataDictionary;
+            var startDelay = (float)playback["startDelay"].Double;
             var duration = (float)playback["duration"].Double;
             var loop = playback["loop"].Boolean;
 
@@ -93,6 +94,7 @@ namespace TpLab.Flux.FX.Udon
                 burstTimes,
                 burstCounts,
                 particleCount,
+                startDelay,
                 duration,
                 loop);
         }

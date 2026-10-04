@@ -33,6 +33,7 @@ namespace TpLab.Flux.FX.Editor
         {
             parameters["playback"] = new JObject
             {
+                ["startDelay"] = playback.StartDelay,
                 ["duration"] = playback.Duration,
                 ["loop"] = playback.Loop
             };

@@ -129,11 +129,17 @@ namespace TpLab.Flux.FX.Scripts
     public class PlaybackSettings
     {
         [SerializeField]
+        [Min(0)]
+        float startDelay;
+
+        [SerializeField]
         [Min(0.01f)]
         float duration = 5.0f;
 
         [SerializeField]
         bool loop = true;
+
+        public float StartDelay => startDelay;
 
         public float Duration => duration;
 

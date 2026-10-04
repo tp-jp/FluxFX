@@ -53,6 +53,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         float _emissionAccumulator;
         float _emissionTime;
         float _simulationTime;
+        float _startDelayRemaining;
         int _nextBurstIndex;
         int _spawnCursor;
         int _spawnSeed;
@@ -106,6 +107,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _emissionAccumulator = 0;
             _emissionTime = 0;
             _simulationTime = 0;
+            _startDelayRemaining = Mathf.Max(0, _authoring.Playback.StartDelay);
             _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
@@ -140,6 +142,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _emissionAccumulator = 0;
             _emissionTime = 0;
             _simulationTime = 0;
+            _startDelayRemaining = 0;
             _nextBurstIndex = 0;
             _spawnCursor = 0;
             _spawnSeed = 0;
@@ -226,9 +229,20 @@ namespace TpLab.Flux.FX.Editor.Preview
         {
             if (_emissionCompleted) return 0;
 
+            var remainingTime = deltaTime;
+
+            if (_startDelayRemaining > 0)
+            {
+                var delayStepTime = Mathf.Min(remainingTime, _startDelayRemaining);
+
+                _startDelayRemaining -= delayStepTime;
+                remainingTime -= delayStepTime;
+
+                if (remainingTime <= 0) return 0;
+            }
+
             var duration = Mathf.Max(_authoring.Playback.Duration, MinDuration);
             var spawnCount = 0;
-            var remainingTime = deltaTime;
 
             while (remainingTime > 0)
             {
@@ -314,46 +328,16 @@ namespace TpLab.Flux.FX.Editor.Preview
                 speedMax = Mathf.Max(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);
             }
 
-            var gravity = _authoring.Gravity.Enabled
-                ? _authoring.Gravity.Gravity
-                : Vector3.zero;
-
-            var force = _authoring.Force.Enabled
-                ? _authoring.Force.Force
-                : Vector3.zero;
-
-            var drag = _authoring.Drag.Enabled
-                ? _authoring.Drag.Drag
-                : 0;
-
-            var noiseStrength = _authoring.Noise.Enabled
-                ? _authoring.Noise.Strength
-                : 0;
-
-            var noiseScale = _authoring.Noise.Enabled
-                ? _authoring.Noise.Scale
-                : 0;
-
-            var noiseTime = _authoring.Noise.Enabled
-                ? _simulationTime * _authoring.Noise.Speed
-                : 0;
-
-            var vortexCenter = _authoring.Vortex.Enabled
-                ? _authoring.Vortex.Center
-                : Vector3.zero;
-
-            var vortexAxis = _authoring.Vortex.Enabled
-                ? _authoring.Vortex.Axis.normalized
-                : Vector3.zero;
-
-            var vortexStrength = _authoring.Vortex.Enabled
-                ? _authoring.Vortex.Strength
-                : 0;
-
-            var maxSpeed = _authoring.LimitVelocity.Enabled
-                ? _authoring.LimitVelocity.MaxSpeed
-                : 0;
-
+            var gravity = _authoring.Gravity.Enabled ? _authoring.Gravity.Gravity : Vector3.zero;
+            var force = _authoring.Force.Enabled ? _authoring.Force.Force : Vector3.zero;
+            var drag = _authoring.Drag.Enabled ? _authoring.Drag.Drag : 0;
+            var noiseStrength = _authoring.Noise.Enabled ? _authoring.Noise.Strength : 0;
+            var noiseScale = _authoring.Noise.Enabled ? _authoring.Noise.Scale : 0;
+            var noiseTime = _authoring.Noise.Enabled ? _simulationTime * _authoring.Noise.Speed : 0;
+            var vortexCenter = _authoring.Vortex.Enabled ? _authoring.Vortex.Center : Vector3.zero;
+            var vortexAxis = _authoring.Vortex.Enabled ? _authoring.Vortex.Axis.normalized : Vector3.zero;
+            var vortexStrength = _authoring.Vortex.Enabled ? _authoring.Vortex.Strength : 0;
+            var maxSpeed = _authoring.LimitVelocity.Enabled ? _authoring.LimitVelocity.MaxSpeed : 0;
             var systemRotation = _particleSystem.transform.rotation;
 
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);
@@ -367,9 +351,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
             _velocityMaterial.SetFloat("_ShapeAngle", _authoring.Shape.Angle);
             _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
-            _velocityMaterial.SetVector(
-                "_SystemRotation",
-                new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
+            _velocityMaterial.SetVector("_SystemRotation", new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
             _velocityMaterial.SetVector("_Gravity", gravity);
             _velocityMaterial.SetVector("_Force", force);
             _velocityMaterial.SetFloat("_Drag", drag);
@@ -386,7 +368,6 @@ namespace TpLab.Flux.FX.Editor.Preview
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)
         {
             var shapeSize = _authoring.Shape.Size;
-
             var systemTransform = _particleSystem.transform;
             var systemPosition = systemTransform.position;
             var systemRotation = systemTransform.rotation;
@@ -400,15 +381,9 @@ namespace TpLab.Flux.FX.Editor.Preview
             _positionMaterial.SetFloat("_ShapeRadius", _authoring.Shape.Radius);
             _positionMaterial.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
             _positionMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
-            _positionMaterial.SetVector(
-                "_SystemPosition",
-                new Vector4(systemPosition.x, systemPosition.y, systemPosition.z, 0));
-            _positionMaterial.SetVector(
-                "_SystemRotation",
-                new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
-            _positionMaterial.SetVector(
-                "_SystemScale",
-                new Vector4(systemScale.x, systemScale.y, systemScale.z, 0));
+            _positionMaterial.SetVector("_SystemPosition", new Vector4(systemPosition.x, systemPosition.y, systemPosition.z, 0));
+            _positionMaterial.SetVector("_SystemRotation", new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
+            _positionMaterial.SetVector("_SystemScale", new Vector4(systemScale.x, systemScale.y, systemScale.z, 0));
             _positionMaterial.SetTexture("_VelocityTex", _nextVelocity);
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }
@@ -453,11 +428,9 @@ namespace TpLab.Flux.FX.Editor.Preview
             _renderMaterial.SetTexture("_PositionTex", _currentPosition);
             _renderMaterial.SetTexture("_VelocityTex", _currentVelocity);
             _renderMaterial.SetTexture("_VisualTex", _currentVisual);
-
             _renderMaterial.SetFloat("_FluxSourceCount", _particleCount);
             _renderMaterial.SetFloat("_FluxSourceWidth", _textureSize);
             _renderMaterial.SetFloat("_FluxSourceHeight", _textureSize);
-
             _renderMaterial.SetVector("_StartRotation", _authoring.Render.StartRotation);
             _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _renderMaterial.SetFloat("_RenderMode", (int)_authoring.Render.Mode);
@@ -633,7 +606,6 @@ namespace TpLab.Flux.FX.Editor.Preview
         void DispatchInitialize(RenderTexture destination)
         {
             PrepareDestination(_initializeMaterial);
-
             Graphics.Blit(null, destination, _initializeMaterial);
         }
 
@@ -641,7 +613,6 @@ namespace TpLab.Flux.FX.Editor.Preview
         {
             PrepareSource(material);
             PrepareDestination(material);
-
             Graphics.Blit(source, destination, material);
         }
 
@@ -666,7 +637,6 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             _meshFilter = _previewObject.AddComponent<MeshFilter>();
             _meshRenderer = _previewObject.AddComponent<MeshRenderer>();
-
             _meshRenderer.sharedMaterial = _renderMaterial;
 
             RebuildPreviewMesh();

@@ -169,6 +169,7 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.LabelField("Main", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
+            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("startDelay"), new GUIContent("Start Delay"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("duration"), new GUIContent("Duration"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("loop"), new GUIContent("Loop"));
             DrawLifetime();

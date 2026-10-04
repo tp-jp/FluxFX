@@ -19,6 +19,7 @@ namespace TpLab.Flux.FX.Udon
         int _particleCount;
         int _spawnCursor;
         int _spawnSeed;
+        float _startDelayRemaining;
         float _duration;
         bool _loop;
         bool _emissionCompleted;
@@ -34,6 +35,7 @@ namespace TpLab.Flux.FX.Udon
             float[] burstTimes,
             int[] burstCounts,
             int particleCount,
+            float startDelay,
             float duration,
             bool loop)
         {
@@ -41,6 +43,7 @@ namespace TpLab.Flux.FX.Udon
             _burstTimes = burstTimes;
             _burstCounts = burstCounts;
             _particleCount = particleCount;
+            _startDelayRemaining = Mathf.Max(0, startDelay);
             _duration = Mathf.Max(duration, MinDuration);
             _loop = loop;
         }
@@ -54,6 +57,16 @@ namespace TpLab.Flux.FX.Udon
             if (_emissionCompleted) return;
 
             var remainingTime = deltaTime;
+
+            if (_startDelayRemaining > 0)
+            {
+                var delayStepTime = Mathf.Min(remainingTime, _startDelayRemaining);
+
+                _startDelayRemaining -= delayStepTime;
+                remainingTime -= delayStepTime;
+
+                if (remainingTime <= 0) return;
+            }
 
             while (remainingTime > 0)
             {
