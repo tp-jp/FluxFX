@@ -29,6 +29,10 @@ namespace TpLab.Flux.FX.Editor
         const string VortexExpandedKey = SessionStatePrefix + "VortexExpanded";
         const string LimitVelocityExpandedKey = SessionStatePrefix + "LimitVelocityExpanded";
 
+        const string ColorOverLifetimeExpandedKey = SessionStatePrefix + "ColorOverLifetimeExpanded";
+        const string SizeOverLifetimeExpandedKey = SessionStatePrefix + "SizeOverLifetimeExpanded";
+        const string RotationOverLifetimeExpandedKey = SessionStatePrefix + "RotationOverLifetimeExpanded";
+
         bool _emissionExpanded;
         bool _shapeExpanded;
         bool _velocityExpanded;
@@ -41,6 +45,10 @@ namespace TpLab.Flux.FX.Editor
         bool _noiseExpanded;
         bool _vortexExpanded;
         bool _limitVelocityExpanded;
+
+        bool _colorOverLifetimeExpanded;
+        bool _sizeOverLifetimeExpanded;
+        bool _rotationOverLifetimeExpanded;
 
         SerializedObject _authoringObject;
 
@@ -448,31 +456,37 @@ namespace TpLab.Flux.FX.Editor
         void DrawColorOverLifetime()
         {
             var module = _render.FindPropertyRelative("colorOverLifetime");
-            var enabled = module.FindPropertyRelative("enabled");
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            enabled.boolValue = EditorGUILayout.ToggleLeft(
+
+            _colorOverLifetimeExpanded = DrawModuleHeader(
                 "Color over Lifetime",
-                enabled.boolValue,
-                EditorStyles.boldLabel);
+                module,
+                _colorOverLifetimeExpanded,
+                ColorOverLifetimeExpandedKey);
 
-            if (enabled.boolValue)
+            if (_colorOverLifetimeExpanded)
             {
-                EditorGUI.indentLevel++;
+                var enabled = module.FindPropertyRelative("enabled");
 
-                var mode = module.FindPropertyRelative("mode");
-                EditorGUILayout.PropertyField(mode);
-
-                if ((FluxParticleColorOverLifetimeMode)mode.enumValueIndex == FluxParticleColorOverLifetimeMode.Linear)
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
                 {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endColor"));
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("gradient"));
-                }
+                    EditorGUI.indentLevel++;
 
-                EditorGUI.indentLevel--;
+                    var mode = module.FindPropertyRelative("mode");
+                    EditorGUILayout.PropertyField(mode);
+
+                    if ((FluxParticleColorOverLifetimeMode)mode.enumValueIndex == FluxParticleColorOverLifetimeMode.Linear)
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("endColor"));
+                    }
+                    else
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("gradient"));
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -481,31 +495,37 @@ namespace TpLab.Flux.FX.Editor
         void DrawSizeOverLifetime()
         {
             var module = _render.FindPropertyRelative("sizeOverLifetime");
-            var enabled = module.FindPropertyRelative("enabled");
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            enabled.boolValue = EditorGUILayout.ToggleLeft(
+
+            _sizeOverLifetimeExpanded = DrawModuleHeader(
                 "Size over Lifetime",
-                enabled.boolValue,
-                EditorStyles.boldLabel);
+                module,
+                _sizeOverLifetimeExpanded,
+                SizeOverLifetimeExpandedKey);
 
-            if (enabled.boolValue)
+            if (_sizeOverLifetimeExpanded)
             {
-                EditorGUI.indentLevel++;
+                var enabled = module.FindPropertyRelative("enabled");
 
-                var mode = module.FindPropertyRelative("mode");
-                EditorGUILayout.PropertyField(mode);
-
-                if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
                 {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endSize"));
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
-                }
+                    EditorGUI.indentLevel++;
 
-                EditorGUI.indentLevel--;
+                    var mode = module.FindPropertyRelative("mode");
+                    EditorGUILayout.PropertyField(mode);
+
+                    if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("endSize"));
+                    }
+                    else
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -514,32 +534,38 @@ namespace TpLab.Flux.FX.Editor
         void DrawRotationOverLifetime()
         {
             var module = _render.FindPropertyRelative("rotationOverLifetime");
-            var enabled = module.FindPropertyRelative("enabled");
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            enabled.boolValue = EditorGUILayout.ToggleLeft(
+
+            _rotationOverLifetimeExpanded = DrawModuleHeader(
                 "Rotation over Lifetime",
-                enabled.boolValue,
-                EditorStyles.boldLabel);
+                module,
+                _rotationOverLifetimeExpanded,
+                RotationOverLifetimeExpandedKey);
 
-            if (enabled.boolValue)
+            if (_rotationOverLifetimeExpanded)
             {
-                EditorGUI.indentLevel++;
+                var enabled = module.FindPropertyRelative("enabled");
 
-                var mode = module.FindPropertyRelative("mode");
-                EditorGUILayout.PropertyField(mode);
-
-                if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Linear)
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
                 {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
-                    EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
-                }
+                    EditorGUI.indentLevel++;
 
-                EditorGUI.indentLevel--;
+                    var mode = module.FindPropertyRelative("mode");
+                    EditorGUILayout.PropertyField(mode);
+
+                    if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Linear)
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
+                    }
+                    else
+                    {
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("endRotation"));
+                        EditorGUILayout.PropertyField(module.FindPropertyRelative("curve"));
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -642,12 +668,47 @@ namespace TpLab.Flux.FX.Editor
 
         bool DrawModule(string label, SerializedProperty module, bool expanded, string sessionStateKey)
         {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            expanded = DrawModuleHeader(label, module, expanded, sessionStateKey);
+
+            if (expanded)
+            {
+                var enabled = module.FindPropertyRelative("enabled");
+
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
+                {
+                    EditorGUI.indentLevel++;
+
+                    var property = module.Copy();
+                    var endProperty = property.GetEndProperty();
+
+                    property.NextVisible(true);
+
+                    while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
+                    {
+                        if (property.name == "enabled")
+                        {
+                            continue;
+                        }
+
+                        EditorGUILayout.PropertyField(property, true);
+                    }
+
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+
+            return expanded;
+        }
+
+        bool DrawModuleHeader(string label, SerializedProperty module, bool expanded, string sessionStateKey)
+        {
             InitializeModuleHeaderStyles();
 
             var enabled = module.FindPropertyRelative("enabled");
-
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
             var headerRect = GUILayoutUtility.GetRect(0, ModuleHeaderHeight, GUILayout.ExpandWidth(true));
 
             var toggleRect = new Rect(
@@ -686,33 +747,6 @@ namespace TpLab.Flux.FX.Editor
                 GUI.changed = true;
             }
 
-            if (expanded)
-            {
-                using (new EditorGUI.DisabledScope(!enabled.boolValue))
-                {
-                    EditorGUI.indentLevel++;
-
-                    var property = module.Copy();
-                    var endProperty = property.GetEndProperty();
-
-                    property.NextVisible(true);
-
-                    while (property.NextVisible(false) && !SerializedProperty.EqualContents(property, endProperty))
-                    {
-                        if (property.name == "enabled")
-                        {
-                            continue;
-                        }
-
-                        EditorGUILayout.PropertyField(property, true);
-                    }
-
-                    EditorGUI.indentLevel--;
-                }
-            }
-
-            EditorGUILayout.EndVertical();
-
             return expanded;
         }
 
@@ -738,6 +772,10 @@ namespace TpLab.Flux.FX.Editor
             _noiseExpanded = SessionState.GetBool(NoiseExpandedKey, false);
             _vortexExpanded = SessionState.GetBool(VortexExpandedKey, false);
             _limitVelocityExpanded = SessionState.GetBool(LimitVelocityExpandedKey, false);
+
+            _colorOverLifetimeExpanded = SessionState.GetBool(ColorOverLifetimeExpandedKey, false);
+            _sizeOverLifetimeExpanded = SessionState.GetBool(SizeOverLifetimeExpandedKey, false);
+            _rotationOverLifetimeExpanded = SessionState.GetBool(RotationOverLifetimeExpandedKey, false);
         }
 
         void DrawPointShapeGizmo()
