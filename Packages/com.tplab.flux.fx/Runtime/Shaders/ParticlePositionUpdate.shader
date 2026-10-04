@@ -38,6 +38,7 @@ Shader "FluxFX/ParticlePositionUpdate"
             float _VelocityOverLifetimeEnabled;
             float4 _VelocityOverLifetimeStart;
             float4 _VelocityOverLifetimeEnd;
+            float4 _VelocityOverLifetimeOrbital;
             float4 _VelocityOverLifetimeOffset;
             float _VelocityOverLifetimeRadial;
             float _DeltaTime;
@@ -156,6 +157,18 @@ Shader "FluxFX/ParticlePositionUpdate"
                 return center;
             }
 
+            float3 GetVelocityOverLifetimeOrbital()
+            {
+                float3 orbital = _VelocityOverLifetimeOrbital.xyz;
+
+                if (_SimulationSpace > 0.5)
+                {
+                    orbital = RotateVector(orbital, _SystemRotation);
+                }
+
+                return orbital;
+            }
+
             float3 EvaluateVelocityOverLifetime(float3 position, float age, float lifetime)
             {
                 if (_VelocityOverLifetimeEnabled < 0.5 || lifetime <= 0)
@@ -169,12 +182,16 @@ Shader "FluxFX/ParticlePositionUpdate"
                     _VelocityOverLifetimeEnd.xyz,
                     normalizedAge);
 
-                float3 radialOffset = position - GetVelocityOverLifetimeCenter();
-                float radialDistance = length(radialOffset);
+                float3 centerOffset = position - GetVelocityOverLifetimeCenter();
+                float3 orbital = GetVelocityOverLifetimeOrbital();
+
+                velocity += cross(orbital, centerOffset);
+
+                float radialDistance = length(centerOffset);
 
                 if (radialDistance > 0.00001)
                 {
-                    velocity += radialOffset / radialDistance * _VelocityOverLifetimeRadial;
+                    velocity += centerOffset / radialDistance * _VelocityOverLifetimeRadial;
                 }
 
                 return velocity;

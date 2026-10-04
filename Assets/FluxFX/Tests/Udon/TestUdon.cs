@@ -9,7 +9,7 @@ namespace TpLab.Flux.FX.Tests.Udon
     {
         [SerializeField]
         FluxParticleSystem fluxParticleSystem;
-        
+
         public void Test()
         {
             // fluxParticleSystem.Force.SetForce(new Vector3(0, 9.81f, 0));
@@ -37,7 +37,8 @@ namespace TpLab.Flux.FX.Tests.Udon
             fluxParticleSystem.VelocityOverLifetime.SetStart(Vector3.zero);
             fluxParticleSystem.VelocityOverLifetime.SetEnd(Vector3.zero);
             fluxParticleSystem.VelocityOverLifetime.SetOffset(Vector3.zero);
-            fluxParticleSystem.VelocityOverLifetime.SetRadial(2.0f);
+            fluxParticleSystem.VelocityOverLifetime.SetRadial(0.0f);
+            fluxParticleSystem.VelocityOverLifetime.SetOrbital(new Vector3(0, Mathf.PI * 2.0f, 0));
             fluxParticleSystem.VelocityOverLifetime.SetEnabled(true);
         }
     }

@@ -354,6 +354,7 @@ namespace TpLab.Flux.FX.Udon
             var enabled = false;
             var start = Vector3.zero;
             var end = Vector3.zero;
+            var orbital = Vector3.zero;
             var offset = Vector3.zero;
             var radial = 0.0f;
 
@@ -371,6 +372,14 @@ namespace TpLab.Flux.FX.Udon
                     (float)velocity["endY"].Double,
                     (float)velocity["endZ"].Double);
 
+                if (velocity.TryGetValue("orbitalX", out var orbitalXToken))
+                {
+                    orbital = new Vector3(
+                        (float)orbitalXToken.Double,
+                        (float)velocity["orbitalY"].Double,
+                        (float)velocity["orbitalZ"].Double);
+                }
+
                 if (velocity.TryGetValue("offsetX", out var offsetXToken))
                 {
                     offset = new Vector3(
@@ -387,6 +396,7 @@ namespace TpLab.Flux.FX.Udon
 
             _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(enabled, start, end);
 
+            VelocityOverLifetime.SetOrbital(orbital);
             VelocityOverLifetime.SetOffset(offset);
             VelocityOverLifetime.SetRadial(radial);
         }

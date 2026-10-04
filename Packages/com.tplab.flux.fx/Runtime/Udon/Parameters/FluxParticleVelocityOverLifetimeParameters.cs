@@ -9,6 +9,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         Enabled,
         Start,
         End,
+        Orbital,
         Offset,
         Radial,
 
@@ -28,6 +29,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
             data[(int)FluxParticleVelocityOverLifetimeParameter.Enabled] = enabled;
             data[(int)FluxParticleVelocityOverLifetimeParameter.Start] = new DataToken(start);
             data[(int)FluxParticleVelocityOverLifetimeParameter.End] = new DataToken(end);
+            data[(int)FluxParticleVelocityOverLifetimeParameter.Orbital] = new DataToken(Vector3.zero);
             data[(int)FluxParticleVelocityOverLifetimeParameter.Offset] = new DataToken(Vector3.zero);
             data[(int)FluxParticleVelocityOverLifetimeParameter.Radial] = 0.0f;
 
@@ -108,10 +110,32 @@ namespace TpLab.Flux.FX.Udon.Parameters
         }
 
         /// <summary>
-        /// Radial Velocityの中心Offsetを取得します。
+        /// 中心周りに加算するOrbital角速度を取得します。
         /// </summary>
         /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
-        /// <returns>Radial Velocityの中心Offset</returns>
+        /// <returns>各軸周りの角速度（rad/s）</returns>
+        [PublicAPI]
+        public static Vector3 GetOrbital(this FluxParticleVelocityOverLifetimeParameters parameters)
+        {
+            return (Vector3)parameters[(int)FluxParticleVelocityOverLifetimeParameter.Orbital].Reference;
+        }
+
+        /// <summary>
+        /// 中心周りに加算するOrbital角速度を設定します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <param name="orbital">各軸周りの角速度（rad/s）</param>
+        [PublicAPI]
+        public static void SetOrbital(this FluxParticleVelocityOverLifetimeParameters parameters, Vector3 orbital)
+        {
+            parameters[(int)FluxParticleVelocityOverLifetimeParameter.Orbital] = new DataToken(orbital);
+        }
+
+        /// <summary>
+        /// Orbital VelocityとRadial Velocityの中心Offsetを取得します。
+        /// </summary>
+        /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
+        /// <returns>Orbital VelocityとRadial Velocityの中心Offset</returns>
         [PublicAPI]
         public static Vector3 GetOffset(this FluxParticleVelocityOverLifetimeParameters parameters)
         {
@@ -119,10 +143,10 @@ namespace TpLab.Flux.FX.Udon.Parameters
         }
 
         /// <summary>
-        /// Radial Velocityの中心Offsetを設定します。
+        /// Orbital VelocityとRadial Velocityの中心Offsetを設定します。
         /// </summary>
         /// <param name="parameters">Velocity over Lifetimeパラメーター</param>
-        /// <param name="offset">Radial Velocityの中心Offset</param>
+        /// <param name="offset">Orbital VelocityとRadial Velocityの中心Offset</param>
         [PublicAPI]
         public static void SetOffset(this FluxParticleVelocityOverLifetimeParameters parameters, Vector3 offset)
         {

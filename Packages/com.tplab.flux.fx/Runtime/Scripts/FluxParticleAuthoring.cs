@@ -266,6 +266,9 @@ namespace TpLab.Flux.FX.Scripts
         Vector3 end;
 
         [SerializeField]
+        Vector3 orbital;
+
+        [SerializeField]
         Vector3 offset;
 
         [SerializeField]
@@ -276,6 +279,8 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 Start => start;
 
         public Vector3 End => end;
+
+        public Vector3 Orbital => orbital;
 
         public Vector3 Offset => offset;
 
