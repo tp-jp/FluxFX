@@ -23,11 +23,11 @@ namespace TpLab.Flux.FX.Tests.Udon
             // fluxParticleSystem.LimitVelocity.SetMaxSpeed(2.0f);
             // fluxParticleSystem.Shape.SetShapeType(FluxParticleShapeType.Sphere);
             // fluxParticleSystem.Shape.SetRadius(3.0f);
-            fluxParticleSystem.StartColor.SetMin(Color.red);
-            fluxParticleSystem.StartColor.SetMax(Color.red);
-
-            fluxParticleSystem.StartSize.SetMin(3.0f);
-            fluxParticleSystem.StartSize.SetMax(3.0f);
+            // fluxParticleSystem.StartColor.SetMin(Color.red);
+            // fluxParticleSystem.StartColor.SetMax(Color.red);
+            // fluxParticleSystem.StartSize.SetMin(3.0f);
+            // fluxParticleSystem.StartSize.SetMax(3.0f);
+            fluxParticleSystem.StartRotation.SetRotation(new Vector3(0, 45, 0));
         }
     }
 }

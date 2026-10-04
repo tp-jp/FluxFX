@@ -48,6 +48,7 @@ namespace TpLab.Flux.FX.Udon
         object _limitVelocity;
         object _startColor;
         object _startSize;
+        object _startRotation;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -126,6 +127,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
+
+        /// <summary>
+        /// Start RotationのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -421,10 +428,11 @@ namespace TpLab.Flux.FX.Udon
 
             InitializeStartColor(render);
             InitializeStartSize(render);
+            InitializeStartRotation(render);
 
             particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
             particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render);
+            particleRenderer.SetRenderParameters(render, StartRotation);
         }
 
         void InitializeStartColor(DataDictionary render)
@@ -472,6 +480,16 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _startSize = FluxParticleStartSizeParameters.New(min, max);
+        }
+
+        void InitializeStartRotation(DataDictionary render)
+        {
+            var rotation = new Vector3(
+                (float)render["startRotationX"].Double,
+                (float)render["startRotationY"].Double,
+                (float)render["startRotationZ"].Double);
+
+            _startRotation = FluxParticleStartRotationParameters.New(rotation);
         }
     }
 }

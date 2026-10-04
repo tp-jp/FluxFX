@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -44,7 +45,6 @@ namespace TpLab.Flux.FX.Udon
         Material _material;
 
         Vector4 _endColor;
-        Vector3 _startRotation;
         float _endSize;
         float _colorOverLifetimeEnabled;
         float _sizeOverLifetimeEnabled;
@@ -54,6 +54,9 @@ namespace TpLab.Flux.FX.Udon
         float _rotationOverLifetimeEnabled;
         float _rotationOverLifetimeMode;
         float _simulationSpace;
+        object _startRotation;
+
+        FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         internal void Initialize(int capacity)
         {
@@ -81,12 +84,9 @@ namespace TpLab.Flux.FX.Udon
             _simulationSpace = simulationSpace;
         }
 
-        internal void SetRenderParameters(DataDictionary parameters)
+        internal void SetRenderParameters(DataDictionary parameters, FluxParticleStartRotationParameters startRotation)
         {
-            _startRotation = new Vector3(
-                (float)parameters["startRotationX"].Double,
-                (float)parameters["startRotationY"].Double,
-                (float)parameters["startRotationZ"].Double);
+            _startRotation = startRotation;
 
             if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
             {
@@ -165,13 +165,13 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
             _material.SetFloat("_FluxSourceWidth", texture.width);
             _material.SetFloat("_FluxSourceHeight", texture.height);
+            _material.SetVector("_StartRotation", StartRotation.GetRotation());
         }
 
         void ApplyRenderParameters()
         {
             var mode = (int)renderMode;
             _material.SetVector("_EndColor", _endColor);
-            _material.SetVector("_StartRotation", _startRotation);
             _material.SetFloat("_EndSize", _endSize);
             _material.SetFloat("_ColorOverLifetimeEnabled", _colorOverLifetimeEnabled);
             _material.SetFloat("_SizeOverLifetimeEnabled", _sizeOverLifetimeEnabled);

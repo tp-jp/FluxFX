@@ -1072,7 +1072,7 @@ MonoBehaviour:
     startSizeMode: 0
     startSizeMin: 0.02
     startSizeMax: 0.2
-    startRotation: {x: 0, y: 45, z: 0}
+    startRotation: {x: 0, y: 0, z: 0}
     colorOverLifetime:
       enabled: 0
       mode: 1
