@@ -39,6 +39,11 @@ namespace TpLab.Flux.FX.Udon
         object _emission;
         object _lifetime;
         object _gravity;
+        object _force;
+        object _drag;
+        object _noise;
+        object _vortex;
+        object _limitVelocity;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -63,6 +68,36 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
+
+        /// <summary>
+        /// ForceのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleForceParameters Force => (FluxParticleForceParameters)_force;
+
+        /// <summary>
+        /// DragのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleDragParameters Drag => (FluxParticleDragParameters)_drag;
+
+        /// <summary>
+        /// NoiseのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleNoiseParameters Noise => (FluxParticleNoiseParameters)_noise;
+
+        /// <summary>
+        /// VortexのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
+
+        /// <summary>
+        /// Limit VelocityのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -173,8 +208,21 @@ namespace TpLab.Flux.FX.Udon
 
             InitializeLifetime(parameters);
             InitializeGravity(parameters);
+            InitializeForce(parameters);
+            InitializeDrag(parameters);
+            InitializeNoise(parameters);
+            InitializeVortex(parameters);
+            InitializeLimitVelocity(parameters);
 
-            particleSimulation.Initialize(parameters, Lifetime, Gravity);
+            particleSimulation.Initialize(
+                Lifetime,
+                Gravity,
+                Force,
+                Drag,
+                Noise,
+                Vortex,
+                LimitVelocity);
+
             particleSimulation.SetSimulationSpace(simulationSpace);
 
             var shape = parameters["shape"].DataDictionary;
@@ -198,7 +246,7 @@ namespace TpLab.Flux.FX.Udon
 
             if (initialVelocity.TryGetValue("speedMax", out var initialSpeedMaxToken))
             {
-                initialSpeedMax = (float)initialVelocity["speedMax"].Double;
+                initialSpeedMax = (float)initialSpeedMaxToken.Double;
             }
 
             particleSimulation.SetSpawnParameters(
@@ -244,6 +292,91 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _gravity = FluxParticleGravityParameters.New(gravity);
+        }
+
+        void InitializeForce(DataDictionary parameters)
+        {
+            var force = Vector3.zero;
+
+            if (parameters.TryGetValue("force", out var token))
+            {
+                var data = token.DataDictionary;
+
+                force = new Vector3(
+                    (float)data["x"].Double,
+                    (float)data["y"].Double,
+                    (float)data["z"].Double);
+            }
+
+            _force = FluxParticleForceParameters.New(force);
+        }
+
+        void InitializeDrag(DataDictionary parameters)
+        {
+            var drag = 0.0f;
+
+            if (parameters.TryGetValue("drag", out var token))
+            {
+                drag = (float)token.Double;
+            }
+
+            _drag = FluxParticleDragParameters.New(drag);
+        }
+
+        void InitializeNoise(DataDictionary parameters)
+        {
+            var strength = 0.0f;
+            var scale = 0.0f;
+            var speed = 0.0f;
+
+            if (parameters.TryGetValue("noise", out var token))
+            {
+                var data = token.DataDictionary;
+
+                strength = (float)data["strength"].Double;
+                scale = (float)data["scale"].Double;
+                speed = (float)data["speed"].Double;
+            }
+
+            _noise = FluxParticleNoiseParameters.New(strength, scale, speed);
+        }
+
+        void InitializeVortex(DataDictionary parameters)
+        {
+            var center = Vector3.zero;
+            var axis = Vector3.zero;
+            var strength = 0.0f;
+
+            if (parameters.TryGetValue("vortex", out var token))
+            {
+                var data = token.DataDictionary;
+
+                center = new Vector3(
+                    (float)data["centerX"].Double,
+                    (float)data["centerY"].Double,
+                    (float)data["centerZ"].Double);
+
+                axis = new Vector3(
+                    (float)data["axisX"].Double,
+                    (float)data["axisY"].Double,
+                    (float)data["axisZ"].Double);
+
+                strength = (float)data["strength"].Double;
+            }
+
+            _vortex = FluxParticleVortexParameters.New(center, axis, strength);
+        }
+
+        void InitializeLimitVelocity(DataDictionary parameters)
+        {
+            var maxSpeed = 0.0f;
+
+            if (parameters.TryGetValue("limitVelocity", out var token))
+            {
+                maxSpeed = (float)token.Double;
+            }
+
+            _limitVelocity = FluxParticleLimitVelocityParameters.New(maxSpeed);
         }
 
         void InitializeRenderer(DataDictionary parameters)

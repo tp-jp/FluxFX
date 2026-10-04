@@ -12,10 +12,15 @@ namespace TpLab.Flux.FX.Tests.Udon
         
         public void Test()
         {
-            fluxParticleSystem.Emission.SetRate(100f);
-            fluxParticleSystem.Gravity.SetGravity(Vector3.up * 5f);
-            fluxParticleSystem.Lifetime.SetMin(0.5f);
-            fluxParticleSystem.Lifetime.SetMax(0.5f);            
+            fluxParticleSystem.Force.SetForce(new Vector3(0, 9.81f, 0));
+            fluxParticleSystem.Drag.SetDrag(0.1f);
+            fluxParticleSystem.Noise.SetStrength(0.5f);
+            fluxParticleSystem.Noise.SetScale(1.0f);
+            fluxParticleSystem.Noise.SetSpeed(1.0f);
+            fluxParticleSystem.Vortex.SetCenter(new Vector3(0, 0, 0));
+            fluxParticleSystem.Vortex.SetAxis(new Vector3(0, 1, 0));
+            fluxParticleSystem.Vortex.SetStrength(1.0f);
+            fluxParticleSystem.LimitVelocity.SetMaxSpeed(2.0f);
         }
     }
 }
