@@ -30,7 +30,8 @@ namespace TpLab.Flux.FX.Tests.Udon
             // fluxParticleSystem.StartRotation.SetRotation(new Vector3(0, 45, 0));
             // fluxParticleSystem.ColorOverLifetime.SetEnabled(true);
             // fluxParticleSystem.ColorOverLifetime.SetEndColor(Color.red);
-            fluxParticleSystem.ColorOverLifetime.SetEnabled(false);
+            fluxParticleSystem.SizeOverLifetime.SetEnabled(true);
+            fluxParticleSystem.SizeOverLifetime.SetEndSize(3.0f);
         }
     }
 }

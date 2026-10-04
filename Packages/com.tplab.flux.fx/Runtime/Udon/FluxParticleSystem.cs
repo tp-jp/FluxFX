@@ -50,6 +50,7 @@ namespace TpLab.Flux.FX.Udon
         object _startSize;
         object _startRotation;
         object _colorOverLifetime;
+        object _sizeOverLifetime;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -140,6 +141,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
+
+        /// <summary>
+        /// Size over LifetimeのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -437,10 +444,11 @@ namespace TpLab.Flux.FX.Udon
             InitializeStartSize(render);
             InitializeStartRotation(render);
             InitializeColorOverLifetime(render);
+            InitializeSizeOverLifetime(render);
 
             particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
             particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime);
+            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime, SizeOverLifetime);
         }
 
         void InitializeStartColor(DataDictionary render)
@@ -517,6 +525,22 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _colorOverLifetime = FluxParticleColorOverLifetimeParameters.New(enabled, endColor);
+        }
+
+        void InitializeSizeOverLifetime(DataDictionary render)
+        {
+            var enabled = false;
+            var endSize = 0.0f;
+
+            if (render.TryGetValue("sizeOverLifetime", out var token))
+            {
+                var size = token.DataDictionary;
+
+                enabled = true;
+                endSize = (float)size["endSize"].Double;
+            }
+
+            _sizeOverLifetime = FluxParticleSizeOverLifetimeParameters.New(enabled, endSize);
         }
     }
 }
