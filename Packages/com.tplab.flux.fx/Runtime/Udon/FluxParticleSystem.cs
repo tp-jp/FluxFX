@@ -70,6 +70,15 @@ namespace TpLab.Flux.FX.Udon
             _isPlaying = true;
         }
 
+        /// <summary>
+        /// 現在存在するParticleをすべて消去します。Playback状態には影響しません。
+        /// </summary>
+        [PublicAPI]
+        public void Clear()
+        {
+            particleState.Clear();
+        }
+
         void Start()
         {
             particleState.Initialize(particleCount);
@@ -176,7 +185,7 @@ namespace TpLab.Flux.FX.Udon
 
             if (initialVelocity.TryGetValue("speedMax", out var initialSpeedMaxToken))
             {
-                initialSpeedMax = (float)initialSpeedMaxToken.Double;
+                initialSpeedMax = (float)initialVelocity["speedMax"].Double;
             }
 
             particleSimulation.SetSpawnParameters(

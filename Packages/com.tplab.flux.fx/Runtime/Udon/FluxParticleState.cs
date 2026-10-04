@@ -56,19 +56,24 @@ namespace TpLab.Flux.FX.Udon
             visualBufferA.SetCount(count);
             visualBufferB.SetCount(count);
 
-            initializeKernel.Dispatch(positionBufferA);
-            initializeKernel.Dispatch(positionBufferB);
-            initializeKernel.Dispatch(velocityBufferA);
-            initializeKernel.Dispatch(velocityBufferB);
-            initializeKernel.Dispatch(visualBufferA);
-            initializeKernel.Dispatch(visualBufferB);
-
             _currentPositionBuffer = positionBufferA;
             _nextPositionBuffer = positionBufferB;
             _currentVelocityBuffer = velocityBufferA;
             _nextVelocityBuffer = velocityBufferB;
             _currentVisualBuffer = visualBufferA;
             _nextVisualBuffer = visualBufferB;
+
+            Clear();
+        }
+
+        internal void Clear()
+        {
+            initializeKernel.Dispatch(positionBufferA);
+            initializeKernel.Dispatch(positionBufferB);
+            initializeKernel.Dispatch(velocityBufferA);
+            initializeKernel.Dispatch(velocityBufferB);
+            initializeKernel.Dispatch(visualBufferA);
+            initializeKernel.Dispatch(visualBufferB);
         }
 
         internal void SwapSimulation()
