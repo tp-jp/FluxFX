@@ -1,8 +1,8 @@
 using JetBrains.Annotations;
-using Mathf = UnityEngine.Mathf;
 using VRC.SDK3.Data;
+using Mathf = UnityEngine.Mathf;
 
-namespace TpLab.Flux.FX.Udon
+namespace TpLab.Flux.FX.Udon.Parameters
 {
     enum FluxParticleEmissionParameter
     {

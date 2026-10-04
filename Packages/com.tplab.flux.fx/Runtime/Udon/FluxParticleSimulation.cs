@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -25,9 +26,14 @@ namespace TpLab.Flux.FX.Udon
 
         float _simulationTime;
         float _noiseSpeed;
+        object _gravity;
 
-        internal void Initialize(DataDictionary parameters)
+        FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
+
+        internal void Initialize(DataDictionary parameters, FluxParticleGravityParameters gravity)
         {
+            _gravity = gravity;
+
             ApplyVelocityParameters(parameters);
         }
 
@@ -100,29 +106,11 @@ namespace TpLab.Flux.FX.Udon
 
         void ApplyVelocityParameters(DataDictionary parameters)
         {
-            ApplyGravity(parameters);
             ApplyForce(parameters);
             ApplyDrag(parameters);
             ApplyNoise(parameters);
             ApplyVortex(parameters);
             ApplyLimitVelocity(parameters);
-        }
-
-        void ApplyGravity(DataDictionary parameters)
-        {
-            if (!parameters.TryGetValue("gravity", out var token))
-            {
-                velocityUpdateKernel.SetVector("_Gravity", Vector4.zero);
-                return;
-            }
-
-            var gravity = token.DataDictionary;
-
-            velocityUpdateKernel.SetVector("_Gravity", new Vector4(
-                (float)gravity["x"].Double,
-                (float)gravity["y"].Double,
-                (float)gravity["z"].Double,
-                0));
         }
 
         void ApplyForce(DataDictionary parameters)
@@ -211,6 +199,9 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdateVelocity(float deltaTime)
         {
+            var gravity = Gravity.GetGravity();
+
+            velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             velocityUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);

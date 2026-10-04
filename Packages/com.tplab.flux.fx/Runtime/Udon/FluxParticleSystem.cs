@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Data;
@@ -36,6 +37,7 @@ namespace TpLab.Flux.FX.Udon
 
         bool _isPlaying;
         object _emission;
+        object _gravity;
 
         /// <summary>
         /// Particle Systemが使用するParticle数を取得します。
@@ -48,6 +50,12 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         [PublicAPI]
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
+
+        /// <summary>
+        /// GravityのRuntimeパラメーターを取得します。
+        /// </summary>
+        [PublicAPI]
+        public FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
         /// <summary>
         /// ParticleのEmissionを開始または再開します。
@@ -156,7 +164,9 @@ namespace TpLab.Flux.FX.Udon
         {
             var simulationSpace = (int)parameters["simulationSpace"].Double;
 
-            particleSimulation.Initialize(parameters);
+            InitializeGravity(parameters);
+
+            particleSimulation.Initialize(parameters, Gravity);
             particleSimulation.SetSimulationSpace(simulationSpace);
 
             var lifetime = (float)parameters["lifetime"].Double;
@@ -206,6 +216,23 @@ namespace TpLab.Flux.FX.Udon
                 shapeSize,
                 initialSpeedMin,
                 initialSpeedMax);
+        }
+
+        void InitializeGravity(DataDictionary parameters)
+        {
+            var gravity = Vector3.zero;
+
+            if (parameters.TryGetValue("gravity", out var token))
+            {
+                var data = token.DataDictionary;
+
+                gravity = new Vector3(
+                    (float)data["x"].Double,
+                    (float)data["y"].Double,
+                    (float)data["z"].Double);
+            }
+
+            _gravity = FluxParticleGravityParameters.New(gravity);
         }
 
         void InitializeRenderer(DataDictionary parameters)
