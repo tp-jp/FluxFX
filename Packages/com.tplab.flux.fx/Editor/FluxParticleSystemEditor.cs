@@ -206,12 +206,18 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.Space(2);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
+            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
+
+            EditorGUILayout.Space(4);
+
             EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent("Play On Awake"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("startDelay"), new GUIContent("Start Delay"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("duration"), new GUIContent("Duration"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("loop"), new GUIContent("Loop"));
+
+            EditorGUILayout.Space(4);
+
             DrawLifetime();
-            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
         }
 
         void DrawEmission()
