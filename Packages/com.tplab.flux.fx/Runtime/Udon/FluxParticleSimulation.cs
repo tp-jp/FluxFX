@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -27,21 +26,18 @@ namespace TpLab.Flux.FX.Udon
         float _simulationTime;
         float _noiseSpeed;
 
-        [PublicAPI]
-        public void Initialize(DataDictionary parameters)
+        internal void Initialize(DataDictionary parameters)
         {
             ApplyVelocityParameters(parameters);
         }
 
-        [PublicAPI]
-        public void SetSimulationSpace(int simulationSpace)
+        internal void SetSimulationSpace(int simulationSpace)
         {
             velocityUpdateKernel.SetFloat("_SimulationSpace", simulationSpace);
             positionUpdateKernel.SetFloat("_SimulationSpace", simulationSpace);
         }
 
-        [PublicAPI]
-        public void SetSystemTransform(Vector3 position, Quaternion rotation, Vector3 scale)
+        internal void SetSystemTransform(Vector3 position, Quaternion rotation, Vector3 scale)
         {
             var rotationVector = new Vector4(rotation.x, rotation.y, rotation.z, rotation.w);
 
@@ -52,8 +48,7 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_SystemScale", new Vector4(scale.x, scale.y, scale.z, 0));
         }
 
-        [PublicAPI]
-        public void SetSpawnParameters(
+        internal void SetSpawnParameters(
             float lifetimeMin,
             float lifetimeMax,
             int shapeType,
@@ -75,8 +70,7 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
         }
 
-        [PublicAPI]
-        public void SetVisualSpawnParameters(
+        internal void SetVisualSpawnParameters(
             Color startColorMin,
             Color startColorMax,
             float startSizeMin,
@@ -88,8 +82,7 @@ namespace TpLab.Flux.FX.Udon
             visualUpdateKernel.SetFloat("_StartSizeMax", startSizeMax);
         }
 
-        [PublicAPI]
-        public void Simulate(float deltaTime)
+        internal void Simulate(float deltaTime)
         {
             _simulationTime += deltaTime;
 

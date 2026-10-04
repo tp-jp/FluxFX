@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -56,8 +55,7 @@ namespace TpLab.Flux.FX.Udon
         float _rotationOverLifetimeMode;
         float _simulationSpace;
 
-        [PublicAPI]
-        public void Initialize(int capacity)
+        internal void Initialize(int capacity)
         {
             if (renderMode == FluxParticleRenderMode.Mesh && sourceMesh != null)
             {
@@ -78,14 +76,12 @@ namespace TpLab.Flux.FX.Udon
             ApplyRenderParameters();
         }
 
-        [PublicAPI]
-        public void SetSimulationSpace(int simulationSpace)
+        internal void SetSimulationSpace(int simulationSpace)
         {
             _simulationSpace = simulationSpace;
         }
 
-        [PublicAPI]
-        public void SetRenderParameters(DataDictionary parameters)
+        internal void SetRenderParameters(DataDictionary parameters)
         {
             _startRotation = new Vector3(
                 (float)parameters["startRotationX"].Double,
@@ -158,8 +154,7 @@ namespace TpLab.Flux.FX.Udon
             }
         }
 
-        [PublicAPI]
-        public void SetState(FluxParticleState state)
+        internal void SetState(FluxParticleState state)
         {
             SetBuffer("_PositionTex", state.CurrentPosition);
             SetBuffer("_VelocityTex", state.CurrentVelocity);

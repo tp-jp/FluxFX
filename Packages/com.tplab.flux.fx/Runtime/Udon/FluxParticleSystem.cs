@@ -5,6 +5,10 @@ using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
+    /// <summary>
+    /// GPU上でParticleのSimulationとRenderingを行うParticle Systemです。
+    /// </summary>
+    [PublicAPI]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleSystem : UdonSharpBehaviour
     {
@@ -27,6 +31,9 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string compiledParameters;
 
+        /// <summary>
+        /// Particle Systemが使用するParticle数を取得します。
+        /// </summary>
         [PublicAPI]
         public int ParticleCount => particleCount;
 

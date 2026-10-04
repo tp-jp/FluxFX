@@ -1,5 +1,4 @@
-﻿﻿using JetBrains.Annotations;
-using TpLab.Flux.Udon;
+﻿using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
 
@@ -36,26 +35,19 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer _currentVisualBuffer;
         FluxBuffer _nextVisualBuffer;
 
-        [PublicAPI]
         public FluxBuffer CurrentPosition => _currentPositionBuffer;
 
-        [PublicAPI]
         public FluxBuffer NextPosition => _nextPositionBuffer;
 
-        [PublicAPI]
         public FluxBuffer CurrentVelocity => _currentVelocityBuffer;
 
-        [PublicAPI]
         public FluxBuffer NextVelocity => _nextVelocityBuffer;
 
-        [PublicAPI]
         public FluxBuffer CurrentVisual => _currentVisualBuffer;
 
-        [PublicAPI]
         public FluxBuffer NextVisual => _nextVisualBuffer;
 
-        [PublicAPI]
-        public void Initialize(int count)
+        internal void Initialize(int count)
         {
             positionBufferA.SetCount(count);
             positionBufferB.SetCount(count);
@@ -79,8 +71,7 @@ namespace TpLab.Flux.FX.Udon
             _nextVisualBuffer = visualBufferB;
         }
 
-        [PublicAPI]
-        public void SwapSimulation()
+        internal void SwapSimulation()
         {
             var positionTemp = _currentPositionBuffer;
             _currentPositionBuffer = _nextPositionBuffer;
@@ -91,8 +82,7 @@ namespace TpLab.Flux.FX.Udon
             _nextVelocityBuffer = velocityTemp;
         }
 
-        [PublicAPI]
-        public void SwapVisual()
+        internal void SwapVisual()
         {
             var visualTemp = _currentVisualBuffer;
             _currentVisualBuffer = _nextVisualBuffer;

@@ -1,5 +1,4 @@
-﻿﻿using JetBrains.Annotations;
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Udon
@@ -7,6 +6,7 @@ namespace TpLab.Flux.FX.Udon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleEmitter : UdonSharpBehaviour
     {
+        // Spawn Seedを長時間安定して扱うため、Shader側と同じ周期に制限する。
         const int SpawnSeedPeriod = 1048576;
         const float MinDuration = 0.01f;
 
@@ -23,17 +23,13 @@ namespace TpLab.Flux.FX.Udon
         bool _loop;
         bool _emissionCompleted;
 
-        [PublicAPI]
         public int SpawnStart { get; private set; }
 
-        [PublicAPI]
         public int SpawnSeedStart { get; private set; }
 
-        [PublicAPI]
         public int SpawnCount { get; private set; }
 
-        [PublicAPI]
-        public void Initialize(
+        internal void Initialize(
             float emissionRate,
             float[] burstTimes,
             int[] burstCounts,
@@ -49,8 +45,7 @@ namespace TpLab.Flux.FX.Udon
             _loop = loop;
         }
 
-        [PublicAPI]
-        public void UpdateEmission(float deltaTime)
+        internal void UpdateEmission(float deltaTime)
         {
             SpawnStart = _spawnCursor;
             SpawnSeedStart = _spawnSeed;
