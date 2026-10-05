@@ -213,7 +213,7 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.Space(2);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"), new GUIContent(L10n.Tr("Particle Count")));
-            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent(L10n.Tr("Simulation Space")));
+            DrawEnum(_simulationSpace, "Simulation Space");
 
             EditorGUILayout.Space(4);
 
@@ -246,7 +246,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var mode = _lifetime.FindPropertyRelative("mode");
 
-            EditorGUILayout.PropertyField(mode, new GUIContent(L10n.Tr("Start Lifetime Mode")));
+            DrawEnum(mode, "Start Lifetime Mode");
 
             if ((FluxParticleStartLifetimeMode)mode.enumValueIndex == FluxParticleStartLifetimeMode.Constant)
             {
@@ -275,7 +275,7 @@ namespace TpLab.Flux.FX.Editor
             var type = _shape.FindPropertyRelative("type");
             var shapeType = (FluxParticleShapeType)type.enumValueIndex;
 
-            EditorGUILayout.PropertyField(type, new GUIContent(L10n.Tr("Type")));
+            DrawEnum(type, "Type");
 
             if (shapeType == FluxParticleShapeType.Sphere ||
                 shapeType == FluxParticleShapeType.Hemisphere ||
@@ -352,7 +352,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var mode = _initialVelocity.FindPropertyRelative("mode");
 
-            EditorGUILayout.PropertyField(mode, new GUIContent(L10n.Tr("Initial Speed Mode")));
+            DrawEnum(mode, "Initial Speed Mode");
 
             if ((FluxParticleInitialSpeedMode)mode.enumValueIndex == FluxParticleInitialSpeedMode.Constant)
             {
@@ -381,7 +381,7 @@ namespace TpLab.Flux.FX.Editor
             var mode = _render.FindPropertyRelative("mode");
             var mesh = _render.FindPropertyRelative("mesh");
 
-            EditorGUILayout.PropertyField(mode, new GUIContent(L10n.Tr("Mode")));
+            DrawEnum(mode, "Mode");
 
             if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
             {
@@ -420,9 +420,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var startSizeMode = _render.FindPropertyRelative("startSizeMode");
 
-            EditorGUILayout.PropertyField(
-                startSizeMode,
-                new GUIContent(L10n.Tr("Start Size Mode")));
+            DrawEnum(startSizeMode, "Start Size Mode");
 
             if ((FluxParticleStartSizeMode)startSizeMode.enumValueIndex == FluxParticleStartSizeMode.Constant)
             {
@@ -445,9 +443,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var startColorMode = _render.FindPropertyRelative("startColorMode");
 
-            EditorGUILayout.PropertyField(
-                startColorMode,
-                new GUIContent(L10n.Tr("Start Color Mode")));
+            DrawEnum(startColorMode, "Start Color Mode");
 
             if ((FluxParticleStartColorMode)startColorMode.enumValueIndex == FluxParticleStartColorMode.Constant)
             {
@@ -487,7 +483,7 @@ namespace TpLab.Flux.FX.Editor
                     EditorGUI.indentLevel++;
 
                     var mode = module.FindPropertyRelative("mode");
-                    DrawProperty(mode);
+                    DrawEnum(mode);
 
                     if ((FluxParticleColorOverLifetimeMode)mode.enumValueIndex == FluxParticleColorOverLifetimeMode.Linear)
                     {
@@ -526,7 +522,7 @@ namespace TpLab.Flux.FX.Editor
                     EditorGUI.indentLevel++;
 
                     var mode = module.FindPropertyRelative("mode");
-                    DrawProperty(mode);
+                    DrawEnum(mode);
 
                     if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
                     {
@@ -565,7 +561,7 @@ namespace TpLab.Flux.FX.Editor
                     EditorGUI.indentLevel++;
 
                     var mode = module.FindPropertyRelative("mode");
-                    DrawProperty(mode);
+                    DrawEnum(mode);
 
                     if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Linear)
                     {
@@ -590,6 +586,27 @@ namespace TpLab.Flux.FX.Editor
                 property,
                 new GUIContent(L10n.Tr(property.displayName)),
                 includeChildren);
+        }
+
+        void DrawEnum(SerializedProperty property, string label = null)
+        {
+            var names = property.enumDisplayNames;
+            var localizedNames = new string[names.Length];
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                localizedNames[i] = L10n.Tr(names[i]);
+            }
+
+            var selectedIndex = EditorGUILayout.Popup(
+                L10n.Tr(label ?? property.displayName),
+                property.enumValueIndex,
+                localizedNames);
+
+            if (selectedIndex != property.enumValueIndex)
+            {
+                property.enumValueIndex = selectedIndex;
+            }
         }
 
         void DrawSectionHeader(string label)
@@ -713,7 +730,14 @@ namespace TpLab.Flux.FX.Editor
                             continue;
                         }
 
-                        DrawProperty(property, true);
+                        if (property.propertyType == SerializedPropertyType.Enum)
+                        {
+                            DrawEnum(property);
+                        }
+                        else
+                        {
+                            DrawProperty(property, true);
+                        }
                     }
 
                     EditorGUI.indentLevel--;

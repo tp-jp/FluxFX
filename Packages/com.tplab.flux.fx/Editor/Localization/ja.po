@@ -207,6 +207,42 @@ msgstr "寿命による回転"
 msgid "End Rotation"
 msgstr "終了回転"
 
+msgid "Local"
+msgstr "ローカル"
+
+msgid "World"
+msgstr "ワールド"
+
+msgid "Point"
+msgstr "点"
+
+msgid "Sphere"
+msgstr "球"
+
+msgid "Hemisphere"
+msgstr "半球"
+
+msgid "Circle"
+msgstr "円"
+
+msgid "Box"
+msgstr "ボックス"
+
+msgid "Cone"
+msgstr "円錐"
+
+msgid "Constant"
+msgstr "一定"
+
+msgid "Random Between Two Constants"
+msgstr "2つの値からランダム"
+
+msgid "Billboard"
+msgstr "ビルボード"
+
+msgid "Linear"
+msgstr "線形"
+
 msgid "FluxParticleAuthoring is required on the same GameObject."
 msgstr "同じGameObjectにFluxParticleAuthoringが必要です。"
 
