@@ -1015,7 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 571358e415308e2448dcad23a70cd1f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simulationSpace: 1
+  simulationSpace: 0
   playback:
     startDelay: 0
     duration: 3
@@ -1029,7 +1029,7 @@ MonoBehaviour:
     min: 1
     max: 5
   shape:
-    type: 5
+    type: 2
     radius: 0.5
     angle: 25
     size: {x: 2, y: 1, z: 3}

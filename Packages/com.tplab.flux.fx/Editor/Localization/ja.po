@@ -19,7 +19,7 @@ msgid "Particle Count"
 msgstr "最大パーティクル数"
 
 msgid "Simulation Space"
-msgstr "移動基準"
+msgstr "シミュレーションスペース"
 
 msgid "Determines whether particle positions and movement are simulated in local or world space."
 msgstr "パーティクルの位置と移動をローカル空間またはワールド空間のどちらで扱うかを設定します。"
