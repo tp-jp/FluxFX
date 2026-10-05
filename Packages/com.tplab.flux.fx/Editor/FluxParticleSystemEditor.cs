@@ -1,9 +1,11 @@
+using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Editor.Preview;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
 
 namespace TpLab.Flux.FX.Editor
 {
@@ -207,17 +209,17 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawMain()
         {
-            DrawSectionHeader("MAIN");
+            DrawSectionHeader(L10n.Tr("MAIN"));
 
             EditorGUILayout.Space(2);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"));
-            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent("Simulation Space"));
+            EditorGUILayout.PropertyField(_simulationSpace, new GUIContent(L10n.Tr("Simulation Space")));
 
             EditorGUILayout.Space(4);
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent("Play On Awake"));
-            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("startDelay"), new GUIContent("Start Delay"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent(L10n.Tr("Play On Awake")));
+            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("startDelay"), new GUIContent(L10n.Tr("Start Delay")));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("duration"), new GUIContent("Duration"));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("loop"), new GUIContent("Loop"));
 

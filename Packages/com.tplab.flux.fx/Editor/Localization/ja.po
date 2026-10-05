@@ -1,0 +1,16 @@
+msgid ""
+msgstr ""
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "MAIN"
+msgstr "基本設定"
+
+msgid "Simulation Space"
+msgstr "移動基準"
+
+msgid "Play On Awake"
+msgstr "自動再生"
+
+msgid "Start Delay"
+msgstr "開始遅延"
