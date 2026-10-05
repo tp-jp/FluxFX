@@ -213,13 +213,23 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.Space(2);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"), new GUIContent(L10n.Tr("Particle Count")));
-            DrawEnum(_simulationSpace, "Simulation Space");
+
+            DrawEnum(
+                _simulationSpace,
+                "Simulation Space",
+                "Determines whether particle positions and movement are simulated in local or world space.");
 
             EditorGUILayout.Space(4);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent(L10n.Tr("Play On Awake")));
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("startDelay"), new GUIContent(L10n.Tr("Start Delay")));
-            EditorGUILayout.PropertyField(_playback.FindPropertyRelative("duration"), new GUIContent(L10n.Tr("Duration")));
+
+            EditorGUILayout.PropertyField(
+                _playback.FindPropertyRelative("duration"),
+                new GUIContent(
+                    L10n.Tr("Duration"),
+                    L10n.Tr("Sets how long particles are emitted during each cycle.")));
+
             EditorGUILayout.PropertyField(_playback.FindPropertyRelative("loop"), new GUIContent(L10n.Tr("Loop")));
 
             EditorGUILayout.Space(4);
@@ -259,6 +269,7 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(
                     _lifetime.FindPropertyRelative("min"),
                     new GUIContent(L10n.Tr("Start Lifetime Min")));
+
                 EditorGUILayout.PropertyField(
                     _lifetime.FindPropertyRelative("max"),
                     new GUIContent(L10n.Tr("Start Lifetime Max")));
@@ -365,6 +376,7 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(
                     _initialVelocity.FindPropertyRelative("min"),
                     new GUIContent(L10n.Tr("Initial Speed Min")));
+
                 EditorGUILayout.PropertyField(
                     _initialVelocity.FindPropertyRelative("max"),
                     new GUIContent(L10n.Tr("Initial Speed Max")));
@@ -433,6 +445,7 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(
                     _render.FindPropertyRelative("startSizeMin"),
                     new GUIContent(L10n.Tr("Start Size Min")));
+
                 EditorGUILayout.PropertyField(
                     _render.FindPropertyRelative("startSizeMax"),
                     new GUIContent(L10n.Tr("Start Size Max")));
@@ -456,6 +469,7 @@ namespace TpLab.Flux.FX.Editor
                 EditorGUILayout.PropertyField(
                     _render.FindPropertyRelative("startColorMin"),
                     new GUIContent(L10n.Tr("Start Color Min")));
+
                 EditorGUILayout.PropertyField(
                     _render.FindPropertyRelative("startColorMax"),
                     new GUIContent(L10n.Tr("Start Color Max")));
@@ -582,16 +596,19 @@ namespace TpLab.Flux.FX.Editor
 
         void DrawProperty(SerializedProperty property, bool includeChildren = false)
         {
+            var tooltip = GetTooltip(property.displayName);
+
             EditorGUILayout.PropertyField(
                 property,
-                new GUIContent(L10n.Tr(property.displayName)),
+                new GUIContent(L10n.Tr(property.displayName), tooltip),
                 includeChildren);
         }
 
-        void DrawEnum(SerializedProperty property, string label = null)
+        void DrawEnum(SerializedProperty property, string label = null, string tooltip = null)
         {
             var names = property.enumDisplayNames;
             var localizedNames = new string[names.Length];
+            var displayName = label ?? property.displayName;
 
             for (var i = 0; i < names.Length; i++)
             {
@@ -599,7 +616,7 @@ namespace TpLab.Flux.FX.Editor
             }
 
             var selectedIndex = EditorGUILayout.Popup(
-                L10n.Tr(label ?? property.displayName),
+                new GUIContent(L10n.Tr(displayName), tooltip == null ? GetTooltip(displayName) : L10n.Tr(tooltip)),
                 property.enumValueIndex,
                 localizedNames);
 
@@ -607,6 +624,26 @@ namespace TpLab.Flux.FX.Editor
             {
                 property.enumValueIndex = selectedIndex;
             }
+        }
+
+        string GetTooltip(string label)
+        {
+            if (label == "Orbital")
+            {
+                return L10n.Tr("Sets the angular velocity around the center defined by Offset.");
+            }
+
+            if (label == "Offset")
+            {
+                return L10n.Tr("Sets the center used by Orbital and Radial velocity.");
+            }
+
+            if (label == "Radial")
+            {
+                return L10n.Tr("Sets the velocity away from or toward the center. Positive values move outward and negative values move inward.");
+            }
+
+            return null;
         }
 
         void DrawSectionHeader(string label)

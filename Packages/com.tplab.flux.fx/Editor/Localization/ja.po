@@ -21,6 +21,9 @@ msgstr "最大パーティクル数"
 msgid "Simulation Space"
 msgstr "移動基準"
 
+msgid "Determines whether particle positions and movement are simulated in local or world space."
+msgstr "パーティクルの位置と移動をローカル空間またはワールド空間のどちらで扱うかを設定します。"
+
 msgid "Play On Awake"
 msgstr "自動再生"
 
@@ -29,6 +32,9 @@ msgstr "開始遅延"
 
 msgid "Duration"
 msgstr "生成時間"
+
+msgid "Sets how long particles are emitted during each cycle."
+msgstr "1回のサイクルでパーティクルを生成する時間を設定します。"
 
 msgid "Loop"
 msgstr "ループ"
@@ -102,11 +108,20 @@ msgstr "終了速度"
 msgid "Orbital"
 msgstr "旋回速度"
 
+msgid "Sets the angular velocity around the center defined by Offset."
+msgstr "中心位置を基準にパーティクルを旋回させる角速度を設定します。"
+
 msgid "Offset"
 msgstr "中心位置"
 
+msgid "Sets the center used by Orbital and Radial velocity."
+msgstr "旋回速度と放射速度の基準となる中心位置を設定します。"
+
 msgid "Radial"
 msgstr "放射速度"
+
+msgid "Sets the velocity away from or toward the center. Positive values move outward and negative values move inward."
+msgstr "中心位置から外側または内側へ移動する速度を設定します。正の値で外向き、負の値で内向きです。"
 
 msgid "Gravity"
 msgstr "重力"
