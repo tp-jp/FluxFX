@@ -3,8 +3,20 @@ msgstr ""
 "Language: ja\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgid "Preview"
+msgstr "プレビュー"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Restart"
+msgstr "再開始"
+
 msgid "MAIN"
 msgstr "基本設定"
+
+msgid "Particle Count"
+msgstr "最大パーティクル数"
 
 msgid "Simulation Space"
 msgstr "移動基準"
@@ -14,3 +26,189 @@ msgstr "自動再生"
 
 msgid "Start Delay"
 msgstr "開始遅延"
+
+msgid "Duration"
+msgstr "生成時間"
+
+msgid "Loop"
+msgstr "ループ"
+
+msgid "Start Lifetime Mode"
+msgstr "寿命モード"
+
+msgid "Start Lifetime"
+msgstr "寿命"
+
+msgid "Start Lifetime Min"
+msgstr "最小寿命"
+
+msgid "Start Lifetime Max"
+msgstr "最大寿命"
+
+msgid "EMISSION"
+msgstr "生成"
+
+msgid "Rate over Time"
+msgstr "生成レート"
+
+msgid "Bursts"
+msgstr "バースト"
+
+msgid "Time"
+msgstr "時間"
+
+msgid "Count"
+msgstr "生成数"
+
+msgid "SHAPE"
+msgstr "生成形状"
+
+msgid "Type"
+msgstr "形状"
+
+msgid "Radius"
+msgstr "半径"
+
+msgid "Size"
+msgstr "サイズ"
+
+msgid "Angle"
+msgstr "角度"
+
+msgid "VELOCITY"
+msgstr "移動"
+
+msgid "Initial Speed Mode"
+msgstr "初速モード"
+
+msgid "Initial Speed"
+msgstr "初速"
+
+msgid "Initial Speed Min"
+msgstr "最小初速"
+
+msgid "Initial Speed Max"
+msgstr "最大初速"
+
+msgid "Velocity over Lifetime"
+msgstr "寿命による速度"
+
+msgid "Start"
+msgstr "開始速度"
+
+msgid "End"
+msgstr "終了速度"
+
+msgid "Orbital"
+msgstr "旋回速度"
+
+msgid "Offset"
+msgstr "中心位置"
+
+msgid "Radial"
+msgstr "放射速度"
+
+msgid "Gravity"
+msgstr "重力"
+
+msgid "Force"
+msgstr "力"
+
+msgid "Drag"
+msgstr "抵抗"
+
+msgid "Noise"
+msgstr "ノイズ"
+
+msgid "Strength"
+msgstr "強さ"
+
+msgid "Scale"
+msgstr "スケール"
+
+msgid "Speed"
+msgstr "速度"
+
+msgid "Vortex"
+msgstr "渦"
+
+msgid "Center"
+msgstr "中心"
+
+msgid "Axis"
+msgstr "軸"
+
+msgid "Limit Velocity"
+msgstr "速度制限"
+
+msgid "Max Speed"
+msgstr "最大速度"
+
+msgid "RENDERER"
+msgstr "描画"
+
+msgid "Mode"
+msgstr "モード"
+
+msgid "Mesh"
+msgstr "メッシュ"
+
+msgid "Material"
+msgstr "マテリアル"
+
+msgid "Start Color Mode"
+msgstr "開始色モード"
+
+msgid "Start Color"
+msgstr "開始色"
+
+msgid "Start Color Min"
+msgstr "開始色 最小"
+
+msgid "Start Color Max"
+msgstr "開始色 最大"
+
+msgid "Start Size Mode"
+msgstr "開始サイズモード"
+
+msgid "Start Size"
+msgstr "開始サイズ"
+
+msgid "Start Size Min"
+msgstr "最小開始サイズ"
+
+msgid "Start Size Max"
+msgstr "最大開始サイズ"
+
+msgid "Start Rotation"
+msgstr "開始回転"
+
+msgid "Color over Lifetime"
+msgstr "寿命による色"
+
+msgid "End Color"
+msgstr "終了色"
+
+msgid "Gradient"
+msgstr "グラデーション"
+
+msgid "Size over Lifetime"
+msgstr "寿命によるサイズ"
+
+msgid "End Size"
+msgstr "終了サイズ"
+
+msgid "Curve"
+msgstr "カーブ"
+
+msgid "Rotation over Lifetime"
+msgstr "寿命による回転"
+
+msgid "End Rotation"
+msgstr "終了回転"
+
+msgid "FluxParticleAuthoring is required on the same GameObject."
+msgstr "同じGameObjectにFluxParticleAuthoringが必要です。"
+
+msgid "Mesh is required for Mesh render mode."
+msgstr "Mesh描画にはメッシュの設定が必要です。"
