@@ -322,7 +322,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             var speedMin = _authoring.InitialVelocity.Speed;
             var speedMax = _authoring.InitialVelocity.Speed;
 
-            if (_authoring.InitialVelocity.Mode == FluxParticleInitialSpeedMode.RandomBetweenTwoConstants)
+            if (_authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
                 speedMin = Mathf.Min(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);
                 speedMax = Mathf.Max(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);

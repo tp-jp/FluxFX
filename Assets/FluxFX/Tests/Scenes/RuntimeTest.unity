@@ -1019,16 +1019,10 @@ MonoBehaviour:
   playback:
     startDelay: 0
     duration: 3
-    loop: 0
+    loop: 1
   emission:
-    rate: 0
-    bursts:
-    - time: 0
-      count: 10
-    - time: 1
-      count: 20
-    - time: 2
-      count: 30
+    rate: 8
+    bursts: []
   lifetime:
     lifetime: 5
     mode: 0
@@ -1074,7 +1068,7 @@ MonoBehaviour:
     enabled: 0
     maxSpeed: 2
   render:
-    mode: 1
+    mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
     startColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1087,7 +1081,7 @@ MonoBehaviour:
     startSizeMax: 0.2
     startRotation: {x: 0, y: 0, z: 0}
     colorOverLifetime:
-      enabled: 1
+      enabled: 0
       mode: 0
       endColor: {r: 0.57078075, g: 0, b: 1, a: 1}
       gradient:
@@ -1121,7 +1115,7 @@ MonoBehaviour:
         m_NumColorKeys: 2
         m_NumAlphaKeys: 2
     sizeOverLifetime:
-      enabled: 1
+      enabled: 0
       mode: 0
       endSize: 0.1
       curve:
@@ -1149,7 +1143,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
     rotationOverLifetime:
-      enabled: 1
+      enabled: 0
       mode: 0
       endRotation: 180
       curve:

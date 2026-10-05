@@ -97,7 +97,7 @@ namespace TpLab.Flux.FX.Scripts
         RandomBetweenTwoConstants
     }
 
-    public enum FluxParticleInitialSpeedMode
+    public enum FluxParticleStartSpeedMode
     {
         Constant,
         RandomBetweenTwoConstants
@@ -234,7 +234,7 @@ namespace TpLab.Flux.FX.Scripts
         float speed = 1.0f;
 
         [SerializeField]
-        FluxParticleInitialSpeedMode mode;
+        FluxParticleStartSpeedMode mode;
 
         [SerializeField]
         [Min(0)]
@@ -246,7 +246,7 @@ namespace TpLab.Flux.FX.Scripts
 
         public float Speed => speed;
 
-        public FluxParticleInitialSpeedMode Mode => mode;
+        public FluxParticleStartSpeedMode Mode => mode;
 
         public float Min => min;
 

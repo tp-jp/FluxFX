@@ -89,10 +89,10 @@ namespace TpLab.Flux.FX.Editor
 
         void AddInitialVelocity(JObject parameters, InitialVelocitySettings initialVelocity)
         {
-            var speedMin = initialVelocity.Mode == FluxParticleInitialSpeedMode.Constant
+            var speedMin = initialVelocity.Mode == FluxParticleStartSpeedMode.Constant
                 ? initialVelocity.Speed
                 : UnityEngine.Mathf.Min(initialVelocity.Min, initialVelocity.Max);
-            var speedMax = initialVelocity.Mode == FluxParticleInitialSpeedMode.Constant
+            var speedMax = initialVelocity.Mode == FluxParticleStartSpeedMode.Constant
                 ? initialVelocity.Speed
                 : UnityEngine.Mathf.Max(initialVelocity.Min, initialVelocity.Max);
 

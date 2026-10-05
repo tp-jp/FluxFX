@@ -51,6 +51,18 @@ msgstr "最小寿命"
 msgid "Start Lifetime Max"
 msgstr "最大寿命"
 
+msgid "Start Speed Mode"
+msgstr "開始速度モード"
+
+msgid "Start Speed"
+msgstr "開始速度"
+
+msgid "Start Speed Min"
+msgstr "最小開始速度"
+
+msgid "Start Speed Max"
+msgstr "最大開始速度"
+
 msgid "EMISSION"
 msgstr "生成"
 
@@ -83,18 +95,6 @@ msgstr "角度"
 
 msgid "VELOCITY"
 msgstr "移動"
-
-msgid "Initial Speed Mode"
-msgstr "初速モード"
-
-msgid "Initial Speed"
-msgstr "初速"
-
-msgid "Initial Speed Min"
-msgstr "最小初速"
-
-msgid "Initial Speed Max"
-msgstr "最大初速"
 
 msgid "Velocity over Lifetime"
 msgstr "寿命による速度"

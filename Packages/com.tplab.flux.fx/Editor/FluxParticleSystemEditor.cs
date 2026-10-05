@@ -269,6 +269,42 @@ namespace TpLab.Flux.FX.Editor
             EditorGUILayout.Space(4);
 
             DrawLifetime();
+            DrawStartSpeed();
+            DrawStartColor();
+            DrawStartSize();
+
+            var renderMode = (FluxParticleRenderMode)_render.FindPropertyRelative("mode").enumValueIndex;
+
+            if (renderMode == FluxParticleRenderMode.Mesh)
+            {
+                EditorGUILayout.PropertyField(
+                    _render.FindPropertyRelative("startRotation"),
+                    new GUIContent(L10n.Tr("Start Rotation")));
+            }
+        }
+
+        void DrawStartSpeed()
+        {
+            var mode = _initialVelocity.FindPropertyRelative("mode");
+
+            DrawEnum(mode, "Start Speed Mode");
+
+            if ((FluxParticleStartSpeedMode)mode.enumValueIndex == FluxParticleStartSpeedMode.Constant)
+            {
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("speed"),
+                    new GUIContent(L10n.Tr("Start Speed")));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("min"),
+                    new GUIContent(L10n.Tr("Start Speed Min")));
+
+                EditorGUILayout.PropertyField(
+                    _initialVelocity.FindPropertyRelative("max"),
+                    new GUIContent(L10n.Tr("Start Speed Max")));
+            }
         }
 
         void DrawEmission()
@@ -346,10 +382,6 @@ namespace TpLab.Flux.FX.Editor
 
             EditorGUILayout.Space(2);
 
-            DrawInitialSpeed();
-
-            EditorGUILayout.Space();
-
             _velocityOverLifetimeExpanded = DrawModule(
                 L10n.Tr("Velocity over Lifetime"),
                 _velocityOverLifetime,
@@ -399,7 +431,7 @@ namespace TpLab.Flux.FX.Editor
 
             DrawEnum(mode, "Initial Speed Mode");
 
-            if ((FluxParticleInitialSpeedMode)mode.enumValueIndex == FluxParticleInitialSpeedMode.Constant)
+            if ((FluxParticleStartSpeedMode)mode.enumValueIndex == FluxParticleStartSpeedMode.Constant)
             {
                 EditorGUILayout.PropertyField(
                     _initialVelocity.FindPropertyRelative("speed"),
@@ -440,16 +472,6 @@ namespace TpLab.Flux.FX.Editor
             }
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("material"), new GUIContent(L10n.Tr("Material")));
-
-            EditorGUILayout.Space();
-
-            DrawStartColor();
-            DrawStartSize();
-
-            if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
-            {
-                EditorGUILayout.PropertyField(_render.FindPropertyRelative("startRotation"), new GUIContent(L10n.Tr("Start Rotation")));
-            }
 
             EditorGUILayout.Space();
 
