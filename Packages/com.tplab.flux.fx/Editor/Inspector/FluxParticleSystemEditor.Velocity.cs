@@ -1,7 +1,7 @@
 using UnityEditor;
 using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
 
-namespace TpLab.Flux.FX.Editor
+namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleSystemEditor
     {

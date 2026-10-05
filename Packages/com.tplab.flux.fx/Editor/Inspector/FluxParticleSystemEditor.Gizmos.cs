@@ -2,7 +2,7 @@ using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor
+namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleSystemEditor
     {
