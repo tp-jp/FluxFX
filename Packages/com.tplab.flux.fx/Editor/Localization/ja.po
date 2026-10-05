@@ -232,7 +232,7 @@ msgid "Cone"
 msgstr "円錐"
 
 msgid "Constant"
-msgstr "一定"
+msgstr "固定"
 
 msgid "Random Between Two Constants"
 msgstr "2つの値からランダム"
