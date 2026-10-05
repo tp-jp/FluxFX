@@ -698,7 +698,7 @@ namespace TpLab.Flux.FX.Editor
 
             _sectionHeaderLabelStyle = new GUIStyle(EditorStyles.boldLabel);
             _sectionHeaderLabelStyle.alignment = TextAnchor.MiddleLeft;
-            _sectionHeaderLabelStyle.fontSize = 11;
+            _sectionHeaderLabelStyle.fontSize = 12;
 
             _sectionHeaderChevronStyle = new GUIStyle(EditorStyles.miniLabel);
             _sectionHeaderChevronStyle.alignment = TextAnchor.MiddleCenter;
@@ -801,6 +801,7 @@ namespace TpLab.Flux.FX.Editor
 
             _moduleHeaderLabelStyle = new GUIStyle(EditorStyles.boldLabel);
             _moduleHeaderLabelStyle.alignment = TextAnchor.MiddleLeft;
+            _moduleHeaderLabelStyle.fontSize = 12;
         }
 
         void InitializeBurstList()
