@@ -127,6 +127,7 @@ namespace TpLab.Flux.FX.Editor
 
             _authoringObject.Update();
 
+            DrawLanguage();
             DrawPreview();
             DrawMain();
             DrawEmission();
@@ -170,6 +171,25 @@ namespace TpLab.Flux.FX.Editor
             {
                 DrawConeShapeGizmo();
             }
+        }
+
+        void DrawLanguage()
+        {
+            var language = L10n.Language;
+
+            var selectedIndex = EditorGUILayout.Popup(
+                "Language / 言語",
+                (int)language,
+                new[]
+                {
+                    "English",
+                    "日本語"
+                });
+
+            if (selectedIndex == (int)language) return;
+
+            L10n.Language = (Localization.Language)selectedIndex;
+            Repaint();
         }
 
         void DrawPreview()
