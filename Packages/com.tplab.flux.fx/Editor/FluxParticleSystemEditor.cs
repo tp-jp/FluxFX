@@ -36,6 +36,12 @@ namespace TpLab.Flux.FX.Editor
         const string SizeOverLifetimeExpandedKey = SessionStatePrefix + "SizeOverLifetimeExpanded";
         const string RotationOverLifetimeExpandedKey = SessionStatePrefix + "RotationOverLifetimeExpanded";
 
+        static readonly string[] LanguageNames =
+        {
+            "English",
+            "日本語"
+        };
+
         bool _emissionExpanded;
         bool _shapeExpanded;
         bool _velocityExpanded;
@@ -177,14 +183,22 @@ namespace TpLab.Flux.FX.Editor
         {
             var language = L10n.Language;
 
-            var selectedIndex = EditorGUILayout.Popup(
+            EditorGUILayout.BeginHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            EditorGUILayout.LabelField(
                 "Language / 言語",
+                GUILayout.Width(100));
+
+            var selectedIndex = EditorGUILayout.Popup(
                 (int)language,
-                new[]
-                {
-                    "English",
-                    "日本語"
-                });
+                LanguageNames,
+                GUILayout.Width(90));
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(6);
 
             if (selectedIndex == (int)language) return;
 
