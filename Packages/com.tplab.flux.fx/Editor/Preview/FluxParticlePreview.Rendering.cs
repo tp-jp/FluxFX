@@ -65,7 +65,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", settings.Enabled ? 1 : 0);
             _renderMaterial.SetFloat("_RotationOverLifetimeMode", (int)settings.Mode);
-            _renderMaterial.SetFloat("_EndBillboardRotation", settings.EndRotation.z);
+            _renderMaterial.SetVector("_EndRotation", settings.EndRotation);
 
             if (!settings.Enabled || settings.Mode != FluxParticleRotationOverLifetimeMode.Curve)
             {
