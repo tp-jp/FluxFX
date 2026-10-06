@@ -35,11 +35,11 @@ Shader "FluxFX/ParticleRender"
 
             float4 _EndColor;
             float _EndSize;
+            float3 _EndRotation;
             float _ColorOverLifetimeEnabled;
             float _SizeOverLifetimeEnabled;
             float _ColorOverLifetimeMode;
             float _SizeOverLifetimeMode;
-            float _EndBillboardRotation;
             float _RotationOverLifetimeEnabled;
             float _RotationOverLifetimeMode;
             float _SimulationSpace;
@@ -125,20 +125,20 @@ Shader "FluxFX/ParticleRender"
                 );
             }
 
-            float GetRotationOverLifetime(float normalizedAge)
+            float3 GetRotationOverLifetime(float normalizedAge)
             {
                 if (_RotationOverLifetimeEnabled <= 0.5)
                     return 0;
 
                 if (_RotationOverLifetimeMode > 0.5)
                 {
-                    return _EndBillboardRotation
+                    return _EndRotation
                         * tex2Dlod(
                             _RotationOverLifetimeLut,
                             float4(normalizedAge, 0.5, 0, 0)).r;
                 }
 
-                return _EndBillboardRotation * normalizedAge;
+                return _EndRotation * normalizedAge;
             }
 
             v2f vert(appdata v)
@@ -192,19 +192,19 @@ Shader "FluxFX/ParticleRender"
                     }
                 }
 
-                float rotationOverLifetime = GetRotationOverLifetime(normalizedAge);
+                float3 rotationOverLifetime = GetRotationOverLifetime(normalizedAge);
 
                 float3 particleVertex;
                 if (_RenderMode < 0.5)
                 {
                     particleVertex = GetBillboardVertex(
-                        Rotate2D(v.vertex.xy, radians(rotationOverLifetime)),
+                        Rotate2D(v.vertex.xy, radians(rotationOverLifetime.z)),
                         size);
                 }
                 else
                 {
                     float3 startRotation = tex2Dlod(_RotationTex, float4(stateUV, 0, 0)).xyz;
-                    float3 rotation = radians(startRotation + float3(0, 0, rotationOverLifetime));
+                    float3 rotation = radians(startRotation + rotationOverLifetime);
 
                     particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
                 }

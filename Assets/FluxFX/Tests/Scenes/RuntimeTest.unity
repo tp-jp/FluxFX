@@ -1230,7 +1230,7 @@ MonoBehaviour:
     rotationOverLifetime:
       enabled: 0
       mode: 0
-      endRotation: {x: 0, y: 0, z: 360}
+      endRotation: {x: 360, y: 180, z: 90}
       curve:
         serializedVersion: 2
         m_Curve:

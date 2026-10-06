@@ -158,7 +158,7 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_FluxSourceHeight", texture.height);
             _material.SetVector("_EndColor", endColor);
             _material.SetFloat("_EndSize", SizeOverLifetime.GetEndSize());
-            _material.SetFloat("_EndBillboardRotation", RotationOverLifetime.GetEndRotation());
+            _material.SetVector("_EndRotation", RotationOverLifetime.GetEndRotation());
             _material.SetFloat("_ColorOverLifetimeEnabled", ColorOverLifetime.GetEnabled() ? 1.0f : 0.0f);
             _material.SetFloat("_SizeOverLifetimeEnabled", SizeOverLifetime.GetEnabled() ? 1.0f : 0.0f);
             _material.SetFloat("_RotationOverLifetimeEnabled", RotationOverLifetime.GetEnabled() ? 1.0f : 0.0f);

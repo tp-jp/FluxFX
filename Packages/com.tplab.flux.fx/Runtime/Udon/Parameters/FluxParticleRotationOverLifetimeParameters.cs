@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using UnityEngine;
 using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Parameters
@@ -17,12 +18,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleRotationOverLifetimeParameters : DataList
     {
-        internal static FluxParticleRotationOverLifetimeParameters New(bool enabled, float endRotation)
+        internal static FluxParticleRotationOverLifetimeParameters New(bool enabled, Vector3 endRotation)
         {
             var data = new DataToken[(int)FluxParticleRotationOverLifetimeParameter.Count];
 
             data[(int)FluxParticleRotationOverLifetimeParameter.Enabled] = enabled;
-            data[(int)FluxParticleRotationOverLifetimeParameter.EndRotation] = endRotation;
+            data[(int)FluxParticleRotationOverLifetimeParameter.EndRotation] = new DataToken(endRotation);
 
             return (FluxParticleRotationOverLifetimeParameters)new DataList(data);
         }
@@ -62,9 +63,9 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <param name="parameters">Rotation over Lifetimeパラメーター</param>
         /// <returns>Linearモードの終了回転角</returns>
         [PublicAPI]
-        public static float GetEndRotation(this FluxParticleRotationOverLifetimeParameters parameters)
+        public static Vector3 GetEndRotation(this FluxParticleRotationOverLifetimeParameters parameters)
         {
-            return (float)parameters[(int)FluxParticleRotationOverLifetimeParameter.EndRotation].Double;
+            return (Vector3)parameters[(int)FluxParticleRotationOverLifetimeParameter.EndRotation].Reference;
         }
 
         /// <summary>
@@ -73,9 +74,9 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <param name="parameters">Rotation over Lifetimeパラメーター</param>
         /// <param name="endRotation">Linearモードの終了回転角</param>
         [PublicAPI]
-        public static void SetEndRotation(this FluxParticleRotationOverLifetimeParameters parameters, float endRotation)
+        public static void SetEndRotation(this FluxParticleRotationOverLifetimeParameters parameters, Vector3 endRotation)
         {
-            parameters[(int)FluxParticleRotationOverLifetimeParameter.EndRotation] = endRotation;
+            parameters[(int)FluxParticleRotationOverLifetimeParameter.EndRotation] = new DataToken(endRotation);
         }
     }
 }

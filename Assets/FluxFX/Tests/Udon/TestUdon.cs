@@ -42,7 +42,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             // fluxParticleSystem.VelocityOverLifetime.SetEnabled(true);
             // fluxParticleSystem.StartRotation.SetRotation(new Vector3(0, 90, 0));
             fluxParticleSystem.RotationOverLifetime.SetEnabled(true);
-            fluxParticleSystem.RotationOverLifetime.SetEndRotation(360f);
+            fluxParticleSystem.RotationOverLifetime.SetEndRotation(new Vector3(360, 180, 90));
         }
     }
 }

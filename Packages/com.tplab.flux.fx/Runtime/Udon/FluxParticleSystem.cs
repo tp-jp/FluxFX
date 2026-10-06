@@ -615,14 +615,17 @@ namespace TpLab.Flux.FX.Udon
         void InitializeRotationOverLifetime(DataDictionary render)
         {
             var enabled = false;
-            var endRotation = 0.0f;
+            var endRotation = Vector3.zero;
 
             if (render.TryGetValue("rotationOverLifetime", out var token))
             {
                 var rotation = token.DataDictionary;
 
                 enabled = true;
-                endRotation = (float)rotation["endRotation"].Double;
+                endRotation = new Vector3(
+                    (float)rotation["endRotationX"].Double,
+                    (float)rotation["endRotationY"].Double,
+                    (float)rotation["endRotationZ"].Double);
             }
 
             _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
