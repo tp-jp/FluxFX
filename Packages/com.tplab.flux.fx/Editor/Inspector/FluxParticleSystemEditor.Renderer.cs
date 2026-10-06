@@ -36,11 +36,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             DrawColorOverLifetime();
             DrawSizeOverLifetime();
-
-            if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Billboard)
-            {
-                DrawRotationOverLifetime();
-            }
+            DrawRotationOverLifetime();
         }
 
         void DrawStartSize()
