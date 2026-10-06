@@ -26,6 +26,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         Material _velocityMaterial;
         Material _positionMaterial;
         Material _visualMaterial;
+        Material _rotationMaterial;
         Material _renderMaterial;
 
         RenderTexture _positionA;
@@ -34,6 +35,8 @@ namespace TpLab.Flux.FX.Editor.Preview
         RenderTexture _velocityB;
         RenderTexture _visualA;
         RenderTexture _visualB;
+        RenderTexture _rotationA;
+        RenderTexture _rotationB;
 
         RenderTexture _currentPosition;
         RenderTexture _nextPosition;
@@ -41,6 +44,8 @@ namespace TpLab.Flux.FX.Editor.Preview
         RenderTexture _nextVelocity;
         RenderTexture _currentVisual;
         RenderTexture _nextVisual;
+        RenderTexture _currentRotation;
+        RenderTexture _nextRotation;
 
         Texture2D _colorOverLifetimeLut;
         Texture2D _sizeOverLifetimeLut;

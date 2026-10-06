@@ -11,11 +11,13 @@ namespace TpLab.Flux.FX.Editor.Preview
             var velocityShader = Shader.Find("FluxFX/ParticleVelocityUpdate");
             var positionShader = Shader.Find("FluxFX/ParticlePositionUpdate");
             var visualShader = Shader.Find("FluxFX/ParticleVisualUpdate");
+            var rotationShader = Shader.Find("FluxFX/ParticleRotationUpdate");
 
             if (initializeShader == null ||
                 velocityShader == null ||
                 positionShader == null ||
-                visualShader == null)
+                visualShader == null ||
+                rotationShader == null)
             {
                 Logger.LogError("Preview shaders could not be found.", _particleSystem);
                 return false;
@@ -32,6 +34,9 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             _visualMaterial = new Material(visualShader);
             _visualMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            _rotationMaterial = new Material(rotationShader);
+            _rotationMaterial.hideFlags = HideFlags.HideAndDontSave;
 
             _currentSourceMaterial = _authoring.Render.Material;
             _renderMaterial = new Material(_currentSourceMaterial);
@@ -72,6 +77,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityB = CreateStateTexture("FluxFX Preview Velocity B");
             _visualA = CreateStateTexture("FluxFX Preview Visual A");
             _visualB = CreateStateTexture("FluxFX Preview Visual B");
+            _rotationA = CreateStateTexture("FluxFX Preview Rotation A");
+            _rotationB = CreateStateTexture("FluxFX Preview Rotation B");
 
             _currentPosition = _positionA;
             _nextPosition = _positionB;
@@ -79,6 +86,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             _nextVelocity = _velocityB;
             _currentVisual = _visualA;
             _nextVisual = _visualB;
+            _currentRotation = _rotationA;
+            _nextRotation = _rotationB;
         }
 
         RenderTexture CreateStateTexture(string name)
@@ -116,6 +125,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             DispatchInitialize(_velocityB);
             DispatchInitialize(_visualA);
             DispatchInitialize(_visualB);
+            DispatchInitialize(_rotationA);
+            DispatchInitialize(_rotationB);
         }
 
         void DisposeTextures()
@@ -126,6 +137,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             DisposeTexture(ref _velocityB);
             DisposeTexture(ref _visualA);
             DisposeTexture(ref _visualB);
+            DisposeTexture(ref _rotationA);
+            DisposeTexture(ref _rotationB);
 
             _currentPosition = null;
             _nextPosition = null;
@@ -133,6 +146,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             _nextVelocity = null;
             _currentVisual = null;
             _nextVisual = null;
+            _currentRotation = null;
+            _nextRotation = null;
         }
 
         void DisposeLuts()
@@ -165,6 +180,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             DisposeMaterial(ref _velocityMaterial);
             DisposeMaterial(ref _positionMaterial);
             DisposeMaterial(ref _visualMaterial);
+            DisposeMaterial(ref _rotationMaterial);
             DisposeMaterial(ref _renderMaterial);
         }
 

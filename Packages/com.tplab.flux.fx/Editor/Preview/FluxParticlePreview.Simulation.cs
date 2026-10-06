@@ -21,6 +21,10 @@ namespace TpLab.Flux.FX.Editor.Preview
             {
                 ApplyVisualParameters(spawnStart, spawnSeedStart, spawnCount);
                 Dispatch(_visualMaterial, _currentVisual, _nextVisual);
+
+                ApplyRotationParameters();
+                Dispatch(_rotationMaterial, _currentRotation, _nextRotation);
+
                 SwapVisual();
             }
 
@@ -150,6 +154,13 @@ namespace TpLab.Flux.FX.Editor.Preview
             _visualMaterial.SetTexture("_VelocityTex", _nextVelocity);
         }
 
+        void ApplyRotationParameters()
+        {
+            _rotationMaterial.SetVector("_StartRotation", _authoring.Render.StartRotation);
+            _rotationMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
+            _rotationMaterial.SetTexture("_VelocityTex", _nextVelocity);
+        }
+
         void DispatchInitialize(RenderTexture destination)
         {
             PrepareDestination(_initializeMaterial);
@@ -193,6 +204,10 @@ namespace TpLab.Flux.FX.Editor.Preview
             var visualTemp = _currentVisual;
             _currentVisual = _nextVisual;
             _nextVisual = visualTemp;
+
+            var rotationTemp = _currentRotation;
+            _currentRotation = _nextRotation;
+            _nextRotation = rotationTemp;
         }
     }
 }

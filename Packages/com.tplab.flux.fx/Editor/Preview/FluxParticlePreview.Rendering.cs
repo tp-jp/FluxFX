@@ -15,10 +15,10 @@ namespace TpLab.Flux.FX.Editor.Preview
             _renderMaterial.SetTexture("_PositionTex", _currentPosition);
             _renderMaterial.SetTexture("_VelocityTex", _currentVelocity);
             _renderMaterial.SetTexture("_VisualTex", _currentVisual);
+            _renderMaterial.SetTexture("_RotationTex", _currentRotation);
             _renderMaterial.SetFloat("_FluxSourceCount", _particleCount);
             _renderMaterial.SetFloat("_FluxSourceWidth", _textureSize);
             _renderMaterial.SetFloat("_FluxSourceHeight", _textureSize);
-            _renderMaterial.SetVector("_StartRotation", _authoring.Render.StartRotation);
             _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _renderMaterial.SetFloat("_RenderMode", (int)_authoring.Render.Mode);
         }
