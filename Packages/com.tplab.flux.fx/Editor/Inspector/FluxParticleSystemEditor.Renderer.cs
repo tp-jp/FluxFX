@@ -148,12 +148,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
                     var mode = module.FindPropertyRelative("mode");
                     DrawEnum(mode);
+                    DrawProperty(module.FindPropertyRelative("endSize"));
 
-                    if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
-                    {
-                        DrawProperty(module.FindPropertyRelative("endSize"));
-                    }
-                    else
+                    if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Curve)
                     {
                         DrawProperty(module.FindPropertyRelative("curve"));
                     }

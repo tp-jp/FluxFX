@@ -1153,14 +1153,14 @@ MonoBehaviour:
     enabled: 0
     maxSpeed: 2
   render:
-    mode: 1
+    mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
     startColor: {r: 1, g: 1, b: 1, a: 1}
     startColorMode: 0
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
     startColorMax: {r: 0, g: 0, b: 1, a: 1}
-    startSize: 0.1
+    startSize: 1
     startSizeMode: 0
     startSizeMin: 0.02
     startSizeMax: 0.2
@@ -1230,7 +1230,7 @@ MonoBehaviour:
     rotationOverLifetime:
       enabled: 0
       mode: 0
-      endRotation: {x: 360, y: 180, z: 90}
+      endRotation: {x: 0, y: 0, z: 360}
       curve:
         serializedVersion: 2
         m_Curve:
