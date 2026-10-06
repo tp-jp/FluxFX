@@ -538,7 +538,7 @@ namespace TpLab.Flux.FX.Scripts
         FluxParticleRotationOverLifetimeMode mode;
 
         [SerializeField]
-        float endRotation;
+        Vector3 endRotation;
 
         [SerializeField]
         AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
@@ -547,7 +547,7 @@ namespace TpLab.Flux.FX.Scripts
 
         public FluxParticleRotationOverLifetimeMode Mode => mode;
 
-        public float EndRotation => endRotation;
+        public Vector3 EndRotation => endRotation;
 
         public AnimationCurve Curve => curve;
     }

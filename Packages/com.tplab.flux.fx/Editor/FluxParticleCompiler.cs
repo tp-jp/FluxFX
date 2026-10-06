@@ -251,7 +251,10 @@ namespace TpLab.Flux.FX.Editor
                 settings["rotationOverLifetime"] = new JObject
                 {
                     ["mode"] = (int)render.RotationOverLifetime.Mode,
-                    ["endRotation"] = render.RotationOverLifetime.EndRotation
+                    ["endRotation"] = render.RotationOverLifetime.EndRotation.z,
+                    ["endRotationX"] = render.RotationOverLifetime.EndRotation.x,
+                    ["endRotationY"] = render.RotationOverLifetime.EndRotation.y,
+                    ["endRotationZ"] = render.RotationOverLifetime.EndRotation.z
                 };
             }
 
