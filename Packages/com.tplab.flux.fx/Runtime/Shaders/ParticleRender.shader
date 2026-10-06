@@ -5,6 +5,7 @@ Shader "FluxFX/ParticleRender"
         _PositionTex ("Position", 2D) = "black" {}
         _VelocityTex ("Velocity", 2D) = "black" {}
         _VisualTex ("Visual", 2D) = "white" {}
+        _RotationTex ("Rotation", 2D) = "black" {}
         _ColorOverLifetimeLut ("Color over Lifetime LUT", 2D) = "white" {}
         _SizeOverLifetimeLut ("Size over Lifetime LUT", 2D) = "white" {}
         _RotationOverLifetimeLut ("Rotation over Lifetime LUT", 2D) = "white" {}
@@ -27,12 +28,12 @@ Shader "FluxFX/ParticleRender"
             sampler2D_float _PositionTex;
             sampler2D_float _VelocityTex;
             sampler2D_float _VisualTex;
+            sampler2D_float _RotationTex;
             sampler2D _ColorOverLifetimeLut;
             sampler2D _SizeOverLifetimeLut;
             sampler2D _RotationOverLifetimeLut;
 
             float4 _EndColor;
-            float3 _StartRotation;
             float _EndSize;
             float _ColorOverLifetimeEnabled;
             float _SizeOverLifetimeEnabled;
@@ -202,7 +203,8 @@ Shader "FluxFX/ParticleRender"
                 }
                 else
                 {
-                    float3 rotation = radians(_StartRotation);
+                    float3 startRotation = tex2Dlod(_RotationTex, float4(stateUV, 0, 0)).xyz;
+                    float3 rotation = radians(startRotation);
                     particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
                 }
 
@@ -224,6 +226,7 @@ Shader "FluxFX/ParticleRender"
                         o.vertex = UnityObjectToClipPos(float4(localPosition, 1));
                     }
                 }
+
                 o.color = float4(color, 1);
 
                 return o;

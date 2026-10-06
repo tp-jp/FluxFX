@@ -26,6 +26,12 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer visualBufferB;
 
         [SerializeField]
+        FluxBuffer rotationBufferA;
+
+        [SerializeField]
+        FluxBuffer rotationBufferB;
+
+        [SerializeField]
         FluxKernel initializeKernel;
 
         FluxBuffer _currentPositionBuffer;
@@ -34,6 +40,8 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer _nextVelocityBuffer;
         FluxBuffer _currentVisualBuffer;
         FluxBuffer _nextVisualBuffer;
+        FluxBuffer _currentRotationBuffer;
+        FluxBuffer _nextRotationBuffer;
 
         public FluxBuffer CurrentPosition => _currentPositionBuffer;
 
@@ -47,6 +55,10 @@ namespace TpLab.Flux.FX.Udon
 
         public FluxBuffer NextVisual => _nextVisualBuffer;
 
+        public FluxBuffer CurrentRotation => _currentRotationBuffer;
+
+        public FluxBuffer NextRotation => _nextRotationBuffer;
+
         internal void Initialize(int count)
         {
             positionBufferA.SetCount(count);
@@ -55,6 +67,8 @@ namespace TpLab.Flux.FX.Udon
             velocityBufferB.SetCount(count);
             visualBufferA.SetCount(count);
             visualBufferB.SetCount(count);
+            rotationBufferA.SetCount(count);
+            rotationBufferB.SetCount(count);
 
             _currentPositionBuffer = positionBufferA;
             _nextPositionBuffer = positionBufferB;
@@ -62,6 +76,8 @@ namespace TpLab.Flux.FX.Udon
             _nextVelocityBuffer = velocityBufferB;
             _currentVisualBuffer = visualBufferA;
             _nextVisualBuffer = visualBufferB;
+            _currentRotationBuffer = rotationBufferA;
+            _nextRotationBuffer = rotationBufferB;
 
             Clear();
         }
@@ -74,6 +90,8 @@ namespace TpLab.Flux.FX.Udon
             initializeKernel.Dispatch(velocityBufferB);
             initializeKernel.Dispatch(visualBufferA);
             initializeKernel.Dispatch(visualBufferB);
+            initializeKernel.Dispatch(rotationBufferA);
+            initializeKernel.Dispatch(rotationBufferB);
         }
 
         internal void SwapSimulation()
@@ -92,6 +110,10 @@ namespace TpLab.Flux.FX.Udon
             var visualTemp = _currentVisualBuffer;
             _currentVisualBuffer = _nextVisualBuffer;
             _nextVisualBuffer = visualTemp;
+
+            var rotationTemp = _currentRotationBuffer;
+            _currentRotationBuffer = _nextRotationBuffer;
+            _nextRotationBuffer = rotationTemp;
         }
     }
 }

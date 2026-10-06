@@ -515,9 +515,9 @@ namespace TpLab.Flux.FX.Udon
             InitializeSizeOverLifetime(render);
             InitializeRotationOverLifetime(render);
 
-            particleSimulation.SetVisualSpawnParameters(StartColor, StartSize);
+            particleSimulation.SetSpawnParameters(StartColor, StartSize, StartRotation);
             particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render, StartRotation, ColorOverLifetime, SizeOverLifetime, RotationOverLifetime);
+            particleRenderer.SetRenderParameters(render, ColorOverLifetime, SizeOverLifetime, RotationOverLifetime);
         }
 
         void InitializeStartColor(DataDictionary render)

@@ -23,6 +23,9 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         FluxKernel visualUpdateKernel;
 
+        [SerializeField]
+        FluxKernel rotationUpdateKernel;
+
         float _simulationTime;
         object _lifetime;
         object _shape;
@@ -36,6 +39,7 @@ namespace TpLab.Flux.FX.Udon
         object _limitVelocity;
         object _startColor;
         object _startSize;
+        object _startRotation;
 
         FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
 
@@ -60,6 +64,8 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
 
         FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
+
+        FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         internal void Initialize(
             FluxParticleLifetimeParameters lifetime,
@@ -102,10 +108,14 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_SystemScale", new Vector4(scale.x, scale.y, scale.z, 0));
         }
 
-        internal void SetVisualSpawnParameters(FluxParticleStartColorParameters startColor, FluxParticleStartSizeParameters startSize)
+        internal void SetSpawnParameters(
+            FluxParticleStartColorParameters startColor,
+            FluxParticleStartSizeParameters startSize,
+            FluxParticleStartRotationParameters startRotation)
         {
             _startColor = startColor;
             _startSize = startSize;
+            _startRotation = startRotation;
         }
 
         internal void Simulate(float deltaTime)
@@ -118,6 +128,7 @@ namespace TpLab.Flux.FX.Udon
             if (particleEmitter.SpawnCount > 0)
             {
                 UpdateVisual();
+                UpdateRotation();
                 particleState.SwapVisual();
             }
 
@@ -202,6 +213,16 @@ namespace TpLab.Flux.FX.Udon
             visualUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
             visualUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
             visualUpdateKernel.Dispatch(particleState.CurrentVisual, particleState.NextVisual);
+        }
+
+        void UpdateRotation()
+        {
+            var rotation = StartRotation.GetRotation();
+
+            rotationUpdateKernel.SetVector("_StartRotation", new Vector4(rotation.x, rotation.y, rotation.z, 0));
+            rotationUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
+            rotationUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
+            rotationUpdateKernel.Dispatch(particleState.CurrentRotation, particleState.NextRotation);
         }
     }
 }

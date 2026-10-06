@@ -48,12 +48,9 @@ namespace TpLab.Flux.FX.Udon
         float _sizeOverLifetimeMode;
         float _rotationOverLifetimeMode;
         float _simulationSpace;
-        object _startRotation;
         object _colorOverLifetime;
         object _sizeOverLifetime;
         object _rotationOverLifetime;
-
-        FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
 
@@ -89,12 +86,10 @@ namespace TpLab.Flux.FX.Udon
 
         internal void SetRenderParameters(
             DataDictionary parameters,
-            FluxParticleStartRotationParameters startRotation,
             FluxParticleColorOverLifetimeParameters colorOverLifetime,
             FluxParticleSizeOverLifetimeParameters sizeOverLifetime,
             FluxParticleRotationOverLifetimeParameters rotationOverLifetime)
         {
-            _startRotation = startRotation;
             _colorOverLifetime = colorOverLifetime;
             _sizeOverLifetime = sizeOverLifetime;
             _rotationOverLifetime = rotationOverLifetime;
@@ -153,6 +148,7 @@ namespace TpLab.Flux.FX.Udon
             SetBuffer("_PositionTex", state.CurrentPosition);
             SetBuffer("_VelocityTex", state.CurrentVelocity);
             SetBuffer("_VisualTex", state.CurrentVisual);
+            SetBuffer("_RotationTex", state.CurrentRotation);
 
             var texture = state.CurrentPosition.Texture;
             var endColor = ColorOverLifetime.GetEndColor();
@@ -160,7 +156,6 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
             _material.SetFloat("_FluxSourceWidth", texture.width);
             _material.SetFloat("_FluxSourceHeight", texture.height);
-            _material.SetVector("_StartRotation", StartRotation.GetRotation());
             _material.SetVector("_EndColor", endColor);
             _material.SetFloat("_EndSize", SizeOverLifetime.GetEndSize());
             _material.SetFloat("_EndBillboardRotation", RotationOverLifetime.GetEndRotation());
