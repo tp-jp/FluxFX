@@ -33,6 +33,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         const string ColorOverLifetimeExpandedKey = SessionStatePrefix + "ColorOverLifetimeExpanded";
         const string SizeOverLifetimeExpandedKey = SessionStatePrefix + "SizeOverLifetimeExpanded";
         const string RotationOverLifetimeExpandedKey = SessionStatePrefix + "RotationOverLifetimeExpanded";
+        const string TextureSheetAnimationExpandedKey = SessionStatePrefix + "TextureSheetAnimationExpanded";
 
         static readonly string[] LanguageNames =
         {
@@ -56,6 +57,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         bool _colorOverLifetimeExpanded;
         bool _sizeOverLifetimeExpanded;
         bool _rotationOverLifetimeExpanded;
+        bool _textureSheetAnimationExpanded;
 
         SerializedObject _authoringObject;
 
@@ -256,6 +258,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _colorOverLifetimeExpanded = SessionState.GetBool(ColorOverLifetimeExpandedKey, false);
             _sizeOverLifetimeExpanded = SessionState.GetBool(SizeOverLifetimeExpandedKey, false);
             _rotationOverLifetimeExpanded = SessionState.GetBool(RotationOverLifetimeExpandedKey, false);
+            _textureSheetAnimationExpanded = SessionState.GetBool(TextureSheetAnimationExpandedKey, false);
         }
     }
 }

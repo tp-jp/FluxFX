@@ -37,6 +37,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawColorOverLifetime();
             DrawSizeOverLifetime();
             DrawRotationOverLifetime();
+            DrawTextureSheetAnimation();
         }
 
         void DrawStartSize()
@@ -194,6 +195,37 @@ namespace TpLab.Flux.FX.Editor.Inspector
                         DrawProperty(module.FindPropertyRelative("endRotation"));
                         DrawProperty(module.FindPropertyRelative("curve"));
                     }
+
+                    EditorGUI.indentLevel--;
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawTextureSheetAnimation()
+        {
+            var module = _render.FindPropertyRelative("textureSheetAnimation");
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            _textureSheetAnimationExpanded = DrawModuleHeader(
+                L10n.Tr("Texture Sheet Animation"),
+                module,
+                _textureSheetAnimationExpanded,
+                TextureSheetAnimationExpandedKey);
+
+            if (_textureSheetAnimationExpanded)
+            {
+                var enabled = module.FindPropertyRelative("enabled");
+
+                using (new EditorGUI.DisabledScope(!enabled.boolValue))
+                {
+                    EditorGUI.indentLevel++;
+
+                    DrawProperty(module.FindPropertyRelative("tilesX"));
+                    DrawProperty(module.FindPropertyRelative("tilesY"));
+                    DrawProperty(module.FindPropertyRelative("cycles"));
 
                     EditorGUI.indentLevel--;
                 }

@@ -58,6 +58,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         {
             var vertexCount = capacity * 4;
             var vertices = new Vector3[vertexCount];
+            var uv = new Vector2[vertexCount];
             var uv2 = new Vector2[vertexCount];
             var triangles = new int[capacity * 6];
 
@@ -70,6 +71,11 @@ namespace TpLab.Flux.FX.Editor.Preview
                 vertices[vertexIndex + 1] = new Vector3(0.05f, -0.05f, 0);
                 vertices[vertexIndex + 2] = new Vector3(0.05f, 0.05f, 0);
                 vertices[vertexIndex + 3] = new Vector3(-0.05f, 0.05f, 0);
+
+                uv[vertexIndex] = new Vector2(0, 0);
+                uv[vertexIndex + 1] = new Vector2(1, 0);
+                uv[vertexIndex + 2] = new Vector2(1, 1);
+                uv[vertexIndex + 3] = new Vector2(0, 1);
 
                 var particleIndex = new Vector2(i, 0);
 
@@ -96,6 +102,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             }
 
             mesh.vertices = vertices;
+            mesh.uv = uv;
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
             mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);

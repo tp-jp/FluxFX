@@ -1080,7 +1080,7 @@ Transform:
   m_GameObject: {fileID: 1217573528}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.1551, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -1256,9 +1256,9 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
     textureSheetAnimation:
-      enabled: 0
-      tilesX: 1
-      tilesY: 1
+      enabled: 1
+      tilesX: 4
+      tilesY: 4
       cycles: 1
 --- !u!114 &1217573531
 MonoBehaviour:

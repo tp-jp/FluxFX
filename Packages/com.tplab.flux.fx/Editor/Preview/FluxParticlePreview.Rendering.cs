@@ -11,6 +11,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             ApplyColorOverLifetime();
             ApplySizeOverLifetime();
             ApplyRotationOverLifetime();
+            ApplyTextureSheetAnimation();
 
             _renderMaterial.SetTexture("_PositionTex", _currentPosition);
             _renderMaterial.SetTexture("_VelocityTex", _currentVelocity);
@@ -75,6 +76,16 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             _lutBaker.UpdateRotationOverLifetimeLut(_rotationOverLifetimeLut, settings);
             _renderMaterial.SetTexture("_RotationOverLifetimeLut", _rotationOverLifetimeLut);
+        }
+
+        void ApplyTextureSheetAnimation()
+        {
+            var settings = _authoring.Render.TextureSheetAnimation;
+
+            _renderMaterial.SetFloat("_TextureSheetAnimationEnabled", settings.Enabled ? 1 : 0);
+            _renderMaterial.SetFloat("_TextureSheetTilesX", settings.TilesX);
+            _renderMaterial.SetFloat("_TextureSheetTilesY", settings.TilesY);
+            _renderMaterial.SetFloat("_TextureSheetCycles", settings.Cycles);
         }
 
         void UpdatePreviewTransform()
