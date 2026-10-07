@@ -8,6 +8,9 @@
     },
     "com.tplab.sceneflow": {
       "version": "2.1.0"
+    },
+    "com.tplab.flux": {
+      "version": "0.0.1"
     }
   },
   "locked": {
@@ -28,6 +31,13 @@
     "com.tplab.sceneflow": {
       "version": "2.1.0",
       "dependencies": {}
+    },
+    "com.tplab.flux": {
+      "version": "0.0.1",
+      "dependencies": {
+        "com.vrchat.worlds": "^3.10.5",
+        "com.tplab.sceneflow": "^2.1.0"
+      }
     }
   }
 }

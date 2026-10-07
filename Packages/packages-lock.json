@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "com.tplab.flux": {
-      "version": "file:LocalPackages/com.tplab.flux-0.0.1.tgz",
+      "version": "file:com.tplab.flux",
       "depth": 0,
-      "source": "local-tarball",
+      "source": "embedded",
       "dependencies": {}
     },
     "com.tplab.flux.fx": {
