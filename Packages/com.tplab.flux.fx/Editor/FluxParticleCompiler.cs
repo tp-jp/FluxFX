@@ -258,6 +258,16 @@ namespace TpLab.Flux.FX.Editor
                 };
             }
 
+            if (render.TextureSheetAnimation.Enabled)
+            {
+                settings["textureSheetAnimation"] = new JObject
+                {
+                    ["tilesX"] = render.TextureSheetAnimation.TilesX,
+                    ["tilesY"] = render.TextureSheetAnimation.TilesY,
+                    ["cycles"] = render.TextureSheetAnimation.Cycles
+                };
+            }
+
             parameters["render"] = settings;
         }
     }

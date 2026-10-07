@@ -47,6 +47,10 @@ namespace TpLab.Flux.FX.Udon
         float _colorOverLifetimeMode;
         float _sizeOverLifetimeMode;
         float _rotationOverLifetimeMode;
+        float _textureSheetAnimationEnabled;
+        float _textureSheetTilesX = 1;
+        float _textureSheetTilesY = 1;
+        float _textureSheetCycles = 1;
         float _simulationSpace;
         object _colorOverLifetime;
         object _sizeOverLifetime;
@@ -141,6 +145,23 @@ namespace TpLab.Flux.FX.Udon
             {
                 _rotationOverLifetimeMode = 0;
             }
+
+            if (parameters.TryGetValue("textureSheetAnimation", out var textureSheetToken))
+            {
+                var textureSheet = textureSheetToken.DataDictionary;
+
+                _textureSheetAnimationEnabled = 1;
+                _textureSheetTilesX = (float)textureSheet["tilesX"].Double;
+                _textureSheetTilesY = (float)textureSheet["tilesY"].Double;
+                _textureSheetCycles = (float)textureSheet["cycles"].Double;
+            }
+            else
+            {
+                _textureSheetAnimationEnabled = 0;
+                _textureSheetTilesX = 1;
+                _textureSheetTilesY = 1;
+                _textureSheetCycles = 1;
+            }
         }
 
         internal void SetState(FluxParticleState state)
@@ -171,6 +192,10 @@ namespace TpLab.Flux.FX.Udon
             _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
             _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);
             _material.SetFloat("_RotationOverLifetimeMode", _rotationOverLifetimeMode);
+            _material.SetFloat("_TextureSheetAnimationEnabled", _textureSheetAnimationEnabled);
+            _material.SetFloat("_TextureSheetTilesX", _textureSheetTilesX);
+            _material.SetFloat("_TextureSheetTilesY", _textureSheetTilesY);
+            _material.SetFloat("_TextureSheetCycles", _textureSheetCycles);
             _material.SetFloat("_SimulationSpace", _simulationSpace);
             _material.SetFloat("_RenderMode", mode);
             _material.SetTexture("_ColorOverLifetimeLut", colorOverLifetimeLut);
@@ -187,6 +212,7 @@ namespace TpLab.Flux.FX.Udon
         {
             var vertexCount = capacity * 4;
             var vertices = new Vector3[vertexCount];
+            var uv = new Vector2[vertexCount];
             var uv2 = new Vector2[vertexCount];
             var triangles = new int[capacity * 6];
 
@@ -199,6 +225,11 @@ namespace TpLab.Flux.FX.Udon
                 vertices[vertexIndex + 1] = new Vector3(0.05f, -0.05f, 0);
                 vertices[vertexIndex + 2] = new Vector3(0.05f, 0.05f, 0);
                 vertices[vertexIndex + 3] = new Vector3(-0.05f, 0.05f, 0);
+
+                uv[vertexIndex] = new Vector2(0, 0);
+                uv[vertexIndex + 1] = new Vector2(1, 0);
+                uv[vertexIndex + 2] = new Vector2(1, 1);
+                uv[vertexIndex + 3] = new Vector2(0, 1);
 
                 var particleIndex = new Vector2(i, 0);
 
@@ -224,6 +255,7 @@ namespace TpLab.Flux.FX.Udon
             }
 
             mesh.vertices = vertices;
+            mesh.uv = uv;
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
             mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);

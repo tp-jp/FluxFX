@@ -1103,23 +1103,23 @@ MonoBehaviour:
   simulationSpace: 0
   playback:
     startDelay: 0
-    duration: 5
+    duration: 1
     loop: 1
   emission:
-    rate: 8
+    rate: 1
     bursts: []
   lifetime:
-    lifetime: 5
+    lifetime: 1
     mode: 0
     min: 1
     max: 5
   shape:
-    type: 2
+    type: 0
     radius: 0.5
     angle: 25
     size: {x: 2, y: 1, z: 3}
   initialVelocity:
-    speed: 1
+    speed: 0
     mode: 0
     min: 0.5
     max: 3
@@ -1255,6 +1255,11 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+    textureSheetAnimation:
+      enabled: 0
+      tilesX: 1
+      tilesY: 1
+      cycles: 1
 --- !u!114 &1217573531
 MonoBehaviour:
   m_ObjectHideFlags: 2

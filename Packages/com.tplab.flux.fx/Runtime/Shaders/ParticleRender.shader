@@ -2,6 +2,7 @@ Shader "FluxFX/ParticleRender"
 {
     Properties
     {
+        _MainTex ("Texture", 2D) = "white" {}
         _PositionTex ("Position", 2D) = "black" {}
         _VelocityTex ("Velocity", 2D) = "black" {}
         _VisualTex ("Visual", 2D) = "white" {}
@@ -9,6 +10,11 @@ Shader "FluxFX/ParticleRender"
         _ColorOverLifetimeLut ("Color over Lifetime LUT", 2D) = "white" {}
         _SizeOverLifetimeLut ("Size over Lifetime LUT", 2D) = "white" {}
         _RotationOverLifetimeLut ("Rotation over Lifetime LUT", 2D) = "white" {}
+
+        _TextureSheetAnimationEnabled ("Texture Sheet Animation Enabled", Float) = 0
+        _TextureSheetTilesX ("Tiles X", Float) = 1
+        _TextureSheetTilesY ("Tiles Y", Float) = 1
+        _TextureSheetCycles ("Cycles", Float) = 1
     }
 
     SubShader
@@ -25,6 +31,7 @@ Shader "FluxFX/ParticleRender"
             #include "UnityCG.cginc"
             #include "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl"
 
+            sampler2D _MainTex;
             sampler2D_float _PositionTex;
             sampler2D_float _VelocityTex;
             sampler2D_float _VisualTex;
@@ -42,18 +49,24 @@ Shader "FluxFX/ParticleRender"
             float _SizeOverLifetimeMode;
             float _RotationOverLifetimeEnabled;
             float _RotationOverLifetimeMode;
+            float _TextureSheetAnimationEnabled;
+            float _TextureSheetTilesX;
+            float _TextureSheetTilesY;
+            float _TextureSheetCycles;
             float _SimulationSpace;
             float _RenderMode;
 
             struct appdata
             {
                 float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
                 float2 particleData : TEXCOORD1;
             };
 
             struct v2f
             {
                 float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
                 float4 color : COLOR;
             };
 
@@ -141,6 +154,29 @@ Shader "FluxFX/ParticleRender"
                 return _EndRotation * normalizedAge;
             }
 
+            float2 GetTextureSheetUV(float2 uv, float normalizedAge)
+            {
+                if (_TextureSheetAnimationEnabled <= 0.5)
+                    return uv;
+
+                float tilesX = max(1, floor(_TextureSheetTilesX));
+                float tilesY = max(1, floor(_TextureSheetTilesY));
+                float frameCount = tilesX * tilesY;
+
+                float animationTime = frac(normalizedAge * max(0, _TextureSheetCycles));
+                float frame = min(floor(animationTime * frameCount), frameCount - 1);
+
+                float column = fmod(frame, tilesX);
+                float row = floor(frame / tilesX);
+
+                float2 tileSize = 1.0 / float2(tilesX, tilesY);
+                float2 tileOffset = float2(
+                    column * tileSize.x,
+                    (tilesY - row - 1) * tileSize.y);
+
+                return uv * tileSize + tileOffset;
+            }
+
             v2f vert(appdata v)
             {
                 v2f o;
@@ -158,6 +194,7 @@ Shader "FluxFX/ParticleRender"
                 if (lifetime <= 0 || age >= lifetime)
                 {
                     o.vertex = float4(2, 2, 2, 1);
+                    o.uv = 0;
                     o.color = 0;
                     return o;
                 }
@@ -228,6 +265,7 @@ Shader "FluxFX/ParticleRender"
                     }
                 }
 
+                o.uv = GetTextureSheetUV(v.uv, normalizedAge);
                 o.color = float4(color, 1);
 
                 return o;
@@ -235,7 +273,7 @@ Shader "FluxFX/ParticleRender"
 
             float4 frag(v2f i) : SV_Target
             {
-                return i.color;
+                return tex2D(_MainTex, i.uv) * i.color;
             }
             ENDHLSL
         }
