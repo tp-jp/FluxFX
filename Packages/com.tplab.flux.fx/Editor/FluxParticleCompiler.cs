@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts;
@@ -7,9 +8,20 @@ namespace TpLab.Flux.FX.Editor
 {
     public class FluxParticleCompiler
     {
+
         public string Compile(FluxParticleAuthoring authoring)
         {
             var plan = FluxParticleCompilePlan.Create(authoring);
+
+            var validator = new FluxParticleCompileValidator();
+            var validation = validator.Validate(plan);
+
+            if (validation.HasErrors)
+            {
+                throw new InvalidOperationException(
+                    $"FluxParticle compilation failed for '{authoring.name}':\n" +
+                    validation.GetReport());
+            }
 
             var parameters = new JObject
             {
