@@ -15,12 +15,19 @@ Shader "FluxFX/ParticleRender"
         _TextureSheetTilesX ("Tiles X", Float) = 1
         _TextureSheetTilesY ("Tiles Y", Float) = 1
         _TextureSheetCycles ("Cycles", Float) = 1
+
+        [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
+        [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
+        [HideInInspector] _ZWrite ("ZWrite", Float) = 1
     }
 
     SubShader
     {
         Tags { "RenderType" = "Opaque" }
+
         Cull Off
+        Blend [_SrcBlend] [_DstBlend]
+        ZWrite [_ZWrite]
 
         Pass
         {
@@ -209,7 +216,9 @@ Shader "FluxFX/ParticleRender"
                 {
                     if (_ColorOverLifetimeMode > 0.5)
                     {
-                        color = tex2Dlod(_ColorOverLifetimeLut, float4(normalizedAge, 0.5, 0, 0)).rgb;
+                        color = tex2Dlod(
+                            _ColorOverLifetimeLut,
+                            float4(normalizedAge, 0.5, 0, 0)).rgb;
                     }
                     else
                     {
@@ -221,7 +230,10 @@ Shader "FluxFX/ParticleRender"
                 {
                     if (_SizeOverLifetimeMode > 0.5)
                     {
-                        size = startSize * tex2Dlod(_SizeOverLifetimeLut, float4(normalizedAge, 0.5, 0, 0)).r;
+                        size = startSize
+                            * tex2Dlod(
+                                _SizeOverLifetimeLut,
+                                float4(normalizedAge, 0.5, 0, 0)).r;
                     }
                     else
                     {
@@ -232,6 +244,7 @@ Shader "FluxFX/ParticleRender"
                 float3 rotationOverLifetime = GetRotationOverLifetime(normalizedAge);
 
                 float3 particleVertex;
+
                 if (_RenderMode < 0.5)
                 {
                     particleVertex = GetBillboardVertex(
@@ -240,28 +253,44 @@ Shader "FluxFX/ParticleRender"
                 }
                 else
                 {
-                    float3 startRotation = tex2Dlod(_RotationTex, float4(stateUV, 0, 0)).xyz;
-                    float3 rotation = radians(startRotation + rotationOverLifetime);
+                    float3 startRotation =
+                        tex2Dlod(_RotationTex, float4(stateUV, 0, 0)).xyz;
 
-                    particleVertex = RotateEuler(v.vertex.xyz * size, rotation);
+                    float3 rotation =
+                        radians(startRotation + rotationOverLifetime);
+
+                    particleVertex =
+                        RotateEuler(v.vertex.xyz * size, rotation);
                 }
 
                 if (_SimulationSpace > 0.5)
                 {
-                    float3 worldPosition = position.xyz + particleVertex;
-                    o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                    float3 worldPosition =
+                        position.xyz + particleVertex;
+
+                    o.vertex =
+                        mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
                 }
                 else
                 {
                     if (_RenderMode < 0.5)
                     {
-                        float3 worldPosition = mul(unity_ObjectToWorld, float4(position.xyz, 1)).xyz + particleVertex;
-                        o.vertex = mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                        float3 worldPosition =
+                            mul(
+                                unity_ObjectToWorld,
+                                float4(position.xyz, 1)).xyz
+                            + particleVertex;
+
+                        o.vertex =
+                            mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
                     }
                     else
                     {
-                        float3 localPosition = position.xyz + particleVertex;
-                        o.vertex = UnityObjectToClipPos(float4(localPosition, 1));
+                        float3 localPosition =
+                            position.xyz + particleVertex;
+
+                        o.vertex =
+                            UnityObjectToClipPos(float4(localPosition, 1));
                     }
                 }
 

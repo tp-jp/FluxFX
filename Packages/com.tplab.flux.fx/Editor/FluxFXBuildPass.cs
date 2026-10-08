@@ -53,6 +53,7 @@ namespace TpLab.Flux.FX.Editor
                 var renderMode = authoring.Render.Mode;
                 var sourceMesh = authoring.Render.Mesh;
                 var particleMaterial = authoring.Render.Material;
+                var blendMode = authoring.Render.BlendMode;
                 var colorOverLifetimeLut = lutBaker.BakeColorOverLifetime(authoring);
                 var sizeOverLifetimeLut = lutBaker.BakeSizeOverLifetime(authoring);
                 var rotationOverLifetimeLut = lutBaker.BakeRotationOverLifetime(authoring);
@@ -60,6 +61,7 @@ namespace TpLab.Flux.FX.Editor
                 particleRenderer.SetProgramVariable("renderMode", renderMode);
                 particleRenderer.SetProgramVariable("sourceMesh", sourceMesh);
                 particleRenderer.SetProgramVariable("particleMaterial", particleMaterial);
+                particleRenderer.SetProgramVariable("blendMode", blendMode);
                 particleRenderer.SetProgramVariable("colorOverLifetimeLut", colorOverLifetimeLut);
                 particleRenderer.SetProgramVariable("sizeOverLifetimeLut", sizeOverLifetimeLut);
                 particleRenderer.SetProgramVariable("rotationOverLifetimeLut", rotationOverLifetimeLut);

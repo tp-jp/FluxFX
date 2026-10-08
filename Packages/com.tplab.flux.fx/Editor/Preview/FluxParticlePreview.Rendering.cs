@@ -1,6 +1,7 @@
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace TpLab.Flux.FX.Editor.Preview
 {
@@ -12,6 +13,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             ApplySizeOverLifetime();
             ApplyRotationOverLifetime();
             ApplyTextureSheetAnimation();
+            ApplyBlendMode();
 
             _renderMaterial.SetTexture("_PositionTex", _currentPosition);
             _renderMaterial.SetTexture("_VelocityTex", _currentVelocity);
@@ -22,6 +24,34 @@ namespace TpLab.Flux.FX.Editor.Preview
             _renderMaterial.SetFloat("_FluxSourceHeight", _textureSize);
             _renderMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _renderMaterial.SetFloat("_RenderMode", (int)_authoring.Render.Mode);
+        }
+
+        void ApplyBlendMode()
+        {
+            var blendMode = _authoring.Render.BlendMode;
+
+            if (blendMode == FluxParticleBlendMode.Alpha)
+            {
+                _renderMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                _renderMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                _renderMaterial.SetFloat("_ZWrite", 0);
+                _renderMaterial.renderQueue = (int)RenderQueue.Transparent;
+                return;
+            }
+
+            if (blendMode == FluxParticleBlendMode.Additive)
+            {
+                _renderMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                _renderMaterial.SetFloat("_DstBlend", (float)BlendMode.One);
+                _renderMaterial.SetFloat("_ZWrite", 0);
+                _renderMaterial.renderQueue = (int)RenderQueue.Transparent;
+                return;
+            }
+
+            _renderMaterial.SetFloat("_SrcBlend", (float)BlendMode.One);
+            _renderMaterial.SetFloat("_DstBlend", (float)BlendMode.Zero);
+            _renderMaterial.SetFloat("_ZWrite", 1);
+            _renderMaterial.renderQueue = (int)RenderQueue.Geometry;
         }
 
         void ApplyColorOverLifetime()

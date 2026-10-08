@@ -410,6 +410,9 @@ namespace TpLab.Flux.FX.Scripts
         Material material;
 
         [SerializeField]
+        FluxParticleBlendMode blendMode;
+
+        [SerializeField]
         Color startColor = Color.white;
 
         [SerializeField]
@@ -456,6 +459,8 @@ namespace TpLab.Flux.FX.Scripts
         public Mesh Mesh => mesh;
 
         public Material Material => material;
+
+        public FluxParticleBlendMode BlendMode => blendMode;
 
         public Color StartColor => startColor;
 

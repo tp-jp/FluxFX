@@ -12,6 +12,11 @@ namespace TpLab.Flux.FX.Udon
     {
         const int MaxUInt16VertexCount = 65535;
 
+        const float BlendZero = 0;
+        const float BlendOne = 1;
+        const float BlendSrcAlpha = 5;
+        const float BlendOneMinusSrcAlpha = 10;
+
         [SerializeField]
         MeshFilter meshFilter;
 
@@ -29,6 +34,10 @@ namespace TpLab.Flux.FX.Udon
         [HideInInspector]
         [SerializeField]
         Material particleMaterial;
+
+        [HideInInspector]
+        [SerializeField]
+        FluxParticleBlendMode blendMode;
 
         [HideInInspector]
         [SerializeField]
@@ -201,6 +210,34 @@ namespace TpLab.Flux.FX.Udon
             _material.SetTexture("_ColorOverLifetimeLut", colorOverLifetimeLut);
             _material.SetTexture("_SizeOverLifetimeLut", sizeOverLifetimeLut);
             _material.SetTexture("_RotationOverLifetimeLut", rotationOverLifetimeLut);
+
+            ApplyBlendMode();
+        }
+
+        void ApplyBlendMode()
+        {
+            if (blendMode == FluxParticleBlendMode.Alpha)
+            {
+                _material.SetFloat("_SrcBlend", BlendSrcAlpha);
+                _material.SetFloat("_DstBlend", BlendOneMinusSrcAlpha);
+                _material.SetFloat("_ZWrite", 0);
+                _material.renderQueue = (int)RenderQueue.Transparent;
+                return;
+            }
+
+            if (blendMode == FluxParticleBlendMode.Additive)
+            {
+                _material.SetFloat("_SrcBlend", BlendSrcAlpha);
+                _material.SetFloat("_DstBlend", BlendOne);
+                _material.SetFloat("_ZWrite", 0);
+                _material.renderQueue = (int)RenderQueue.Transparent;
+                return;
+            }
+
+            _material.SetFloat("_SrcBlend", BlendOne);
+            _material.SetFloat("_DstBlend", BlendZero);
+            _material.SetFloat("_ZWrite", 1);
+            _material.renderQueue = (int)RenderQueue.Geometry;
         }
 
         void SetBuffer(string name, FluxBuffer buffer)

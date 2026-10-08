@@ -30,7 +30,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 }
             }
 
-            EditorGUILayout.PropertyField(_render.FindPropertyRelative("material"), new GUIContent(L10n.Tr("Material")));
+            EditorGUILayout.PropertyField(
+                _render.FindPropertyRelative("material"),
+                new GUIContent(L10n.Tr("Material")));
+
+            DrawEnum(
+                _render.FindPropertyRelative("blendMode"),
+                "Blend Mode");
 
             EditorGUILayout.Space();
 

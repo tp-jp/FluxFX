@@ -263,3 +263,15 @@ msgstr "同じGameObjectにFluxParticleAuthoringが必要です。"
 
 msgid "Mesh is required for Mesh render mode."
 msgstr "Mesh描画にはメッシュの設定が必要です。"
+
+msgid "Blend Mode"
+msgstr "ブレンドモード"
+
+msgid "Opaque"
+msgstr "不透明"
+
+msgid "Alpha"
+msgstr "アルファ"
+
+msgid "Additive"
+msgstr "加算"
