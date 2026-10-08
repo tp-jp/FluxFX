@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
@@ -153,11 +154,16 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _sectionHeaderChevronStyle.alignment = TextAnchor.MiddleCenter;
         }
 
-        bool DrawModule(string label, SerializedProperty module, bool expanded, string sessionStateKey)
+        bool DrawModule(
+            string label,
+            SerializedProperty module,
+            bool expanded,
+            string sessionStateKey,
+            Action onRemove = null)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            expanded = DrawModuleHeader(label, module, expanded, sessionStateKey);
+            expanded = DrawModuleHeader(label, module, expanded, sessionStateKey, onRemove);
 
             if (expanded)
             {
@@ -198,7 +204,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
             return expanded;
         }
 
-        bool DrawModuleHeader(string label, SerializedProperty module, bool expanded, string sessionStateKey)
+        bool DrawModuleHeader(
+            string label,
+            SerializedProperty module,
+            bool expanded,
+            string sessionStateKey,
+            Action onRemove = null)
         {
             InitializeModuleHeaderStyles();
 
@@ -211,10 +222,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 18,
                 headerRect.height - 4);
 
+            var menuWidth = onRemove != null ? 26.0f : 0.0f;
+
             var labelRect = new Rect(
                 headerRect.x + 24,
                 headerRect.y,
-                headerRect.width - 26,
+                headerRect.width - 26 - menuWidth,
                 headerRect.height);
 
             enabled.boolValue = EditorGUI.Toggle(toggleRect, enabled.boolValue);
@@ -230,6 +243,20 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             GUI.Label(labelRect, label, _moduleHeaderLabelStyle);
             EditorGUIUtility.AddCursorRect(labelRect, MouseCursor.Link);
+
+            if (onRemove != null)
+            {
+                var menuRect = new Rect(
+                    headerRect.xMax - 26,
+                    headerRect.y,
+                    24,
+                    headerRect.height);
+
+                if (GUI.Button(menuRect, "⋮", EditorStyles.miniButton))
+                {
+                    onRemove();
+                }
+            }
 
             if (Event.current.type == EventType.MouseDown &&
                 Event.current.button == 0 &&

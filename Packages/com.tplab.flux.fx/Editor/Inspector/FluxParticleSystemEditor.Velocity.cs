@@ -48,6 +48,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 L10n.Tr("Limit Velocity"),
                 _limitVelocityExpanded,
                 LimitVelocityExpandedKey);
+
+            DrawAddModuleButton(VelocityModuleDefinitions);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
@@ -7,52 +8,109 @@ namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleSystemEditor
     {
-        bool DrawOptionalModule<T>(string label, bool expanded, string sessionStateKey)
-            where T : FluxParticleModule, new()
+        struct ModuleDefinition
         {
-            var moduleIndex = FindModuleIndex<T>();
+            public readonly Type Type;
+            public readonly string Label;
+            public readonly string ExpandedKey;
 
-            if (moduleIndex >= 0)
+            public ModuleDefinition(Type type, string label, string expandedKey)
             {
-                var module = _modules.GetArrayElementAtIndex(moduleIndex);
-
-                expanded = DrawModule(
-                    label,
-                    module,
-                    expanded,
-                    sessionStateKey);
+                Type = type;
+                Label = label;
+                ExpandedKey = expandedKey;
             }
+        }
+
+        static readonly ModuleDefinition[] VelocityModuleDefinitions =
+        {
+            new ModuleDefinition(typeof(FluxParticleGravityModule), "Gravity", GravityExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleForceModule), "Force", ForceExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleDragModule), "Drag", DragExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleNoiseModule), "Noise", NoiseExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleVortexModule), "Vortex", VortexExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleLimitVelocityModule), "Limit Velocity", LimitVelocityExpandedKey)
+        };
+
+        bool DrawOptionalModule<T>(string label, bool expanded, string sessionStateKey)
+            where T : FluxParticleModule
+        {
+            var moduleIndex = FindModuleIndex(typeof(T));
+            if (moduleIndex < 0) return expanded;
+
+            var module = _modules.GetArrayElementAtIndex(moduleIndex);
+
+            return DrawModule(
+                label,
+                module,
+                expanded,
+                sessionStateKey,
+                () => ShowRemoveModuleMenu(typeof(T)));
+        }
+
+        void DrawAddModuleButton(ModuleDefinition[] definitions)
+        {
+            EditorGUILayout.Space(4);
 
             EditorGUILayout.BeginHorizontal();
 
             GUILayout.FlexibleSpace();
 
-            using (new EditorGUI.DisabledScope(moduleIndex >= 0))
+            var buttonRect = GUILayoutUtility.GetRect(
+                140,
+                EditorGUIUtility.singleLineHeight,
+                GUILayout.Width(140));
+
+            if (GUI.Button(buttonRect, L10n.Tr("Add Module")))
             {
-                if (GUILayout.Button(L10n.Tr("Add Module"), GUILayout.Width(120)))
-                {
-                    if (AddModule<T>())
-                    {
-                        expanded = true;
-                        SessionState.SetBool(sessionStateKey, true);
-                    }
-                }
+                ShowAddModuleMenu(definitions, buttonRect);
             }
 
-            using (new EditorGUI.DisabledScope(moduleIndex < 0))
-            {
-                if (GUILayout.Button(L10n.Tr("Remove Module"), GUILayout.Width(120)))
-                {
-                    RemoveModule(moduleIndex);
-                }
-            }
+            GUILayout.FlexibleSpace();
 
             EditorGUILayout.EndHorizontal();
-
-            return expanded;
         }
 
-        int FindModuleIndex<T>() where T : FluxParticleModule
+        void ShowAddModuleMenu(ModuleDefinition[] definitions, Rect buttonRect)
+        {
+            var menu = new GenericMenu();
+            var availableCount = 0;
+
+            foreach (var definition in definitions)
+            {
+                if (FindModuleIndex(definition.Type) >= 0) continue;
+
+                var selectedDefinition = definition;
+
+                menu.AddItem(
+                    new GUIContent(L10n.Tr(selectedDefinition.Label)),
+                    false,
+                    () => AddModule(selectedDefinition));
+
+                availableCount++;
+            }
+
+            if (availableCount == 0)
+            {
+                menu.AddDisabledItem(new GUIContent(L10n.Tr("All modules added")));
+            }
+
+            menu.DropDown(buttonRect);
+        }
+
+        void ShowRemoveModuleMenu(Type moduleType)
+        {
+            var menu = new GenericMenu();
+
+            menu.AddItem(
+                new GUIContent(L10n.Tr("Remove Module")),
+                false,
+                () => RemoveModule(moduleType));
+
+            menu.ShowAsContext();
+        }
+
+        int FindModuleIndex(Type moduleType)
         {
             if (_modules == null) return -1;
 
@@ -60,7 +118,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             {
                 var module = _modules.GetArrayElementAtIndex(i);
 
-                if (module.managedReferenceValue is T)
+                if (module.managedReferenceValue == null) continue;
+
+                if (module.managedReferenceValue.GetType() == moduleType)
                 {
                     return i;
                 }
@@ -69,24 +129,69 @@ namespace TpLab.Flux.FX.Editor.Inspector
             return -1;
         }
 
-        bool AddModule<T>() where T : FluxParticleModule, new()
+        void AddModule(ModuleDefinition definition)
         {
-            if (_modules == null || FindModuleIndex<T>() >= 0) return false;
+            if (_authoringObject == null) return;
+
+            _authoringObject.Update();
+
+            if (FindModuleIndex(definition.Type) >= 0) return;
 
             var index = _modules.arraySize;
             _modules.arraySize++;
 
             var module = _modules.GetArrayElementAtIndex(index);
-            module.managedReferenceValue = new T();
+            module.managedReferenceValue = Activator.CreateInstance(definition.Type);
 
-            return true;
+            _authoringObject.ApplyModifiedProperties();
+
+            SessionState.SetBool(definition.ExpandedKey, true);
+            SetModuleExpanded(definition.Type, true);
+
+            Repaint();
         }
 
-        void RemoveModule(int index)
+        void RemoveModule(Type moduleType)
         {
-            if (_modules == null || index < 0 || index >= _modules.arraySize) return;
+            if (_authoringObject == null) return;
+
+            _authoringObject.Update();
+
+            var index = FindModuleIndex(moduleType);
+            if (index < 0) return;
 
             _modules.DeleteArrayElementAtIndex(index);
+            _authoringObject.ApplyModifiedProperties();
+
+            Repaint();
+        }
+
+        void SetModuleExpanded(Type moduleType, bool expanded)
+        {
+            if (moduleType == typeof(FluxParticleGravityModule))
+            {
+                _gravityExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleForceModule))
+            {
+                _forceExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleDragModule))
+            {
+                _dragExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleNoiseModule))
+            {
+                _noiseExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleVortexModule))
+            {
+                _vortexExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleLimitVelocityModule))
+            {
+                _limitVelocityExpanded = expanded;
+            }
         }
     }
 }
