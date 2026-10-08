@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor
 {
@@ -19,7 +20,7 @@ namespace TpLab.Flux.FX.Editor
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
             AddVelocityOverLifetime(parameters, authoring.VelocityOverLifetime);
-            AddGravity(parameters, authoring.Gravity);
+            AddGravity(parameters, authoring);
             AddForce(parameters, authoring.Force);
             AddDrag(parameters, authoring.Drag);
             AddNoise(parameters, authoring.Noise);
@@ -126,7 +127,32 @@ namespace TpLab.Flux.FX.Editor
             };
         }
 
-        void AddGravity(JObject parameters, GravitySettings gravity)
+        void AddGravity(JObject parameters, FluxParticleAuthoring authoring)
+        {
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleGravityModule gravityModule)) continue;
+
+                if (gravityModule.Enabled)
+                {
+                    var gravity = gravityModule.Gravity;
+
+                    parameters["gravity"] = new JObject
+                    {
+                        ["x"] = gravity.x,
+                        ["y"] = gravity.y,
+                        ["z"] = gravity.z
+                    };
+                }
+
+                return;
+            }
+
+            // Moduleへの移行前に作成された既存Particle Systemの設定を維持する。
+            AddLegacyGravity(parameters, authoring.Gravity);
+        }
+
+        void AddLegacyGravity(JObject parameters, GravitySettings gravity)
         {
             if (!gravity.Enabled) return;
 

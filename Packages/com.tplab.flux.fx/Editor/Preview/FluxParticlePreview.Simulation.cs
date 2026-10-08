@@ -1,4 +1,5 @@
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Preview
@@ -70,7 +71,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 speedMax = Mathf.Max(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);
             }
 
-            var gravity = _authoring.Gravity.Enabled ? _authoring.Gravity.Gravity : Vector3.zero;
+            var gravity = GetGravity();
             var force = _authoring.Force.Enabled ? _authoring.Force.Force : Vector3.zero;
             var drag = _authoring.Drag.Enabled ? _authoring.Drag.Drag : 0;
             var noiseStrength = _authoring.Noise.Enabled ? _authoring.Noise.Strength : 0;
@@ -89,7 +90,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_LifetimeMin", lifetimeMin);
             _velocityMaterial.SetFloat("_LifetimeMax", lifetimeMax);
             _velocityMaterial.SetFloat("_InitialSpeedMin", speedMin);
-            _velocityMaterial.SetFloat("_InitialSpeedMax", speedMax);
+            _velocityMaterial.SetFloat("_InitialSpeedMax", lifetimeMax);
             _velocityMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
             _velocityMaterial.SetFloat("_ShapeAngle", _authoring.Shape.Angle);
             _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
@@ -105,6 +106,19 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_VortexStrength", vortexStrength);
             _velocityMaterial.SetFloat("_MaxSpeed", maxSpeed);
             _velocityMaterial.SetTexture("_PositionTex", _currentPosition);
+        }
+
+        Vector3 GetGravity()
+        {
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleGravityModule gravityModule)) continue;
+
+                return gravityModule.Enabled ? gravityModule.Gravity : Vector3.zero;
+            }
+
+            // Module移行前の既存設定との互換性を維持する。
+            return _authoring.Gravity.Enabled ? _authoring.Gravity.Gravity : Vector3.zero;
         }
 
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)

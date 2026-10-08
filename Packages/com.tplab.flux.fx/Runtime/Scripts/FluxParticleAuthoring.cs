@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
@@ -50,6 +52,9 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         RenderSettings render = new RenderSettings();
 
+        [SerializeReference]
+        List<FluxParticleModule> modules = new List<FluxParticleModule>();
+
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
 
         public PlaybackSettings Playback => playback;
@@ -77,6 +82,8 @@ namespace TpLab.Flux.FX.Scripts
         public LimitVelocitySettings LimitVelocity => limitVelocity;
 
         public RenderSettings Render => render;
+
+        public IReadOnlyList<FluxParticleModule> Modules => modules;
     }
 
     public enum FluxParticleStartSizeMode

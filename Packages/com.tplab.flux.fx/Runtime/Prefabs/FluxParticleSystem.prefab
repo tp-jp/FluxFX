@@ -547,6 +547,7 @@ MonoBehaviour:
   renderMode: 0
   sourceMesh: {fileID: 4300000, guid: 680ee5a1c6fcd7046bde90a112cb792d, type: 2}
   particleMaterial: {fileID: 0}
+  blendMode: 0
   colorOverLifetimeLut: {fileID: 0}
   sizeOverLifetimeLut: {fileID: 0}
   rotationOverLifetimeLut: {fileID: 0}
@@ -1172,8 +1173,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6110645425195456592}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.1551, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -1303,6 +1304,7 @@ MonoBehaviour:
     mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
+    blendMode: 0
     startColor: {r: 1, g: 1, b: 1, a: 1}
     startColorMode: 0
     startColorMin: {r: 1, g: 0, b: 0, a: 1}
@@ -1407,6 +1409,10 @@ MonoBehaviour:
       tilesX: 1
       tilesY: 1
       cycles: 1
+  modules: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &6330377903930078214
 GameObject:
   m_ObjectHideFlags: 0
