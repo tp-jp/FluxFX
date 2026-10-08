@@ -24,6 +24,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         static readonly ModuleDefinition[] VelocityModuleDefinitions =
         {
+            new ModuleDefinition(typeof(FluxParticleVelocityOverLifetimeModule), "Velocity over Lifetime", VelocityOverLifetimeExpandedKey),
             new ModuleDefinition(typeof(FluxParticleGravityModule), "Gravity", GravityExpandedKey),
             new ModuleDefinition(typeof(FluxParticleForceModule), "Force", ForceExpandedKey),
             new ModuleDefinition(typeof(FluxParticleDragModule), "Drag", DragExpandedKey),
@@ -168,7 +169,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void SetModuleExpanded(Type moduleType, bool expanded)
         {
-            if (moduleType == typeof(FluxParticleGravityModule))
+            if (moduleType == typeof(FluxParticleVelocityOverLifetimeModule))
+            {
+                _velocityOverLifetimeExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleGravityModule))
             {
                 _gravityExpanded = expanded;
             }

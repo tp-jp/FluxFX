@@ -19,7 +19,7 @@ namespace TpLab.Flux.FX.Editor
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
-            AddVelocityOverLifetime(parameters, authoring.VelocityOverLifetime);
+            AddVelocityOverLifetime(parameters, authoring);
             AddGravity(parameters, authoring);
             AddForce(parameters, authoring);
             AddDrag(parameters, authoring);
@@ -105,26 +105,34 @@ namespace TpLab.Flux.FX.Editor
             };
         }
 
-        void AddVelocityOverLifetime(JObject parameters, VelocityOverLifetimeSettings velocityOverLifetime)
+        void AddVelocityOverLifetime(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!velocityOverLifetime.Enabled) return;
-
-            parameters["velocityOverLifetime"] = new JObject
+            foreach (var module in authoring.Modules)
             {
-                ["startX"] = velocityOverLifetime.Start.x,
-                ["startY"] = velocityOverLifetime.Start.y,
-                ["startZ"] = velocityOverLifetime.Start.z,
-                ["endX"] = velocityOverLifetime.End.x,
-                ["endY"] = velocityOverLifetime.End.y,
-                ["endZ"] = velocityOverLifetime.End.z,
-                ["orbitalX"] = velocityOverLifetime.Orbital.x,
-                ["orbitalY"] = velocityOverLifetime.Orbital.y,
-                ["orbitalZ"] = velocityOverLifetime.Orbital.z,
-                ["offsetX"] = velocityOverLifetime.Offset.x,
-                ["offsetY"] = velocityOverLifetime.Offset.y,
-                ["offsetZ"] = velocityOverLifetime.Offset.z,
-                ["radial"] = velocityOverLifetime.Radial
-            };
+                if (!(module is FluxParticleVelocityOverLifetimeModule velocityModule)) continue;
+
+                if (velocityModule.Enabled)
+                {
+                    parameters["velocityOverLifetime"] = new JObject
+                    {
+                        ["startX"] = velocityModule.Start.x,
+                        ["startY"] = velocityModule.Start.y,
+                        ["startZ"] = velocityModule.Start.z,
+                        ["endX"] = velocityModule.End.x,
+                        ["endY"] = velocityModule.End.y,
+                        ["endZ"] = velocityModule.End.z,
+                        ["orbitalX"] = velocityModule.Orbital.x,
+                        ["orbitalY"] = velocityModule.Orbital.y,
+                        ["orbitalZ"] = velocityModule.Orbital.z,
+                        ["offsetX"] = velocityModule.Offset.x,
+                        ["offsetY"] = velocityModule.Offset.y,
+                        ["offsetZ"] = velocityModule.Offset.z,
+                        ["radial"] = velocityModule.Radial
+                    };
+                }
+
+                return;
+            }
         }
 
         void AddGravity(JObject parameters, FluxParticleAuthoring authoring)

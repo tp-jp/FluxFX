@@ -13,9 +13,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             EditorGUILayout.Space(2);
 
-            _velocityOverLifetimeExpanded = DrawModule(
+            _velocityOverLifetimeExpanded = DrawOptionalModule<FluxParticleVelocityOverLifetimeModule>(
                 L10n.Tr("Velocity over Lifetime"),
-                _velocityOverLifetime,
                 _velocityOverLifetimeExpanded,
                 VelocityOverLifetimeExpandedKey);
 

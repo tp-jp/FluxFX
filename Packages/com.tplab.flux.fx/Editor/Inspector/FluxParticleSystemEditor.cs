@@ -67,7 +67,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
         SerializedProperty _lifetime;
         SerializedProperty _shape;
         SerializedProperty _initialVelocity;
-        SerializedProperty _velocityOverLifetime;
         SerializedProperty _render;
         SerializedProperty _modules;
 
@@ -95,7 +94,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _lifetime = _authoringObject.FindProperty("lifetime");
             _shape = _authoringObject.FindProperty("shape");
             _initialVelocity = _authoringObject.FindProperty("initialVelocity");
-            _velocityOverLifetime = _authoringObject.FindProperty("velocityOverLifetime");
             _render = _authoringObject.FindProperty("render");
             _modules = _authoringObject.FindProperty("modules");
 

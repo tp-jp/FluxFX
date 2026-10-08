@@ -29,9 +29,6 @@ namespace TpLab.Flux.FX.Scripts
         InitialVelocitySettings initialVelocity = new InitialVelocitySettings();
 
         [SerializeField]
-        VelocityOverLifetimeSettings velocityOverLifetime = new VelocityOverLifetimeSettings();
-
-        [SerializeField]
         RenderSettings render = new RenderSettings();
 
         [SerializeReference]
@@ -48,8 +45,6 @@ namespace TpLab.Flux.FX.Scripts
         public ShapeSettings Shape => shape;
 
         public InitialVelocitySettings InitialVelocity => initialVelocity;
-
-        public VelocityOverLifetimeSettings VelocityOverLifetime => velocityOverLifetime;
 
         public RenderSettings Render => render;
 
@@ -228,40 +223,6 @@ namespace TpLab.Flux.FX.Scripts
         public float Min => min;
 
         public float Max => max;
-    }
-
-    [Serializable]
-    public class VelocityOverLifetimeSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        Vector3 start;
-
-        [SerializeField]
-        Vector3 end;
-
-        [SerializeField]
-        Vector3 orbital;
-
-        [SerializeField]
-        Vector3 offset;
-
-        [SerializeField]
-        float radial;
-
-        public bool Enabled => enabled;
-
-        public Vector3 Start => start;
-
-        public Vector3 End => end;
-
-        public Vector3 Orbital => orbital;
-
-        public Vector3 Offset => offset;
-
-        public float Radial => radial;
     }
 
     [Serializable]
