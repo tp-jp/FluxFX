@@ -208,12 +208,15 @@ namespace TpLab.Flux.FX.Editor
                 ["startColorR"] = render.StartColor.r,
                 ["startColorG"] = render.StartColor.g,
                 ["startColorB"] = render.StartColor.b,
+                ["startColorA"] = render.StartColor.a,
                 ["startColorMinR"] = startColorMin.r,
                 ["startColorMinG"] = startColorMin.g,
                 ["startColorMinB"] = startColorMin.b,
+                ["startColorMinA"] = startColorMin.a,
                 ["startColorMaxR"] = startColorMax.r,
                 ["startColorMaxG"] = startColorMax.g,
                 ["startColorMaxB"] = startColorMax.b,
+                ["startColorMaxA"] = startColorMax.a,
                 ["startSize"] = render.StartSize,
                 ["startSizeMin"] = render.StartSizeMode == FluxParticleStartSizeMode.Constant
                     ? render.StartSize
@@ -233,7 +236,8 @@ namespace TpLab.Flux.FX.Editor
                     ["mode"] = (int)render.ColorOverLifetime.Mode,
                     ["endColorR"] = render.ColorOverLifetime.EndColor.r,
                     ["endColorG"] = render.ColorOverLifetime.EndColor.g,
-                    ["endColorB"] = render.ColorOverLifetime.EndColor.b
+                    ["endColorB"] = render.ColorOverLifetime.EndColor.b,
+                    ["endColorA"] = render.ColorOverLifetime.EndColor.a
                 };
             }
 

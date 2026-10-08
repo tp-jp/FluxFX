@@ -127,8 +127,12 @@ namespace TpLab.Flux.FX.Udon
 
             if (particleEmitter.SpawnCount > 0)
             {
-                UpdateVisual();
-                UpdateRotation();
+                var startColorMin = StartColor.GetMin();
+                var startColorMax = StartColor.GetMax();
+
+                UpdateVisual(startColorMin, startColorMax);
+                UpdateRotation(startColorMin.a, startColorMax.a);
+
                 particleState.SwapVisual();
             }
 
@@ -201,10 +205,10 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.Dispatch(particleState.CurrentPosition, particleState.NextPosition);
         }
 
-        void UpdateVisual()
+        void UpdateVisual(Color startColorMin, Color startColorMax)
         {
-            visualUpdateKernel.SetVector("_StartColorMin", StartColor.GetMin());
-            visualUpdateKernel.SetVector("_StartColorMax", StartColor.GetMax());
+            visualUpdateKernel.SetVector("_StartColorMin", startColorMin);
+            visualUpdateKernel.SetVector("_StartColorMax", startColorMax);
             visualUpdateKernel.SetFloat("_StartSizeMin", StartSize.GetMin());
             visualUpdateKernel.SetFloat("_StartSizeMax", StartSize.GetMax());
             visualUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
@@ -215,11 +219,16 @@ namespace TpLab.Flux.FX.Udon
             visualUpdateKernel.Dispatch(particleState.CurrentVisual, particleState.NextVisual);
         }
 
-        void UpdateRotation()
+        void UpdateRotation(float startAlphaMin, float startAlphaMax)
         {
             var rotation = StartRotation.GetRotation();
 
             rotationUpdateKernel.SetVector("_StartRotation", new Vector4(rotation.x, rotation.y, rotation.z, 0));
+            rotationUpdateKernel.SetFloat("_StartAlphaMin", startAlphaMin);
+            rotationUpdateKernel.SetFloat("_StartAlphaMax", startAlphaMax);
+            rotationUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
+            rotationUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
+            rotationUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
             rotationUpdateKernel.SetBuffer("_CurrentVelocityTex", particleState.CurrentVelocity);
             rotationUpdateKernel.SetBuffer("_VelocityTex", particleState.NextVelocity);
             rotationUpdateKernel.Dispatch(particleState.CurrentRotation, particleState.NextRotation);

@@ -19,10 +19,24 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             if (spawnCount > 0)
             {
-                ApplyVisualParameters(spawnStart, spawnSeedStart, spawnCount);
+                GetStartColorRange(out var startColorMin, out var startColorMax);
+
+                ApplyVisualParameters(
+                    spawnStart,
+                    spawnSeedStart,
+                    spawnCount,
+                    startColorMin,
+                    startColorMax);
+
                 Dispatch(_visualMaterial, _currentVisual, _nextVisual);
 
-                ApplyRotationParameters();
+                ApplyRotationParameters(
+                    spawnStart,
+                    spawnSeedStart,
+                    spawnCount,
+                    startColorMin.a,
+                    startColorMax.a);
+
                 Dispatch(_rotationMaterial, _currentRotation, _nextRotation);
 
                 SwapVisual();
@@ -123,17 +137,8 @@ namespace TpLab.Flux.FX.Editor.Preview
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }
 
-        void ApplyVisualParameters(int spawnStart, int spawnSeedStart, int spawnCount)
+        void ApplyVisualParameters(int spawnStart, int spawnSeedStart, int spawnCount, Color startColorMin, Color startColorMax)
         {
-            var startColorMin = _authoring.Render.StartColor;
-            var startColorMax = _authoring.Render.StartColor;
-
-            if (_authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
-            {
-                startColorMin = _authoring.Render.StartColorMin;
-                startColorMax = _authoring.Render.StartColorMax;
-            }
-
             var startSizeMin = _authoring.Render.StartSize;
             var startSizeMax = _authoring.Render.StartSize;
 
@@ -154,11 +159,27 @@ namespace TpLab.Flux.FX.Editor.Preview
             _visualMaterial.SetTexture("_VelocityTex", _nextVelocity);
         }
 
-        void ApplyRotationParameters()
+        void ApplyRotationParameters(int spawnStart, int spawnSeedStart, int spawnCount, float startAlphaMin, float startAlphaMax)
         {
             _rotationMaterial.SetVector("_StartRotation", _authoring.Render.StartRotation);
+            _rotationMaterial.SetFloat("_StartAlphaMin", startAlphaMin);
+            _rotationMaterial.SetFloat("_StartAlphaMax", startAlphaMax);
+            _rotationMaterial.SetFloat("_SpawnStart", spawnStart);
+            _rotationMaterial.SetFloat("_SpawnSeedStart", spawnSeedStart);
+            _rotationMaterial.SetFloat("_SpawnCount", spawnCount);
             _rotationMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
             _rotationMaterial.SetTexture("_VelocityTex", _nextVelocity);
+        }
+
+        void GetStartColorRange(out Color min, out Color max)
+        {
+            min = _authoring.Render.StartColor;
+            max = _authoring.Render.StartColor;
+
+            if (_authoring.Render.StartColorMode != FluxParticleStartColorMode.RandomBetweenTwoConstants) return;
+
+            min = _authoring.Render.StartColorMin;
+            max = _authoring.Render.StartColorMax;
         }
 
         void DispatchInitialize(RenderTexture destination)

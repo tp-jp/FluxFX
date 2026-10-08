@@ -22,12 +22,18 @@ Shader "FluxFX/ParticleRotationUpdate"
 
             #include "UnityCG.cginc"
             #include "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl"
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl"
 
             sampler2D_float _MainTex;
             sampler2D_float _CurrentVelocityTex;
             sampler2D_float _VelocityTex;
 
             float3 _StartRotation;
+            float _StartAlphaMin;
+            float _StartAlphaMax;
+            float _SpawnStart;
+            float _SpawnSeedStart;
+            float _SpawnCount;
 
             float4 frag(v2f_img i) : SV_Target
             {
@@ -47,7 +53,19 @@ Shader "FluxFX/ParticleRotationUpdate"
 
                 if (!wasActive && isActive)
                 {
-                    return float4(_StartRotation, 0);
+                    uint spawnSeed = FluxFXGetSpawnSeed(
+                        index,
+                        (uint)_FluxDestinationCount,
+                        (uint)_SpawnStart,
+                        (uint)_SpawnSeedStart);
+
+                    float colorRandom = FluxFXRandom01(spawnSeed * 2u + 1u);
+                    float startAlpha = lerp(
+                        _StartAlphaMin,
+                        _StartAlphaMax,
+                        colorRandom);
+
+                    return float4(_StartRotation, startAlpha);
                 }
 
                 return rotation;

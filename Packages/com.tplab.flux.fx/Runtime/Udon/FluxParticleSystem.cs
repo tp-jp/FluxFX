@@ -54,135 +54,74 @@ namespace TpLab.Flux.FX.Udon
         object _sizeOverLifetime;
         object _rotationOverLifetime;
 
-        /// <summary>
-        /// Particle Systemが使用するParticle数を取得します。
-        /// </summary>
+        #region Public API
+
         [PublicAPI]
         public int ParticleCount => particleCount;
 
-        /// <summary>
-        /// EmissionのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
 
-        /// <summary>
-        /// LifetimeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
 
-        /// <summary>
-        /// ShapeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
 
-        /// <summary>
-        /// Initial VelocityのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
 
-        /// <summary>
-        /// Velocity over LifetimeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
 
-        /// <summary>
-        /// GravityのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
-        /// <summary>
-        /// ForceのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleForceParameters Force => (FluxParticleForceParameters)_force;
 
-        /// <summary>
-        /// DragのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleDragParameters Drag => (FluxParticleDragParameters)_drag;
 
-        /// <summary>
-        /// NoiseのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleNoiseParameters Noise => (FluxParticleNoiseParameters)_noise;
 
-        /// <summary>
-        /// VortexのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
 
-        /// <summary>
-        /// Limit VelocityのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
 
-        /// <summary>
-        /// Start ColorのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
 
-        /// <summary>
-        /// Start SizeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
 
-        /// <summary>
-        /// Start RotationのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
-        /// <summary>
-        /// Color over LifetimeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
 
-        /// <summary>
-        /// Size over LifetimeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
 
-        /// <summary>
-        /// Rotation over LifetimeのRuntimeパラメーターを取得します。
-        /// </summary>
         [PublicAPI]
         public FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
 
-        /// <summary>
-        /// ParticleのEmissionを開始または再開します。
-        /// </summary>
         [PublicAPI]
         public void Play()
         {
             _isPlaying = true;
         }
 
-        /// <summary>
-        /// ParticleのEmissionを停止します。既存のParticleはSimulationを継続します。
-        /// </summary>
         [PublicAPI]
         public void Stop()
         {
             _isPlaying = false;
         }
 
-        /// <summary>
-        /// 既存のParticleを維持したままEmissionのタイムラインを先頭から再開します。
-        /// </summary>
         [PublicAPI]
         public void Restart()
         {
@@ -190,14 +129,15 @@ namespace TpLab.Flux.FX.Udon
             _isPlaying = true;
         }
 
-        /// <summary>
-        /// 現在存在するParticleをすべて消去します。Playback状態には影響しません。
-        /// </summary>
         [PublicAPI]
         public void Clear()
         {
             particleState.Clear();
         }
+
+        #endregion
+
+        #region Unity Events
 
         void Start()
         {
@@ -220,6 +160,10 @@ namespace TpLab.Flux.FX.Udon
             particleSimulation.Simulate(deltaTime);
             particleRenderer.SetState(particleState);
         }
+
+        #endregion
+
+        #region Private Methods
 
         void InitializeCompiledParameters()
         {
@@ -321,6 +265,7 @@ namespace TpLab.Flux.FX.Udon
             var type = (FluxParticleShapeType)(int)shape["type"].Double;
             var radius = (float)shape["radius"].Double;
             var angle = (float)shape["angle"].Double;
+
             var size = new Vector3(
                 (float)shape["sizeX"].Double,
                 (float)shape["sizeY"].Double,
@@ -363,10 +308,12 @@ namespace TpLab.Flux.FX.Udon
                 var velocity = token.DataDictionary;
 
                 enabled = true;
+
                 start = new Vector3(
                     (float)velocity["startX"].Double,
                     (float)velocity["startY"].Double,
                     (float)velocity["startZ"].Double);
+
                 end = new Vector3(
                     (float)velocity["endX"].Double,
                     (float)velocity["endY"].Double,
@@ -525,7 +472,9 @@ namespace TpLab.Flux.FX.Udon
             var startColor = new Color(
                 (float)render["startColorR"].Double,
                 (float)render["startColorG"].Double,
-                (float)render["startColorB"].Double);
+                (float)render["startColorB"].Double,
+                (float)render["startColorA"].Double);
+
             var min = startColor;
             var max = startColor;
 
@@ -534,7 +483,8 @@ namespace TpLab.Flux.FX.Udon
                 min = new Color(
                     (float)minToken.Double,
                     (float)render["startColorMinG"].Double,
-                    (float)render["startColorMinB"].Double);
+                    (float)render["startColorMinB"].Double,
+                    (float)render["startColorMinA"].Double);
             }
 
             if (render.TryGetValue("startColorMaxR", out var maxToken))
@@ -542,7 +492,8 @@ namespace TpLab.Flux.FX.Udon
                 max = new Color(
                     (float)maxToken.Double,
                     (float)render["startColorMaxG"].Double,
-                    (float)render["startColorMaxB"].Double);
+                    (float)render["startColorMaxB"].Double,
+                    (float)render["startColorMaxA"].Double);
             }
 
             _startColor = FluxParticleStartColorParameters.New(min, max);
@@ -587,10 +538,12 @@ namespace TpLab.Flux.FX.Udon
                 var color = token.DataDictionary;
 
                 enabled = true;
+
                 endColor = new Color(
                     (float)color["endColorR"].Double,
                     (float)color["endColorG"].Double,
-                    (float)color["endColorB"].Double);
+                    (float)color["endColorB"].Double,
+                    (float)color["endColorA"].Double);
             }
 
             _colorOverLifetime = FluxParticleColorOverLifetimeParameters.New(enabled, endColor);
@@ -622,6 +575,7 @@ namespace TpLab.Flux.FX.Udon
                 var rotation = token.DataDictionary;
 
                 enabled = true;
+
                 endRotation = new Vector3(
                     (float)rotation["endRotationX"].Double,
                     (float)rotation["endRotationY"].Double,
@@ -630,5 +584,7 @@ namespace TpLab.Flux.FX.Udon
 
             _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
         }
+
+        #endregion
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "com.tplab.flux.fx",
   "displayName": "FluxFX",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "unity": "2022.3",
   "description": "GPU particle and visual effects framework powered by Flux.",
   "gitDependencies": {},

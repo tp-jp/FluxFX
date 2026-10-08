@@ -32,6 +32,7 @@ Shader "FluxFX/ParticleRender"
         Pass
         {
             HLSLPROGRAM
+
             #pragma vertex vert
             #pragma fragment frag
 
@@ -177,6 +178,7 @@ Shader "FluxFX/ParticleRender"
                 float row = floor(frame / tilesX);
 
                 float2 tileSize = 1.0 / float2(tilesX, tilesY);
+
                 float2 tileOffset = float2(
                     column * tileSize.x,
                     (tilesY - row - 1) * tileSize.y);
@@ -194,6 +196,7 @@ Shader "FluxFX/ParticleRender"
                 float4 position = tex2Dlod(_PositionTex, float4(stateUV, 0, 0));
                 float4 velocity = tex2Dlod(_VelocityTex, float4(stateUV, 0, 0));
                 float4 visual = tex2Dlod(_VisualTex, float4(stateUV, 0, 0));
+                float4 rotationData = tex2Dlod(_RotationTex, float4(stateUV, 0, 0));
 
                 float age = position.w;
                 float lifetime = velocity.w;
@@ -207,9 +210,14 @@ Shader "FluxFX/ParticleRender"
                 }
 
                 float normalizedAge = saturate(age / lifetime);
-                float3 startColor = visual.rgb;
+
+                float4 startColor = float4(
+                    visual.rgb,
+                    rotationData.w);
+
                 float startSize = visual.a;
-                float3 color = startColor;
+
+                float4 color = startColor;
                 float size = startSize;
 
                 if (_ColorOverLifetimeEnabled > 0.5)
@@ -218,11 +226,14 @@ Shader "FluxFX/ParticleRender"
                     {
                         color = tex2Dlod(
                             _ColorOverLifetimeLut,
-                            float4(normalizedAge, 0.5, 0, 0)).rgb;
+                            float4(normalizedAge, 0.5, 0, 0));
                     }
                     else
                     {
-                        color = lerp(startColor, _EndColor.rgb, normalizedAge);
+                        color = lerp(
+                            startColor,
+                            _EndColor,
+                            normalizedAge);
                     }
                 }
 
@@ -237,27 +248,32 @@ Shader "FluxFX/ParticleRender"
                     }
                     else
                     {
-                        size = lerp(startSize, _EndSize, normalizedAge);
+                        size = lerp(
+                            startSize,
+                            _EndSize,
+                            normalizedAge);
                     }
                 }
 
-                float3 rotationOverLifetime = GetRotationOverLifetime(normalizedAge);
+                float3 rotationOverLifetime =
+                    GetRotationOverLifetime(normalizedAge);
 
                 float3 particleVertex;
 
                 if (_RenderMode < 0.5)
                 {
                     particleVertex = GetBillboardVertex(
-                        Rotate2D(v.vertex.xy, radians(rotationOverLifetime.z)),
+                        Rotate2D(
+                            v.vertex.xy,
+                            radians(rotationOverLifetime.z)),
                         size);
                 }
                 else
                 {
-                    float3 startRotation =
-                        tex2Dlod(_RotationTex, float4(stateUV, 0, 0)).xyz;
+                    float3 startRotation = rotationData.xyz;
 
-                    float3 rotation =
-                        radians(startRotation + rotationOverLifetime);
+                    float3 rotation = radians(
+                        startRotation + rotationOverLifetime);
 
                     particleVertex =
                         RotateEuler(v.vertex.xyz * size, rotation);
@@ -282,7 +298,9 @@ Shader "FluxFX/ParticleRender"
                             + particleVertex;
 
                         o.vertex =
-                            mul(UNITY_MATRIX_VP, float4(worldPosition, 1));
+                            mul(
+                                UNITY_MATRIX_VP,
+                                float4(worldPosition, 1));
                     }
                     else
                     {
@@ -290,12 +308,16 @@ Shader "FluxFX/ParticleRender"
                             position.xyz + particleVertex;
 
                         o.vertex =
-                            UnityObjectToClipPos(float4(localPosition, 1));
+                            UnityObjectToClipPos(
+                                float4(localPosition, 1));
                     }
                 }
 
-                o.uv = GetTextureSheetUV(v.uv, normalizedAge);
-                o.color = float4(color, 1);
+                o.uv = GetTextureSheetUV(
+                    v.uv,
+                    normalizedAge);
+
+                o.color = color;
 
                 return o;
             }
@@ -304,6 +326,7 @@ Shader "FluxFX/ParticleRender"
             {
                 return tex2D(_MainTex, i.uv) * i.color;
             }
+
             ENDHLSL
         }
     }
