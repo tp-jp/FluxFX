@@ -1,3 +1,4 @@
+
 using System;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
@@ -31,6 +32,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
             new ModuleDefinition(typeof(FluxParticleNoiseModule), "Noise", NoiseExpandedKey),
             new ModuleDefinition(typeof(FluxParticleVortexModule), "Vortex", VortexExpandedKey),
             new ModuleDefinition(typeof(FluxParticleLimitVelocityModule), "Limit Velocity", LimitVelocityExpandedKey)
+        };
+
+        static readonly ModuleDefinition[] RendererModuleDefinitions =
+        {
+            new ModuleDefinition(typeof(FluxParticleTextureSheetAnimationModule), "Texture Sheet Animation", TextureSheetAnimationExpandedKey)
         };
 
         bool DrawOptionalModule<T>(string label, bool expanded, string sessionStateKey)
@@ -196,6 +202,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
             else if (moduleType == typeof(FluxParticleLimitVelocityModule))
             {
                 _limitVelocityExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleTextureSheetAnimationModule))
+            {
+                _textureSheetAnimationExpanded = expanded;
             }
         }
     }

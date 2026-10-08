@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -279,9 +280,6 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         RotationOverLifetimeSettings rotationOverLifetime = new RotationOverLifetimeSettings();
 
-        [SerializeField]
-        TextureSheetAnimationSettings textureSheetAnimation = new TextureSheetAnimationSettings();
-
         public FluxParticleRenderMode Mode => mode;
 
         public Mesh Mesh => mesh;
@@ -313,8 +311,6 @@ namespace TpLab.Flux.FX.Scripts
         public SizeOverLifetimeSettings SizeOverLifetime => sizeOverLifetime;
 
         public RotationOverLifetimeSettings RotationOverLifetime => rotationOverLifetime;
-
-        public TextureSheetAnimationSettings TextureSheetAnimation => textureSheetAnimation;
     }
 
     [Serializable]
@@ -388,32 +384,5 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 EndRotation => endRotation;
 
         public AnimationCurve Curve => curve;
-    }
-
-    [Serializable]
-    public class TextureSheetAnimationSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        [Min(1)]
-        int tilesX = 1;
-
-        [SerializeField]
-        [Min(1)]
-        int tilesY = 1;
-
-        [SerializeField]
-        [Min(0)]
-        float cycles = 1.0f;
-
-        public bool Enabled => enabled;
-
-        public int TilesX => tilesX;
-
-        public int TilesY => tilesY;
-
-        public float Cycles => cycles;
     }
 }

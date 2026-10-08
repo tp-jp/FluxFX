@@ -1,4 +1,6 @@
+
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -110,12 +112,29 @@ namespace TpLab.Flux.FX.Editor.Preview
 
         void ApplyTextureSheetAnimation()
         {
-            var settings = _authoring.Render.TextureSheetAnimation;
+            FluxParticleTextureSheetAnimationModule textureSheetModule = null;
 
-            _renderMaterial.SetFloat("_TextureSheetAnimationEnabled", settings.Enabled ? 1 : 0);
-            _renderMaterial.SetFloat("_TextureSheetTilesX", settings.TilesX);
-            _renderMaterial.SetFloat("_TextureSheetTilesY", settings.TilesY);
-            _renderMaterial.SetFloat("_TextureSheetCycles", settings.Cycles);
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleTextureSheetAnimationModule found)) continue;
+
+                textureSheetModule = found;
+                break;
+            }
+
+            if (textureSheetModule == null || !textureSheetModule.Enabled)
+            {
+                _renderMaterial.SetFloat("_TextureSheetAnimationEnabled", 0);
+                _renderMaterial.SetFloat("_TextureSheetTilesX", 1);
+                _renderMaterial.SetFloat("_TextureSheetTilesY", 1);
+                _renderMaterial.SetFloat("_TextureSheetCycles", 1);
+                return;
+            }
+
+            _renderMaterial.SetFloat("_TextureSheetAnimationEnabled", 1);
+            _renderMaterial.SetFloat("_TextureSheetTilesX", textureSheetModule.TilesX);
+            _renderMaterial.SetFloat("_TextureSheetTilesY", textureSheetModule.TilesY);
+            _renderMaterial.SetFloat("_TextureSheetCycles", textureSheetModule.Cycles);
         }
 
         void UpdatePreviewTransform()

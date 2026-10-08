@@ -1,3 +1,4 @@
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts;
@@ -26,7 +27,7 @@ namespace TpLab.Flux.FX.Editor
             AddNoise(parameters, authoring);
             AddVortex(parameters, authoring);
             AddLimitVelocity(parameters, authoring);
-            AddRender(parameters, authoring.Render);
+            AddRender(parameters, authoring);
 
             return parameters.ToString(Formatting.None);
         }
@@ -256,8 +257,10 @@ namespace TpLab.Flux.FX.Editor
             }
         }
 
-        void AddRender(JObject parameters, RenderSettings render)
+        void AddRender(JObject parameters, FluxParticleAuthoring authoring)
         {
+            var render = authoring.Render;
+
             var startColorMin = render.StartColorMode == FluxParticleStartColorMode.Constant
                 ? render.StartColor
                 : render.StartColorMin;
@@ -324,17 +327,29 @@ namespace TpLab.Flux.FX.Editor
                 };
             }
 
-            if (render.TextureSheetAnimation.Enabled)
-            {
-                settings["textureSheetAnimation"] = new JObject
-                {
-                    ["tilesX"] = render.TextureSheetAnimation.TilesX,
-                    ["tilesY"] = render.TextureSheetAnimation.TilesY,
-                    ["cycles"] = render.TextureSheetAnimation.Cycles
-                };
-            }
+            AddTextureSheetAnimation(settings, authoring);
 
             parameters["render"] = settings;
+        }
+
+        void AddTextureSheetAnimation(JObject settings, FluxParticleAuthoring authoring)
+        {
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleTextureSheetAnimationModule textureSheetModule)) continue;
+
+                if (textureSheetModule.Enabled)
+                {
+                    settings["textureSheetAnimation"] = new JObject
+                    {
+                        ["tilesX"] = textureSheetModule.TilesX,
+                        ["tilesY"] = textureSheetModule.TilesY,
+                        ["cycles"] = textureSheetModule.Cycles
+                    };
+                }
+
+                return;
+            }
         }
     }
 }

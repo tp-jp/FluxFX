@@ -1,4 +1,6 @@
+
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEngine;
@@ -43,7 +45,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawColorOverLifetime();
             DrawSizeOverLifetime();
             DrawRotationOverLifetime();
-            DrawTextureSheetAnimation();
+
+            _textureSheetAnimationExpanded = DrawOptionalModule<FluxParticleTextureSheetAnimationModule>(
+                L10n.Tr("Texture Sheet Animation"),
+                _textureSheetAnimationExpanded,
+                TextureSheetAnimationExpandedKey);
+
+            DrawAddModuleButton(RendererModuleDefinitions);
         }
 
         void DrawStartSize()
@@ -201,37 +209,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
                         DrawProperty(module.FindPropertyRelative("endRotation"));
                         DrawProperty(module.FindPropertyRelative("curve"));
                     }
-
-                    EditorGUI.indentLevel--;
-                }
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-
-        void DrawTextureSheetAnimation()
-        {
-            var module = _render.FindPropertyRelative("textureSheetAnimation");
-
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-
-            _textureSheetAnimationExpanded = DrawModuleHeader(
-                L10n.Tr("Texture Sheet Animation"),
-                module,
-                _textureSheetAnimationExpanded,
-                TextureSheetAnimationExpandedKey);
-
-            if (_textureSheetAnimationExpanded)
-            {
-                var enabled = module.FindPropertyRelative("enabled");
-
-                using (new EditorGUI.DisabledScope(!enabled.boolValue))
-                {
-                    EditorGUI.indentLevel++;
-
-                    DrawProperty(module.FindPropertyRelative("tilesX"));
-                    DrawProperty(module.FindPropertyRelative("tilesY"));
-                    DrawProperty(module.FindPropertyRelative("cycles"));
 
                     EditorGUI.indentLevel--;
                 }
