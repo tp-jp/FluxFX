@@ -32,9 +32,6 @@ namespace TpLab.Flux.FX.Scripts
         VelocityOverLifetimeSettings velocityOverLifetime = new VelocityOverLifetimeSettings();
 
         [SerializeField]
-        ForceSettings force = new ForceSettings();
-
-        [SerializeField]
         DragSettings drag = new DragSettings();
 
         [SerializeField]
@@ -65,8 +62,6 @@ namespace TpLab.Flux.FX.Scripts
         public InitialVelocitySettings InitialVelocity => initialVelocity;
 
         public VelocityOverLifetimeSettings VelocityOverLifetime => velocityOverLifetime;
-
-        public ForceSettings Force => force;
 
         public DragSettings Drag => drag;
 
@@ -290,20 +285,6 @@ namespace TpLab.Flux.FX.Scripts
     }
 
     [Serializable]
-    public class ForceSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        Vector3 force;
-
-        public bool Enabled => enabled;
-
-        public Vector3 Force => force;
-    }
-
-    [Serializable]
     public class DragSettings
     {
         [SerializeField]
@@ -361,13 +342,13 @@ namespace TpLab.Flux.FX.Scripts
         [Min(0)]
         float strength = 1.0f;
 
-        public bool Enabled => enabled;
-
         public Vector3 Center => center;
 
         public Vector3 Axis => axis;
 
         public float Strength => strength;
+
+        public bool Enabled => enabled;
     }
 
     [Serializable]

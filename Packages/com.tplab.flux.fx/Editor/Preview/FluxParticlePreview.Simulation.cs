@@ -72,7 +72,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             }
 
             var gravity = GetGravity();
-            var force = _authoring.Force.Enabled ? _authoring.Force.Force : Vector3.zero;
+            var force = GetForce();
             var drag = _authoring.Drag.Enabled ? _authoring.Drag.Drag : 0;
             var noiseStrength = _authoring.Noise.Enabled ? _authoring.Noise.Strength : 0;
             var noiseScale = _authoring.Noise.Enabled ? _authoring.Noise.Scale : 0;
@@ -115,6 +115,18 @@ namespace TpLab.Flux.FX.Editor.Preview
                 if (!(module is FluxParticleGravityModule gravityModule)) continue;
 
                 return gravityModule.Enabled ? gravityModule.Gravity : Vector3.zero;
+            }
+
+            return Vector3.zero;
+        }
+
+        Vector3 GetForce()
+        {
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleForceModule forceModule)) continue;
+
+                return forceModule.Enabled ? forceModule.Force : Vector3.zero;
             }
 
             return Vector3.zero;

@@ -24,9 +24,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _gravityExpanded,
                 GravityExpandedKey);
 
-            _forceExpanded = DrawModule(
+            _forceExpanded = DrawOptionalModule<FluxParticleForceModule>(
                 L10n.Tr("Force"),
-                _force,
                 _forceExpanded,
                 ForceExpandedKey);
 

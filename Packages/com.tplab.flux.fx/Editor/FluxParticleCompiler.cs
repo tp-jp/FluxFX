@@ -21,7 +21,7 @@ namespace TpLab.Flux.FX.Editor
             AddInitialVelocity(parameters, authoring.InitialVelocity);
             AddVelocityOverLifetime(parameters, authoring.VelocityOverLifetime);
             AddGravity(parameters, authoring);
-            AddForce(parameters, authoring.Force);
+            AddForce(parameters, authoring);
             AddDrag(parameters, authoring.Drag);
             AddNoise(parameters, authoring.Noise);
             AddVortex(parameters, authoring.Vortex);
@@ -149,16 +149,26 @@ namespace TpLab.Flux.FX.Editor
             }
         }
 
-        void AddForce(JObject parameters, ForceSettings force)
+        void AddForce(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!force.Enabled) return;
-
-            parameters["force"] = new JObject
+            foreach (var module in authoring.Modules)
             {
-                ["x"] = force.Force.x,
-                ["y"] = force.Force.y,
-                ["z"] = force.Force.z
-            };
+                if (!(module is FluxParticleForceModule forceModule)) continue;
+
+                if (forceModule.Enabled)
+                {
+                    var force = forceModule.Force;
+
+                    parameters["force"] = new JObject
+                    {
+                        ["x"] = force.x,
+                        ["y"] = force.y,
+                        ["z"] = force.z
+                    };
+                }
+
+                return;
+            }
         }
 
         void AddDrag(JObject parameters, DragSettings drag)
@@ -191,9 +201,9 @@ namespace TpLab.Flux.FX.Editor
                 ["centerX"] = vortex.Center.x,
                 ["centerY"] = vortex.Center.y,
                 ["centerZ"] = vortex.Center.z,
-                ["axisX"] = axis.x,
-                ["axisY"] = axis.y,
-                ["axisZ"] = axis.z,
+                ["axisX"] = vortex.Axis.x,
+                ["axisY"] = vortex.Axis.y,
+                ["axisZ"] = vortex.Axis.z,
                 ["strength"] = vortex.Strength
             };
         }
