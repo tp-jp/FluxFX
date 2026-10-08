@@ -136,6 +136,53 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &178485533
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 178485535}
+  - component: {fileID: 178485534}
+  m_Layer: 0
+  m_Name: FluxFXGpuBenchmark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &178485534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 178485533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3992d15d312fc564c967e8306756e54d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  caseId: G00
+  warmupSeconds: 20
+  measureSeconds: 10
+--- !u!4 &178485535
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 178485533}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &358170787
 GameObject:
   m_ObjectHideFlags: 0
@@ -668,10 +715,15 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2680331688606634723, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+    - target: {fileID: 2700669343830225459, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3011812459262992520, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: particleCount
-      value: 1024
+      value: 16384
       objectReference: {fileID: 0}
     - target: {fileID: 3011812459262992520, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -761,12 +813,17 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: emission.rate
-      value: 100
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: render.blendMode
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: lifetime.lifetime
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -2036,12 +2093,12 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066845].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066846].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -2061,32 +2118,32 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066847].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066848].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066849].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066850].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066851].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066852].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -2096,12 +2153,12 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066853].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066854].enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -5375,44 +5432,44 @@ MonoBehaviour:
     ID: 22
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1119965956}
+  - gameObject: {fileID: 1379617928}
     ID: 23
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 41551547}
+  - gameObject: {fileID: 617711873}
     ID: 24
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1023137027}
+  - gameObject: {fileID: 1119965956}
     ID: 25
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 26550150}
+  - gameObject: {fileID: 41551547}
     ID: 26
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 785121123}
+  - gameObject: {fileID: 1023137027}
     ID: 27
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1930212630}
+  - gameObject: {fileID: 26550150}
     ID: 28
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1034251896}
+  - gameObject: {fileID: 785121123}
     ID: 29
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1379617928}
+  - gameObject: {fileID: 1394730907}
+    ID: 30
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 1930212630}
     ID: 31
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 617711873}
+  - gameObject: {fileID: 1034251896}
     ID: 32
-    SerializedTypeNames:
-    - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1394730907}
-    ID: 33
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}
@@ -5591,3 +5648,4 @@ SceneRoots:
   - {fileID: 7606902903243430487}
   - {fileID: 358170790}
   - {fileID: 7033779131796818726}
+  - {fileID: 178485535}
