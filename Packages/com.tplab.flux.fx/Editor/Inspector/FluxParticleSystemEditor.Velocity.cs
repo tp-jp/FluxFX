@@ -57,15 +57,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             var moduleIndex = FindGravityModuleIndex();
 
-            if (moduleIndex < 0)
-            {
-                _gravityExpanded = DrawModule(
-                    L10n.Tr("Gravity"),
-                    _gravity,
-                    _gravityExpanded,
-                    GravityExpandedKey);
-            }
-            else
+            if (moduleIndex >= 0)
             {
                 var module = _modules.GetArrayElementAtIndex(moduleIndex);
 
@@ -125,13 +117,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             var module = _modules.GetArrayElementAtIndex(index);
             module.managedReferenceValue = new FluxParticleGravityModule();
-
-            // 従来設定を引き継ぎ、Module追加だけで挙動が変わらないようにする。
-            module.FindPropertyRelative("enabled").boolValue =
-                _gravity.FindPropertyRelative("enabled").boolValue;
-
-            module.FindPropertyRelative("gravity").vector3Value =
-                _gravity.FindPropertyRelative("gravity").vector3Value;
 
             _gravityExpanded = true;
             SessionState.SetBool(GravityExpandedKey, true);

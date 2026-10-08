@@ -68,7 +68,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
         SerializedProperty _shape;
         SerializedProperty _initialVelocity;
         SerializedProperty _velocityOverLifetime;
-        SerializedProperty _gravity;
         SerializedProperty _force;
         SerializedProperty _drag;
         SerializedProperty _noise;
@@ -102,7 +101,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _shape = _authoringObject.FindProperty("shape");
             _initialVelocity = _authoringObject.FindProperty("initialVelocity");
             _velocityOverLifetime = _authoringObject.FindProperty("velocityOverLifetime");
-            _gravity = _authoringObject.FindProperty("gravity");
             _force = _authoringObject.FindProperty("force");
             _drag = _authoringObject.FindProperty("drag");
             _noise = _authoringObject.FindProperty("noise");

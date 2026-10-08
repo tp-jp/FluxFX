@@ -117,8 +117,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 return gravityModule.Enabled ? gravityModule.Gravity : Vector3.zero;
             }
 
-            // Module移行前の既存設定との互換性を維持する。
-            return _authoring.Gravity.Enabled ? _authoring.Gravity.Gravity : Vector3.zero;
+            return Vector3.zero;
         }
 
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)

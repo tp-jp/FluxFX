@@ -147,21 +147,6 @@ namespace TpLab.Flux.FX.Editor
 
                 return;
             }
-
-            // Moduleへの移行前に作成された既存Particle Systemの設定を維持する。
-            AddLegacyGravity(parameters, authoring.Gravity);
-        }
-
-        void AddLegacyGravity(JObject parameters, GravitySettings gravity)
-        {
-            if (!gravity.Enabled) return;
-
-            parameters["gravity"] = new JObject
-            {
-                ["x"] = gravity.Gravity.x,
-                ["y"] = gravity.Gravity.y,
-                ["z"] = gravity.Gravity.z
-            };
         }
 
         void AddForce(JObject parameters, ForceSettings force)

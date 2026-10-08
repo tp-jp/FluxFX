@@ -32,9 +32,6 @@ namespace TpLab.Flux.FX.Scripts
         VelocityOverLifetimeSettings velocityOverLifetime = new VelocityOverLifetimeSettings();
 
         [SerializeField]
-        GravitySettings gravity = new GravitySettings();
-
-        [SerializeField]
         ForceSettings force = new ForceSettings();
 
         [SerializeField]
@@ -68,8 +65,6 @@ namespace TpLab.Flux.FX.Scripts
         public InitialVelocitySettings InitialVelocity => initialVelocity;
 
         public VelocityOverLifetimeSettings VelocityOverLifetime => velocityOverLifetime;
-
-        public GravitySettings Gravity => gravity;
 
         public ForceSettings Force => force;
 
@@ -292,20 +287,6 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 Offset => offset;
 
         public float Radial => radial;
-    }
-
-    [Serializable]
-    public class GravitySettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        Vector3 gravity = new Vector3(0, -1.0f, 0);
-
-        public bool Enabled => enabled;
-
-        public Vector3 Gravity => gravity;
     }
 
     [Serializable]
