@@ -1,4 +1,3 @@
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts;
@@ -10,6 +9,8 @@ namespace TpLab.Flux.FX.Editor
     {
         public string Compile(FluxParticleAuthoring authoring)
         {
+            var plan = FluxParticleCompilePlan.Create(authoring);
+
             var parameters = new JObject
             {
                 ["simulationSpace"] = (int)authoring.SimulationSpace
@@ -20,14 +21,16 @@ namespace TpLab.Flux.FX.Editor
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
-            AddVelocityOverLifetime(parameters, authoring);
-            AddGravity(parameters, authoring);
-            AddForce(parameters, authoring);
-            AddDrag(parameters, authoring);
-            AddNoise(parameters, authoring);
-            AddVortex(parameters, authoring);
-            AddLimitVelocity(parameters, authoring);
-            AddRender(parameters, authoring);
+
+            AddVelocityOverLifetime(parameters, plan);
+            AddGravity(parameters, plan);
+            AddForce(parameters, plan);
+            AddDrag(parameters, plan);
+            AddNoise(parameters, plan);
+            AddVortex(parameters, plan);
+            AddLimitVelocity(parameters, plan);
+
+            AddRender(parameters, authoring.Render, plan);
 
             return parameters.ToString(Formatting.None);
         }
@@ -67,6 +70,7 @@ namespace TpLab.Flux.FX.Editor
             var lifetimeMin = lifetime.Mode == FluxParticleStartLifetimeMode.Constant
                 ? lifetime.Lifetime
                 : UnityEngine.Mathf.Min(lifetime.Min, lifetime.Max);
+
             var lifetimeMax = lifetime.Mode == FluxParticleStartLifetimeMode.Constant
                 ? lifetime.Lifetime
                 : UnityEngine.Mathf.Max(lifetime.Min, lifetime.Max);
@@ -94,6 +98,7 @@ namespace TpLab.Flux.FX.Editor
             var speedMin = initialVelocity.Mode == FluxParticleStartSpeedMode.Constant
                 ? initialVelocity.Speed
                 : UnityEngine.Mathf.Min(initialVelocity.Min, initialVelocity.Max);
+
             var speedMax = initialVelocity.Mode == FluxParticleStartSpeedMode.Constant
                 ? initialVelocity.Speed
                 : UnityEngine.Mathf.Max(initialVelocity.Min, initialVelocity.Max);
@@ -106,164 +111,114 @@ namespace TpLab.Flux.FX.Editor
             };
         }
 
-        void AddVelocityOverLifetime(JObject parameters, FluxParticleAuthoring authoring)
+        void AddVelocityOverLifetime(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleVelocityOverLifetimeModule>();
+            if (module == null) return;
+
+            parameters["velocityOverLifetime"] = new JObject
             {
-                if (!(module is FluxParticleVelocityOverLifetimeModule velocityModule)) continue;
-
-                if (velocityModule.Enabled)
-                {
-                    parameters["velocityOverLifetime"] = new JObject
-                    {
-                        ["startX"] = velocityModule.Start.x,
-                        ["startY"] = velocityModule.Start.y,
-                        ["startZ"] = velocityModule.Start.z,
-                        ["endX"] = velocityModule.End.x,
-                        ["endY"] = velocityModule.End.y,
-                        ["endZ"] = velocityModule.End.z,
-                        ["orbitalX"] = velocityModule.Orbital.x,
-                        ["orbitalY"] = velocityModule.Orbital.y,
-                        ["orbitalZ"] = velocityModule.Orbital.z,
-                        ["offsetX"] = velocityModule.Offset.x,
-                        ["offsetY"] = velocityModule.Offset.y,
-                        ["offsetZ"] = velocityModule.Offset.z,
-                        ["radial"] = velocityModule.Radial
-                    };
-                }
-
-                return;
-            }
+                ["startX"] = module.Start.x,
+                ["startY"] = module.Start.y,
+                ["startZ"] = module.Start.z,
+                ["endX"] = module.End.x,
+                ["endY"] = module.End.y,
+                ["endZ"] = module.End.z,
+                ["orbitalX"] = module.Orbital.x,
+                ["orbitalY"] = module.Orbital.y,
+                ["orbitalZ"] = module.Orbital.z,
+                ["offsetX"] = module.Offset.x,
+                ["offsetY"] = module.Offset.y,
+                ["offsetZ"] = module.Offset.z,
+                ["radial"] = module.Radial
+            };
         }
 
-        void AddGravity(JObject parameters, FluxParticleAuthoring authoring)
+        void AddGravity(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleGravityModule>();
+            if (module == null) return;
+
+            var gravity = module.Gravity;
+
+            parameters["gravity"] = new JObject
             {
-                if (!(module is FluxParticleGravityModule gravityModule)) continue;
-
-                if (gravityModule.Enabled)
-                {
-                    var gravity = gravityModule.Gravity;
-
-                    parameters["gravity"] = new JObject
-                    {
-                        ["x"] = gravity.x,
-                        ["y"] = gravity.y,
-                        ["z"] = gravity.z
-                    };
-                }
-
-                return;
-            }
+                ["x"] = gravity.x,
+                ["y"] = gravity.y,
+                ["z"] = gravity.z
+            };
         }
 
-        void AddForce(JObject parameters, FluxParticleAuthoring authoring)
+        void AddForce(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleForceModule>();
+            if (module == null) return;
+
+            var force = module.Force;
+
+            parameters["force"] = new JObject
             {
-                if (!(module is FluxParticleForceModule forceModule)) continue;
-
-                if (forceModule.Enabled)
-                {
-                    var force = forceModule.Force;
-
-                    parameters["force"] = new JObject
-                    {
-                        ["x"] = force.x,
-                        ["y"] = force.y,
-                        ["z"] = force.z
-                    };
-                }
-
-                return;
-            }
+                ["x"] = force.x,
+                ["y"] = force.y,
+                ["z"] = force.z
+            };
         }
 
-        void AddDrag(JObject parameters, FluxParticleAuthoring authoring)
+        void AddDrag(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
-            {
-                if (!(module is FluxParticleDragModule dragModule)) continue;
+            var module = plan.GetModule<FluxParticleDragModule>();
+            if (module == null) return;
 
-                if (dragModule.Enabled)
-                {
-                    parameters["drag"] = dragModule.Drag;
-                }
-
-                return;
-            }
+            parameters["drag"] = module.Drag;
         }
 
-        void AddNoise(JObject parameters, FluxParticleAuthoring authoring)
+        void AddNoise(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleNoiseModule>();
+            if (module == null) return;
+
+            parameters["noise"] = new JObject
             {
-                if (!(module is FluxParticleNoiseModule noiseModule)) continue;
-
-                if (noiseModule.Enabled)
-                {
-                    parameters["noise"] = new JObject
-                    {
-                        ["strength"] = noiseModule.Strength,
-                        ["scale"] = noiseModule.Scale,
-                        ["speed"] = noiseModule.Speed
-                    };
-                }
-
-                return;
-            }
+                ["strength"] = module.Strength,
+                ["scale"] = module.Scale,
+                ["speed"] = module.Speed
+            };
         }
 
-        void AddVortex(JObject parameters, FluxParticleAuthoring authoring)
+        void AddVortex(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleVortexModule>();
+            if (module == null) return;
+
+            var center = module.Center;
+            var axis = module.Axis.normalized;
+
+            parameters["vortex"] = new JObject
             {
-                if (!(module is FluxParticleVortexModule vortexModule)) continue;
-
-                if (vortexModule.Enabled)
-                {
-                    var center = vortexModule.Center;
-                    var axis = vortexModule.Axis.normalized;
-
-                    parameters["vortex"] = new JObject
-                    {
-                        ["centerX"] = center.x,
-                        ["centerY"] = center.y,
-                        ["centerZ"] = center.z,
-                        ["axisX"] = axis.x,
-                        ["axisY"] = axis.y,
-                        ["axisZ"] = axis.z,
-                        ["strength"] = vortexModule.Strength
-                    };
-                }
-
-                return;
-            }
+                ["centerX"] = center.x,
+                ["centerY"] = center.y,
+                ["centerZ"] = center.z,
+                ["axisX"] = axis.x,
+                ["axisY"] = axis.y,
+                ["axisZ"] = axis.z,
+                ["strength"] = module.Strength
+            };
         }
 
-        void AddLimitVelocity(JObject parameters, FluxParticleAuthoring authoring)
+        void AddLimitVelocity(JObject parameters, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
-            {
-                if (!(module is FluxParticleLimitVelocityModule limitVelocityModule)) continue;
+            var module = plan.GetModule<FluxParticleLimitVelocityModule>();
+            if (module == null) return;
 
-                if (limitVelocityModule.Enabled)
-                {
-                    parameters["limitVelocity"] = limitVelocityModule.MaxSpeed;
-                }
-
-                return;
-            }
+            parameters["limitVelocity"] = module.MaxSpeed;
         }
 
-        void AddRender(JObject parameters, FluxParticleAuthoring authoring)
+        void AddRender(JObject parameters, RenderSettings render, FluxParticleCompilePlan plan)
         {
-            var render = authoring.Render;
-
             var startColorMin = render.StartColorMode == FluxParticleStartColorMode.Constant
                 ? render.StartColor
                 : render.StartColorMin;
+
             var startColorMax = render.StartColorMode == FluxParticleStartColorMode.Constant
                 ? render.StartColor
                 : render.StartColorMax;
@@ -294,97 +249,69 @@ namespace TpLab.Flux.FX.Editor
                 ["startRotationZ"] = render.StartRotation.z
             };
 
-            AddColorOverLifetime(settings, authoring);
-            AddSizeOverLifetime(settings, authoring);
-            AddRotationOverLifetime(settings, authoring);
-            AddTextureSheetAnimation(settings, authoring);
+            AddColorOverLifetime(settings, plan);
+            AddSizeOverLifetime(settings, plan);
+            AddRotationOverLifetime(settings, plan);
+            AddTextureSheetAnimation(settings, plan);
 
             parameters["render"] = settings;
         }
 
-        void AddColorOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        void AddColorOverLifetime(JObject settings, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleColorOverLifetimeModule>();
+            if (module == null) return;
+
+            settings["colorOverLifetime"] = new JObject
             {
-                if (!(module is FluxParticleColorOverLifetimeModule colorModule)) continue;
-
-                if (colorModule.Enabled)
-                {
-                    settings["colorOverLifetime"] = new JObject
-                    {
-                        ["mode"] = (int)colorModule.Mode,
-                        ["endColorR"] = colorModule.EndColor.r,
-                        ["endColorG"] = colorModule.EndColor.g,
-                        ["endColorB"] = colorModule.EndColor.b,
-                        ["endColorA"] = colorModule.EndColor.a
-                    };
-                }
-
-                return;
-            }
+                ["mode"] = (int)module.Mode,
+                ["endColorR"] = module.EndColor.r,
+                ["endColorG"] = module.EndColor.g,
+                ["endColorB"] = module.EndColor.b,
+                ["endColorA"] = module.EndColor.a
+            };
         }
 
-        void AddSizeOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        void AddSizeOverLifetime(JObject settings, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleSizeOverLifetimeModule>();
+            if (module == null) return;
+
+            settings["sizeOverLifetime"] = new JObject
             {
-                if (!(module is FluxParticleSizeOverLifetimeModule sizeModule)) continue;
-
-                if (sizeModule.Enabled)
-                {
-                    settings["sizeOverLifetime"] = new JObject
-                    {
-                        ["mode"] = (int)sizeModule.Mode,
-                        ["endSize"] = sizeModule.EndSize
-                    };
-                }
-
-                return;
-            }
+                ["mode"] = (int)module.Mode,
+                ["endSize"] = module.EndSize
+            };
         }
 
-        void AddRotationOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        void AddRotationOverLifetime(JObject settings, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleRotationOverLifetimeModule>();
+            if (module == null) return;
+
+            var endRotation = module.EndRotation;
+
+            settings["rotationOverLifetime"] = new JObject
             {
-                if (!(module is FluxParticleRotationOverLifetimeModule rotationModule)) continue;
-
-                if (rotationModule.Enabled)
-                {
-                    var endRotation = rotationModule.EndRotation;
-
-                    settings["rotationOverLifetime"] = new JObject
-                    {
-                        ["mode"] = (int)rotationModule.Mode,
-                        ["endRotation"] = endRotation.z,
-                        ["endRotationX"] = endRotation.x,
-                        ["endRotationY"] = endRotation.y,
-                        ["endRotationZ"] = endRotation.z
-                    };
-                }
-
-                return;
-            }
+                ["mode"] = (int)module.Mode,
+                ["endRotation"] = endRotation.z,
+                ["endRotationX"] = endRotation.x,
+                ["endRotationY"] = endRotation.y,
+                ["endRotationZ"] = endRotation.z
+            };
         }
 
-        void AddTextureSheetAnimation(JObject settings, FluxParticleAuthoring authoring)
+        void AddTextureSheetAnimation(JObject settings, FluxParticleCompilePlan plan)
         {
-            foreach (var module in authoring.Modules)
+            var module = plan.GetModule<FluxParticleTextureSheetAnimationModule>();
+            if (module == null) return;
+
+            settings["textureSheetAnimation"] = new JObject
             {
-                if (!(module is FluxParticleTextureSheetAnimationModule textureSheetModule)) continue;
-
-                if (textureSheetModule.Enabled)
-                {
-                    settings["textureSheetAnimation"] = new JObject
-                    {
-                        ["tilesX"] = textureSheetModule.TilesX,
-                        ["tilesY"] = textureSheetModule.TilesY,
-                        ["cycles"] = textureSheetModule.Cycles
-                    };
-                }
-
-                return;
-            }
+                ["tilesX"] = module.TilesX,
+                ["tilesY"] = module.TilesY,
+                ["cycles"] = module.Cycles
+            };
         }
     }
 }

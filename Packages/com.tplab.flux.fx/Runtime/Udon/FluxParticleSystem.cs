@@ -54,8 +54,6 @@ namespace TpLab.Flux.FX.Udon
         object _sizeOverLifetime;
         object _rotationOverLifetime;
 
-        #region Public API
-
         [PublicAPI]
         public int ParticleCount => particleCount;
 
@@ -135,10 +133,6 @@ namespace TpLab.Flux.FX.Udon
             particleState.Clear();
         }
 
-        #endregion
-
-        #region Unity Events
-
         void Start()
         {
             particleState.Initialize(particleCount);
@@ -161,12 +155,9 @@ namespace TpLab.Flux.FX.Udon
             particleRenderer.SetState(particleState);
         }
 
-        #endregion
-
-        #region Private Methods
-
         void InitializeCompiledParameters()
         {
+            Debug.Log("JSON: " + compiledParameters);
             if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var result)) return;
 
             var parameters = result.DataDictionary;
@@ -584,7 +575,5 @@ namespace TpLab.Flux.FX.Udon
 
             _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
         }
-
-        #endregion
     }
 }
