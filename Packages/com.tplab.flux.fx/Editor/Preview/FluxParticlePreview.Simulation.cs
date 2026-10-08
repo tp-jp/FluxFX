@@ -74,13 +74,46 @@ namespace TpLab.Flux.FX.Editor.Preview
             var gravity = GetGravity();
             var force = GetForce();
             var drag = GetDrag();
-            var noiseStrength = _authoring.Noise.Enabled ? _authoring.Noise.Strength : 0;
-            var noiseScale = _authoring.Noise.Enabled ? _authoring.Noise.Scale : 0;
-            var noiseTime = _authoring.Noise.Enabled ? _simulationTime * _authoring.Noise.Speed : 0;
-            var vortexCenter = _authoring.Vortex.Enabled ? _authoring.Vortex.Center : Vector3.zero;
-            var vortexAxis = _authoring.Vortex.Enabled ? _authoring.Vortex.Axis.normalized : Vector3.zero;
-            var vortexStrength = _authoring.Vortex.Enabled ? _authoring.Vortex.Strength : 0;
-            var maxSpeed = _authoring.LimitVelocity.Enabled ? _authoring.LimitVelocity.MaxSpeed : 0;
+
+            var noiseStrength = 0.0f;
+            var noiseScale = 0.0f;
+            var noiseTime = 0.0f;
+
+            var vortexCenter = Vector3.zero;
+            var vortexAxis = Vector3.zero;
+            var vortexStrength = 0.0f;
+
+            var maxSpeed = 0.0f;
+
+            foreach (var module in _authoring.Modules)
+            {
+                if (module is FluxParticleNoiseModule noiseModule)
+                {
+                    if (noiseModule.Enabled)
+                    {
+                        noiseStrength = noiseModule.Strength;
+                        noiseScale = noiseModule.Scale;
+                        noiseTime = _simulationTime * noiseModule.Speed;
+                    }
+                }
+                else if (module is FluxParticleVortexModule vortexModule)
+                {
+                    if (vortexModule.Enabled)
+                    {
+                        vortexCenter = vortexModule.Center;
+                        vortexAxis = vortexModule.Axis.normalized;
+                        vortexStrength = vortexModule.Strength;
+                    }
+                }
+                else if (module is FluxParticleLimitVelocityModule limitVelocityModule)
+                {
+                    if (limitVelocityModule.Enabled)
+                    {
+                        maxSpeed = limitVelocityModule.MaxSpeed;
+                    }
+                }
+            }
+
             var systemRotation = _particleSystem.transform.rotation;
 
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);

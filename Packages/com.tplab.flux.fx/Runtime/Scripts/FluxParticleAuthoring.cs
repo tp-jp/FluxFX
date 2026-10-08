@@ -32,15 +32,6 @@ namespace TpLab.Flux.FX.Scripts
         VelocityOverLifetimeSettings velocityOverLifetime = new VelocityOverLifetimeSettings();
 
         [SerializeField]
-        NoiseSettings noise = new NoiseSettings();
-
-        [SerializeField]
-        VortexSettings vortex = new VortexSettings();
-
-        [SerializeField]
-        LimitVelocitySettings limitVelocity = new LimitVelocitySettings();
-
-        [SerializeField]
         RenderSettings render = new RenderSettings();
 
         [SerializeReference]
@@ -59,12 +50,6 @@ namespace TpLab.Flux.FX.Scripts
         public InitialVelocitySettings InitialVelocity => initialVelocity;
 
         public VelocityOverLifetimeSettings VelocityOverLifetime => velocityOverLifetime;
-
-        public NoiseSettings Noise => noise;
-
-        public VortexSettings Vortex => vortex;
-
-        public LimitVelocitySettings LimitVelocity => limitVelocity;
 
         public RenderSettings Render => render;
 
@@ -277,73 +262,6 @@ namespace TpLab.Flux.FX.Scripts
         public Vector3 Offset => offset;
 
         public float Radial => radial;
-    }
-
-    [Serializable]
-    public class NoiseSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        [Min(0)]
-        float strength = 1.0f;
-
-        [SerializeField]
-        [Min(0)]
-        float scale = 1.0f;
-
-        [SerializeField]
-        [Min(0)]
-        float speed = 1.0f;
-
-        public bool Enabled => enabled;
-
-        public float Strength => strength;
-
-        public float Scale => scale;
-
-        public float Speed => speed;
-    }
-
-    [Serializable]
-    public class VortexSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        Vector3 center;
-
-        [SerializeField]
-        Vector3 axis = Vector3.up;
-
-        [SerializeField]
-        [Min(0)]
-        float strength = 1.0f;
-
-        public bool Enabled => enabled;
-
-        public Vector3 Center => center;
-
-        public Vector3 Axis => axis;
-
-        public float Strength => strength;
-    }
-
-    [Serializable]
-    public class LimitVelocitySettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        [Min(0)]
-        float maxSpeed = 1.0f;
-
-        public bool Enabled => enabled;
-
-        public float MaxSpeed => maxSpeed;
     }
 
     [Serializable]

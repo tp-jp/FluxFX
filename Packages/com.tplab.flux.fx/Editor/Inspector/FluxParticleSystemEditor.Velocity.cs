@@ -34,21 +34,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _dragExpanded,
                 DragExpandedKey);
 
-            _noiseExpanded = DrawModule(
+            _noiseExpanded = DrawOptionalModule<FluxParticleNoiseModule>(
                 L10n.Tr("Noise"),
-                _noise,
                 _noiseExpanded,
                 NoiseExpandedKey);
 
-            _vortexExpanded = DrawModule(
+            _vortexExpanded = DrawOptionalModule<FluxParticleVortexModule>(
                 L10n.Tr("Vortex"),
-                _vortex,
                 _vortexExpanded,
                 VortexExpandedKey);
 
-            _limitVelocityExpanded = DrawModule(
+            _limitVelocityExpanded = DrawOptionalModule<FluxParticleLimitVelocityModule>(
                 L10n.Tr("Limit Velocity"),
-                _limitVelocity,
                 _limitVelocityExpanded,
                 LimitVelocityExpandedKey);
         }

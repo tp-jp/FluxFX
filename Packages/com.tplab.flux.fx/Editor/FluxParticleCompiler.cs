@@ -23,9 +23,9 @@ namespace TpLab.Flux.FX.Editor
             AddGravity(parameters, authoring);
             AddForce(parameters, authoring);
             AddDrag(parameters, authoring);
-            AddNoise(parameters, authoring.Noise);
-            AddVortex(parameters, authoring.Vortex);
-            AddLimitVelocity(parameters, authoring.LimitVelocity);
+            AddNoise(parameters, authoring);
+            AddVortex(parameters, authoring);
+            AddLimitVelocity(parameters, authoring);
             AddRender(parameters, authoring.Render);
 
             return parameters.ToString(Formatting.None);
@@ -186,41 +186,66 @@ namespace TpLab.Flux.FX.Editor
             }
         }
 
-        void AddNoise(JObject parameters, NoiseSettings noise)
+        void AddNoise(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!noise.Enabled) return;
-
-            parameters["noise"] = new JObject
+            foreach (var module in authoring.Modules)
             {
-                ["strength"] = noise.Strength,
-                ["scale"] = noise.Scale,
-                ["speed"] = noise.Speed
-            };
+                if (!(module is FluxParticleNoiseModule noiseModule)) continue;
+
+                if (noiseModule.Enabled)
+                {
+                    parameters["noise"] = new JObject
+                    {
+                        ["strength"] = noiseModule.Strength,
+                        ["scale"] = noiseModule.Scale,
+                        ["speed"] = noiseModule.Speed
+                    };
+                }
+
+                return;
+            }
         }
 
-        void AddVortex(JObject parameters, VortexSettings vortex)
+        void AddVortex(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!vortex.Enabled) return;
-
-            var axis = vortex.Axis.normalized;
-
-            parameters["vortex"] = new JObject
+            foreach (var module in authoring.Modules)
             {
-                ["centerX"] = vortex.Center.x,
-                ["centerY"] = vortex.Center.y,
-                ["centerZ"] = vortex.Center.z,
-                ["axisX"] = axis.x,
-                ["axisY"] = axis.y,
-                ["axisZ"] = axis.z,
-                ["strength"] = vortex.Strength
-            };
+                if (!(module is FluxParticleVortexModule vortexModule)) continue;
+
+                if (vortexModule.Enabled)
+                {
+                    var center = vortexModule.Center;
+                    var axis = vortexModule.Axis.normalized;
+
+                    parameters["vortex"] = new JObject
+                    {
+                        ["centerX"] = center.x,
+                        ["centerY"] = center.y,
+                        ["centerZ"] = center.z,
+                        ["axisX"] = axis.x,
+                        ["axisY"] = axis.y,
+                        ["axisZ"] = axis.z,
+                        ["strength"] = vortexModule.Strength
+                    };
+                }
+
+                return;
+            }
         }
 
-        void AddLimitVelocity(JObject parameters, LimitVelocitySettings limitVelocity)
+        void AddLimitVelocity(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!limitVelocity.Enabled) return;
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleLimitVelocityModule limitVelocityModule)) continue;
 
-            parameters["limitVelocity"] = limitVelocity.MaxSpeed;
+                if (limitVelocityModule.Enabled)
+                {
+                    parameters["limitVelocity"] = limitVelocityModule.MaxSpeed;
+                }
+
+                return;
+            }
         }
 
         void AddRender(JObject parameters, RenderSettings render)
