@@ -58,19 +58,36 @@ namespace TpLab.Flux.FX.Editor.Preview
 
         void ApplyColorOverLifetime()
         {
-            var settings = _authoring.Render.ColorOverLifetime;
+            FluxParticleColorOverLifetimeModule colorModule = null;
 
-            _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", settings.Enabled ? 1 : 0);
-            _renderMaterial.SetFloat("_ColorOverLifetimeMode", (int)settings.Mode);
-            _renderMaterial.SetVector("_EndColor", settings.EndColor);
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleColorOverLifetimeModule found)) continue;
 
-            if (!settings.Enabled || settings.Mode != FluxParticleColorOverLifetimeMode.Gradient)
+                colorModule = found;
+                break;
+            }
+
+            if (colorModule == null || !colorModule.Enabled)
+            {
+                _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", 0);
+                _renderMaterial.SetFloat("_ColorOverLifetimeMode", 0);
+                _renderMaterial.SetVector("_EndColor", Color.white);
+                _renderMaterial.SetTexture("_ColorOverLifetimeLut", null);
+                return;
+            }
+
+            _renderMaterial.SetFloat("_ColorOverLifetimeEnabled", 1);
+            _renderMaterial.SetFloat("_ColorOverLifetimeMode", (int)colorModule.Mode);
+            _renderMaterial.SetVector("_EndColor", colorModule.EndColor);
+
+            if (colorModule.Mode != FluxParticleColorOverLifetimeMode.Gradient)
             {
                 _renderMaterial.SetTexture("_ColorOverLifetimeLut", null);
                 return;
             }
 
-            _lutBaker.UpdateColorOverLifetimeLut(_colorOverLifetimeLut, settings);
+            _lutBaker.UpdateColorOverLifetimeLut(_colorOverLifetimeLut, colorModule);
             _renderMaterial.SetTexture("_ColorOverLifetimeLut", _colorOverLifetimeLut);
         }
 

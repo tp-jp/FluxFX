@@ -43,6 +43,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.Space();
 
             DrawColorOverLifetime();
+
             DrawSizeOverLifetime();
             DrawRotationOverLifetime();
 
@@ -102,9 +103,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
             }
         }
 
+
         void DrawColorOverLifetime()
         {
-            var module = _render.FindPropertyRelative("colorOverLifetime");
+            var moduleIndex = FindModuleIndex(typeof(FluxParticleColorOverLifetimeModule));
+            if (moduleIndex < 0) return;
+
+            var module = _modules.GetArrayElementAtIndex(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -112,7 +117,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 L10n.Tr("Color over Lifetime"),
                 module,
                 _colorOverLifetimeExpanded,
-                ColorOverLifetimeExpandedKey);
+                ColorOverLifetimeExpandedKey,
+                () => ShowRemoveModuleMenu(typeof(FluxParticleColorOverLifetimeModule)));
 
             if (_colorOverLifetimeExpanded)
             {

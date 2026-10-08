@@ -1,5 +1,7 @@
+
 using System.IO;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,8 +14,18 @@ namespace TpLab.Flux.FX.Editor
 
         public Texture2D BakeColorOverLifetime(FluxParticleAuthoring authoring)
         {
-            var settings = authoring.Render.ColorOverLifetime;
-            if (!settings.Enabled || settings.Mode != FluxParticleColorOverLifetimeMode.Gradient)
+            FluxParticleColorOverLifetimeModule colorModule = null;
+
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleColorOverLifetimeModule found)) continue;
+
+                colorModule = found;
+                break;
+            }
+
+            if (colorModule == null || !colorModule.Enabled ||
+                colorModule.Mode != FluxParticleColorOverLifetimeMode.Gradient)
             {
                 DeleteLut(authoring, "ColorOverLifetime");
                 return null;
@@ -22,7 +34,7 @@ namespace TpLab.Flux.FX.Editor
             var texture = CreateLut(authoring, "ColorOverLifetime");
             if (texture == null) return null;
 
-            UpdateColorOverLifetimeLut(texture, settings);
+            UpdateColorOverLifetimeLut(texture, colorModule);
 
             EditorUtility.SetDirty(texture);
 
@@ -78,12 +90,12 @@ namespace TpLab.Flux.FX.Editor
             return texture;
         }
 
-        public void UpdateColorOverLifetimeLut(Texture2D texture, ColorOverLifetimeSettings settings)
+        public void UpdateColorOverLifetimeLut(Texture2D texture, FluxParticleColorOverLifetimeModule module)
         {
             for (var i = 0; i < LutResolution; i++)
             {
                 var normalizedAge = i / (float)(LutResolution - 1);
-                texture.SetPixel(i, 0, settings.Gradient.Evaluate(normalizedAge));
+                texture.SetPixel(i, 0, module.Gradient.Evaluate(normalizedAge));
             }
 
             texture.Apply(false, false);

@@ -36,6 +36,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         static readonly ModuleDefinition[] RendererModuleDefinitions =
         {
+            new ModuleDefinition(typeof(FluxParticleColorOverLifetimeModule), "Color over Lifetime", ColorOverLifetimeExpandedKey),
             new ModuleDefinition(typeof(FluxParticleTextureSheetAnimationModule), "Texture Sheet Animation", TextureSheetAnimationExpandedKey)
         };
 
@@ -202,6 +203,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
             else if (moduleType == typeof(FluxParticleLimitVelocityModule))
             {
                 _limitVelocityExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleColorOverLifetimeModule))
+            {
+                _colorOverLifetimeExpanded = expanded;
             }
             else if (moduleType == typeof(FluxParticleTextureSheetAnimationModule))
             {

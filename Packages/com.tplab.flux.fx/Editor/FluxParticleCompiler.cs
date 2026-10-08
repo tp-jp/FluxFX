@@ -201,7 +201,7 @@ namespace TpLab.Flux.FX.Editor
             {
                 if (!(module is FluxParticleNoiseModule noiseModule)) continue;
 
-                if (noiseModule.Enabled)
+                if (module.Enabled)
                 {
                     parameters["noise"] = new JObject
                     {
@@ -294,17 +294,7 @@ namespace TpLab.Flux.FX.Editor
                 ["startRotationZ"] = render.StartRotation.z
             };
 
-            if (render.ColorOverLifetime.Enabled)
-            {
-                settings["colorOverLifetime"] = new JObject
-                {
-                    ["mode"] = (int)render.ColorOverLifetime.Mode,
-                    ["endColorR"] = render.ColorOverLifetime.EndColor.r,
-                    ["endColorG"] = render.ColorOverLifetime.EndColor.g,
-                    ["endColorB"] = render.ColorOverLifetime.EndColor.b,
-                    ["endColorA"] = render.ColorOverLifetime.EndColor.a
-                };
-            }
+            AddColorOverLifetime(settings, authoring);
 
             if (render.SizeOverLifetime.Enabled)
             {
@@ -330,6 +320,28 @@ namespace TpLab.Flux.FX.Editor
             AddTextureSheetAnimation(settings, authoring);
 
             parameters["render"] = settings;
+        }
+
+        void AddColorOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        {
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleColorOverLifetimeModule colorModule)) continue;
+
+                if (colorModule.Enabled)
+                {
+                    settings["colorOverLifetime"] = new JObject
+                    {
+                        ["mode"] = (int)colorModule.Mode,
+                        ["endColorR"] = colorModule.EndColor.r,
+                        ["endColorG"] = colorModule.EndColor.g,
+                        ["endColorB"] = colorModule.EndColor.b,
+                        ["endColorA"] = colorModule.EndColor.a
+                    };
+                }
+
+                return;
+            }
         }
 
         void AddTextureSheetAnimation(JObject settings, FluxParticleAuthoring authoring)

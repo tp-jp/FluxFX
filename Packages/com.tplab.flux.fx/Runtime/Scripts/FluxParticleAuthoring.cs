@@ -272,9 +272,6 @@ namespace TpLab.Flux.FX.Scripts
         Vector3 startRotation;
 
         [SerializeField]
-        ColorOverLifetimeSettings colorOverLifetime = new ColorOverLifetimeSettings();
-
-        [SerializeField]
         SizeOverLifetimeSettings sizeOverLifetime = new SizeOverLifetimeSettings();
 
         [SerializeField]
@@ -306,35 +303,9 @@ namespace TpLab.Flux.FX.Scripts
 
         public Vector3 StartRotation => startRotation;
 
-        public ColorOverLifetimeSettings ColorOverLifetime => colorOverLifetime;
-
         public SizeOverLifetimeSettings SizeOverLifetime => sizeOverLifetime;
 
         public RotationOverLifetimeSettings RotationOverLifetime => rotationOverLifetime;
-    }
-
-    [Serializable]
-    public class ColorOverLifetimeSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        FluxParticleColorOverLifetimeMode mode;
-
-        [SerializeField]
-        Color endColor = Color.white;
-
-        [SerializeField]
-        Gradient gradient = new Gradient();
-
-        public bool Enabled => enabled;
-
-        public FluxParticleColorOverLifetimeMode Mode => mode;
-
-        public Color EndColor => endColor;
-
-        public Gradient Gradient => gradient;
     }
 
     [Serializable]
