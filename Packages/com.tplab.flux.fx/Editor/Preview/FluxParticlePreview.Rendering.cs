@@ -93,37 +93,71 @@ namespace TpLab.Flux.FX.Editor.Preview
 
         void ApplySizeOverLifetime()
         {
-            var settings = _authoring.Render.SizeOverLifetime;
+            FluxParticleSizeOverLifetimeModule sizeModule = null;
 
-            _renderMaterial.SetFloat("_SizeOverLifetimeEnabled", settings.Enabled ? 1 : 0);
-            _renderMaterial.SetFloat("_SizeOverLifetimeMode", (int)settings.Mode);
-            _renderMaterial.SetFloat("_EndSize", settings.EndSize);
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleSizeOverLifetimeModule found)) continue;
 
-            if (!settings.Enabled || settings.Mode != FluxParticleSizeOverLifetimeMode.Curve)
+                sizeModule = found;
+                break;
+            }
+
+            if (sizeModule == null || !sizeModule.Enabled)
+            {
+                _renderMaterial.SetFloat("_SizeOverLifetimeEnabled", 0);
+                _renderMaterial.SetFloat("_SizeOverLifetimeMode", 0);
+                _renderMaterial.SetFloat("_EndSize", 0);
+                _renderMaterial.SetTexture("_SizeOverLifetimeLut", null);
+                return;
+            }
+
+            _renderMaterial.SetFloat("_SizeOverLifetimeEnabled", 1);
+            _renderMaterial.SetFloat("_SizeOverLifetimeMode", (int)sizeModule.Mode);
+            _renderMaterial.SetFloat("_EndSize", sizeModule.EndSize);
+
+            if (sizeModule.Mode != FluxParticleSizeOverLifetimeMode.Curve)
             {
                 _renderMaterial.SetTexture("_SizeOverLifetimeLut", null);
                 return;
             }
 
-            _lutBaker.UpdateSizeOverLifetimeLut(_sizeOverLifetimeLut, settings);
+            _lutBaker.UpdateSizeOverLifetimeLut(_sizeOverLifetimeLut, sizeModule);
             _renderMaterial.SetTexture("_SizeOverLifetimeLut", _sizeOverLifetimeLut);
         }
 
         void ApplyRotationOverLifetime()
         {
-            var settings = _authoring.Render.RotationOverLifetime;
+            FluxParticleRotationOverLifetimeModule rotationModule = null;
 
-            _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", settings.Enabled ? 1 : 0);
-            _renderMaterial.SetFloat("_RotationOverLifetimeMode", (int)settings.Mode);
-            _renderMaterial.SetVector("_EndRotation", settings.EndRotation);
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleRotationOverLifetimeModule found)) continue;
 
-            if (!settings.Enabled || settings.Mode != FluxParticleRotationOverLifetimeMode.Curve)
+                rotationModule = found;
+                break;
+            }
+
+            if (rotationModule == null || !rotationModule.Enabled)
+            {
+                _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", 0);
+                _renderMaterial.SetFloat("_RotationOverLifetimeMode", 0);
+                _renderMaterial.SetVector("_EndRotation", Vector3.zero);
+                _renderMaterial.SetTexture("_RotationOverLifetimeLut", null);
+                return;
+            }
+
+            _renderMaterial.SetFloat("_RotationOverLifetimeEnabled", 1);
+            _renderMaterial.SetFloat("_RotationOverLifetimeMode", (int)rotationModule.Mode);
+            _renderMaterial.SetVector("_EndRotation", rotationModule.EndRotation);
+
+            if (rotationModule.Mode != FluxParticleRotationOverLifetimeMode.Curve)
             {
                 _renderMaterial.SetTexture("_RotationOverLifetimeLut", null);
                 return;
             }
 
-            _lutBaker.UpdateRotationOverLifetimeLut(_rotationOverLifetimeLut, settings);
+            _lutBaker.UpdateRotationOverLifetimeLut(_rotationOverLifetimeLut, rotationModule);
             _renderMaterial.SetTexture("_RotationOverLifetimeLut", _rotationOverLifetimeLut);
         }
 

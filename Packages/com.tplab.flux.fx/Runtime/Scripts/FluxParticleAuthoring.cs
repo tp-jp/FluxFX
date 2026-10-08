@@ -36,19 +36,12 @@ namespace TpLab.Flux.FX.Scripts
         List<FluxParticleModule> modules = new List<FluxParticleModule>();
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
-
         public PlaybackSettings Playback => playback;
-
         public EmissionSettings Emission => emission;
-
         public LifetimeSettings Lifetime => lifetime;
-
         public ShapeSettings Shape => shape;
-
         public InitialVelocitySettings InitialVelocity => initialVelocity;
-
         public RenderSettings Render => render;
-
         public IReadOnlyList<FluxParticleModule> Modules => modules;
     }
 
@@ -109,9 +102,7 @@ namespace TpLab.Flux.FX.Scripts
         bool loop = true;
 
         public float StartDelay => startDelay;
-
         public float Duration => duration;
-
         public bool Loop => loop;
     }
 
@@ -126,7 +117,6 @@ namespace TpLab.Flux.FX.Scripts
         BurstSettings[] bursts = Array.Empty<BurstSettings>();
 
         public float Rate => rate;
-
         public BurstSettings[] Bursts => bursts;
     }
 
@@ -142,7 +132,6 @@ namespace TpLab.Flux.FX.Scripts
         int count = 1;
 
         public float Time => time;
-
         public int Count => count;
     }
 
@@ -165,11 +154,8 @@ namespace TpLab.Flux.FX.Scripts
         float max = 3.0f;
 
         public float Lifetime => lifetime;
-
         public FluxParticleStartLifetimeMode Mode => mode;
-
         public float Min => min;
-
         public float Max => max;
     }
 
@@ -191,11 +177,8 @@ namespace TpLab.Flux.FX.Scripts
         Vector3 size = Vector3.one;
 
         public FluxParticleShapeType Type => type;
-
         public float Radius => radius;
-
         public float Angle => angle;
-
         public Vector3 Size => size;
     }
 
@@ -218,11 +201,8 @@ namespace TpLab.Flux.FX.Scripts
         float max = 1.0f;
 
         public float Speed => speed;
-
         public FluxParticleStartSpeedMode Mode => mode;
-
         public float Min => min;
-
         public float Max => max;
     }
 
@@ -271,89 +251,18 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         Vector3 startRotation;
 
-        [SerializeField]
-        SizeOverLifetimeSettings sizeOverLifetime = new SizeOverLifetimeSettings();
-
-        [SerializeField]
-        RotationOverLifetimeSettings rotationOverLifetime = new RotationOverLifetimeSettings();
-
         public FluxParticleRenderMode Mode => mode;
-
         public Mesh Mesh => mesh;
-
         public Material Material => material;
-
         public FluxParticleBlendMode BlendMode => blendMode;
-
         public Color StartColor => startColor;
-
         public FluxParticleStartColorMode StartColorMode => startColorMode;
-
         public Color StartColorMin => startColorMin;
-
         public Color StartColorMax => startColorMax;
-
         public float StartSize => startSize;
-
         public FluxParticleStartSizeMode StartSizeMode => startSizeMode;
-
         public float StartSizeMin => startSizeMin;
-
         public float StartSizeMax => startSizeMax;
-
         public Vector3 StartRotation => startRotation;
-
-        public SizeOverLifetimeSettings SizeOverLifetime => sizeOverLifetime;
-
-        public RotationOverLifetimeSettings RotationOverLifetime => rotationOverLifetime;
-    }
-
-    [Serializable]
-    public class SizeOverLifetimeSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        FluxParticleSizeOverLifetimeMode mode;
-
-        [SerializeField]
-        [Min(0)]
-        float endSize;
-
-        [SerializeField]
-        AnimationCurve curve = AnimationCurve.Linear(0, 1, 1, 1);
-
-        public bool Enabled => enabled;
-
-        public FluxParticleSizeOverLifetimeMode Mode => mode;
-
-        public float EndSize => endSize;
-
-        public AnimationCurve Curve => curve;
-    }
-
-    [Serializable]
-    public class RotationOverLifetimeSettings
-    {
-        [SerializeField]
-        bool enabled;
-
-        [SerializeField]
-        FluxParticleRotationOverLifetimeMode mode;
-
-        [SerializeField]
-        Vector3 endRotation;
-
-        [SerializeField]
-        AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
-
-        public bool Enabled => enabled;
-
-        public FluxParticleRotationOverLifetimeMode Mode => mode;
-
-        public Vector3 EndRotation => endRotation;
-
-        public AnimationCurve Curve => curve;
     }
 }

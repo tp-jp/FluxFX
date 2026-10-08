@@ -201,7 +201,7 @@ namespace TpLab.Flux.FX.Editor
             {
                 if (!(module is FluxParticleNoiseModule noiseModule)) continue;
 
-                if (module.Enabled)
+                if (noiseModule.Enabled)
                 {
                     parameters["noise"] = new JObject
                     {
@@ -295,28 +295,8 @@ namespace TpLab.Flux.FX.Editor
             };
 
             AddColorOverLifetime(settings, authoring);
-
-            if (render.SizeOverLifetime.Enabled)
-            {
-                settings["sizeOverLifetime"] = new JObject
-                {
-                    ["mode"] = (int)render.SizeOverLifetime.Mode,
-                    ["endSize"] = render.SizeOverLifetime.EndSize
-                };
-            }
-
-            if (render.RotationOverLifetime.Enabled)
-            {
-                settings["rotationOverLifetime"] = new JObject
-                {
-                    ["mode"] = (int)render.RotationOverLifetime.Mode,
-                    ["endRotation"] = render.RotationOverLifetime.EndRotation.z,
-                    ["endRotationX"] = render.RotationOverLifetime.EndRotation.x,
-                    ["endRotationY"] = render.RotationOverLifetime.EndRotation.y,
-                    ["endRotationZ"] = render.RotationOverLifetime.EndRotation.z
-                };
-            }
-
+            AddSizeOverLifetime(settings, authoring);
+            AddRotationOverLifetime(settings, authoring);
             AddTextureSheetAnimation(settings, authoring);
 
             parameters["render"] = settings;
@@ -337,6 +317,49 @@ namespace TpLab.Flux.FX.Editor
                         ["endColorG"] = colorModule.EndColor.g,
                         ["endColorB"] = colorModule.EndColor.b,
                         ["endColorA"] = colorModule.EndColor.a
+                    };
+                }
+
+                return;
+            }
+        }
+
+        void AddSizeOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        {
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleSizeOverLifetimeModule sizeModule)) continue;
+
+                if (sizeModule.Enabled)
+                {
+                    settings["sizeOverLifetime"] = new JObject
+                    {
+                        ["mode"] = (int)sizeModule.Mode,
+                        ["endSize"] = sizeModule.EndSize
+                    };
+                }
+
+                return;
+            }
+        }
+
+        void AddRotationOverLifetime(JObject settings, FluxParticleAuthoring authoring)
+        {
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleRotationOverLifetimeModule rotationModule)) continue;
+
+                if (rotationModule.Enabled)
+                {
+                    var endRotation = rotationModule.EndRotation;
+
+                    settings["rotationOverLifetime"] = new JObject
+                    {
+                        ["mode"] = (int)rotationModule.Mode,
+                        ["endRotation"] = endRotation.z,
+                        ["endRotationX"] = endRotation.x,
+                        ["endRotationY"] = endRotation.y,
+                        ["endRotationZ"] = endRotation.z
                     };
                 }
 

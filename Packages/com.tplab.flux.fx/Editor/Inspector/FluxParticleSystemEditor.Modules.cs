@@ -37,6 +37,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
         static readonly ModuleDefinition[] RendererModuleDefinitions =
         {
             new ModuleDefinition(typeof(FluxParticleColorOverLifetimeModule), "Color over Lifetime", ColorOverLifetimeExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleSizeOverLifetimeModule), "Size over Lifetime", SizeOverLifetimeExpandedKey),
+            new ModuleDefinition(typeof(FluxParticleRotationOverLifetimeModule), "Rotation over Lifetime", RotationOverLifetimeExpandedKey),
             new ModuleDefinition(typeof(FluxParticleTextureSheetAnimationModule), "Texture Sheet Animation", TextureSheetAnimationExpandedKey)
         };
 
@@ -59,9 +61,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void DrawAddModuleButton(ModuleDefinition[] definitions)
         {
             EditorGUILayout.Space(4);
-
             EditorGUILayout.BeginHorizontal();
-
             GUILayout.FlexibleSpace();
 
             var buttonRect = GUILayoutUtility.GetRect(
@@ -75,7 +75,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             }
 
             GUILayout.FlexibleSpace();
-
             EditorGUILayout.EndHorizontal();
         }
 
@@ -125,7 +124,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             for (var i = 0; i < _modules.arraySize; i++)
             {
                 var module = _modules.GetArrayElementAtIndex(i);
-
                 if (module.managedReferenceValue == null) continue;
 
                 if (module.managedReferenceValue.GetType() == moduleType)
@@ -207,6 +205,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
             else if (moduleType == typeof(FluxParticleColorOverLifetimeModule))
             {
                 _colorOverLifetimeExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleSizeOverLifetimeModule))
+            {
+                _sizeOverLifetimeExpanded = expanded;
+            }
+            else if (moduleType == typeof(FluxParticleRotationOverLifetimeModule))
+            {
+                _rotationOverLifetimeExpanded = expanded;
             }
             else if (moduleType == typeof(FluxParticleTextureSheetAnimationModule))
             {

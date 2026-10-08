@@ -43,7 +43,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.Space();
 
             DrawColorOverLifetime();
-
             DrawSizeOverLifetime();
             DrawRotationOverLifetime();
 
@@ -103,7 +102,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             }
         }
 
-
         void DrawColorOverLifetime()
         {
             var moduleIndex = FindModuleIndex(typeof(FluxParticleColorOverLifetimeModule));
@@ -149,7 +147,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawSizeOverLifetime()
         {
-            var module = _render.FindPropertyRelative("sizeOverLifetime");
+            var moduleIndex = FindModuleIndex(typeof(FluxParticleSizeOverLifetimeModule));
+            if (moduleIndex < 0) return;
+
+            var module = _modules.GetArrayElementAtIndex(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -157,7 +158,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 L10n.Tr("Size over Lifetime"),
                 module,
                 _sizeOverLifetimeExpanded,
-                SizeOverLifetimeExpandedKey);
+                SizeOverLifetimeExpandedKey,
+                () => ShowRemoveModuleMenu(typeof(FluxParticleSizeOverLifetimeModule)));
 
             if (_sizeOverLifetimeExpanded)
             {
@@ -169,9 +171,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
                     var mode = module.FindPropertyRelative("mode");
                     DrawEnum(mode);
-                    DrawProperty(module.FindPropertyRelative("endSize"));
 
-                    if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Curve)
+                    if ((FluxParticleSizeOverLifetimeMode)mode.enumValueIndex == FluxParticleSizeOverLifetimeMode.Linear)
+                    {
+                        DrawProperty(module.FindPropertyRelative("endSize"));
+                    }
+                    else
                     {
                         DrawProperty(module.FindPropertyRelative("curve"));
                     }
@@ -185,7 +190,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawRotationOverLifetime()
         {
-            var module = _render.FindPropertyRelative("rotationOverLifetime");
+            var moduleIndex = FindModuleIndex(typeof(FluxParticleRotationOverLifetimeModule));
+            if (moduleIndex < 0) return;
+
+            var module = _modules.GetArrayElementAtIndex(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -193,7 +201,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 L10n.Tr("Rotation over Lifetime"),
                 module,
                 _rotationOverLifetimeExpanded,
-                RotationOverLifetimeExpandedKey);
+                RotationOverLifetimeExpandedKey,
+                () => ShowRemoveModuleMenu(typeof(FluxParticleRotationOverLifetimeModule)));
 
             if (_rotationOverLifetimeExpanded)
             {
@@ -206,13 +215,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     var mode = module.FindPropertyRelative("mode");
                     DrawEnum(mode);
 
-                    if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Linear)
+                    DrawProperty(module.FindPropertyRelative("endRotation"));
+
+                    if ((FluxParticleRotationOverLifetimeMode)mode.enumValueIndex == FluxParticleRotationOverLifetimeMode.Curve)
                     {
-                        DrawProperty(module.FindPropertyRelative("endRotation"));
-                    }
-                    else
-                    {
-                        DrawProperty(module.FindPropertyRelative("endRotation"));
                         DrawProperty(module.FindPropertyRelative("curve"));
                     }
 
