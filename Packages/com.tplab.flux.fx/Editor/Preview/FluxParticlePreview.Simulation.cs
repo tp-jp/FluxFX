@@ -73,7 +73,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             var gravity = GetGravity();
             var force = GetForce();
-            var drag = _authoring.Drag.Enabled ? _authoring.Drag.Drag : 0;
+            var drag = GetDrag();
             var noiseStrength = _authoring.Noise.Enabled ? _authoring.Noise.Strength : 0;
             var noiseScale = _authoring.Noise.Enabled ? _authoring.Noise.Scale : 0;
             var noiseTime = _authoring.Noise.Enabled ? _simulationTime * _authoring.Noise.Speed : 0;
@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_LifetimeMin", lifetimeMin);
             _velocityMaterial.SetFloat("_LifetimeMax", lifetimeMax);
             _velocityMaterial.SetFloat("_InitialSpeedMin", speedMin);
-            _velocityMaterial.SetFloat("_InitialSpeedMax", lifetimeMax);
+            _velocityMaterial.SetFloat("_InitialSpeedMax", speedMax);
             _velocityMaterial.SetFloat("_ShapeType", (int)_authoring.Shape.Type);
             _velocityMaterial.SetFloat("_ShapeAngle", _authoring.Shape.Angle);
             _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
@@ -130,6 +130,18 @@ namespace TpLab.Flux.FX.Editor.Preview
             }
 
             return Vector3.zero;
+        }
+
+        float GetDrag()
+        {
+            foreach (var module in _authoring.Modules)
+            {
+                if (!(module is FluxParticleDragModule dragModule)) continue;
+
+                return dragModule.Enabled ? dragModule.Drag : 0;
+            }
+
+            return 0;
         }
 
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)

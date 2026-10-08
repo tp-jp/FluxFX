@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Editor
             AddVelocityOverLifetime(parameters, authoring.VelocityOverLifetime);
             AddGravity(parameters, authoring);
             AddForce(parameters, authoring);
-            AddDrag(parameters, authoring.Drag);
+            AddDrag(parameters, authoring);
             AddNoise(parameters, authoring.Noise);
             AddVortex(parameters, authoring.Vortex);
             AddLimitVelocity(parameters, authoring.LimitVelocity);
@@ -171,11 +171,19 @@ namespace TpLab.Flux.FX.Editor
             }
         }
 
-        void AddDrag(JObject parameters, DragSettings drag)
+        void AddDrag(JObject parameters, FluxParticleAuthoring authoring)
         {
-            if (!drag.Enabled) return;
+            foreach (var module in authoring.Modules)
+            {
+                if (!(module is FluxParticleDragModule dragModule)) continue;
 
-            parameters["drag"] = drag.Drag;
+                if (dragModule.Enabled)
+                {
+                    parameters["drag"] = dragModule.Drag;
+                }
+
+                return;
+            }
         }
 
         void AddNoise(JObject parameters, NoiseSettings noise)
@@ -201,9 +209,9 @@ namespace TpLab.Flux.FX.Editor
                 ["centerX"] = vortex.Center.x,
                 ["centerY"] = vortex.Center.y,
                 ["centerZ"] = vortex.Center.z,
-                ["axisX"] = vortex.Axis.x,
-                ["axisY"] = vortex.Axis.y,
-                ["axisZ"] = vortex.Axis.z,
+                ["axisX"] = axis.x,
+                ["axisY"] = axis.y,
+                ["axisZ"] = axis.z,
                 ["strength"] = vortex.Strength
             };
         }

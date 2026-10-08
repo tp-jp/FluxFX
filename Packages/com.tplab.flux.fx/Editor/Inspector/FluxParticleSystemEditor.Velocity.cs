@@ -29,9 +29,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _forceExpanded,
                 ForceExpandedKey);
 
-            _dragExpanded = DrawModule(
+            _dragExpanded = DrawOptionalModule<FluxParticleDragModule>(
                 L10n.Tr("Drag"),
-                _drag,
                 _dragExpanded,
                 DragExpandedKey);
 
