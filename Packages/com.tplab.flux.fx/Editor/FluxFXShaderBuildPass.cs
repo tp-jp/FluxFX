@@ -24,6 +24,7 @@ namespace TpLab.Flux.FX.Editor
         public override void Execute(SceneFlowContext context)
         {
             var registry = new FluxParticleGpuModuleRegistry();
+            var validator = new FluxParticleGpuModuleValidator(registry);
             var compiler = new FluxParticleShaderCompiler(registry);
             var cache = new FluxParticleShaderCache();
 
@@ -37,13 +38,30 @@ namespace TpLab.Flux.FX.Editor
 
                 var simulation = authoring.GetComponentInChildren<FluxParticleSimulation>(true);
                 if (simulation == null)
+                {
                     throw new InvalidOperationException($"FluxParticleSimulation was not found under '{authoring.name}'.");
+                }
 
                 var velocityKernel = FindVelocityKernel(simulation);
                 if (velocityKernel == null)
+                {
                     throw new InvalidOperationException($"Velocity FluxKernel was not found under '{authoring.name}'.");
+                }
 
                 var plan = FluxParticleCompilePlan.Create(authoring);
+
+                var standardValidation = new FluxParticleCompileValidator().Validate(plan);
+                if (standardValidation.HasErrors)
+                {
+                    throw new InvalidOperationException($"Particle validation failed for '{authoring.name}':\n{standardValidation.GetReport()}");
+                }
+
+                var gpuValidation = validator.Validate(plan);
+                if (gpuValidation.HasErrors)
+                {
+                    throw new InvalidOperationException($"GPU Module validation failed for '{authoring.name}':\n{gpuValidation.GetReport()}");
+                }
+
                 var compilation = compiler.CompileVelocity(plan);
                 var shader = cache.GetOrCreate(compilation);
 
@@ -67,12 +85,15 @@ namespace TpLab.Flux.FX.Editor
                 if (shader == null) continue;
 
                 var shaderName = shader.name;
-
                 if (shaderName != SourceShaderName && !shaderName.StartsWith(GeneratedShaderPrefix, StringComparison.Ordinal))
+                {
                     continue;
+                }
 
                 if (result != null)
+                {
                     throw new InvalidOperationException($"Multiple Velocity FluxKernels were found under '{simulation.name}'.");
+                }
 
                 result = kernel;
             }
