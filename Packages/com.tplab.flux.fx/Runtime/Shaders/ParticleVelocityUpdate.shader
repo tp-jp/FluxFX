@@ -45,6 +45,7 @@ Shader "FluxFX/ParticleVelocityUpdate"
             float _SimulationSpace;
             float4 _SystemRotation;
             float _DeltaTime;
+            float _FluxFXSimulationTime;
             float _SpawnStart;
             float _SpawnSeedStart;
             float _SpawnCount;

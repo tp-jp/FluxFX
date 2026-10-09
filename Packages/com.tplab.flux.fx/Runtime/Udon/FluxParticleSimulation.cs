@@ -167,6 +167,7 @@ namespace TpLab.Flux.FX.Udon
             velocityUpdateKernel.SetFloat("_VortexStrength", Vortex.GetStrength());
             velocityUpdateKernel.SetFloat("_MaxSpeed", LimitVelocity.GetMaxSpeed());
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
+            velocityUpdateKernel.SetFloat("_FluxFXSimulationTime", _simulationTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             velocityUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             velocityUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
