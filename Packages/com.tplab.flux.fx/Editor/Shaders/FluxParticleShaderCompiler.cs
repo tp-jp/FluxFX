@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,10 +12,11 @@ namespace TpLab.Flux.FX.Editor.Shaders
 {
     public sealed class FluxParticleShaderCompiler
     {
-        const string CompilerVersion = "D3-B-1";
+        const string CompilerVersion = "D4-B1-1";
         const string VelocityShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/ParticleVelocityUpdate.shader";
         const string SourceShaderName = "FluxFX/ParticleVelocityUpdate";
 
+        const string PropertyMarker = "        _PositionTex (\"Position\", 2D) = \"black\" {}";
         const string ParameterMarker = "            float _SpawnCount;";
         const string FunctionMarker = "            float4 frag(v2f_img i) : SV_Target";
 
@@ -30,39 +32,48 @@ namespace TpLab.Flux.FX.Editor.Shaders
 
         public FluxParticleShaderCompilation CompileVelocity(FluxParticleCompilePlan plan)
         {
-            if (plan == null)
-                throw new ArgumentNullException(nameof(plan));
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
 
-            var definitions = new List<FluxParticleGpuModuleDefinition>();
+            var modules = new List<(FluxParticleModule module, FluxParticleGpuModuleDefinition definition)>();
 
             foreach (var module in plan.GetModules(FluxParticleExecutionStage.VelocityUpdate))
             {
                 if (_registry.TryGet(module.GetType(), out var definition))
-                    definitions.Add(definition);
+                {
+                    modules.Add((module, definition));
+                }
             }
 
-            definitions.Sort((a, b) =>
+            modules.Sort((a, b) =>
             {
-                var order = a.Order.CompareTo(b.Order);
-                return order != 0 ? order : string.CompareOrdinal(a.ModuleId, b.ModuleId);
+                var order = a.definition.Order.CompareTo(b.definition.Order);
+                return order != 0 ? order : string.CompareOrdinal(a.definition.ModuleId, b.definition.ModuleId);
             });
 
             var source = Normalize(File.ReadAllText(VelocityShaderPath));
             var includes = new StringBuilder();
             var dependencies = new StringBuilder();
             var operations = new List<(int order, string id, string code)>();
+            var collector = new FluxParticleParameterCollector();
 
-            foreach (var definition in definitions)
+            foreach (var entry in modules)
             {
+                var definition = entry.definition;
                 var path = definition.HlslPath.Replace('\\', '/');
 
                 if (!File.Exists(path))
+                {
                     throw new FileNotFoundException($"GPU Module HLSL was not found: {path}", path);
+                }
 
                 var hlsl = Normalize(File.ReadAllText(path));
 
                 if (hlsl.Contains("#include"))
-                    throw new InvalidOperationException($"Nested HLSL includes are not supported in D3-B: {path}");
+                {
+                    throw new InvalidOperationException($"Nested HLSL includes are not supported: {path}");
+                }
+
+                definition.CollectParameters(entry.module, collector);
 
                 includes.AppendLine($"            #include \"{path}\"");
 
@@ -78,17 +89,43 @@ namespace TpLab.Flux.FX.Editor.Shaders
                     $"                {definition.EntryPoint}(velocity, deltaTime);"));
             }
 
+            var properties = new StringBuilder();
+            var uniforms = new StringBuilder();
+
+            foreach (var parameter in collector.Parameters.OrderBy(x => x.Name, StringComparer.Ordinal))
+            {
+                switch (parameter.Type)
+                {
+                    case FluxParticleParameterType.Float:
+                        properties.AppendLine($"        {parameter.Name} (\"{parameter.Name}\", Float) = 0");
+                        uniforms.AppendLine($"            float {parameter.Name};");
+                        break;
+
+                    case FluxParticleParameterType.Vector:
+                        properties.AppendLine($"        {parameter.Name} (\"{parameter.Name}\", Vector) = (0,0,0,0)");
+                        uniforms.AppendLine($"            float4 {parameter.Name};");
+                        break;
+
+                    default:
+                        throw new InvalidOperationException($"Unsupported GPU parameter type: {parameter.Type}");
+                }
+            }
+
             operations.Add((200, "legacy.force", "                velocity += _Force.xyz * deltaTime;"));
             operations.Add((300, "legacy.noise", "                float3 noise = EvaluateNoise(position);\n                velocity += noise * _NoiseStrength * deltaTime;"));
             operations.Add((400, "legacy.vortex", "                float3 vortex = EvaluateVortex(position);\n                velocity += vortex * deltaTime;"));
             operations.Add((600, "legacy.limit", "                velocity = ApplyVelocityLimit(velocity);"));
 
             // D3-Bの移行対象外Moduleは既存Shader処理を維持する。
-            if (!definitions.Any(x => x.ModuleId == "tplab.fluxfx.gravity"))
+            if (!modules.Any(x => x.definition.ModuleId == "tplab.fluxfx.gravity"))
+            {
                 operations.Add((100, "legacy.gravity", "                velocity += _Gravity.xyz * deltaTime;"));
+            }
 
-            if (!definitions.Any(x => x.ModuleId == "tplab.fluxfx.drag"))
+            if (!modules.Any(x => x.definition.ModuleId == "tplab.fluxfx.drag"))
+            {
                 operations.Add((500, "legacy.drag", "                velocity *= exp(-_Drag * deltaTime);"));
+            }
 
             operations.Sort((a, b) =>
             {
@@ -101,12 +138,15 @@ namespace TpLab.Flux.FX.Editor.Shaders
             function.AppendLine("            {");
 
             foreach (var operation in operations)
+            {
                 function.AppendLine(operation.code);
+            }
 
             function.AppendLine("            }");
             function.AppendLine();
 
-            source = ReplaceOnce(source, ParameterMarker, ParameterMarker + "\n" + includes);
+            source = ReplaceOnce(source, PropertyMarker, PropertyMarker + "\n" + properties);
+            source = ReplaceOnce(source, ParameterMarker, ParameterMarker + "\n" + uniforms + includes);
             source = ReplaceOnce(source, FunctionMarker, function + FunctionMarker);
             source = ReplaceVelocityBlock(source, "                FluxFX_ApplyVelocityModules(velocity.xyz, position.xyz, _DeltaTime);");
 
@@ -127,11 +167,15 @@ namespace TpLab.Flux.FX.Editor.Shaders
         {
             var start = source.IndexOf(VelocityBlockStart, StringComparison.Ordinal);
             if (start < 0)
+            {
                 throw new InvalidOperationException("Velocity block start was not found.");
+            }
 
             var end = source.IndexOf(VelocityBlockEnd, start, StringComparison.Ordinal);
             if (end < 0)
+            {
                 throw new InvalidOperationException("Velocity block end was not found.");
+            }
 
             end += VelocityBlockEnd.Length;
 
@@ -142,7 +186,9 @@ namespace TpLab.Flux.FX.Editor.Shaders
         {
             var index = source.IndexOf(before, StringComparison.Ordinal);
             if (index < 0)
+            {
                 throw new InvalidOperationException($"Shader template marker was not found: {before}");
+            }
 
             return source.Substring(0, index) + after + source.Substring(index + before.Length);
         }

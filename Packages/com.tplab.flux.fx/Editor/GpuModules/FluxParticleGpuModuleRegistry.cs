@@ -22,7 +22,9 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 if (type.IsAbstract || type.ContainsGenericParameters) continue;
 
                 if (type.GetConstructor(Type.EmptyTypes) == null)
+                {
                     throw new InvalidOperationException($"GPU Module Definition requires a public parameterless constructor: {type.FullName}");
+                }
 
                 var definition = (FluxParticleGpuModuleDefinition)Activator.CreateInstance(type);
 
@@ -37,16 +39,14 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
         public FluxParticleGpuModuleDefinition Get(Type moduleType)
         {
-            if (TryGet(moduleType, out var definition))
-                return definition;
+            if (TryGet(moduleType, out var definition)) return definition;
 
             throw new InvalidOperationException($"GPU Module Definition is not registered: {moduleType?.FullName ?? "null"}");
         }
 
         public FluxParticleGpuModuleDefinition Get(FluxParticleModule module)
         {
-            if (module == null)
-                throw new ArgumentNullException(nameof(module));
+            if (module == null) throw new ArgumentNullException(nameof(module));
 
             return Get(module.GetType());
         }

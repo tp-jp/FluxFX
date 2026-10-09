@@ -3,7 +3,7 @@
 
 void FluxFX_CustomLift(inout float3 velocity, float deltaTime)
 {
-    velocity.y += 2.0 * deltaTime;
+    velocity.y += _CustomLiftStrength * deltaTime;
 }
 
 #endif
