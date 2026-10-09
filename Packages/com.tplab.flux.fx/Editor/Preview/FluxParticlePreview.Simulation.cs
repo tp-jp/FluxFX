@@ -117,6 +117,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             var systemRotation = _particleSystem.transform.rotation;
 
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);
+            _velocityMaterial.SetFloat("_FluxFXSimulationTime", _simulationTime);
             _velocityMaterial.SetFloat("_SpawnStart", spawnStart);
             _velocityMaterial.SetFloat("_SpawnSeedStart", spawnSeedStart);
             _velocityMaterial.SetFloat("_SpawnCount", spawnCount);

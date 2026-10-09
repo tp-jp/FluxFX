@@ -10,8 +10,13 @@ namespace TpLab.Flux.FX.CustomModules
         [SerializeField]
         float strength = 2.0f;
 
+        [SerializeField]
+        Vector3 direction = Vector3.up;
+
         public float Strength => strength;
 
+        public Vector3 Direction => direction;
+        
         public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.VelocityUpdate;
 
         public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.Velocity;

@@ -167,6 +167,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             module.managedReferenceValue = Activator.CreateInstance(definition.Type);
 
             _authoringObject.ApplyModifiedProperties();
+            _preview?.OnAuthoringChanged();
 
             SessionState.SetBool(definition.ExpandedKey, true);
             SetModuleExpanded(definition.Type, true);
@@ -185,6 +186,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             _modules.DeleteArrayElementAtIndex(index);
             _authoringObject.ApplyModifiedProperties();
+            _preview?.OnAuthoringChanged();
 
             Repaint();
         }

@@ -1,3 +1,7 @@
+using System;
+using TpLab.Flux.FX.Editor.GpuModules;
+using TpLab.Flux.FX.Editor.Shaders;
+using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -8,18 +12,43 @@ namespace TpLab.Flux.FX.Editor.Preview
         bool CreateMaterials()
         {
             var initializeShader = Shader.Find("FluxFX/ParticleInitialize");
-            var velocityShader = Shader.Find("FluxFX/ParticleVelocityUpdate");
             var positionShader = Shader.Find("FluxFX/ParticlePositionUpdate");
             var visualShader = Shader.Find("FluxFX/ParticleVisualUpdate");
             var rotationShader = Shader.Find("FluxFX/ParticleRotationUpdate");
 
             if (initializeShader == null ||
-                velocityShader == null ||
                 positionShader == null ||
                 visualShader == null ||
                 rotationShader == null)
             {
                 Logger.LogError("Preview shaders could not be found.", _particleSystem);
+                return false;
+            }
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var validator = new FluxParticleGpuModuleValidator(registry);
+            var validation = validator.Validate(plan);
+
+            if (validation.HasErrors)
+            {
+                Logger.LogError($"Preview GPU Module validation failed:\n{validation.GetReport()}", _particleSystem);
+                return false;
+            }
+
+            Shader velocityShader;
+
+            try
+            {
+                var compiler = new FluxParticleShaderCompiler(registry);
+                var cache = new FluxParticleShaderCache();
+                var compilation = compiler.CompileVelocity(plan);
+
+                velocityShader = cache.GetOrCreate(compilation);
+            }
+            catch (Exception exception)
+            {
+                Logger.LogError($"Preview Shader compilation failed: {exception}", _particleSystem);
                 return false;
             }
 
@@ -37,6 +66,17 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             _rotationMaterial = new Material(rotationShader);
             _rotationMaterial.hideFlags = HideFlags.HideAndDontSave;
+
+            var collector = new FluxParticleParameterCollector();
+
+            foreach (var module in plan.GetModules(FluxParticleExecutionStage.VelocityUpdate))
+            {
+                if (!registry.TryGet(module.GetType(), out var definition)) continue;
+
+                definition.CollectParameters(module, collector);
+            }
+
+            collector.Apply(_velocityMaterial);
 
             _currentSourceMaterial = _authoring.Render.Material;
             _renderMaterial = new Material(_currentSourceMaterial);

@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.CustomModules.Editor
             var lift = (CustomLiftModule)module;
 
             collector.AddFloat("_CustomLiftStrength", lift.Strength);
-            collector.AddVector("_CustomLiftDirection", new Vector4(0, 1, 0, 0));
+            collector.AddVector("_CustomLiftDirection", lift.Direction);
         }
     }
 }

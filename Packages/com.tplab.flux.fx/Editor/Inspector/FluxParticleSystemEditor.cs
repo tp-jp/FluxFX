@@ -129,8 +129,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawVelocity();
             DrawRenderer();
 
-            _authoringObject.ApplyModifiedProperties();
+            var authoringChanged = _authoringObject.ApplyModifiedProperties();
             serializedObject.ApplyModifiedProperties();
+
+            if (authoringChanged)
+            {
+                _preview?.OnAuthoringChanged();
+            }
         }
 
         void OnSceneGUI()
