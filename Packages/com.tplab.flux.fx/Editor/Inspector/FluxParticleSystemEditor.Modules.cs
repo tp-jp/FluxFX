@@ -97,6 +97,23 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 availableCount++;
             }
 
+            if (ReferenceEquals(definitions, VelocityModuleDefinitions))
+            {
+                foreach (var definition in GetCustomVelocityModuleDefinitions())
+                {
+                    if (FindModuleIndex(definition.Type) >= 0) continue;
+
+                    var selectedDefinition = definition;
+
+                    menu.AddItem(
+                        new GUIContent("Custom/" + selectedDefinition.Label),
+                        false,
+                        () => AddModule(selectedDefinition));
+
+                    availableCount++;
+                }
+            }
+
             if (availableCount == 0)
             {
                 menu.AddDisabledItem(new GUIContent(L10n.Tr("All modules added")));

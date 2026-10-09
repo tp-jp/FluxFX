@@ -5714,7 +5714,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.size
-      value: 11
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -5774,7 +5774,12 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[10]
-      value: 8074038455801217056
+      value: 8074038455801217057
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[11]
+      value: 8074038455801217058
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -6143,6 +6148,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+      propertyPath: managedReferences[8074038455801217057]
+      value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleVelocityOverLifetimeModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217058]
+      value: Assembly-CSharp TpLab.Flux.FX.CustomModules.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
       propertyPath: managedReferences[8074038424773066767].drag
       value: 0.5
       objectReference: {fileID: 0}
@@ -6330,6 +6345,21 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038424773066848].speed
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].end.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].end.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].end.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -6535,6 +6565,11 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038424773066854].tilesY
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].radial
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -7058,6 +7093,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+      propertyPath: managedReferences[8074038455801217057].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].start.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].start.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].start.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217058].enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
       propertyPath: managedReferences[8074038424773066769].maxSpeed
       value: 1
       objectReference: {fileID: 0}
@@ -7285,6 +7345,26 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038455801217056].strength
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].offset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].offset.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217058].strength
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -7554,6 +7634,21 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038424773066845].gravity.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].orbital.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].orbital.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038455801217057].orbital.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
