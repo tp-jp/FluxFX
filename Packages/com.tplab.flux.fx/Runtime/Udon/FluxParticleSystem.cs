@@ -133,6 +133,12 @@ namespace TpLab.Flux.FX.Udon
             particleState.Clear();
         }
 
+        [PublicAPI]
+        public void SetVelocityFloat(string name, float value)
+        {
+            particleSimulation.SetVelocityFloat(name, value);
+        }
+
         void Start()
         {
             particleState.Initialize(particleCount);

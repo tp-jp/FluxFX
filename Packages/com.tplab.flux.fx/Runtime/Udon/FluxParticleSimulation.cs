@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.Udon;
 using UdonSharp;
@@ -66,6 +67,12 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
 
         FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
+
+        [PublicAPI]
+        public void SetVelocityFloat(string name, float value)
+        {
+            velocityUpdateKernel.SetFloat(name, value);
+        }
 
         internal void Initialize(
             FluxParticleLifetimeParameters lifetime,
