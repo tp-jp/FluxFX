@@ -157,7 +157,6 @@ namespace TpLab.Flux.FX.Udon
 
         void InitializeCompiledParameters()
         {
-            Debug.Log("JSON: " + compiledParameters);
             if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var result)) return;
 
             var parameters = result.DataDictionary;
