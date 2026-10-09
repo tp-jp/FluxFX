@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using UnityEditor;
@@ -34,7 +33,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
 
                 if (cachedShader != null && cachedShader.name == compilation.ShaderName)
                 {
-                    Logger.Log($"[FluxFX Shader Cache] Reused: {path}");
+                    Logger.Log($"Shader reused: {path}");
                     return cachedShader;
                 }
 
@@ -44,7 +43,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
             {
                 File.WriteAllText(path, compilation.Source);
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                Logger.Log($"[FluxFX Shader Cache] Created: {path}");
+                Logger.Log($"Shader created: {path}");
             }
 
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);

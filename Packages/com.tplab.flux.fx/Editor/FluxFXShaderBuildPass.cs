@@ -1,4 +1,3 @@
-
 using System;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;
@@ -8,7 +7,6 @@ using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
 using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Editor
@@ -52,10 +50,10 @@ namespace TpLab.Flux.FX.Editor
                 velocityKernel.SetProgramVariable("shader", shader);
                 assignedCount++;
 
-                Logger.Log($"[FluxFX Shader] Assigned {shader.name} to {authoring.name}", authoring);
+                Logger.Log($"Shader assigned: {shader.name} to {authoring.name}", authoring);
             }
 
-            Logger.Log($"[FluxFX Shader] Build Pass completed. Assigned systems: {assignedCount}");
+            Logger.Log($"Shader build completed. Assigned systems: {assignedCount}");
         }
 
         static FluxKernel FindVelocityKernel(FluxParticleSimulation simulation)
