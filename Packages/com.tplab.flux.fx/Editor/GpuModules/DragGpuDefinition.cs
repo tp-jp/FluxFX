@@ -9,7 +9,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
         public override string ModuleId => "tplab.fluxfx.drag";
 
-        public override string HlslPath => "Assets/FluxFX/Modules/Drag.hlsl";
+        public override string HlslPath => "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Drag.hlsl";
 
         public override string EntryPoint => "FluxFX_Drag";
 
