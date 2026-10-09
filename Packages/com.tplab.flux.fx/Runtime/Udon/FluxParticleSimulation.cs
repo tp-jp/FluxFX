@@ -71,7 +71,25 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public void SetVelocityFloat(string name, float value)
         {
-            velocityUpdateKernel.SetFloat(name, value);
+            SetFloat(FluxParticleKernelTarget.Velocity, name, value);
+        }
+
+        [PublicAPI]
+        public void SetFloat(FluxParticleKernelTarget target, string name, float value)
+        {
+            var kernel = GetKernel(target);
+            if (kernel == null) return;
+
+            kernel.SetFloat(name, value);
+        }
+
+        [PublicAPI]
+        public void SetVector(FluxParticleKernelTarget target, string name, Vector4 value)
+        {
+            var kernel = GetKernel(target);
+            if (kernel == null) return;
+
+            kernel.SetVector(name, value);
         }
 
         internal void Initialize(
@@ -144,6 +162,28 @@ namespace TpLab.Flux.FX.Udon
             }
 
             particleState.SwapSimulation();
+        }
+
+        FluxKernel GetKernel(FluxParticleKernelTarget target)
+        {
+            switch (target)
+            {
+                case FluxParticleKernelTarget.Velocity:
+                    return velocityUpdateKernel;
+
+                case FluxParticleKernelTarget.Position:
+                    return positionUpdateKernel;
+
+                case FluxParticleKernelTarget.Visual:
+                    return visualUpdateKernel;
+
+                case FluxParticleKernelTarget.Rotation:
+                    return rotationUpdateKernel;
+
+                default:
+                    Debug.LogError($"Invalid FluxFX kernel target: {target}");
+                    return null;
+            }
         }
 
         void UpdateVelocity(float deltaTime)

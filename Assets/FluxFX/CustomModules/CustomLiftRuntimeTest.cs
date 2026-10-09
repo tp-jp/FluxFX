@@ -19,15 +19,20 @@ namespace TpLab.Flux.FX.CustomModules
 
         public override void Interact()
         {
-            ToggleStrength();
+            ToggleParameters();
         }
 
-        public void ToggleStrength()
+        public void ToggleParameters()
         {
             _isHighStrength = !_isHighStrength;
 
             var strength = _isHighStrength ? highStrength : lowStrength;
-            particleSystem.SetVelocityFloat("_CustomLiftStrength", strength);
+            var direction = _isHighStrength
+                ? new Vector4(1, 0, 0, 0)
+                : new Vector4(0, 1, 0, 0);
+
+            particleSystem.SetFloat(FluxParticleKernelTarget.Velocity, "_CustomLiftStrength", strength);
+            particleSystem.SetVector(FluxParticleKernelTarget.Velocity, "_CustomLiftDirection", direction);
         }
     }
 }

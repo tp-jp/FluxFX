@@ -1,6 +1,7 @@
 using System;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts.Modules;
+using UnityEngine;
 
 namespace TpLab.Flux.FX.CustomModules.Editor
 {
@@ -19,7 +20,9 @@ namespace TpLab.Flux.FX.CustomModules.Editor
         public override void CollectParameters(FluxParticleModule module, FluxParticleParameterCollector collector)
         {
             var lift = (CustomLiftModule)module;
+
             collector.AddFloat("_CustomLiftStrength", lift.Strength);
+            collector.AddVector("_CustomLiftDirection", new Vector4(0, 1, 0, 0));
         }
     }
 }
