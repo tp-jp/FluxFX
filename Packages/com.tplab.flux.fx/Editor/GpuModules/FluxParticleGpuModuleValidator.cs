@@ -128,7 +128,6 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             return type == typeof(FluxParticleVelocityOverLifetimeModule) ||
                    type == typeof(FluxParticleNoiseModule) ||
                    type == typeof(FluxParticleVortexModule) ||
-                   type == typeof(FluxParticleLimitVelocityModule) ||
                    type == typeof(FluxParticleColorOverLifetimeModule) ||
                    type == typeof(FluxParticleSizeOverLifetimeModule) ||
                    type == typeof(FluxParticleRotationOverLifetimeModule) ||

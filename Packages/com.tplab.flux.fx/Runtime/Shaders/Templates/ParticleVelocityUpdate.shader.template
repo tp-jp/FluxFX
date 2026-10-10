@@ -34,7 +34,6 @@ Shader "{{SHADER_NAME}}"
             float4 _VortexCenter;
             float4 _VortexAxis;
             float _VortexStrength;
-            float _MaxSpeed;
             float _LifetimeMin;
             float _LifetimeMax;
             float _InitialSpeedMin;
@@ -207,23 +206,6 @@ Shader "{{SHADER_NAME}}"
                 return tangent * _VortexStrength;
             }
 
-            float3 ApplyVelocityLimit(float3 velocity)
-            {
-                if (_MaxSpeed <= 0)
-                {
-                    return velocity;
-                }
-
-                float speed = length(velocity);
-
-                if (speed <= _MaxSpeed)
-                {
-                    return velocity;
-                }
-
-                return velocity * (_MaxSpeed / speed);
-            }
-
             void FluxFX_LegacyNoise(inout FluxFXGpuContext ctx)
             {
                 float3 noise = EvaluateNoise(ctx.position);
@@ -234,11 +216,6 @@ Shader "{{SHADER_NAME}}"
             {
                 float3 vortex = EvaluateVortex(ctx.position);
                 ctx.velocity += vortex * ctx.deltaTime;
-            }
-            
-            void FluxFX_LegacyLimitVelocity(inout FluxFXGpuContext ctx)
-            {
-                ctx.velocity = ApplyVelocityLimit(ctx.velocity);
             }
             
             void FluxFX_ApplyVelocityModules(inout FluxFXGpuContext ctx)

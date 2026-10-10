@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
 {
     public sealed class FluxParticleShaderCompiler
     {
-        const string CompilerVersion = "D5-B1";
+        const string CompilerVersion = "D5-B2";
         const string VelocityTemplatePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Templates/ParticleVelocityUpdate.shader.template";
         const string ContextHlslPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl";
 
@@ -104,7 +104,6 @@ namespace TpLab.Flux.FX.Editor.Shaders
             // Legacy処理は段階的なModule移行が完了するまで維持する。
             operations.Add((300, "legacy.noise", "FluxFX_LegacyNoise(ctx);"));
             operations.Add((400, "legacy.vortex", "FluxFX_LegacyVortex(ctx);"));
-            operations.Add((600, "legacy.limit", "FluxFX_LegacyLimitVelocity(ctx);"));
 
             operations.Sort((a, b) =>
             {

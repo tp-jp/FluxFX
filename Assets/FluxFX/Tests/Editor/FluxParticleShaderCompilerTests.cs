@@ -139,6 +139,53 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(compilation.ShaderName, first.name);
         }
 
+        [Test]
+        public void LimitVelocityOnly()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+
+            var result = Compile();
+
+            StringAssert.Contains("FluxFX_LimitVelocity(ctx);", result.Source);
+            StringAssert.Contains("_MaxSpeed (\"_MaxSpeed\", Float)", result.Source);
+            StringAssert.Contains("float _MaxSpeed;", result.Source);
+            StringAssert.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/LimitVelocity.hlsl\"", result.Source);
+            Assert.IsFalse(result.Source.Contains("FluxFX_LegacyLimitVelocity"));
+        }
+
+        [Test]
+        public void LimitVelocityDisabled()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+
+            var serializedObject = new SerializedObject(_authoring);
+            var modules = serializedObject.FindProperty("modules");
+            modules.GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var result = Compile();
+
+            Assert.IsFalse(result.Source.Contains("FluxFX_LimitVelocity(ctx);"));
+            Assert.IsFalse(result.Source.Contains("_MaxSpeed (\"_MaxSpeed\", Float)"));
+            Assert.IsFalse(result.Source.Contains("float _MaxSpeed;"));
+            Assert.IsFalse(result.Source.Contains("Modules/LimitVelocity.hlsl"));
+        }
+
+        [Test]
+        public void LimitVelocityRunsAfterDrag()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+            AddModule(new FluxParticleDragModule());
+
+            var result = Compile();
+
+            var dragIndex = result.Source.IndexOf("FluxFX_Drag(ctx);");
+            var limitIndex = result.Source.IndexOf("FluxFX_LimitVelocity(ctx);");
+
+            Assert.GreaterOrEqual(dragIndex, 0);
+            Assert.Greater(limitIndex, dragIndex);
+        }
+
         FluxParticleShaderCompilation Compile()
         {
             return _compiler.CompileVelocity(FluxParticleCompilePlan.Create(_authoring));
