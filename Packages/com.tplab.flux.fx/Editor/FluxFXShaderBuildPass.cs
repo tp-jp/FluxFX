@@ -25,8 +25,7 @@ namespace TpLab.Flux.FX.Editor
         {
             var registry = new FluxParticleGpuModuleRegistry();
             var validator = new FluxParticleGpuModuleValidator(registry);
-            var compiler = new FluxParticleShaderCompiler(registry);
-            var cache = new FluxParticleShaderCache();
+            var pipeline = new FluxParticleShaderPipeline(registry);
 
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var assignedCount = 0;
@@ -62,8 +61,8 @@ namespace TpLab.Flux.FX.Editor
                     throw new InvalidOperationException($"GPU Module validation failed for '{authoring.name}':\n{gpuValidation.GetReport()}");
                 }
 
-                var compilation = compiler.CompileVelocity(plan);
-                var shader = cache.GetOrCreate(compilation);
+                var artifact = pipeline.BuildVelocity(plan);
+                var shader = pipeline.GetOrCreate(artifact);
 
                 velocityKernel.SetProgramVariable("shader", shader);
                 assignedCount++;

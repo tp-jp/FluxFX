@@ -2,6 +2,7 @@ using NUnit.Framework;
 using TpLab.Flux.FX.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Editor.Shaders;
+using TpLab.Flux.FX.Editor.Shaders.Artifacts;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
@@ -107,7 +108,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var first = Compile();
             var second = Compile();
 
-            Assert.AreEqual(first.CacheKey, second.CacheKey);
+            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
+            Assert.AreNotEqual(first.ArtifactId, second.ArtifactId);
             Assert.AreEqual(first.Source, second.Source);
         }
 
@@ -120,7 +122,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleDragModule());
             var second = Compile();
 
-            Assert.AreNotEqual(first.CacheKey, second.CacheKey);
+            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
+            Assert.AreNotEqual(first.ArtifactId, second.ArtifactId);
         }
 
         [Test]
@@ -128,15 +131,15 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             AddModule(new FluxParticleGravityModule());
 
-            var compilation = Compile();
-            var cache = new FluxParticleShaderCache();
+            var pipeline = new FluxParticleShaderPipeline(new FluxParticleGpuModuleRegistry());
+            var artifact = pipeline.BuildVelocity(FluxParticleCompilePlan.Create(_authoring));
 
-            var first = cache.GetOrCreate(compilation);
-            var second = cache.GetOrCreate(compilation);
+            var first = pipeline.GetOrCreate(artifact);
+            var second = pipeline.GetOrCreate(artifact);
 
             Assert.IsNotNull(first);
             Assert.AreSame(first, second);
-            Assert.AreEqual(compilation.ShaderName, first.name);
+            Assert.AreEqual(artifact.ShaderName, first.name);
         }
 
         [Test]
@@ -186,9 +189,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Greater(limitIndex, dragIndex);
         }
 
-        FluxParticleShaderCompilation Compile()
+        ShaderArtifact Compile()
         {
-            return _compiler.CompileVelocity(FluxParticleCompilePlan.Create(_authoring));
+            var pipeline = new FluxParticleShaderPipeline(new FluxParticleGpuModuleRegistry());
+            return pipeline.BuildVelocity(FluxParticleCompilePlan.Create(_authoring));
         }
 
         void AddModule(FluxParticleModule module)

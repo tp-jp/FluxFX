@@ -41,15 +41,12 @@ namespace TpLab.Flux.FX.Editor.Preview
                     definition.CollectParameters(module, collector);
                 }
 
-                var compiler = new FluxParticleShaderCompiler(registry);
-                var compilation = compiler.CompileVelocity(plan);
+                var pipeline = new FluxParticleShaderPipeline(registry);
+                var artifact = pipeline.BuildVelocity(plan);
 
-                if (_velocityMaterial.shader.name != compilation.ShaderName)
+                if (_velocityMaterial.shader.name != artifact.ShaderName)
                 {
-                    var cache = new FluxParticleShaderCache();
-                    var shader = cache.GetOrCreate(compilation);
-
-                    _velocityMaterial.shader = shader;
+                    _velocityMaterial.shader = pipeline.GetOrCreate(artifact);
                 }
 
                 collector.Apply(_velocityMaterial);

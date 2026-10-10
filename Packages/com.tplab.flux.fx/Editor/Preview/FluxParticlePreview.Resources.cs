@@ -40,11 +40,10 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             try
             {
-                var compiler = new FluxParticleShaderCompiler(registry);
-                var cache = new FluxParticleShaderCache();
-                var compilation = compiler.CompileVelocity(plan);
+                var pipeline = new FluxParticleShaderPipeline(registry);
+                var artifact = pipeline.BuildVelocity(plan);
 
-                velocityShader = cache.GetOrCreate(compilation);
+                velocityShader = pipeline.GetOrCreate(artifact);
             }
             catch (Exception exception)
             {
