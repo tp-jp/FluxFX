@@ -75,7 +75,6 @@ namespace TpLab.Flux.FX.Editor.Shaders
             }
 
             // Legacy処理は残りのModule移行が完了するまで維持する。
-            operations.Add((300, "legacy.noise", "FluxFX_LegacyNoise(ctx);"));
             operations.Add((400, "legacy.vortex", "FluxFX_LegacyVortex(ctx);"));
 
             operations.Sort((a, b) =>

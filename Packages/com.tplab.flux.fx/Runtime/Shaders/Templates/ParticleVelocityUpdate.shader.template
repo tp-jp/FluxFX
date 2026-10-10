@@ -28,9 +28,6 @@ Shader "{{SHADER_NAME}}"
             sampler2D_float _MainTex;
             sampler2D_float _PositionTex;
 
-            float _NoiseStrength;
-            float _NoiseScale;
-            float _NoiseTime;
             float4 _VortexCenter;
             float4 _VortexAxis;
             float _VortexStrength;
@@ -175,19 +172,6 @@ Shader "{{SHADER_NAME}}"
                 return float4(velocity, EvaluateSpawnLifetime(spawnSeed));
             }
 
-            float3 EvaluateNoise(float3 position)
-            {
-                float3 p = position * _NoiseScale;
-
-                float3 noise;
-
-                noise.x = sin(p.y * 1.37 + p.z * 0.73 + _NoiseTime);
-                noise.y = sin(p.z * 1.11 + p.x * 1.53 + _NoiseTime * 1.17);
-                noise.z = sin(p.x * 0.91 + p.y * 1.29 + _NoiseTime * 0.83);
-
-                return noise;
-            }
-
             float3 EvaluateVortex(float3 position)
             {
                 float3 offset = position - _VortexCenter.xyz;
@@ -206,12 +190,6 @@ Shader "{{SHADER_NAME}}"
                 return tangent * _VortexStrength;
             }
 
-            void FluxFX_LegacyNoise(inout FluxFXGpuContext ctx)
-            {
-                float3 noise = EvaluateNoise(ctx.position);
-                ctx.velocity += noise * _NoiseStrength * ctx.deltaTime;
-            }
-            
             void FluxFX_LegacyVortex(inout FluxFXGpuContext ctx)
             {
                 float3 vortex = EvaluateVortex(ctx.position);

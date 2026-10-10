@@ -193,6 +193,61 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Greater(limitIndex, dragIndex);
         }
 
+        [Test]
+        public void NoiseOnly()
+        {
+            AddModule(new FluxParticleNoiseModule());
+
+            var result = Compile();
+            var sourcePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Noise.hlsl";
+            var includePath = result.Includes.Get(sourcePath).AssetPath;
+
+            StringAssert.Contains("FluxFX_Noise(ctx);", result.Source);
+            StringAssert.Contains("_NoiseStrength (\"_NoiseStrength\", Float)", result.Source);
+            StringAssert.Contains("_NoiseScale (\"_NoiseScale\", Float)", result.Source);
+            StringAssert.Contains("_NoiseTime (\"_NoiseTime\", Float)", result.Source);
+            StringAssert.Contains($"#include \"{includePath}\"", result.Source);
+            Assert.IsFalse(result.Source.Contains($"#include \"{sourcePath}\""));
+            Assert.IsFalse(result.Source.Contains("FluxFX_LegacyNoise"));
+        }
+
+        [Test]
+        public void NoiseDisabled()
+        {
+            AddModule(new FluxParticleNoiseModule());
+
+            var serializedObject = new SerializedObject(_authoring);
+            var modules = serializedObject.FindProperty("modules");
+            modules.GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var result = Compile();
+
+            Assert.IsFalse(result.Source.Contains("FluxFX_Noise(ctx);"));
+            Assert.IsFalse(result.Source.Contains("_NoiseStrength (\"_NoiseStrength\", Float)"));
+            Assert.IsFalse(result.Source.Contains("_NoiseScale (\"_NoiseScale\", Float)"));
+            Assert.IsFalse(result.Source.Contains("_NoiseTime (\"_NoiseTime\", Float)"));
+            Assert.IsFalse(result.Includes.BySourcePath.ContainsKey("Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Noise.hlsl"));
+        }
+
+        [Test]
+        public void NoisePreservesExecutionOrder()
+        {
+            AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleNoiseModule());
+            AddModule(new FluxParticleForceModule());
+
+            var result = Compile();
+
+            var forceIndex = result.Source.IndexOf("FluxFX_Force(ctx);");
+            var noiseIndex = result.Source.IndexOf("FluxFX_Noise(ctx);");
+            var dragIndex = result.Source.IndexOf("FluxFX_Drag(ctx);");
+
+            Assert.GreaterOrEqual(forceIndex, 0);
+            Assert.Greater(noiseIndex, forceIndex);
+            Assert.Greater(dragIndex, noiseIndex);
+        }
+
         ShaderArtifact Compile()
         {
             var pipeline = new FluxParticleShaderPipeline(new FluxParticleGpuModuleRegistry());

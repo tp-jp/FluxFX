@@ -75,10 +75,6 @@ namespace TpLab.Flux.FX.Editor.Preview
             var force = GetForce();
             var drag = GetDrag();
 
-            var noiseStrength = 0.0f;
-            var noiseScale = 0.0f;
-            var noiseTime = 0.0f;
-
             var vortexCenter = Vector3.zero;
             var vortexAxis = Vector3.zero;
             var vortexStrength = 0.0f;
@@ -87,16 +83,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
             foreach (var module in _authoring.Modules)
             {
-                if (module is FluxParticleNoiseModule noiseModule)
-                {
-                    if (noiseModule.Enabled)
-                    {
-                        noiseStrength = noiseModule.Strength;
-                        noiseScale = noiseModule.Scale;
-                        noiseTime = _simulationTime * noiseModule.Speed;
-                    }
-                }
-                else if (module is FluxParticleVortexModule vortexModule)
+                if (module is FluxParticleVortexModule vortexModule)
                 {
                     if (vortexModule.Enabled)
                     {
@@ -132,9 +119,6 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetVector("_Gravity", gravity);
             _velocityMaterial.SetVector("_Force", force);
             _velocityMaterial.SetFloat("_Drag", drag);
-            _velocityMaterial.SetFloat("_NoiseStrength", noiseStrength);
-            _velocityMaterial.SetFloat("_NoiseScale", noiseScale);
-            _velocityMaterial.SetFloat("_NoiseTime", noiseTime);
             _velocityMaterial.SetVector("_VortexCenter", vortexCenter);
             _velocityMaterial.SetVector("_VortexAxis", vortexAxis);
             _velocityMaterial.SetFloat("_VortexStrength", vortexStrength);

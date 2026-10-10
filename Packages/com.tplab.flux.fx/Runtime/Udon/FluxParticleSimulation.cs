@@ -206,9 +206,6 @@ namespace TpLab.Flux.FX.Udon
             velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
             velocityUpdateKernel.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
             velocityUpdateKernel.SetFloat("_Drag", Drag.GetDrag());
-            velocityUpdateKernel.SetFloat("_NoiseStrength", Noise.GetStrength());
-            velocityUpdateKernel.SetFloat("_NoiseScale", Noise.GetScale());
-            velocityUpdateKernel.SetFloat("_NoiseTime", _simulationTime * Noise.GetSpeed());
             velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));
             velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(vortexAxis.x, vortexAxis.y, vortexAxis.z, 0));
             velocityUpdateKernel.SetFloat("_VortexStrength", Vortex.GetStrength());
