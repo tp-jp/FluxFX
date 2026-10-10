@@ -76,10 +76,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleForceModule());
 
             var result = Compile();
+            var sourcePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl";
+            var includePath = result.Includes.Get(sourcePath).AssetPath;
 
             StringAssert.Contains("FluxFX_Force(ctx);", result.Source);
             StringAssert.Contains("_Force (\"_Force\", Vector)", result.Source);
-            StringAssert.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl\"", result.Source);
+            StringAssert.Contains($"#include \"{includePath}\"", result.Source);
+            Assert.IsFalse(result.Source.Contains($"#include \"{sourcePath}\""));
             Assert.IsFalse(result.Source.Contains("FluxFX_LegacyForce(ctx);"));
         }
 
@@ -101,7 +104,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void SameConfigurationProducesSameCacheKey()
+        public void SameConfigurationProducesSameArtifactId()
         {
             AddModule(new FluxParticleGravityModule());
 
@@ -109,12 +112,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             var second = Compile();
 
             Assert.AreEqual(first.ArtifactId, second.ArtifactId);
-            Assert.AreNotEqual(first.ArtifactId, second.ArtifactId);
             Assert.AreEqual(first.Source, second.Source);
         }
 
         [Test]
-        public void DifferentConfigurationsProduceDifferentCacheKeys()
+        public void DifferentConfigurationsProduceDifferentArtifactIds()
         {
             AddModule(new FluxParticleGravityModule());
             var first = Compile();
@@ -122,7 +124,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleDragModule());
             var second = Compile();
 
-            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
             Assert.AreNotEqual(first.ArtifactId, second.ArtifactId);
         }
 
@@ -148,11 +149,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleLimitVelocityModule());
 
             var result = Compile();
+            var sourcePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/LimitVelocity.hlsl";
+            var includePath = result.Includes.Get(sourcePath).AssetPath;
 
             StringAssert.Contains("FluxFX_LimitVelocity(ctx);", result.Source);
             StringAssert.Contains("_MaxSpeed (\"_MaxSpeed\", Float)", result.Source);
             StringAssert.Contains("float _MaxSpeed;", result.Source);
-            StringAssert.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/LimitVelocity.hlsl\"", result.Source);
+            StringAssert.Contains($"#include \"{includePath}\"", result.Source);
+            Assert.IsFalse(result.Source.Contains($"#include \"{sourcePath}\""));
             Assert.IsFalse(result.Source.Contains("FluxFX_LegacyLimitVelocity"));
         }
 
