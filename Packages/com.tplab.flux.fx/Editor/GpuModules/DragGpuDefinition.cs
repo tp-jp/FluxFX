@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
@@ -12,5 +11,10 @@ namespace TpLab.Flux.FX.Editor.GpuModules
         public override string EntryPoint => "FluxFX_Drag";
 
         public override int Order => 500;
+
+        public override void CollectParameters(FluxParticleDragModule module, FluxParticleParameterCollector collector)
+        {
+            collector.AddFloat("_Drag", module.Drag);
+        }
     }
 }

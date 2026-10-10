@@ -8,7 +8,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 {
     public sealed class FluxParticleGpuModuleValidator
     {
-        const string VelocityShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/ParticleVelocityUpdate.shader";
+        const string VelocityShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Templates/ParticleVelocityUpdate.shader.template";
 
         static readonly Regex IdentifierPattern = new Regex(@"^_[A-Za-z][A-Za-z0-9_]*$", RegexOptions.Compiled);
         static readonly Regex UniformPattern = new Regex(@"\b(?:float|float2|float3|float4|int|uint|sampler2D_float|sampler2D)\s+(_[A-Za-z0-9_]+)\s*;", RegexOptions.Compiled);

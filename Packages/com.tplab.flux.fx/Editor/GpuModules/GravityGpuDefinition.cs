@@ -11,5 +11,10 @@ namespace TpLab.Flux.FX.Editor.GpuModules
         public override string EntryPoint => "FluxFX_Gravity";
 
         public override int Order => 100;
+
+        public override void CollectParameters(FluxParticleGravityModule module, FluxParticleParameterCollector collector)
+        {
+            collector.AddVector("_Gravity", module.Gravity);
+        }
     }
 }

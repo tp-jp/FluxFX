@@ -1,0 +1,298 @@
+Shader "{{SHADER_NAME}}"
+{
+    Properties
+    {
+        _MainTex ("Velocity", 2D) = "black" {}
+        _PositionTex ("Position", 2D) = "black" {}
+
+{{MODULE_PROPERTIES}}
+    }
+
+    SubShader
+    {
+        Cull Off
+        ZWrite Off
+        ZTest Always
+
+        Pass
+        {
+            HLSLPROGRAM
+
+            #pragma vertex vert_img
+            #pragma fragment frag
+
+            #include "UnityCG.cginc"
+            #include "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl"
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl"
+
+            sampler2D_float _MainTex;
+            sampler2D_float _PositionTex;
+
+            float4 _Force;
+            float _NoiseStrength;
+            float _NoiseScale;
+            float _NoiseTime;
+            float4 _VortexCenter;
+            float4 _VortexAxis;
+            float _VortexStrength;
+            float _MaxSpeed;
+            float _LifetimeMin;
+            float _LifetimeMax;
+            float _InitialSpeedMin;
+            float _InitialSpeedMax;
+            float _ShapeType;
+            float _ShapeAngle;
+            float _SimulationSpace;
+            float4 _SystemRotation;
+            float _DeltaTime;
+            float _FluxFXSimulationTime;
+            float _SpawnStart;
+            float _SpawnSeedStart;
+            float _SpawnCount;
+
+{{MODULE_UNIFORMS}}
+            
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl"
+            
+{{MODULE_INCLUDES}}
+
+            bool ShouldSpawn(uint index)
+            {
+                uint capacity = (uint)_FluxDestinationCount;
+                uint spawnStart = (uint)_SpawnStart;
+                uint spawnCount = (uint)_SpawnCount;
+
+                if (spawnCount == 0u)
+                    return false;
+
+                if (spawnCount >= capacity)
+                    return true;
+
+                uint startIndex = spawnStart % capacity;
+                uint endIndex = (startIndex + spawnCount) % capacity;
+
+                if (startIndex < endIndex)
+                {
+                    return index >= startIndex && index < endIndex;
+                }
+
+                return index >= startIndex || index < endIndex;
+            }
+
+            float3 RotateVector(float3 value, float4 rotation)
+            {
+                return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
+            }
+
+            float3 CreateBoxSpawnDirection(uint spawnSeed)
+            {
+                uint face = spawnSeed % 6u;
+
+                if (face == 0u)
+                    return float3(1, 0, 0);
+
+                if (face == 1u)
+                    return float3(-1, 0, 0);
+
+                if (face == 2u)
+                    return float3(0, 1, 0);
+
+                if (face == 3u)
+                    return float3(0, -1, 0);
+
+                if (face == 4u)
+                    return float3(0, 0, 1);
+
+                return float3(0, 0, -1);
+            }
+
+            float3 CreateConeSpawnDirection(uint spawnSeed)
+            {
+                float azimuth = FluxFXCreateSpawnAngle(spawnSeed);
+                float angle = radians(_ShapeAngle);
+                float radial = sin(angle);
+
+                return float3(
+                    cos(azimuth) * radial,
+                    cos(angle),
+                    sin(azimuth) * radial);
+            }
+
+            float3 CreateShapeDirection(uint spawnSeed)
+            {
+                if (_ShapeType > 4.5)
+                {
+                    return CreateConeSpawnDirection(spawnSeed);
+                }
+
+                if (_ShapeType > 3.5)
+                {
+                    return CreateBoxSpawnDirection(spawnSeed);
+                }
+
+                if (_ShapeType > 2.5)
+                {
+                    float angle = FluxFXCreateSpawnAngle(spawnSeed);
+
+                    return float3(cos(angle), 0, sin(angle));
+                }
+
+                float3 direction = FluxFXCreateSpawnDirection(spawnSeed);
+
+                if (_ShapeType > 1.5)
+                {
+                    direction.y = abs(direction.y);
+                }
+
+                return direction;
+            }
+
+            float EvaluateSpawnLifetime(uint spawnSeed)
+            {
+                float random = FluxFXRandom01(spawnSeed * 3u + 2u);
+
+                return lerp(_LifetimeMin, _LifetimeMax, random);
+            }
+
+            float4 CreateSpawnVelocity(uint index)
+            {
+                uint spawnSeed = FluxFXGetSpawnSeed(
+                    index,
+                    (uint)_FluxDestinationCount,
+                    (uint)_SpawnStart,
+                    (uint)_SpawnSeedStart);
+                float3 direction = CreateShapeDirection(spawnSeed);
+
+                float initialSpeed = lerp(
+                    _InitialSpeedMin,
+                    _InitialSpeedMax,
+                    FluxFXRandom01(spawnSeed * 4u + 3u));
+                float3 velocity = direction * initialSpeed;
+
+                if (_SimulationSpace > 0.5)
+                {
+                    velocity = RotateVector(velocity, _SystemRotation);
+                }
+
+                return float4(velocity, EvaluateSpawnLifetime(spawnSeed));
+            }
+
+            float3 EvaluateNoise(float3 position)
+            {
+                float3 p = position * _NoiseScale;
+
+                float3 noise;
+
+                noise.x = sin(p.y * 1.37 + p.z * 0.73 + _NoiseTime);
+                noise.y = sin(p.z * 1.11 + p.x * 1.53 + _NoiseTime * 1.17);
+                noise.z = sin(p.x * 0.91 + p.y * 1.29 + _NoiseTime * 0.83);
+
+                return noise;
+            }
+
+            float3 EvaluateVortex(float3 position)
+            {
+                float3 offset = position - _VortexCenter.xyz;
+
+                float axialDistance = dot(offset, _VortexAxis.xyz);
+                float3 radialOffset = offset - _VortexAxis.xyz * axialDistance;
+
+                float radialLength = length(radialOffset);
+
+                if (radialLength <= 0.0001)
+                    return 0;
+
+                float3 radialDirection = radialOffset / radialLength;
+                float3 tangent = cross(_VortexAxis.xyz, radialDirection);
+
+                return tangent * _VortexStrength;
+            }
+
+            float3 ApplyVelocityLimit(float3 velocity)
+            {
+                if (_MaxSpeed <= 0)
+                {
+                    return velocity;
+                }
+
+                float speed = length(velocity);
+
+                if (speed <= _MaxSpeed)
+                {
+                    return velocity;
+                }
+
+                return velocity * (_MaxSpeed / speed);
+            }
+
+            void FluxFX_LegacyForce(inout FluxFXGpuContext ctx)
+            {
+                ctx.velocity += _Force.xyz * ctx.deltaTime;
+            }
+            
+            void FluxFX_LegacyNoise(inout FluxFXGpuContext ctx)
+            {
+                float3 noise = EvaluateNoise(ctx.position);
+                ctx.velocity += noise * _NoiseStrength * ctx.deltaTime;
+            }
+            
+            void FluxFX_LegacyVortex(inout FluxFXGpuContext ctx)
+            {
+                float3 vortex = EvaluateVortex(ctx.position);
+                ctx.velocity += vortex * ctx.deltaTime;
+            }
+            
+            void FluxFX_LegacyLimitVelocity(inout FluxFXGpuContext ctx)
+            {
+                ctx.velocity = ApplyVelocityLimit(ctx.velocity);
+            }
+            
+            void FluxFX_ApplyVelocityModules(inout FluxFXGpuContext ctx)
+            {
+{{MODULE_CALLS}}
+            }
+
+            float4 frag(v2f_img i) : SV_Target
+            {
+                uint index = FluxGetDestinationIndex(i.uv);
+
+                if (!FluxIsDestinationValid(index))
+                    return 0;
+
+                float2 sourceUV = FluxGetSourceUV(index);
+
+                float4 velocity = tex2D(_MainTex, sourceUV);
+                float4 position = tex2D(_PositionTex, sourceUV);
+
+                bool isActive = velocity.w > 0;
+
+                if (!isActive)
+                {
+                    if (ShouldSpawn(index))
+                        return CreateSpawnVelocity(index);
+
+                    return 0;
+                }
+
+                if (position.w >= velocity.w)
+                    return 0;
+
+                FluxFXGpuContext ctx;
+                ctx.position = position.xyz;
+                ctx.velocity = velocity.xyz;
+                ctx.age = position.w;
+                ctx.lifetime = velocity.w;
+                ctx.deltaTime = _DeltaTime;
+                ctx.simulationTime = _FluxFXSimulationTime;
+                
+                FluxFX_ApplyVelocityModules(ctx);
+                
+                velocity.xyz = ctx.velocity;
+
+                return velocity;
+            }
+
+            ENDHLSL
+        }
+    }
+}
