@@ -111,7 +111,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void BuiltInParameterCollision_ShouldReportG004()
         {
-            TestGpuModuleDefinition.ParameterName = "_Gravity";
+            TestGpuModuleDefinition.ParameterName = "_DeltaTime";
             AddModule(new TestGpuModule());
 
             AssertIssue("G004");

@@ -28,7 +28,6 @@ Shader "{{SHADER_NAME}}"
             sampler2D_float _MainTex;
             sampler2D_float _PositionTex;
 
-            float4 _Force;
             float _NoiseStrength;
             float _NoiseScale;
             float _NoiseTime;
@@ -225,11 +224,6 @@ Shader "{{SHADER_NAME}}"
                 return velocity * (_MaxSpeed / speed);
             }
 
-            void FluxFX_LegacyForce(inout FluxFXGpuContext ctx)
-            {
-                ctx.velocity += _Force.xyz * ctx.deltaTime;
-            }
-            
             void FluxFX_LegacyNoise(inout FluxFXGpuContext ctx)
             {
                 float3 noise = EvaluateNoise(ctx.position);

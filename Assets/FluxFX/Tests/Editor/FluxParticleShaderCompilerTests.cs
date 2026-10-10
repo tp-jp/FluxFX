@@ -6,6 +6,7 @@ using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {
@@ -36,8 +37,9 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            StringAssert.Contains("FluxFX_Gravity(velocity, deltaTime);", result.Source);
-            Assert.IsFalse(result.Source.Contains("FluxFX_Drag(velocity, deltaTime);"));
+            StringAssert.Contains("FluxFX_Gravity(ctx);", result.Source);
+            StringAssert.Contains("_Gravity (\"_Gravity\", Vector)", result.Source);
+            Assert.IsFalse(result.Source.Contains("FluxFX_Drag(ctx);"));
         }
 
         [Test]
@@ -47,8 +49,9 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            StringAssert.Contains("FluxFX_Drag(velocity, deltaTime);", result.Source);
-            Assert.IsFalse(result.Source.Contains("FluxFX_Gravity(velocity, deltaTime);"));
+            StringAssert.Contains("FluxFX_Drag(ctx);", result.Source);
+            StringAssert.Contains("_Drag (\"_Drag\", Float)", result.Source);
+            Assert.IsFalse(result.Source.Contains("FluxFX_Gravity(ctx);"));
         }
 
         [Test]
@@ -59,11 +62,41 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            var gravityIndex = result.Source.IndexOf("FluxFX_Gravity(velocity, deltaTime);");
-            var dragIndex = result.Source.IndexOf("FluxFX_Drag(velocity, deltaTime);");
+            var gravityIndex = result.Source.IndexOf("FluxFX_Gravity(ctx);");
+            var dragIndex = result.Source.IndexOf("FluxFX_Drag(ctx);");
 
             Assert.GreaterOrEqual(gravityIndex, 0);
             Assert.Greater(dragIndex, gravityIndex);
+        }
+
+        [Test]
+        public void ForceOnly()
+        {
+            AddModule(new FluxParticleForceModule());
+
+            var result = Compile();
+
+            StringAssert.Contains("FluxFX_Force(ctx);", result.Source);
+            StringAssert.Contains("_Force (\"_Force\", Vector)", result.Source);
+            StringAssert.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl\"", result.Source);
+            Assert.IsFalse(result.Source.Contains("FluxFX_LegacyForce(ctx);"));
+        }
+
+        [Test]
+        public void ForceDisabled()
+        {
+            AddModule(new FluxParticleForceModule());
+
+            var serializedObject = new SerializedObject(_authoring);
+            var modules = serializedObject.FindProperty("modules");
+            modules.GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var result = Compile();
+
+            Assert.IsFalse(result.Source.Contains("FluxFX_Force(ctx);"));
+            Assert.IsFalse(result.Source.Contains("_Force (\"_Force\", Vector)"));
+            Assert.IsFalse(result.Source.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl\""));
         }
 
         [Test]
