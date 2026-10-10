@@ -71,7 +71,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
 
                 definition.CollectParameters(entry.module, collector);
 
-                includes.AppendLine($"            #include \"{path}\"");
+                includes.AppendLine($"#include \"{path}\"");
 
                 dependencies.Append(definition.ModuleId).Append('\n');
                 dependencies.Append(definition.EntryPoint).Append('\n');
@@ -87,13 +87,13 @@ namespace TpLab.Flux.FX.Editor.Shaders
                 switch (parameter.Type)
                 {
                     case FluxParticleParameterType.Float:
-                        properties.AppendLine($"        {parameter.Name} (\"{parameter.Name}\", Float) = 0");
-                        uniforms.AppendLine($"            float {parameter.Name};");
+                        properties.AppendLine($"{parameter.Name} (\"{parameter.Name}\", Float) = 0");
+                        uniforms.AppendLine($"float {parameter.Name};");
                         break;
 
                     case FluxParticleParameterType.Vector:
-                        properties.AppendLine($"        {parameter.Name} (\"{parameter.Name}\", Vector) = (0,0,0,0)");
-                        uniforms.AppendLine($"            float4 {parameter.Name};");
+                        properties.AppendLine($"{parameter.Name} (\"{parameter.Name}\", Vector) = (0,0,0,0)");
+                        uniforms.AppendLine($"float4 {parameter.Name};");
                         break;
 
                     default:
@@ -117,25 +117,61 @@ namespace TpLab.Flux.FX.Editor.Shaders
 
             foreach (var operation in operations)
             {
-                calls.AppendLine($"                {operation.code}");
+                calls.AppendLine($"{operation.code}");
             }
 
             var source = template;
-            source = ReplaceSlot(source, "{{MODULE_PROPERTIES}}", properties.ToString().TrimEnd());
-            source = ReplaceSlot(source, "{{MODULE_UNIFORMS}}", uniforms.ToString().TrimEnd());
-            source = ReplaceSlot(source, "{{MODULE_INCLUDES}}", includes.ToString().TrimEnd());
-            source = ReplaceSlot(source, "{{MODULE_CALLS}}", calls.ToString().TrimEnd());
+            source = ReplaceBlockSlot(source, "{{MODULE_PROPERTIES}}", properties.ToString().TrimEnd());
+            source = ReplaceBlockSlot(source, "{{MODULE_UNIFORMS}}", uniforms.ToString().TrimEnd());
+            source = ReplaceBlockSlot(source, "{{MODULE_INCLUDES}}", includes.ToString().TrimEnd());
+            source = ReplaceBlockSlot(source, "{{MODULE_CALLS}}", calls.ToString().TrimEnd());
 
             var hashInput = CompilerVersion + "\n" + source + "\n" + dependencies;
             var cacheKey = ComputeHash(hashInput);
             var shaderName = $"Hidden/FluxFX/Generated/Velocity_{cacheKey}";
 
-            source = ReplaceSlot(source, "{{SHADER_NAME}}", shaderName);
+            source = ReplaceInlineSlot(source, "{{SHADER_NAME}}", shaderName);
 
             return new FluxParticleShaderCompilation(FluxParticleExecutionStage.VelocityUpdate, shaderName, source, cacheKey);
         }
 
-        static string ReplaceSlot(string source, string slot, string value)
+        static string ReplaceInlineSlot(string source, string slot, string value)
+        {
+            var index = FindSlot(source, slot);
+            return source.Substring(0, index) + value + source.Substring(index + slot.Length);
+        }
+
+        static string ReplaceBlockSlot(string source, string slot, string value)
+        {
+            var index = FindSlot(source, slot);
+            var lineStart = source.LastIndexOf('\n', index);
+            lineStart = lineStart < 0 ? 0 : lineStart + 1;
+
+            var indent = source.Substring(lineStart, index - lineStart);
+
+            if (indent.Trim().Length != 0)
+            {
+                throw new InvalidOperationException($"Shader template block slot must be the only content on its line: {slot}");
+            }
+
+            var lineEnd = source.IndexOf('\n', index + slot.Length);
+
+            if (lineEnd < 0)
+            {
+                lineEnd = source.Length;
+            }
+            else if (source.Substring(index + slot.Length, lineEnd - index - slot.Length).Trim().Length != 0)
+            {
+                throw new InvalidOperationException($"Shader template block slot must be the only content on its line: {slot}");
+            }
+
+            var normalizedValue = value.Replace("\r\n", "\n").Replace('\r', '\n');
+            var indentedValue = normalizedValue.Length == 0 ? "" : indent + normalizedValue.Replace("\n", "\n" + indent);
+
+            return source.Substring(0, lineStart) + indentedValue + source.Substring(index + slot.Length);
+        }
+
+        static int FindSlot(string source, string slot)
         {
             var index = source.IndexOf(slot, StringComparison.Ordinal);
 
@@ -144,7 +180,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
                 throw new InvalidOperationException($"Shader template slot must appear exactly once: {slot}");
             }
 
-            return source.Substring(0, index) + value + source.Substring(index + slot.Length);
+            return index;
         }
 
         static string Normalize(string value)

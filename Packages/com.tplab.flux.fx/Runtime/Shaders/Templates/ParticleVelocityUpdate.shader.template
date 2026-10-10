@@ -5,7 +5,7 @@ Shader "{{SHADER_NAME}}"
         _MainTex ("Velocity", 2D) = "black" {}
         _PositionTex ("Position", 2D) = "black" {}
 
-{{MODULE_PROPERTIES}}
+        {{MODULE_PROPERTIES}}
     }
 
     SubShader
@@ -50,11 +50,11 @@ Shader "{{SHADER_NAME}}"
             float _SpawnSeedStart;
             float _SpawnCount;
 
-{{MODULE_UNIFORMS}}
+            {{MODULE_UNIFORMS}}
             
             #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl"
             
-{{MODULE_INCLUDES}}
+            {{MODULE_INCLUDES}}
 
             bool ShouldSpawn(uint index)
             {
@@ -249,7 +249,7 @@ Shader "{{SHADER_NAME}}"
             
             void FluxFX_ApplyVelocityModules(inout FluxFXGpuContext ctx)
             {
-{{MODULE_CALLS}}
+                {{MODULE_CALLS}}
             }
 
             float4 frag(v2f_img i) : SV_Target
