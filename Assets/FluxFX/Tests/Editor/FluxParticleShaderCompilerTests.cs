@@ -1,4 +1,3 @@
-
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;

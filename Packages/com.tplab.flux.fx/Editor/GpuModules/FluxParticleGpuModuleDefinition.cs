@@ -3,9 +3,10 @@ using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
 {
-    public abstract class FluxParticleGpuModuleDefinition
+    public abstract class FluxParticleGpuModuleDefinition<TModule> : IFluxParticleGpuModuleDefinition
+        where TModule : FluxParticleModule
     {
-        public abstract Type ModuleType { get; }
+        public Type ModuleType => typeof(TModule);
 
         public abstract string ModuleId { get; }
 
@@ -15,7 +16,12 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
         public abstract int Order { get; }
 
-        public virtual void CollectParameters(FluxParticleModule module, FluxParticleParameterCollector collector)
+        void IFluxParticleGpuModuleDefinition.CollectParameters(FluxParticleModule module, FluxParticleParameterCollector collector)
+        {
+            CollectParameters((TModule)module, collector);
+        }
+
+        public virtual void CollectParameters(TModule module, FluxParticleParameterCollector collector)
         {
         }
     }

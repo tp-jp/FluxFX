@@ -190,12 +190,10 @@ namespace TpLab.Flux.FX.Tests.Editor
         public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.Position;
     }
 
-    public sealed class TestGpuModuleDefinition : FluxParticleGpuModuleDefinition
+    public sealed class TestGpuModuleDefinition : FluxParticleGpuModuleDefinition<TestGpuModule>
     {
         public static string ParameterName = "_TestStrength";
         public static bool DuplicateParameter;
-
-        public override Type ModuleType => typeof(TestGpuModule);
 
         public override string ModuleId => "test.fluxfx.validator";
 
@@ -205,7 +203,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         public override int Order => 150;
 
-        public override void CollectParameters(FluxParticleModule module, FluxParticleParameterCollector collector)
+        public override void CollectParameters(TestGpuModule module, FluxParticleParameterCollector collector)
         {
             collector.AddFloat(ParameterName, 1.0f);
 
@@ -216,10 +214,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
     }
 
-    public sealed class UnsupportedStageGpuModuleDefinition : FluxParticleGpuModuleDefinition
+    public sealed class UnsupportedStageGpuModuleDefinition : FluxParticleGpuModuleDefinition<UnsupportedStageGpuModule>
     {
-        public override Type ModuleType => typeof(UnsupportedStageGpuModule);
-
         public override string ModuleId => "test.fluxfx.unsupported-stage";
 
         public override string HlslPath => "Assets/FluxFX/CustomModules/CustomLift.hlsl";

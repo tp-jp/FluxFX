@@ -1,14 +1,9 @@
-using System;
 using TpLab.Flux.FX.Editor.GpuModules;
-using TpLab.Flux.FX.Scripts.Modules;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.CustomModules.Editor
 {
-    public sealed class CustomLiftGpuDefinition : FluxParticleGpuModuleDefinition
+    public sealed class CustomLiftGpuDefinition : FluxParticleGpuModuleDefinition<CustomLiftModule>
     {
-        public override Type ModuleType => typeof(CustomLiftModule);
-
         public override string ModuleId => "custom.fluxfx.lift";
 
         public override string HlslPath => "Assets/FluxFX/CustomModules/CustomLift.hlsl";
@@ -17,12 +12,10 @@ namespace TpLab.Flux.FX.CustomModules.Editor
 
         public override int Order => 150;
 
-        public override void CollectParameters(FluxParticleModule module, FluxParticleParameterCollector collector)
+        public override void CollectParameters(CustomLiftModule module, FluxParticleParameterCollector collector)
         {
-            var lift = (CustomLiftModule)module;
-
-            collector.AddFloat("_CustomLiftStrength", lift.Strength);
-            collector.AddVector("_CustomLiftDirection", lift.Direction);
+            collector.AddFloat("_CustomLiftStrength", module.Strength);
+            collector.AddVector("_CustomLiftDirection", module.Direction);
         }
     }
 }

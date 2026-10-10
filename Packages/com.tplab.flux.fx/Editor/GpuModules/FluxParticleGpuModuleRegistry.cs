@@ -8,14 +8,14 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 {
     public sealed class FluxParticleGpuModuleRegistry
     {
-        readonly Dictionary<Type, FluxParticleGpuModuleDefinition> _definitions = new Dictionary<Type, FluxParticleGpuModuleDefinition>();
+        readonly Dictionary<Type, IFluxParticleGpuModuleDefinition> _definitions = new Dictionary<Type, IFluxParticleGpuModuleDefinition>();
         readonly HashSet<string> _moduleIds = new HashSet<string>(StringComparer.Ordinal);
 
         public int Count => _definitions.Count;
 
         public FluxParticleGpuModuleRegistry()
         {
-            var types = TypeCache.GetTypesDerivedFrom<FluxParticleGpuModuleDefinition>();
+            var types = TypeCache.GetTypesDerivedFrom<IFluxParticleGpuModuleDefinition>();
 
             foreach (var type in types)
             {
@@ -26,34 +26,34 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                     throw new InvalidOperationException($"GPU Module Definition requires a public parameterless constructor: {type.FullName}");
                 }
 
-                var definition = (FluxParticleGpuModuleDefinition)Activator.CreateInstance(type);
+                var definition = (IFluxParticleGpuModuleDefinition)Activator.CreateInstance(type);
 
                 Register(definition);
             }
         }
 
-        public bool TryGet(Type moduleType, out FluxParticleGpuModuleDefinition definition)
+        public bool TryGet(Type moduleType, out IFluxParticleGpuModuleDefinition definition)
         {
             return _definitions.TryGetValue(moduleType, out definition);
         }
 
-        public FluxParticleGpuModuleDefinition Get(Type moduleType)
+        public IFluxParticleGpuModuleDefinition Get(Type moduleType)
         {
             if (TryGet(moduleType, out var definition)) return definition;
 
             throw new InvalidOperationException($"GPU Module Definition is not registered: {moduleType?.FullName ?? "null"}");
         }
 
-        public FluxParticleGpuModuleDefinition Get(FluxParticleModule module)
+        public IFluxParticleGpuModuleDefinition Get(FluxParticleModule module)
         {
             if (module == null) throw new ArgumentNullException(nameof(module));
 
             return Get(module.GetType());
         }
 
-        public IReadOnlyList<FluxParticleGpuModuleDefinition> GetAll()
+        public IReadOnlyList<IFluxParticleGpuModuleDefinition> GetAll()
         {
-            var result = new List<FluxParticleGpuModuleDefinition>(_definitions.Values);
+            var result = new List<IFluxParticleGpuModuleDefinition>(_definitions.Values);
             result.Sort((a, b) =>
             {
                 var order = a.Order.CompareTo(b.Order);
@@ -63,7 +63,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             return result;
         }
 
-        void Register(FluxParticleGpuModuleDefinition definition)
+        void Register(IFluxParticleGpuModuleDefinition definition)
         {
             if (definition == null)
                 throw new ArgumentNullException(nameof(definition));

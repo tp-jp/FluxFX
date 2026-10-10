@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,8 +11,9 @@ namespace TpLab.Flux.FX.Editor.Shaders
 {
     public sealed class FluxParticleShaderCompiler
     {
-        const string CompilerVersion = "D4-B1-1";
+        const string CompilerVersion = "D5-A3";
         const string VelocityShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/ParticleVelocityUpdate.shader";
+        const string ContextHlslPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl";
         const string SourceShaderName = "FluxFX/ParticleVelocityUpdate";
 
         const string PropertyMarker = "        _PositionTex (\"Position\", 2D) = \"black\" {}";
@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
         {
             if (plan == null) throw new ArgumentNullException(nameof(plan));
 
-            var modules = new List<(FluxParticleModule module, FluxParticleGpuModuleDefinition definition)>();
+            var modules = new List<(FluxParticleModule module, IFluxParticleGpuModuleDefinition definition)>();
 
             foreach (var module in plan.GetModules(FluxParticleExecutionStage.VelocityUpdate))
             {
@@ -51,10 +51,14 @@ namespace TpLab.Flux.FX.Editor.Shaders
             });
 
             var source = Normalize(File.ReadAllText(VelocityShaderPath));
+            var contextHlsl = Normalize(File.ReadAllText(ContextHlslPath));
             var includes = new StringBuilder();
             var dependencies = new StringBuilder();
             var operations = new List<(int order, string id, string code)>();
             var collector = new FluxParticleParameterCollector();
+
+            dependencies.Append(ContextHlslPath).Append('\n');
+            dependencies.Append(contextHlsl).Append('\n');
 
             foreach (var entry in modules)
             {
@@ -86,7 +90,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
                 operations.Add((
                     definition.Order,
                     definition.ModuleId,
-                    $"                {definition.EntryPoint}(velocity, deltaTime);"));
+                    $"                {definition.EntryPoint}(ctx);"));
             }
 
             var properties = new StringBuilder();
@@ -111,20 +115,20 @@ namespace TpLab.Flux.FX.Editor.Shaders
                 }
             }
 
-            operations.Add((200, "legacy.force", "                velocity += _Force.xyz * deltaTime;"));
-            operations.Add((300, "legacy.noise", "                float3 noise = EvaluateNoise(position);\n                velocity += noise * _NoiseStrength * deltaTime;"));
-            operations.Add((400, "legacy.vortex", "                float3 vortex = EvaluateVortex(position);\n                velocity += vortex * deltaTime;"));
-            operations.Add((600, "legacy.limit", "                velocity = ApplyVelocityLimit(velocity);"));
+            operations.Add((200, "legacy.force", "                ctx.velocity += _Force.xyz * ctx.deltaTime;"));
+            operations.Add((300, "legacy.noise", "                float3 noise = EvaluateNoise(ctx.position);\n                ctx.velocity += noise * _NoiseStrength * ctx.deltaTime;"));
+            operations.Add((400, "legacy.vortex", "                float3 vortex = EvaluateVortex(ctx.position);\n                ctx.velocity += vortex * ctx.deltaTime;"));
+            operations.Add((600, "legacy.limit", "                ctx.velocity = ApplyVelocityLimit(ctx.velocity);"));
 
-            // D3-Bの移行対象外Moduleは既存Shader処理を維持する。
+            // 未登録ModuleのLegacy処理を維持する。
             if (!modules.Any(x => x.definition.ModuleId == "tplab.fluxfx.gravity"))
             {
-                operations.Add((100, "legacy.gravity", "                velocity += _Gravity.xyz * deltaTime;"));
+                operations.Add((100, "legacy.gravity", "                ctx.velocity += _Gravity.xyz * ctx.deltaTime;"));
             }
 
             if (!modules.Any(x => x.definition.ModuleId == "tplab.fluxfx.drag"))
             {
-                operations.Add((500, "legacy.drag", "                velocity *= exp(-_Drag * deltaTime);"));
+                operations.Add((500, "legacy.drag", "                ctx.velocity *= exp(-_Drag * ctx.deltaTime);"));
             }
 
             operations.Sort((a, b) =>
@@ -134,7 +138,7 @@ namespace TpLab.Flux.FX.Editor.Shaders
             });
 
             var function = new StringBuilder();
-            function.AppendLine("            void FluxFX_ApplyVelocityModules(inout float3 velocity, float3 position, float deltaTime)");
+            function.AppendLine("            void FluxFX_ApplyVelocityModules(inout FluxFXGpuContext ctx)");
             function.AppendLine("            {");
 
             foreach (var operation in operations)
@@ -145,10 +149,25 @@ namespace TpLab.Flux.FX.Editor.Shaders
             function.AppendLine("            }");
             function.AppendLine();
 
+            var contextInclude = $"            #include \"{ContextHlslPath}\"\n";
+
             source = ReplaceOnce(source, PropertyMarker, PropertyMarker + "\n" + properties);
-            source = ReplaceOnce(source, ParameterMarker, ParameterMarker + "\n" + uniforms + includes);
+            source = ReplaceOnce(source, ParameterMarker, ParameterMarker + "\n" + uniforms + contextInclude + includes);
             source = ReplaceOnce(source, FunctionMarker, function + FunctionMarker);
-            source = ReplaceVelocityBlock(source, "                FluxFX_ApplyVelocityModules(velocity.xyz, position.xyz, _DeltaTime);");
+
+            var velocityBlock = new StringBuilder();
+            velocityBlock.AppendLine("                FluxFXGpuContext ctx;");
+            velocityBlock.AppendLine("                ctx.position = position.xyz;");
+            velocityBlock.AppendLine("                ctx.velocity = velocity.xyz;");
+            velocityBlock.AppendLine("                ctx.age = position.w;");
+            velocityBlock.AppendLine("                ctx.lifetime = velocity.w;");
+            velocityBlock.AppendLine("                ctx.deltaTime = _DeltaTime;");
+            velocityBlock.AppendLine("                ctx.simulationTime = _FluxFXSimulationTime;");
+            velocityBlock.AppendLine();
+            velocityBlock.AppendLine("                FluxFX_ApplyVelocityModules(ctx);");
+            velocityBlock.Append("                velocity.xyz = ctx.velocity;");
+
+            source = ReplaceVelocityBlock(source, velocityBlock.ToString());
 
             var hashInput = CompilerVersion + "\n" + source + "\n" + dependencies;
             var cacheKey = ComputeHash(hashInput);

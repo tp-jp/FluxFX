@@ -1,9 +1,9 @@
 #ifndef FLUXFX_GRAVITY_INCLUDED
 #define FLUXFX_GRAVITY_INCLUDED
 
-void FluxFX_Gravity(inout float3 velocity, float deltaTime)
+void FluxFX_Gravity(inout FluxFXGpuContext ctx)
 {
-    velocity += _Gravity.xyz * deltaTime;
+    ctx.velocity += _Gravity.xyz * ctx.deltaTime;
 }
 
 #endif

@@ -1,9 +1,9 @@
 #ifndef FLUXFX_DRAG_INCLUDED
 #define FLUXFX_DRAG_INCLUDED
 
-void FluxFX_Drag(inout float3 velocity, float deltaTime)
+void FluxFX_Drag(inout FluxFXGpuContext ctx)
 {
-    velocity *= exp(-_Drag * deltaTime);
+    ctx.velocity *= exp(-_Drag * ctx.deltaTime);
 }
 
 #endif
