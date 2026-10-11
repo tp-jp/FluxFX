@@ -9,8 +9,15 @@ namespace TpLab.Flux.FX.Editor
 {
     public class FluxParticleCompiler
     {
+        /// <summary>
+        /// Particle Systemの設定をコンパイルし、Runtime用JSONを生成します。
+        /// </summary>
+        /// <param name="authoring">コンパイル対象のAuthoring。</param>
+        /// <returns>Runtime用JSON。</returns>
         public string Compile(FluxParticleAuthoring authoring)
         {
+            if (authoring == null) throw new ArgumentNullException(nameof(authoring));
+
             var plan = FluxParticleCompilePlan.Create(authoring);
             var registry = new FluxParticleGpuModuleRegistry();
             var gpuCompiler = new FluxParticleGpuCompiler(registry);
@@ -23,6 +30,25 @@ namespace TpLab.Flux.FX.Editor
                     result.Validation.GetReport());
             }
 
+            return Compile(authoring, plan, result.Compilation);
+        }
+
+        /// <summary>
+        /// 検証済みのGPU Compilation Modelを使用してRuntime用JSONを生成します。
+        /// </summary>
+        /// <param name="authoring">コンパイル対象のAuthoring。</param>
+        /// <param name="plan">GPU Compilationの生成に使用したCompilePlan。</param>
+        /// <param name="compilation">検証済みのGPU Compilation Model。</param>
+        /// <returns>Runtime用JSON。</returns>
+        public string Compile(
+            FluxParticleAuthoring authoring,
+            FluxParticleCompilePlan plan,
+            FluxParticleGpuCompilation compilation)
+        {
+            if (authoring == null) throw new ArgumentNullException(nameof(authoring));
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
+            if (compilation == null) throw new ArgumentNullException(nameof(compilation));
+
             var parameters = new JObject
             {
                 ["simulationSpace"] = (int)authoring.SimulationSpace
@@ -33,12 +59,13 @@ namespace TpLab.Flux.FX.Editor
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
+
             AddVelocityOverLifetime(parameters, plan);
 
             var writer = new FluxParticleGpuRuntimeDataWriter();
 
-            parameters["gpuParameters"] = writer.WriteParameters(result.Compilation);
-            parameters["gpuModuleBindings"] = writer.WriteBindings(result.Compilation);
+            parameters["gpuParameters"] = writer.WriteParameters(compilation);
+            parameters["gpuModuleBindings"] = writer.WriteBindings(compilation);
 
             AddRender(parameters, authoring.Render, plan);
 
