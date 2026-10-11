@@ -182,6 +182,11 @@ namespace TpLab.Flux.FX.Udon
             InitializeEmitter(parameters);
             InitializeSimulation(parameters);
             InitializeRenderer(parameters);
+
+            if (parameters.TryGetValue("gpuParameters", out var gpuParameters))
+            {
+                particleSimulation.InitializeGpuParameters(gpuParameters.DataDictionary);
+            }
         }
 
         void InitializeEmitter(DataDictionary parameters)

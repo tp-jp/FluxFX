@@ -3,6 +3,7 @@ using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
@@ -26,6 +27,9 @@ namespace TpLab.Flux.FX.Udon
 
         [SerializeField]
         FluxKernel rotationUpdateKernel;
+
+        [SerializeField]
+        FluxParticleGpuParameterStore velocityParameterStore;
 
         float _simulationTime;
         object _lifetime;
@@ -116,6 +120,59 @@ namespace TpLab.Flux.FX.Udon
             _limitVelocity = limitVelocity;
         }
 
+        internal void InitializeGpuParameters(DataDictionary gpuParameters)
+        {
+            if (velocityParameterStore == null)
+            {
+                Logger.LogError("Velocity GPU Parameter Store is not assigned.");
+                return;
+            }
+
+            velocityParameterStore.Initialize(velocityUpdateKernel);
+
+            if (!gpuParameters.TryGetValue("velocity", out var velocityToken)) return;
+
+            var velocity = velocityToken.DataDictionary;
+            var names = velocity.GetKeys();
+
+            for (var i = 0; i < names.Count; i++)
+            {
+                var name = names[i].String;
+                var parameter = velocity[name].DataDictionary;
+                var type = (int)parameter["type"].Double;
+                var value = parameter["value"];
+
+                switch (type)
+                {
+                    case 0:
+                        velocityParameterStore.RegisterFloat(name, (float)value.Double);
+                        break;
+
+                    case 1:
+                        var components = value.DataList;
+
+                        if (components.Count != 4)
+                        {
+                            Logger.LogError($"GPU Vector parameter requires four components: {name}");
+                            break;
+                        }
+
+                        var vector = new Vector4(
+                            (float)components[0].Double,
+                            (float)components[1].Double,
+                            (float)components[2].Double,
+                            (float)components[3].Double);
+
+                        velocityParameterStore.RegisterVector(name, vector);
+                        break;
+
+                    default:
+                        Logger.LogError($"Unsupported GPU parameter type: {type} ({name})");
+                        break;
+                }
+            }
+        }
+
         internal void SetSimulationSpace(int simulationSpace)
         {
             velocityUpdateKernel.SetFloat("_SimulationSpace", simulationSpace);
@@ -188,6 +245,11 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdateVelocity(float deltaTime)
         {
+            if (velocityParameterStore != null)
+            {
+                velocityParameterStore.Flush();
+            }
+
             var gravity = Gravity.GetGravity();
             var force = Force.GetForce();
             var vortexCenter = Vortex.GetCenter();

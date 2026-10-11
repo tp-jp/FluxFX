@@ -37,6 +37,7 @@ Transform:
   - {fileID: 8102671807304173614}
   - {fileID: 6928620966791924637}
   - {fileID: 2938028693262294483}
+  - {fileID: 7850456097509935323}
   m_Father: {fileID: 8373982803532082789}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5318433019894970630
@@ -67,6 +68,7 @@ MonoBehaviour:
   positionUpdateKernel: {fileID: 606634782234255038}
   visualUpdateKernel: {fileID: 2367249115642396450}
   rotationUpdateKernel: {fileID: 2680331688606634723}
+  velocityParameterStore: {fileID: 6334983278318389661}
 --- !u!114 &1454284527816723737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1173,7 +1175,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6110645425195456592}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
@@ -1204,7 +1206,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 3665951349089362475}
-  particleCount: 128
+  particleCount: 1024
   playOnAwake: 1
   particleState: {fileID: 5543737178738777183}
   particleEmitter: {fileID: 8702989573185071428}
@@ -1254,7 +1256,7 @@ MonoBehaviour:
     duration: 4
     loop: 1
   emission:
-    rate: 8
+    rate: 100
     bursts: []
   lifetime:
     lifetime: 4
@@ -1271,35 +1273,6 @@ MonoBehaviour:
     mode: 0
     min: 0.5
     max: 3
-  velocityOverLifetime:
-    enabled: 0
-    start: {x: 0, y: 0, z: 0}
-    end: {x: 0, y: 0, z: 0}
-    orbital: {x: 0, y: 3.1415925, z: 0}
-    offset: {x: 0, y: 0, z: 0}
-    radial: 0
-  gravity:
-    enabled: 0
-    gravity: {x: 0, y: -1, z: 0}
-  force:
-    enabled: 0
-    force: {x: 0, y: 10, z: 0}
-  drag:
-    enabled: 0
-    drag: 0.5
-  noise:
-    enabled: 0
-    strength: 1
-    scale: 1
-    speed: 1
-  vortex:
-    enabled: 0
-    center: {x: 0, y: 0, z: 0}
-    axis: {x: 0, y: 1, z: 0}
-    strength: 2
-  limitVelocity:
-    enabled: 0
-    maxSpeed: 2
   render:
     mode: 0
     mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
@@ -1314,105 +1287,181 @@ MonoBehaviour:
     startSizeMin: 0.02
     startSizeMax: 0.2
     startRotation: {x: 0, y: 0, z: 0}
-    colorOverLifetime:
-      enabled: 0
-      mode: 0
-      endColor: {r: 0.57078075, g: 0, b: 1, a: 1}
-      gradient:
-        serializedVersion: 2
-        key0: {r: 1, g: 1, b: 1, a: 1}
-        key1: {r: 1, g: 0, b: 0, a: 1}
-        key2: {r: 0, g: 0, b: 0, a: 0}
-        key3: {r: 0, g: 0, b: 0, a: 0}
-        key4: {r: 0, g: 0, b: 0, a: 0}
-        key5: {r: 0, g: 0, b: 0, a: 0}
-        key6: {r: 0, g: 0, b: 0, a: 0}
-        key7: {r: 0, g: 0, b: 0, a: 0}
-        ctime0: 0
-        ctime1: 65535
-        ctime2: 0
-        ctime3: 0
-        ctime4: 0
-        ctime5: 0
-        ctime6: 0
-        ctime7: 0
-        atime0: 0
-        atime1: 65535
-        atime2: 0
-        atime3: 0
-        atime4: 0
-        atime5: 0
-        atime6: 0
-        atime7: 0
-        m_Mode: 0
-        m_ColorSpace: -1
-        m_NumColorKeys: 2
-        m_NumAlphaKeys: 2
-    sizeOverLifetime:
-      enabled: 0
-      mode: 0
-      endSize: 0.1
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: -0.013282776
-          value: 0.94885254
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 0.9819946
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    rotationOverLifetime:
-      enabled: 0
-      mode: 0
-      endRotation: {x: 0, y: 0, z: 360}
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 0
-          inSlope: 2
-          outSlope: 2
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    textureSheetAnimation:
-      enabled: 0
-      tilesX: 1
-      tilesY: 1
-      cycles: 1
-  modules: []
+  modules:
+  - rid: 8074038424773066845
+  - rid: 8074038424773066846
+  - rid: 8074038424773066847
+  - rid: 8074038424773066848
+  - rid: 8074038424773066849
+  - rid: 8074038424773066850
+  - rid: 8074038424773066851
+  - rid: 8074038424773066852
+  - rid: 8074038424773066853
+  - rid: 8074038424773066854
+  - rid: 8074038455801217057
+  - rid: 8074038455801217094
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 8074038424773066845
+      type: {class: FluxParticleGravityModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 1
+        gravity: {x: 0, y: -1, z: 0}
+    - rid: 8074038424773066846
+      type: {class: FluxParticleForceModule, ns: TpLab.Flux.FX.Scripts.Modules, asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        force: {x: 0, y: 1, z: 0}
+    - rid: 8074038424773066847
+      type: {class: FluxParticleDragModule, ns: TpLab.Flux.FX.Scripts.Modules, asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        drag: 0.5
+    - rid: 8074038424773066848
+      type: {class: FluxParticleNoiseModule, ns: TpLab.Flux.FX.Scripts.Modules, asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        strength: 1
+        scale: 1
+        speed: 1
+    - rid: 8074038424773066849
+      type: {class: FluxParticleVortexModule, ns: TpLab.Flux.FX.Scripts.Modules, asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        center: {x: 0, y: 0, z: 0}
+        axis: {x: 0, y: 1, z: 0}
+        strength: 1
+    - rid: 8074038424773066850
+      type: {class: FluxParticleLimitVelocityModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        maxSpeed: 1
+    - rid: 8074038424773066851
+      type: {class: FluxParticleColorOverLifetimeModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        mode: 0
+        endColor: {r: 1, g: 0, b: 0, a: 1}
+        gradient:
+          serializedVersion: 2
+          key0: {r: 1, g: 1, b: 1, a: 1}
+          key1: {r: 1, g: 1, b: 1, a: 1}
+          key2: {r: 0, g: 0, b: 0, a: 0}
+          key3: {r: 0, g: 0, b: 0, a: 0}
+          key4: {r: 0, g: 0, b: 0, a: 0}
+          key5: {r: 0, g: 0, b: 0, a: 0}
+          key6: {r: 0, g: 0, b: 0, a: 0}
+          key7: {r: 0, g: 0, b: 0, a: 0}
+          ctime0: 0
+          ctime1: 65535
+          ctime2: 0
+          ctime3: 0
+          ctime4: 0
+          ctime5: 0
+          ctime6: 0
+          ctime7: 0
+          atime0: 0
+          atime1: 65535
+          atime2: 0
+          atime3: 0
+          atime4: 0
+          atime5: 0
+          atime6: 0
+          atime7: 0
+          m_Mode: 0
+          m_ColorSpace: -1
+          m_NumColorKeys: 2
+          m_NumAlphaKeys: 2
+    - rid: 8074038424773066852
+      type: {class: FluxParticleSizeOverLifetimeModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        mode: 0
+        endSize: 0
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    - rid: 8074038424773066853
+      type: {class: FluxParticleRotationOverLifetimeModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        mode: 0
+        endRotation: {x: 0, y: 0, z: 360}
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    - rid: 8074038424773066854
+      type: {class: FluxParticleTextureSheetAnimationModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        tilesX: 1
+        tilesY: 1
+        cycles: 1
+    - rid: 8074038455801217057
+      type: {class: FluxParticleVelocityOverLifetimeModule, ns: TpLab.Flux.FX.Scripts.Modules,
+        asm: TpLab.Flux.FX.Scripts}
+      data:
+        enabled: 0
+        start: {x: 0, y: 0, z: 0}
+        end: {x: 0, y: 0, z: 0}
+        orbital: {x: 0, y: 0, z: 0}
+        offset: {x: 0, y: 0, z: 0}
+        radial: 0
+    - rid: 8074038455801217094
+      type: {class: CustomLiftModule, ns: TpLab.Flux.FX.CustomModules, asm: Assembly-CSharp}
+      data:
+        enabled: 0
+        strength: 2
+        direction: {x: 0, y: 1, z: 0}
 --- !u!1 &6330377903930078214
 GameObject:
   m_ObjectHideFlags: 0
@@ -1572,6 +1621,86 @@ MonoBehaviour:
   _syncMethod: 1
   serializedProgramAsset: {fileID: 0}
   programSource: {fileID: 11400000, guid: 9a04e106da06d104f8521aeb45795b4e, type: 2}
+  serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
+  publicVariablesUnityEngineObjects: []
+  publicVariablesSerializationDataFormat: 0
+--- !u!1 &7094208337137799322
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7850456097509935323}
+  - component: {fileID: 6334983278318389661}
+  - component: {fileID: 5033090743579598573}
+  m_Layer: 0
+  m_Name: GpuParameterStore
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7850456097509935323
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7094208337137799322}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4399242136421204901}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6334983278318389661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7094208337137799322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 822e880cb60e1bc428b862c42adee6b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  _udonSharpBackingUdonBehaviour: {fileID: 5033090743579598573}
+--- !u!114 &5033090743579598573
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7094208337137799322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45115577ef41a5b4ca741ed302693907, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactTextPlacement: {fileID: 0}
+  interactText: Use
+  interactTextGO: {fileID: 0}
+  proximity: 2
+  SynchronizePosition: 0
+  AllowCollisionOwnershipTransfer: 0
+  Reliable: 0
+  _syncMethod: 0
+  serializedProgramAsset: {fileID: 0}
+  programSource: {fileID: 11400000, guid: f0d25a72173648d4680584ca5de3976d, type: 2}
   serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
   publicVariablesUnityEngineObjects: []
   publicVariablesSerializationDataFormat: 0
