@@ -8,6 +8,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     enum FluxParticleLimitVelocityParameter
     {
         Store,
+        EnabledParameter,
 
         Count
     }
@@ -18,11 +19,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleLimitVelocityParameters : DataList
     {
-        internal static FluxParticleLimitVelocityParameters New(FluxParticleGpuParameterStore store)
+        internal static FluxParticleLimitVelocityParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
         {
             var data = new DataToken[(int)FluxParticleLimitVelocityParameter.Count];
 
             data[(int)FluxParticleLimitVelocityParameter.Store] = new DataToken(store);
+            data[(int)FluxParticleLimitVelocityParameter.EnabledParameter] = enabledParameter;
 
             return (FluxParticleLimitVelocityParameters)new DataList(data);
         }

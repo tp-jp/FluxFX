@@ -8,6 +8,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
     enum FluxParticleDragParameter
     {
         Store,
+        EnabledParameter,
 
         Count
     }
@@ -18,11 +19,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleDragParameters : DataList
     {
-        internal static FluxParticleDragParameters New(FluxParticleGpuParameterStore store)
+        internal static FluxParticleDragParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
         {
             var data = new DataToken[(int)FluxParticleDragParameter.Count];
 
             data[(int)FluxParticleDragParameter.Store] = new DataToken(store);
+            data[(int)FluxParticleDragParameter.EnabledParameter] = enabledParameter;
 
             return (FluxParticleDragParameters)new DataList(data);
         }

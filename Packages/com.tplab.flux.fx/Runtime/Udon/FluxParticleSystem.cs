@@ -388,7 +388,10 @@ namespace TpLab.Flux.FX.Udon
             var store = particleSimulation.GetVelocityParameterStore();
             if (store == null || !store.HasParameter("_Gravity")) return;
 
-            _gravity = FluxParticleGravityParameters.New(store);
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.gravity");
+            if (enabledParameter == null) return;
+
+            _gravity = FluxParticleGravityParameters.New(store, enabledParameter);
         }
 
         void InitializeForce()
@@ -396,15 +399,10 @@ namespace TpLab.Flux.FX.Udon
             var store = particleSimulation.GetVelocityParameterStore();
             if (store == null || !store.HasParameter("_Force")) return;
 
-            _force = FluxParticleForceParameters.New(store);
-        }
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.force");
+            if (enabledParameter == null) return;
 
-        void InitializeDrag()
-        {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_Drag")) return;
-
-            _drag = FluxParticleDragParameters.New(store);
+            _force = FluxParticleForceParameters.New(store, enabledParameter);
         }
 
         void InitializeNoise()
@@ -412,15 +410,10 @@ namespace TpLab.Flux.FX.Udon
             var store = particleSimulation.GetVelocityParameterStore();
             if (store == null || !store.HasParameter("_NoiseStrength") || !store.HasParameter("_NoiseScale") || !store.HasParameter("_NoiseSpeed")) return;
 
-            _noise = FluxParticleNoiseParameters.New(store);
-        }
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.noise");
+            if (enabledParameter == null) return;
 
-        void InitializeLimitVelocity()
-        {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_MaxSpeed")) return;
-
-            _limitVelocity = FluxParticleLimitVelocityParameters.New(store);
+            _noise = FluxParticleNoiseParameters.New(store, enabledParameter);
         }
 
         void InitializeVortex()
@@ -428,7 +421,32 @@ namespace TpLab.Flux.FX.Udon
             var store = particleSimulation.GetVelocityParameterStore();
             if (store == null || !store.HasParameter("_VortexCenter") || !store.HasParameter("_VortexAxis") || !store.HasParameter("_VortexStrength")) return;
 
-            _vortex = FluxParticleVortexParameters.New(store);
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.vortex");
+            if (enabledParameter == null) return;
+
+            _vortex = FluxParticleVortexParameters.New(store, enabledParameter);
+        }
+
+        void InitializeDrag()
+        {
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_Drag")) return;
+
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.drag");
+            if (enabledParameter == null) return;
+
+            _drag = FluxParticleDragParameters.New(store, enabledParameter);
+        }
+
+        void InitializeLimitVelocity()
+        {
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_MaxSpeed")) return;
+
+            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.limit-velocity");
+            if (enabledParameter == null) return;
+
+            _limitVelocity = FluxParticleLimitVelocityParameters.New(store, enabledParameter);
         }
 
         void InitializeRenderer(DataDictionary parameters)
@@ -565,7 +583,7 @@ namespace TpLab.Flux.FX.Udon
 
             _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
         }
-        
+
         bool TryGetModuleBinding(string moduleId, out FluxParticleKernelTarget target, out string parameterName)
         {
             target = FluxParticleKernelTarget.Velocity;
@@ -583,6 +601,19 @@ namespace TpLab.Flux.FX.Udon
             parameterName = binding["enabledParameter"].String;
 
             return true;
+        }
+
+        string GetVelocityModuleEnabledParameter(string moduleId)
+        {
+            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return null;
+
+            if (target != FluxParticleKernelTarget.Velocity)
+            {
+                Logger.LogError($"GPU Module is not assigned to Velocity: {moduleId}");
+                return null;
+            }
+
+            return parameterName;
         }
     }
 }

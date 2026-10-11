@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             var updated = gravity.GetGravity();
             Logger.Log($"Gravity changed: {initial} -> {updated}");
         }
-        
+
         public void TestGpuModuleParameters()
         {
             var force = fluxParticleSystem.Force;
@@ -67,7 +67,7 @@ namespace TpLab.Flux.FX.Tests.Udon
 
             Logger.Log("GPU Module Parameters: PASS");
         }
-        
+
         public void TestModuleEnabled()
         {
             var gravityId = "tplab.fluxfx.gravity";
@@ -98,6 +98,63 @@ namespace TpLab.Flux.FX.Tests.Udon
             }
 
             Logger.Log("GPU Module Enabled Binding: PASS");
+        }
+
+        public void TestTypedModuleEnabled()
+        {
+            var gravity = fluxParticleSystem.Gravity;
+            var force = fluxParticleSystem.Force;
+            var noise = fluxParticleSystem.Noise;
+            var vortex = fluxParticleSystem.Vortex;
+            var drag = fluxParticleSystem.Drag;
+            var limitVelocity = fluxParticleSystem.LimitVelocity;
+
+            if (gravity == null || force == null || noise == null || vortex == null || drag == null || limitVelocity == null)
+            {
+                Logger.LogError("Typed Module Enabled: Required module is missing.");
+                return;
+            }
+
+            var initialGravity = gravity.GetEnabled();
+            var initialForce = force.GetEnabled();
+            var initialNoise = noise.GetEnabled();
+            var initialVortex = vortex.GetEnabled();
+            var initialDrag = drag.GetEnabled();
+            var initialLimitVelocity = limitVelocity.GetEnabled();
+
+            gravity.SetEnabled(!initialGravity);
+            force.SetEnabled(!initialForce);
+            noise.SetEnabled(!initialNoise);
+            vortex.SetEnabled(!initialVortex);
+            drag.SetEnabled(!initialDrag);
+            limitVelocity.SetEnabled(!initialLimitVelocity);
+
+            if (gravity.GetEnabled() == initialGravity ||
+                force.GetEnabled() == initialForce ||
+                noise.GetEnabled() == initialNoise ||
+                vortex.GetEnabled() == initialVortex ||
+                drag.GetEnabled() == initialDrag ||
+                limitVelocity.GetEnabled() == initialLimitVelocity)
+            {
+                Logger.LogError("Typed Module Enabled: State mismatch.");
+                return;
+            }
+
+            if (fluxParticleSystem.GetModuleEnabled("tplab.fluxfx.gravity") != gravity.GetEnabled() ||
+                fluxParticleSystem.GetModuleEnabled("tplab.fluxfx.noise") != noise.GetEnabled())
+            {
+                Logger.LogError("Typed Module Enabled: Generic API mismatch.");
+                return;
+            }
+
+            gravity.SetEnabled(initialGravity);
+            force.SetEnabled(initialForce);
+            noise.SetEnabled(initialNoise);
+            vortex.SetEnabled(initialVortex);
+            drag.SetEnabled(initialDrag);
+            limitVelocity.SetEnabled(initialLimitVelocity);
+
+            Logger.Log("Typed Module Enabled: PASS");
         }
     }
 }
