@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 namespace TpLab.Flux.FX.Editor
 {
     /// <summary>
-    /// Particle SystemのGPU Moduleをコンパイルし、ShaderとBuild結果を後続Passへ渡します。
+    /// Particle Systemをコンパイルし、ShaderとBuild結果を後続Passへ渡します。
     /// </summary>
     public class FluxFXCompileBuildPass : PassBase
     {
@@ -28,7 +28,8 @@ namespace TpLab.Flux.FX.Editor
         public override void Execute(SceneFlowContext context)
         {
             var registry = new FluxParticleGpuModuleRegistry();
-            var compiler = new FluxParticleGpuCompiler(registry);
+            var gpuCompiler = new FluxParticleGpuCompiler(registry);
+            var runtimeCompiler = new FluxParticleCompiler();
             var pipeline = new FluxParticleShaderPipeline(registry);
             var session = new FluxFXCompilationSession();
 
@@ -55,7 +56,7 @@ namespace TpLab.Flux.FX.Editor
                 }
 
                 var plan = FluxParticleCompilePlan.Create(authoring);
-                var result = compiler.Compile(plan);
+                var result = gpuCompiler.Compile(plan);
 
                 if (!result.Success)
                 {
@@ -63,11 +64,12 @@ namespace TpLab.Flux.FX.Editor
                 }
 
                 var artifact = pipeline.BuildVelocity(result.Compilation);
+                var runtimeJson = runtimeCompiler.Compile(authoring, plan, result.Compilation);
                 var shader = pipeline.GetOrCreate(artifact);
 
                 velocityKernel.SetProgramVariable("shader", shader);
 
-                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifact));
+                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson));
 
                 assignedCount++;
 
@@ -76,7 +78,7 @@ namespace TpLab.Flux.FX.Editor
 
             context.Data.Add(session);
 
-            Logger.Log($"GPU compilation completed. Systems: {assignedCount}");
+            Logger.Log($"Particle compilation completed. Systems: {assignedCount}");
         }
 
         static FluxKernel FindVelocityKernel(FluxParticleSimulation simulation)

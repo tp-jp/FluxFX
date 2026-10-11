@@ -45,7 +45,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
             var artifact = pipeline.BuildVelocity(result.Compilation);
-            var buildResult = new FluxParticleBuildResult(result.Compilation, artifact);
+            var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
+            var buildResult = new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson);
 
             var session = new FluxFXCompilationSession();
             session.Add(_authoring, buildResult);
@@ -75,14 +76,16 @@ namespace TpLab.Flux.FX.Tests.Editor
             var registry = new FluxParticleGpuModuleRegistry();
             var compiler = new FluxParticleGpuCompiler(registry);
 
-            var result = compiler.Compile(FluxParticleCompilePlan.Create(_authoring));
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var result = compiler.Compile(plan);
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
             var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(result.Compilation);
             var session = new FluxFXCompilationSession();
 
-            session.Add(_authoring, new FluxParticleBuildResult(result.Compilation, artifact));
+            var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
+            session.Add(_authoring, new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson));
 
             var data = new SceneFlowDataStore();
             data.Add(session);

@@ -102,6 +102,25 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(secondSession.TryGet(_firstAuthoring, out _));
         }
 
+        [Test]
+        public void BuildResultPreservesRuntimeJson()
+        {
+            var plan = FluxParticleCompilePlan.Create(_firstAuthoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var compileResult = new FluxParticleGpuCompiler(registry).Compile(plan);
+
+            Assert.IsTrue(compileResult.Success, compileResult.Validation.GetReport());
+
+            var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(compileResult.Compilation);
+            var runtimeJson = new FluxParticleCompiler().Compile(_firstAuthoring, plan, compileResult.Compilation);
+
+            var buildResult = new FluxParticleBuildResult(compileResult.Compilation, artifact, runtimeJson);
+
+            Assert.AreEqual(runtimeJson, buildResult.RuntimeJson);
+            Assert.AreSame(compileResult.Compilation, buildResult.Compilation);
+            Assert.AreSame(artifact, buildResult.VelocityArtifact);
+        }
+
         static FluxParticleBuildResult CreateResult(FluxParticleAuthoring authoring)
         {
             var registry = new FluxParticleGpuModuleRegistry();
@@ -111,8 +130,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
             var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(result.Compilation);
+            var runtimeJson = new FluxParticleCompiler().Compile(authoring, plan, result.Compilation);
 
-            return new FluxParticleBuildResult(result.Compilation, artifact);
+            return new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson);
         }
     }
 }
