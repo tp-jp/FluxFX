@@ -22,12 +22,18 @@ namespace TpLab.Flux.FX.Tests.Editor
             _gameObject = new GameObject("GPU Compiler Test");
             _authoring = _gameObject.AddComponent<FluxParticleAuthoring>();
             _compiler = new FluxParticleGpuCompiler(new FluxParticleGpuModuleRegistry());
+
+            TestGpuModuleDefinition.ParameterName = "_TestStrength";
+            TestGpuModuleDefinition.DuplicateParameter = false;
         }
 
         [TearDown]
         public void TearDown()
         {
             Object.DestroyImmediate(_gameObject);
+
+            TestGpuModuleDefinition.ParameterName = "_TestStrength";
+            TestGpuModuleDefinition.DuplicateParameter = false;
         }
 
         [Test]
@@ -35,14 +41,65 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             var result = Compile();
 
-            Assert.IsTrue(result.Success, result.Validation.GetReport());
-            Assert.IsNotNull(result.Compilation);
+            AssertSuccess(result);
 
             var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
 
             Assert.IsNotNull(stage);
             Assert.AreEqual(0, stage.Modules.Count);
             Assert.AreEqual(0, stage.Parameters.Count);
+            Assert.IsEmpty(result.Validation.Issues);
+        }
+
+        [Test]
+        public void RegisteredGpuModuleCompilesSuccessfully()
+        {
+            AddModule(new TestGpuModule());
+
+            var result = Compile();
+
+            AssertSuccess(result);
+            Assert.IsEmpty(result.Validation.Issues);
+
+            var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
+
+            Assert.AreEqual(1, stage.Modules.Count);
+            Assert.AreEqual("test.fluxfx.validator", stage.Modules[0].ModuleId);
+        }
+
+        [Test]
+        public void StandardAndLegacyModulesCompileSuccessfully()
+        {
+            AddModule(new FluxParticleGravityModule());
+            AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleForceModule());
+            AddModule(new FluxParticleColorOverLifetimeModule());
+
+            var result = Compile();
+
+            AssertSuccess(result);
+            Assert.IsEmpty(result.Validation.Issues);
+
+            var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
+
+            Assert.AreEqual(3, stage.Modules.Count);
+        }
+
+        [Test]
+        public void CustomAndStandardModulesCompileSuccessfully()
+        {
+            AddModule(new TestGpuModule());
+            AddModule(new FluxParticleGravityModule());
+            AddModule(new FluxParticleDragModule());
+
+            var result = Compile();
+
+            AssertSuccess(result);
+            Assert.IsEmpty(result.Validation.Issues);
+
+            var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
+
+            Assert.AreEqual(3, stage.Modules.Count);
         }
 
         [Test]
@@ -52,7 +109,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsTrue(result.Success, result.Validation.GetReport());
+            AssertSuccess(result);
 
             var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
             var module = stage.Modules[0];
@@ -82,7 +139,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsTrue(result.Success, result.Validation.GetReport());
+            AssertSuccess(result);
 
             var module = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate).Modules[0];
 
@@ -100,7 +157,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsTrue(result.Success, result.Validation.GetReport());
+            AssertSuccess(result);
 
             var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
 
@@ -113,47 +170,66 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void InvalidParameterNameProducesNoCompilation()
+        public void UnregisteredModuleProducesG001()
         {
-            TestGpuModuleDefinition.ParameterName = "invalid-name";
+            AddModule(new UnregisteredGpuModule());
 
-            try
-            {
-                AddModule(new TestGpuModule());
-
-                var result = Compile();
-
-                Assert.IsFalse(result.Success);
-                Assert.IsNull(result.Compilation);
-
-                Assert.IsTrue(HasIssue(result.Validation, "G003"));
-            }
-            finally
-            {
-                TestGpuModuleDefinition.ParameterName = "_TestStrength";
-            }
+            AssertFailure("G001");
         }
 
         [Test]
-        public void DuplicateParameterProducesNoCompilation()
+        public void UnsupportedStageProducesG002()
+        {
+            AddModule(new UnsupportedStageGpuModule());
+
+            AssertFailure("G002");
+        }
+
+        [Test]
+        public void InvalidParameterNameProducesG003()
+        {
+            TestGpuModuleDefinition.ParameterName = "invalid-name";
+
+            AddModule(new TestGpuModule());
+
+            AssertFailure("G003");
+        }
+
+        [Test]
+        public void BuiltInParameterCollisionProducesG004()
+        {
+            TestGpuModuleDefinition.ParameterName = "_DeltaTime";
+
+            AddModule(new TestGpuModule());
+
+            AssertFailure("G004");
+        }
+
+        [Test]
+        public void DuplicateParameterProducesG005()
         {
             TestGpuModuleDefinition.DuplicateParameter = true;
 
-            try
-            {
-                AddModule(new TestGpuModule());
+            AddModule(new TestGpuModule());
 
-                var result = Compile();
+            AssertFailure("G005");
+        }
 
-                Assert.IsFalse(result.Success);
-                Assert.IsNull(result.Compilation);
+        void AssertFailure(string expectedCode)
+        {
+            var result = Compile();
 
-                Assert.IsTrue(HasIssue(result.Validation, "G005"));
-            }
-            finally
-            {
-                TestGpuModuleDefinition.DuplicateParameter = false;
-            }
+            Assert.IsFalse(result.Success);
+            Assert.IsNull(result.Compilation);
+            Assert.IsTrue(result.Validation.HasErrors);
+            Assert.IsTrue(HasIssue(result.Validation, expectedCode),
+                $"Expected {expectedCode}.\n{result.Validation.GetReport()}");
+        }
+
+        static void AssertSuccess(FluxParticleGpuCompileResult result)
+        {
+            Assert.IsTrue(result.Success, result.Validation.GetReport());
+            Assert.IsNotNull(result.Compilation);
         }
 
         FluxParticleGpuCompileResult Compile()
