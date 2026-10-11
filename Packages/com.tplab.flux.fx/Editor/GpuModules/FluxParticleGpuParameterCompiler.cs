@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
 {

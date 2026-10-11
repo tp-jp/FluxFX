@@ -139,16 +139,16 @@ namespace TpLab.Flux.FX.Udon
             {
                 var name = names[i].String;
                 var parameter = velocity[name].DataDictionary;
-                var type = (int)parameter["type"].Double;
+                var type = (FluxParticleParameterType)(int)parameter["type"].Double;
                 var value = parameter["value"];
 
                 switch (type)
                 {
-                    case 0:
+                    case FluxParticleParameterType.Float:
                         velocityParameterStore.RegisterFloat(name, (float)value.Double);
                         break;
 
-                    case 1:
+                    case FluxParticleParameterType.Vector:
                         var components = value.DataList;
 
                         if (components.Count != 4)

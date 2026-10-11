@@ -4,6 +4,7 @@ using TpLab.Flux.FX.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;

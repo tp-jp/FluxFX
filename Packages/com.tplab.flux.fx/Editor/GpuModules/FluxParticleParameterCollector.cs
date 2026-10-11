@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
 {
-    public enum FluxParticleParameterType
-    {
-        Float,
-        Vector
-    }
-
     public sealed class FluxParticleParameterCollector
     {
         public sealed class Parameter

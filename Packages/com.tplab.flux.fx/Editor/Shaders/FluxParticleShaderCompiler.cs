@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Shaders
 {
