@@ -10,7 +10,7 @@
       "version": "0.0.1"
     },
     "com.tplab.sceneflow": {
-      "version": "2.1.1"
+      "version": "2.1.4"
     }
   },
   "locked": {
@@ -36,7 +36,7 @@
       }
     },
     "com.tplab.sceneflow": {
-      "version": "2.1.1",
+      "version": "2.1.4",
       "dependencies": {}
     }
   }
