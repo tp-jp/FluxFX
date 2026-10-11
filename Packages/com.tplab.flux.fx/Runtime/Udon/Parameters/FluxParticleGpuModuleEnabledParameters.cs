@@ -10,18 +10,6 @@ namespace TpLab.Flux.FX.Udon.Parameters
         const int EnabledParameterIndex = 1;
 
         [PublicAPI]
-        public static bool GetEnabled(this FluxParticleGravityParameters parameters)
-        {
-            return ReadEnabled(parameters);
-        }
-
-        [PublicAPI]
-        public static void SetEnabled(this FluxParticleGravityParameters parameters, bool enabled)
-        {
-            WriteEnabled(parameters, enabled);
-        }
-
-        [PublicAPI]
         public static bool GetEnabled(this FluxParticleForceParameters parameters)
         {
             return ReadEnabled(parameters);

@@ -155,7 +155,11 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public bool SetModuleEnabled(string moduleId, bool enabled)
         {
-            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return false;
+            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
+            {
+                Logger.LogError($"GPU Module is not registered: {moduleId}");
+                return false;
+            }
 
             return particleSimulation.SetGpuParameterFloat(target, parameterName, enabled ? 1.0f : 0.0f);
         }
@@ -163,13 +167,23 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public bool GetModuleEnabled(string moduleId)
         {
-            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return false;
+            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
+            {
+                Logger.LogError($"GPU Module is not registered: {moduleId}");
+                return false;
+            }
 
             return particleSimulation.GetGpuParameterFloat(target, parameterName) > 0.5f;
         }
 
         [PublicAPI]
         public DataList GetGpuModuleBinding(string moduleId)
+        {
+            return TryGetGpuModuleBinding(moduleId);
+        }
+
+        [PublicAPI]
+        public DataList TryGetGpuModuleBinding(string moduleId)
         {
             if (!TryGetModuleBinding(moduleId, out var target, out var enabledParameter)) return null;
 
@@ -406,68 +420,32 @@ namespace TpLab.Flux.FX.Udon
 
         void InitializeGravity()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_Gravity")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.gravity");
-            if (enabledParameter == null) return;
-
-            _gravity = FluxParticleGravityParameters.New(store, enabledParameter);
+            _gravity = FluxParticleGravityParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.gravity"));
         }
 
         void InitializeForce()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_Force")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.force");
-            if (enabledParameter == null) return;
-
-            _force = FluxParticleForceParameters.New(store, enabledParameter);
+            _force = FluxParticleForceParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.force"));
         }
 
         void InitializeNoise()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_NoiseStrength") || !store.HasParameter("_NoiseScale") || !store.HasParameter("_NoiseSpeed")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.noise");
-            if (enabledParameter == null) return;
-
-            _noise = FluxParticleNoiseParameters.New(store, enabledParameter);
+            _noise = FluxParticleNoiseParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.noise"));
         }
 
         void InitializeVortex()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_VortexCenter") || !store.HasParameter("_VortexAxis") || !store.HasParameter("_VortexStrength")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.vortex");
-            if (enabledParameter == null) return;
-
-            _vortex = FluxParticleVortexParameters.New(store, enabledParameter);
+            _vortex = FluxParticleVortexParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.vortex"));
         }
 
         void InitializeDrag()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_Drag")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.drag");
-            if (enabledParameter == null) return;
-
-            _drag = FluxParticleDragParameters.New(store, enabledParameter);
+            _drag = FluxParticleDragParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.drag"));
         }
 
         void InitializeLimitVelocity()
         {
-            var store = particleSimulation.GetVelocityParameterStore();
-            if (store == null || !store.HasParameter("_MaxSpeed")) return;
-
-            var enabledParameter = GetVelocityModuleEnabledParameter("tplab.fluxfx.limit-velocity");
-            if (enabledParameter == null) return;
-
-            _limitVelocity = FluxParticleLimitVelocityParameters.New(store, enabledParameter);
+            _limitVelocity = FluxParticleLimitVelocityParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.limit-velocity"));
         }
 
         void InitializeRenderer(DataDictionary parameters)
@@ -610,11 +588,7 @@ namespace TpLab.Flux.FX.Udon
             target = FluxParticleKernelTarget.Velocity;
             parameterName = null;
 
-            if (_gpuModuleBindings == null || string.IsNullOrEmpty(moduleId) || !_gpuModuleBindings.TryGetValue(moduleId, out var token))
-            {
-                Logger.LogError($"GPU Module is not registered: {moduleId}");
-                return false;
-            }
+            if (_gpuModuleBindings == null || string.IsNullOrEmpty(moduleId) || !_gpuModuleBindings.TryGetValue(moduleId, out var token)) return false;
 
             var binding = token.DataDictionary;
 
@@ -622,19 +596,6 @@ namespace TpLab.Flux.FX.Udon
             parameterName = binding["enabledParameter"].String;
 
             return true;
-        }
-
-        string GetVelocityModuleEnabledParameter(string moduleId)
-        {
-            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return null;
-
-            if (target != FluxParticleKernelTarget.Velocity)
-            {
-                Logger.LogError($"GPU Module is not assigned to Velocity: {moduleId}");
-                return null;
-            }
-
-            return parameterName;
         }
     }
 }

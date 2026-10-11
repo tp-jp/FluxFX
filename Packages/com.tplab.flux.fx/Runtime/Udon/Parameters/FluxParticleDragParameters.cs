@@ -18,12 +18,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleDragParameters : DataList
     {
-        internal static FluxParticleDragParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
+        internal static FluxParticleDragParameters New(DataList binding)
         {
             var data = new DataToken[(int)FluxParticleDragParameter.Count];
 
-            data[(int)FluxParticleDragParameter.Store] = new DataToken(store);
-            data[(int)FluxParticleDragParameter.EnabledParameter] = enabledParameter;
+            data[(int)FluxParticleDragParameter.Store] = binding[0];
+            data[(int)FluxParticleDragParameter.EnabledParameter] = binding[1];
 
             return (FluxParticleDragParameters)new DataList(data);
         }

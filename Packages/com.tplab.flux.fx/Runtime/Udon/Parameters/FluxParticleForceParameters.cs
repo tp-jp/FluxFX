@@ -18,12 +18,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleForceParameters : DataList
     {
-        internal static FluxParticleForceParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
+        internal static FluxParticleForceParameters New(DataList binding)
         {
             var data = new DataToken[(int)FluxParticleForceParameter.Count];
 
-            data[(int)FluxParticleForceParameter.Store] = new DataToken(store);
-            data[(int)FluxParticleForceParameter.EnabledParameter] = enabledParameter;
+            data[(int)FluxParticleForceParameter.Store] = binding[0];
+            data[(int)FluxParticleForceParameter.EnabledParameter] = binding[1];
 
             return (FluxParticleForceParameters)new DataList(data);
         }

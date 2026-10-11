@@ -18,12 +18,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleVortexParameters : DataList
     {
-        internal static FluxParticleVortexParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
+        internal static FluxParticleVortexParameters New(DataList binding)
         {
             var data = new DataToken[(int)FluxParticleVortexParameter.Count];
 
-            data[(int)FluxParticleVortexParameter.Store] = new DataToken(store);
-            data[(int)FluxParticleVortexParameter.EnabledParameter] = enabledParameter;
+            data[(int)FluxParticleVortexParameter.Store] = binding[0];
+            data[(int)FluxParticleVortexParameter.EnabledParameter] = binding[1];
 
             return (FluxParticleVortexParameters)new DataList(data);
         }

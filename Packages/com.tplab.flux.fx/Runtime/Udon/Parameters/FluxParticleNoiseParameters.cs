@@ -18,12 +18,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     [PublicAPI]
     public class FluxParticleNoiseParameters : DataList
     {
-        internal static FluxParticleNoiseParameters New(FluxParticleGpuParameterStore store, string enabledParameter)
+        internal static FluxParticleNoiseParameters New(DataList binding)
         {
             var data = new DataToken[(int)FluxParticleNoiseParameter.Count];
 
-            data[(int)FluxParticleNoiseParameter.Store] = new DataToken(store);
-            data[(int)FluxParticleNoiseParameter.EnabledParameter] = enabledParameter;
+            data[(int)FluxParticleNoiseParameter.Store] = binding[0];
+            data[(int)FluxParticleNoiseParameter.EnabledParameter] = binding[1];
 
             return (FluxParticleNoiseParameters)new DataList(data);
         }

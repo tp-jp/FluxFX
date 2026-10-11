@@ -738,7 +738,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1416737693}
-  particleSystem: {fileID: 1217573531}
+  fluxParticleSystem: {fileID: 1217573531}
   lowStrength: 1
   highStrength: 5
 --- !u!1 &1506899321 stripped
