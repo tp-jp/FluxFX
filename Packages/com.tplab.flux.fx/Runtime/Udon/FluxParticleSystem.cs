@@ -135,12 +135,6 @@ namespace TpLab.Flux.FX.Udon
         }
 
         [PublicAPI]
-        public void SetVelocityFloat(string name, float value)
-        {
-            SetFloat(FluxParticleKernelTarget.Velocity, name, value);
-        }
-
-        [PublicAPI]
         public void SetFloat(FluxParticleKernelTarget target, string name, float value)
         {
             particleSimulation.SetFloat(target, name, value);
