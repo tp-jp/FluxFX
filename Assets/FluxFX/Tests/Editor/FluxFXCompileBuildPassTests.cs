@@ -97,6 +97,77 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(0.0f, stage.Modules[0].EnabledParameter.FloatValue);
         }
 
+        [Test]
+        public void BuildResultPreservesBothStageArtifacts()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var compiler = new FluxParticleGpuCompiler(new FluxParticleGpuModuleRegistry());
+            var pipeline = new FluxParticleShaderPipeline();
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var result = compiler.Compile(plan);
+
+            Assert.IsTrue(result.Success, result.Validation.GetReport());
+
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.PositionUpdate);
+            var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
+
+            var buildResult = new FluxParticleBuildResult(
+                result.Compilation,
+                new[] { velocityArtifact, positionArtifact },
+                runtimeJson);
+
+            Assert.AreSame(velocityArtifact, buildResult.GetArtifact(FluxParticleExecutionStage.VelocityUpdate));
+            Assert.AreSame(positionArtifact, buildResult.GetArtifact(FluxParticleExecutionStage.PositionUpdate));
+            Assert.AreSame(velocityArtifact, buildResult.VelocityArtifact);
+            Assert.AreEqual(2, buildResult.ShaderArtifacts.Count);
+        }
+
+        [Test]
+        public void BuildResultRejectsMissingStageArtifact()
+        {
+            var compiler = new FluxParticleGpuCompiler(new FluxParticleGpuModuleRegistry());
+            var pipeline = new FluxParticleShaderPipeline();
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var result = compiler.Compile(plan);
+
+            Assert.IsTrue(result.Success, result.Validation.GetReport());
+
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
+
+            Assert.Throws<System.ArgumentException>(() =>
+                new FluxParticleBuildResult(
+                    result.Compilation,
+                    new[] { velocityArtifact },
+                    runtimeJson));
+        }
+
+        [Test]
+        public void BuildResultRejectsDuplicateStageArtifacts()
+        {
+            var compiler = new FluxParticleGpuCompiler(new FluxParticleGpuModuleRegistry());
+            var pipeline = new FluxParticleShaderPipeline();
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var result = compiler.Compile(plan);
+
+            Assert.IsTrue(result.Success, result.Validation.GetReport());
+
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.PositionUpdate);
+            var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
+
+            Assert.Throws<System.ArgumentException>(() =>
+                new FluxParticleBuildResult(
+                    result.Compilation,
+                    new[] { velocityArtifact, velocityArtifact, positionArtifact },
+                    runtimeJson));
+        }
+
         void AddModule(FluxParticleModule module)
         {
             var serializedObject = new SerializedObject(_authoring);

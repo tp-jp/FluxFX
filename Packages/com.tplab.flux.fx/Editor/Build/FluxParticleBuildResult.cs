@@ -1,49 +1,90 @@
 using System;
+using System.Collections.Generic;
 using TpLab.Flux.FX.Editor.GpuModules;
+using TpLab.Flux.FX.Editor.Shaders;
 using TpLab.Flux.FX.Editor.Shaders.Artifacts;
+using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
-    /// Particle SystemのGPUコンパイル結果、Shader Artifact、Runtime JSONを保持します。
+    /// Particle SystemのGPUコンパイル結果、Stage別Shader Artifact、Runtime JSONを保持します。
     /// </summary>
     public sealed class FluxParticleBuildResult
     {
-        /// <summary>
-        /// 検証済みのGPU Compilation Modelを取得します。
-        /// </summary>
+        readonly Dictionary<FluxParticleExecutionStage, ShaderArtifact> _artifacts;
+
         public FluxParticleGpuCompilation Compilation { get; }
 
-        /// <summary>
-        /// Velocity Update用のShader Artifactを取得します。
-        /// </summary>
-        public ShaderArtifact VelocityArtifact { get; }
+        public IReadOnlyDictionary<FluxParticleExecutionStage, ShaderArtifact> ShaderArtifacts { get; }
 
-        /// <summary>
-        /// Runtime用JSONを取得します。
-        /// </summary>
+        public ShaderArtifact VelocityArtifact => GetArtifact(FluxParticleExecutionStage.VelocityUpdate);
+
         public string RuntimeJson { get; }
 
-        /// <summary>
-        /// Particle SystemのBuild結果を作成します。
-        /// </summary>
-        /// <param name="compilation">検証済みのGPU Compilation Model。</param>
-        /// <param name="velocityArtifact">Velocity Update用のShader Artifact。</param>
-        /// <param name="runtimeJson">Runtime用JSON。</param>
-        /// <exception cref="ArgumentNullException">引数がnullの場合。</exception>
-        /// <exception cref="ArgumentException">Runtime JSONが空の場合。</exception>
+        public FluxParticleBuildResult(
+            FluxParticleGpuCompilation compilation,
+            IEnumerable<ShaderArtifact> artifacts,
+            string runtimeJson)
+        {
+            Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
+            if (artifacts == null) throw new ArgumentNullException(nameof(artifacts));
+            if (runtimeJson == null) throw new ArgumentNullException(nameof(runtimeJson));
+            if (string.IsNullOrWhiteSpace(runtimeJson)) throw new ArgumentException("Runtime JSON must not be empty.", nameof(runtimeJson));
+
+            _artifacts = new Dictionary<FluxParticleExecutionStage, ShaderArtifact>();
+
+            foreach (var artifact in artifacts)
+            {
+                if (artifact == null) throw new ArgumentException("Shader Artifact cannot be null.", nameof(artifacts));
+
+                if (!FluxParticleGpuStageRegistry.TryGet(artifact.Stage, out _))
+                {
+                    throw new ArgumentException($"Unsupported Shader Artifact stage: {artifact.Stage}", nameof(artifacts));
+                }
+
+                if (_artifacts.ContainsKey(artifact.Stage))
+                {
+                    throw new ArgumentException($"Duplicate Shader Artifact stage: {artifact.Stage}", nameof(artifacts));
+                }
+
+                _artifacts.Add(artifact.Stage, artifact);
+            }
+
+            foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
+            {
+                if (Compilation.GetStage(descriptor.Stage) == null)
+                {
+                    throw new ArgumentException($"Compilation stage was not found: {descriptor.Stage}", nameof(compilation));
+                }
+
+                if (!_artifacts.ContainsKey(descriptor.Stage))
+                {
+                    throw new ArgumentException($"Shader Artifact was not found: {descriptor.Stage}", nameof(artifacts));
+                }
+            }
+
+            ShaderArtifacts = new System.Collections.ObjectModel.ReadOnlyDictionary<FluxParticleExecutionStage, ShaderArtifact>(_artifacts);
+            RuntimeJson = runtimeJson;
+        }
+
         public FluxParticleBuildResult(
             FluxParticleGpuCompilation compilation,
             ShaderArtifact velocityArtifact,
             string runtimeJson)
+            : this(compilation, new[]
+            {
+                velocityArtifact,
+                new FluxParticleShaderPipeline().Build(compilation, FluxParticleExecutionStage.PositionUpdate)
+            }, runtimeJson)
         {
-            Compilation = compilation ?? throw new ArgumentNullException(nameof(compilation));
-            VelocityArtifact = velocityArtifact ?? throw new ArgumentNullException(nameof(velocityArtifact));
+        }
 
-            if (runtimeJson == null) throw new ArgumentNullException(nameof(runtimeJson));
-            if (string.IsNullOrWhiteSpace(runtimeJson)) throw new ArgumentException("Runtime JSON must not be empty.", nameof(runtimeJson));
+        public ShaderArtifact GetArtifact(FluxParticleExecutionStage stage)
+        {
+            if (_artifacts.TryGetValue(stage, out var artifact)) return artifact;
 
-            RuntimeJson = runtimeJson;
+            throw new InvalidOperationException($"Shader Artifact was not found: {stage}");
         }
     }
 }

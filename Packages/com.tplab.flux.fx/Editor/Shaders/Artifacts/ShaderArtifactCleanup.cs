@@ -34,6 +34,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
 
         static readonly Regex ShaderNamePattern = new Regex(@"^[A-Za-z][A-Za-z0-9]*_[a-f0-9]{64}\.shader$", RegexOptions.Compiled);
         static readonly Regex IncludeNamePattern = new Regex(@"^.+_[a-f0-9]{64}\.(?:hlsl|cginc)$", RegexOptions.Compiled);
+
         static readonly Regex GeneratedIncludePattern = new Regex(
             @"#\s*include\s*""(?<path>Assets/FluxFX/Generated/Includes/[^""]+)""",
             RegexOptions.Compiled);
@@ -156,17 +157,19 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
 
                 if (!result.Success)
                 {
-                    throw new InvalidOperationException(
-                        $"Particle compilation failed during Shader cleanup for '{authoring.name}':\n{result.Validation.GetReport()}");
+                    throw new InvalidOperationException($"Particle compilation failed during Shader cleanup for '{authoring.name}':\n{result.Validation.GetReport()}");
                 }
 
-                var artifact = pipeline.BuildVelocity(result.Compilation);
-
-                protectedPaths.Add(artifact.AssetPath);
-
-                foreach (var include in artifact.Includes.Artifacts)
+                foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
                 {
-                    protectedPaths.Add(include.AssetPath);
+                    var artifact = pipeline.Build(result.Compilation, descriptor.Stage);
+
+                    protectedPaths.Add(artifact.AssetPath);
+
+                    foreach (var include in artifact.Includes.Artifacts)
+                    {
+                        protectedPaths.Add(include.AssetPath);
+                    }
                 }
             }
         }

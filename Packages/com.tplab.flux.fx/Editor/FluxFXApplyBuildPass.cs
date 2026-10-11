@@ -3,7 +3,6 @@ using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts;
-using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
 using TpLab.SceneFlow.Editor.Cores;
@@ -18,8 +17,6 @@ namespace TpLab.Flux.FX.Editor
     /// </summary>
     public class FluxFXApplyBuildPass : PassBase
     {
-        const string VelocityShaderPrefix = "Hidden/FluxFX/Generated/Velocity_";
-
         protected override void ConfigureDependencies(DependencyBuilder builder)
         {
             builder.After<FluxBuildPass>();
@@ -48,28 +45,30 @@ namespace TpLab.Flux.FX.Editor
                     throw new InvalidOperationException($"FluxParticleSimulation was not found under '{authoring.name}'.");
                 }
 
-                var velocityKernel = FindVelocityKernel(simulation);
+                var kernels = FluxParticleGpuKernelResolver.Resolve(simulation);
 
-                if (velocityKernel == null)
+                foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
                 {
-                    throw new InvalidOperationException($"Velocity FluxKernel was not found under '{authoring.name}'.");
+                    var kernel = kernels[descriptor.Stage];
+                    var material = kernel.GetProgramVariable("material") as Material;
+
+                    if (material == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"{descriptor.Stage} Kernel Material was not found under '{authoring.name}'.");
+                    }
+
+                    var stage = result.Compilation.GetStage(descriptor.Stage);
+
+                    if (stage == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"{descriptor.Stage} Compilation Stage was not found for '{authoring.name}'.");
+                    }
+
+                    binder.Apply(stage, material);
                 }
 
-                var material = velocityKernel.GetProgramVariable("material") as Material;
-
-                if (material == null)
-                {
-                    throw new InvalidOperationException($"Velocity Kernel Material was not found under '{authoring.name}'.");
-                }
-
-                var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
-
-                if (stage == null)
-                {
-                    throw new InvalidOperationException($"Velocity Compilation Stage was not found for '{authoring.name}'.");
-                }
-
-                binder.Apply(stage, material);
                 particleSystem.SetProgramVariable("compiledParameters", result.RuntimeJson);
 
                 var particleState = authoring.GetComponentInChildren<FluxParticleState>(true);
@@ -119,28 +118,6 @@ namespace TpLab.Flux.FX.Editor
             UnityEditor.AssetDatabase.SaveAssets();
 
             Logger.Log($"Particle apply completed. Systems: {appliedCount}");
-        }
-
-        static FluxKernel FindVelocityKernel(FluxParticleSimulation simulation)
-        {
-            var kernels = simulation.GetComponentsInChildren<FluxKernel>(true);
-            FluxKernel result = null;
-
-            foreach (var kernel in kernels)
-            {
-                var shader = kernel.Shader;
-
-                if (shader == null || !shader.name.StartsWith(VelocityShaderPrefix, StringComparison.Ordinal)) continue;
-
-                if (result != null)
-                {
-                    throw new InvalidOperationException($"Multiple Velocity FluxKernels were found under '{simulation.name}'.");
-                }
-
-                result = kernel;
-            }
-
-            return result;
         }
     }
 }

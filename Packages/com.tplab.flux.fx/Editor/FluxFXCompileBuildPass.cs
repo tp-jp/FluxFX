@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Editor.Shaders;
+using TpLab.Flux.FX.Editor.Shaders.Artifacts;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
-using TpLab.Flux.Udon;
 using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
 using Object = UnityEngine.Object;
@@ -17,9 +18,6 @@ namespace TpLab.Flux.FX.Editor
     /// </summary>
     public class FluxFXCompileBuildPass : PassBase
     {
-        const string SourceShaderName = "FluxFX/ParticleVelocityUpdate";
-        const string GeneratedShaderPrefix = "Hidden/FluxFX/Generated/Velocity_";
-
         protected override void ConfigureDependencies(DependencyBuilder builder)
         {
             builder.Before<FluxBuildPass>();
@@ -48,13 +46,7 @@ namespace TpLab.Flux.FX.Editor
                     throw new InvalidOperationException($"FluxParticleSimulation was not found under '{authoring.name}'.");
                 }
 
-                var velocityKernel = FindVelocityKernel(simulation);
-
-                if (velocityKernel == null)
-                {
-                    throw new InvalidOperationException($"Velocity FluxKernel was not found under '{authoring.name}'.");
-                }
-
+                var kernels = FluxParticleGpuKernelResolver.Resolve(simulation);
                 var plan = FluxParticleCompilePlan.Create(authoring);
                 var result = gpuCompiler.Compile(plan);
 
@@ -63,50 +55,29 @@ namespace TpLab.Flux.FX.Editor
                     throw new InvalidOperationException($"Particle compilation failed for '{authoring.name}':\n{result.Validation.GetReport()}");
                 }
 
-                var artifact = pipeline.BuildVelocity(result.Compilation);
+                var artifacts = new List<ShaderArtifact>();
+
+                foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
+                {
+                    var artifact = pipeline.Build(result.Compilation, descriptor.Stage);
+                    var shader = pipeline.GetOrCreate(artifact);
+                    var kernel = kernels[descriptor.Stage];
+
+                    kernel.SetProgramVariable("shader", shader);
+                    artifacts.Add(artifact);
+
+                    Logger.Log($"[FluxFX] Shader assigned: {shader.name} to {authoring.name}", authoring);
+                }
+
                 var runtimeJson = runtimeCompiler.Compile(authoring, plan, result.Compilation);
-                var shader = pipeline.GetOrCreate(artifact);
 
-                velocityKernel.SetProgramVariable("shader", shader);
-
-                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson));
-
+                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifacts, runtimeJson));
                 assignedCount++;
-
-                Logger.Log($"Shader assigned: {shader.name} to {authoring.name}", authoring);
             }
 
             context.Data.Add(session);
 
-            Logger.Log($"Particle compilation completed. Systems: {assignedCount}");
-        }
-
-        static FluxKernel FindVelocityKernel(FluxParticleSimulation simulation)
-        {
-            var kernels = simulation.GetComponentsInChildren<FluxKernel>(true);
-            FluxKernel result = null;
-
-            foreach (var kernel in kernels)
-            {
-                var shader = kernel.Shader;
-                if (shader == null) continue;
-
-                var shaderName = shader.name;
-
-                if (shaderName != SourceShaderName && !shaderName.StartsWith(GeneratedShaderPrefix, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (result != null)
-                {
-                    throw new InvalidOperationException($"Multiple Velocity FluxKernels were found under '{simulation.name}'.");
-                }
-
-                result = kernel;
-            }
-
-            return result;
+            Logger.Log($"[FluxFX] Particle compilation completed. Systems: {assignedCount}");
         }
     }
 }

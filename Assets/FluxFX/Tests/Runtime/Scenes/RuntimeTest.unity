@@ -344,7 +344,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &925724770
 Transform:
   m_ObjectHideFlags: 0
@@ -616,7 +616,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1416737689
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5868,17 +5868,17 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[0]
-      value: 8074038503308001558
+      value: 8074038503308001657
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[1]
-      value: 8074038503308001559
+      value: 8074038503308001658
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -5894,6 +5894,16 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038503308001559]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleVelocityOverLifetimeModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657]
+      value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleVelocityOverLifetimeModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001658]
+      value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleGravityModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -5927,12 +5937,32 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+      propertyPath: managedReferences[8074038503308001657].end.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].end.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].end.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
       propertyPath: managedReferences[8074038503308001464].radial
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038503308001559].radial
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].radial
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -5963,7 +5993,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038503308001559].enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -5979,6 +6009,31 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038503308001559].start.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].start.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].start.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].start.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001658].enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -6008,6 +6063,21 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038503308001559].offset.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].offset.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].offset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].offset.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -6053,6 +6123,36 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038503308001559].orbital.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].orbital.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].orbital.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001657].orbital.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001658].gravity.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001658].gravity.y
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[8074038503308001658].gravity.z
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
