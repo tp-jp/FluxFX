@@ -1,6 +1,5 @@
 using System;
 using Newtonsoft.Json.Linq;
-using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
@@ -15,6 +14,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
             foreach (var stage in compilation.Stages)
             {
+                var descriptor = FluxParticleGpuStageRegistry.GetRequired(stage.Stage);
                 var parameters = new JObject();
 
                 foreach (var parameter in stage.Parameters)
@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                     parameters.Add(parameter.Name, WriteParameter(parameter));
                 }
 
-                stages.Add(GetStageName(stage.Stage), parameters);
+                stages.Add(descriptor.RuntimeKey, parameters);
             }
 
             return stages;
@@ -36,7 +36,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
             foreach (var stage in compilation.Stages)
             {
-                var target = GetKernelTarget(stage.Stage);
+                var descriptor = FluxParticleGpuStageRegistry.GetRequired(stage.Stage);
 
                 foreach (var module in stage.Modules)
                 {
@@ -49,7 +49,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
                     bindings.Add(module.ModuleId, new JObject
                     {
-                        ["target"] = (int)target,
+                        ["target"] = (int)descriptor.KernelTarget,
                         ["enabledParameter"] = module.EnabledParameter.Name,
                         ["parameters"] = parameters
                     });
@@ -87,30 +87,6 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
                 default:
                     throw new InvalidOperationException($"Unsupported GPU parameter type: {parameter.Type}");
-            }
-        }
-
-        static string GetStageName(FluxParticleExecutionStage stage)
-        {
-            switch (stage)
-            {
-                case FluxParticleExecutionStage.VelocityUpdate:
-                    return "velocity";
-
-                default:
-                    throw new InvalidOperationException($"GPU Runtime parameters are not supported for stage: {stage}");
-            }
-        }
-
-        static FluxParticleKernelTarget GetKernelTarget(FluxParticleExecutionStage stage)
-        {
-            switch (stage)
-            {
-                case FluxParticleExecutionStage.VelocityUpdate:
-                    return FluxParticleKernelTarget.Velocity;
-
-                default:
-                    throw new InvalidOperationException($"GPU Runtime binding is not supported for stage: {stage}");
             }
         }
     }

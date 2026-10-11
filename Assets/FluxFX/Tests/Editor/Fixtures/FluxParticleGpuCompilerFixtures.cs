@@ -15,6 +15,16 @@ namespace TpLab.Flux.FX.Tests.Editor
     }
 
     [Serializable]
+    public sealed class TestPositionGpuModule : FluxParticleModule
+    {
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.PositionUpdate;
+
+        public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.Position | FluxParticleAttribute.Velocity;
+
+        public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.Position;
+    }
+
+    [Serializable]
     public sealed class UnregisteredGpuModule : FluxParticleModule
     {
         public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.VelocityUpdate;
@@ -27,7 +37,7 @@ namespace TpLab.Flux.FX.Tests.Editor
     [Serializable]
     public sealed class UnsupportedStageGpuModule : FluxParticleModule
     {
-        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.PositionUpdate;
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.Spawn;
 
         public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.Position;
 
@@ -55,6 +65,25 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 collector.AddFloat(ParameterName, 2.0f);
             }
+        }
+    }
+
+    public sealed class TestPositionGpuModuleDefinition : FluxParticleGpuModuleDefinition<TestPositionGpuModule>
+    {
+        public static string ParameterName = "_TestPositionStrength";
+
+        public override string ModuleId => "test.fluxfx.position";
+
+        // C6-2ではHLSLを実行しないため、実装用ファイルはC6-3で用意します。
+        public override string HlslPath => "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+
+        public override string EntryPoint => "FluxFX_CustomLift";
+
+        public override int Order => 150;
+
+        public override void CollectParameters(TestPositionGpuModule module, FluxParticleParameterCollector collector)
+        {
+            collector.AddFloat(ParameterName, 1.0f);
         }
     }
 

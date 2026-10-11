@@ -8,7 +8,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 {
     public sealed class FluxParticleGpuCompiler
     {
-        const string VelocityShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Templates/ParticleVelocityUpdate.shader.template";
+        const string PositionShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/ParticlePositionUpdate.shader";
 
         static readonly Regex IdentifierPattern = new Regex(
             @"^_[A-Za-z][A-Za-z0-9_]*$",
@@ -37,9 +37,16 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 validation.Add(issue.Code, issue.Message, issue.ModuleType, issue.Stage, issue.Severity);
             }
 
-            var reservedNames = CollectReservedNames();
-            var velocityModules = new List<FluxParticleGpuModuleCompilation>();
-            var velocityNames = new HashSet<string>(StringComparer.Ordinal);
+            var stageModules = new Dictionary<FluxParticleExecutionStage, List<FluxParticleGpuModuleCompilation>>();
+            var stageNames = new Dictionary<FluxParticleExecutionStage, HashSet<string>>();
+            var reservedNames = new Dictionary<FluxParticleExecutionStage, HashSet<string>>();
+
+            foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
+            {
+                stageModules.Add(descriptor.Stage, new List<FluxParticleGpuModuleCompilation>());
+                stageNames.Add(descriptor.Stage, new HashSet<string>(StringComparer.Ordinal));
+                reservedNames.Add(descriptor.Stage, CollectReservedNames(GetValidationShaderPath(descriptor)));
+            }
 
             foreach (var module in plan.Modules)
             {
@@ -51,15 +58,24 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                     continue;
                 }
 
-                if (module.Stage != FluxParticleExecutionStage.VelocityUpdate)
+                if (!FluxParticleGpuStageRegistry.TryGet(module.Stage, out _))
                 {
                     AddError(validation, "G002", $"GPU Module stage is not supported: {module.Stage}.", module);
                     continue;
                 }
 
-                if (!TryCollectModule(module, definition, reservedNames, velocityNames, validation, out var compiledModule)) continue;
+                if (!TryCollectModule(
+                    module,
+                    definition,
+                    reservedNames[module.Stage],
+                    stageNames[module.Stage],
+                    validation,
+                    out var compiledModule))
+                {
+                    continue;
+                }
 
-                velocityModules.Add(compiledModule);
+                stageModules[module.Stage].Add(compiledModule);
             }
 
             if (validation.HasErrors)
@@ -67,16 +83,20 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 return new FluxParticleGpuCompileResult(null, validation);
             }
 
-            velocityModules.Sort((a, b) =>
-            {
-                var order = a.Order.CompareTo(b.Order);
-                return order != 0 ? order : string.CompareOrdinal(a.ModuleId, b.ModuleId);
-            });
+            var stages = new List<FluxParticleGpuStageCompilation>();
 
-            var stages = new List<FluxParticleGpuStageCompilation>
+            foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
             {
-                new FluxParticleGpuStageCompilation(FluxParticleExecutionStage.VelocityUpdate, velocityModules)
-            };
+                var modules = stageModules[descriptor.Stage];
+
+                modules.Sort((a, b) =>
+                {
+                    var order = a.Order.CompareTo(b.Order);
+                    return order != 0 ? order : string.CompareOrdinal(a.ModuleId, b.ModuleId);
+                });
+
+                stages.Add(new FluxParticleGpuStageCompilation(descriptor.Stage, modules));
+            }
 
             return new FluxParticleGpuCompileResult(new FluxParticleGpuCompilation(stages), validation);
         }
@@ -174,9 +194,19 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             return valid;
         }
 
-        static HashSet<string> CollectReservedNames()
+        static string GetValidationShaderPath(FluxParticleGpuStageDescriptor descriptor)
         {
-            var source = File.ReadAllText(VelocityShaderPath);
+            if (descriptor.Stage == FluxParticleExecutionStage.PositionUpdate)
+            {
+                return PositionShaderPath;
+            }
+
+            return descriptor.ShaderTemplatePath;
+        }
+
+        static HashSet<string> CollectReservedNames(string shaderPath)
+        {
+            var source = File.ReadAllText(shaderPath);
             var names = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (Match match in UniformPattern.Matches(source))
