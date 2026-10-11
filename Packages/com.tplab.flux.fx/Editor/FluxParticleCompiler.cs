@@ -12,15 +12,15 @@ namespace TpLab.Flux.FX.Editor
         public string Compile(FluxParticleAuthoring authoring)
         {
             var plan = FluxParticleCompilePlan.Create(authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var gpuCompiler = new FluxParticleGpuCompiler(registry);
+            var result = gpuCompiler.Compile(plan);
 
-            var validator = new FluxParticleCompileValidator();
-            var validation = validator.Validate(plan);
-
-            if (validation.HasErrors)
+            if (!result.Success)
             {
                 throw new InvalidOperationException(
                     $"FluxParticle compilation failed for '{authoring.name}':\n" +
-                    validation.GetReport());
+                    result.Validation.GetReport());
             }
 
             var parameters = new JObject
@@ -33,19 +33,12 @@ namespace TpLab.Flux.FX.Editor
             AddLifetime(parameters, authoring.Lifetime);
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
-
             AddVelocityOverLifetime(parameters, plan);
 
-            var registry = new FluxParticleGpuModuleRegistry();
+            var writer = new FluxParticleGpuRuntimeDataWriter();
 
-            var gpuParameterCompiler = new FluxParticleGpuParameterCompiler(registry);
-            var gpuBindingCompiler = new FluxParticleGpuModuleBindingCompiler(registry);
-
-            var gpuParameters = gpuParameterCompiler.Compile(plan);
-            var gpuModuleBindings = gpuBindingCompiler.Compile(plan, gpuParameters);
-
-            parameters["gpuParameters"] = gpuParameters;
-            parameters["gpuModuleBindings"] = gpuModuleBindings;
+            parameters["gpuParameters"] = writer.WriteParameters(result.Compilation);
+            parameters["gpuModuleBindings"] = writer.WriteBindings(result.Compilation);
 
             AddRender(parameters, authoring.Render, plan);
 
