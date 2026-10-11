@@ -36,11 +36,7 @@ namespace TpLab.Flux.FX.Udon
         object _shape;
         object _initialVelocity;
         object _velocityOverLifetime;
-        object _force;
-        object _drag;
-        object _noise;
         object _vortex;
-        object _limitVelocity;
         object _startColor;
         object _startSize;
         object _startRotation;
@@ -53,15 +49,7 @@ namespace TpLab.Flux.FX.Udon
 
         FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
 
-        FluxParticleForceParameters Force => (FluxParticleForceParameters)_force;
-
-        FluxParticleDragParameters Drag => (FluxParticleDragParameters)_drag;
-
-        FluxParticleNoiseParameters Noise => (FluxParticleNoiseParameters)_noise;
-
         FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
-
-        FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
 
         FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
 
@@ -116,21 +104,13 @@ namespace TpLab.Flux.FX.Udon
             FluxParticleShapeParameters shape,
             FluxParticleInitialVelocityParameters initialVelocity,
             FluxParticleVelocityOverLifetimeParameters velocityOverLifetime,
-            FluxParticleForceParameters force,
-            FluxParticleDragParameters drag,
-            FluxParticleNoiseParameters noise,
-            FluxParticleVortexParameters vortex,
-            FluxParticleLimitVelocityParameters limitVelocity)
+            FluxParticleVortexParameters vortex)
         {
             _lifetime = lifetime;
             _shape = shape;
             _initialVelocity = initialVelocity;
             _velocityOverLifetime = velocityOverLifetime;
-            _force = force;
-            _drag = drag;
-            _noise = noise;
             _vortex = vortex;
-            _limitVelocity = limitVelocity;
         }
 
         internal FluxParticleGpuParameterStore GetVelocityParameterStore()
@@ -268,7 +248,6 @@ namespace TpLab.Flux.FX.Udon
                 velocityParameterStore.Flush();
             }
 
-            var force = Force.GetForce();
             var vortexCenter = Vortex.GetCenter();
             var vortexAxis = Vortex.GetAxis();
 
@@ -282,12 +261,9 @@ namespace TpLab.Flux.FX.Udon
                 velocityUpdateKernel.SetFloat("_ShapeAngle", Shape.GetAngle());
             }
 
-            velocityUpdateKernel.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
-            velocityUpdateKernel.SetFloat("_Drag", Drag.GetDrag());
             velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));
             velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(vortexAxis.x, vortexAxis.y, vortexAxis.z, 0));
             velocityUpdateKernel.SetFloat("_VortexStrength", Vortex.GetStrength());
-            velocityUpdateKernel.SetFloat("_MaxSpeed", LimitVelocity.GetMaxSpeed());
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             velocityUpdateKernel.SetFloat("_FluxFXSimulationTime", _simulationTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);

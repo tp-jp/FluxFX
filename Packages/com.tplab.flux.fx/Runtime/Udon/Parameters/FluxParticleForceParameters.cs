@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 using VRC.SDK3.Data;
 
@@ -6,22 +7,22 @@ namespace TpLab.Flux.FX.Udon.Parameters
 {
     enum FluxParticleForceParameter
     {
-        Force,
+        Store,
 
         Count
     }
 
     /// <summary>
-    /// ParticleのForceに関するRuntimeパラメーターを保持します。
+    /// ParticleのForceに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
     public class FluxParticleForceParameters : DataList
     {
-        internal static FluxParticleForceParameters New(Vector3 force)
+        internal static FluxParticleForceParameters New(FluxParticleGpuParameterStore store)
         {
             var data = new DataToken[(int)FluxParticleForceParameter.Count];
 
-            data[(int)FluxParticleForceParameter.Force] = new DataToken(force);
+            data[(int)FluxParticleForceParameter.Store] = new DataToken(store);
 
             return (FluxParticleForceParameters)new DataList(data);
         }
@@ -36,23 +37,24 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// Particleに適用するForceを取得します。
         /// </summary>
-        /// <param name="parameters">Forceパラメーター</param>
-        /// <returns>Particleに適用するForce</returns>
         [PublicAPI]
         public static Vector3 GetForce(this FluxParticleForceParameters parameters)
         {
-            return (Vector3)parameters[(int)FluxParticleForceParameter.Force].Reference;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleForceParameter.Store].Reference;
+            var force = store.GetVector("_Force");
+
+            return new Vector3(force.x, force.y, force.z);
         }
 
         /// <summary>
         /// Particleに適用するForceを設定します。
         /// </summary>
-        /// <param name="parameters">Forceパラメーター</param>
-        /// <param name="force">Particleに適用するForce</param>
         [PublicAPI]
         public static void SetForce(this FluxParticleForceParameters parameters, Vector3 force)
         {
-            parameters[(int)FluxParticleForceParameter.Force] = new DataToken(force);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleForceParameter.Store].Reference;
+
+            store.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
         }
     }
 }

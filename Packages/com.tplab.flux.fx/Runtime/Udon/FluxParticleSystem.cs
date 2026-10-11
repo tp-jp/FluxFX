@@ -232,22 +232,18 @@ namespace TpLab.Flux.FX.Udon
             InitializeInitialVelocity(parameters);
             InitializeVelocityOverLifetime(parameters);
             InitializeGravity();
-            InitializeForce(parameters);
-            InitializeDrag(parameters);
-            InitializeNoise(parameters);
+            InitializeForce();
+            InitializeDrag();
+            InitializeNoise();
             InitializeVortex(parameters);
-            InitializeLimitVelocity(parameters);
+            InitializeLimitVelocity();
 
             particleSimulation.Initialize(
                 Lifetime,
                 Shape,
                 InitialVelocity,
                 VelocityOverLifetime,
-                Force,
-                Drag,
-                Noise,
-                Vortex,
-                LimitVelocity);
+                Vortex);
 
             particleSimulation.SetSimulationSpace(simulationSpace);
         }
@@ -369,51 +365,36 @@ namespace TpLab.Flux.FX.Udon
             _gravity = FluxParticleGravityParameters.New(store);
         }
 
-        void InitializeForce(DataDictionary parameters)
+        void InitializeForce()
         {
-            var force = Vector3.zero;
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_Force")) return;
 
-            if (parameters.TryGetValue("force", out var token))
-            {
-                var data = token.DataDictionary;
-
-                force = new Vector3(
-                    (float)data["x"].Double,
-                    (float)data["y"].Double,
-                    (float)data["z"].Double);
-            }
-
-            _force = FluxParticleForceParameters.New(force);
+            _force = FluxParticleForceParameters.New(store);
         }
 
-        void InitializeDrag(DataDictionary parameters)
+        void InitializeDrag()
         {
-            var drag = 0.0f;
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_Drag")) return;
 
-            if (parameters.TryGetValue("drag", out var token))
-            {
-                drag = (float)token.Double;
-            }
-
-            _drag = FluxParticleDragParameters.New(drag);
+            _drag = FluxParticleDragParameters.New(store);
         }
 
-        void InitializeNoise(DataDictionary parameters)
+        void InitializeNoise()
         {
-            var strength = 0.0f;
-            var scale = 0.0f;
-            var speed = 0.0f;
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_NoiseStrength") || !store.HasParameter("_NoiseScale") || !store.HasParameter("_NoiseSpeed")) return;
 
-            if (parameters.TryGetValue("noise", out var token))
-            {
-                var data = token.DataDictionary;
+            _noise = FluxParticleNoiseParameters.New(store);
+        }
 
-                strength = (float)data["strength"].Double;
-                scale = (float)data["scale"].Double;
-                speed = (float)data["speed"].Double;
-            }
+        void InitializeLimitVelocity()
+        {
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_MaxSpeed")) return;
 
-            _noise = FluxParticleNoiseParameters.New(strength, scale, speed);
+            _limitVelocity = FluxParticleLimitVelocityParameters.New(store);
         }
 
         void InitializeVortex(DataDictionary parameters)
@@ -440,18 +421,6 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _vortex = FluxParticleVortexParameters.New(center, axis, strength);
-        }
-
-        void InitializeLimitVelocity(DataDictionary parameters)
-        {
-            var maxSpeed = 0.0f;
-
-            if (parameters.TryGetValue("limitVelocity", out var token))
-            {
-                maxSpeed = (float)token.Double;
-            }
-
-            _limitVelocity = FluxParticleLimitVelocityParameters.New(maxSpeed);
         }
 
         void InitializeRenderer(DataDictionary parameters)

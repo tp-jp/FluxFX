@@ -1,27 +1,28 @@
 using JetBrains.Annotations;
+using TpLab.Flux.FX.Udon;
+using UnityEngine;
 using VRC.SDK3.Data;
-using Mathf = UnityEngine.Mathf;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
     enum FluxParticleLimitVelocityParameter
     {
-        MaxSpeed,
+        Store,
 
         Count
     }
 
     /// <summary>
-    /// ParticleのLimit Velocityに関するRuntimeパラメーターを保持します。
+    /// ParticleのLimit Velocityに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
     public class FluxParticleLimitVelocityParameters : DataList
     {
-        internal static FluxParticleLimitVelocityParameters New(float maxSpeed)
+        internal static FluxParticleLimitVelocityParameters New(FluxParticleGpuParameterStore store)
         {
             var data = new DataToken[(int)FluxParticleLimitVelocityParameter.Count];
 
-            data[(int)FluxParticleLimitVelocityParameter.MaxSpeed] = Mathf.Max(0, maxSpeed);
+            data[(int)FluxParticleLimitVelocityParameter.Store] = new DataToken(store);
 
             return (FluxParticleLimitVelocityParameters)new DataList(data);
         }
@@ -36,23 +37,23 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// Particleの最大速度を取得します。
         /// </summary>
-        /// <param name="parameters">Limit Velocityパラメーター</param>
-        /// <returns>Particleの最大速度</returns>
         [PublicAPI]
         public static float GetMaxSpeed(this FluxParticleLimitVelocityParameters parameters)
         {
-            return (float)parameters[(int)FluxParticleLimitVelocityParameter.MaxSpeed].Double;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleLimitVelocityParameter.Store].Reference;
+
+            return store.GetFloat("_MaxSpeed");
         }
 
         /// <summary>
         /// Particleの最大速度を設定します。
         /// </summary>
-        /// <param name="parameters">Limit Velocityパラメーター</param>
-        /// <param name="maxSpeed">Particleの最大速度</param>
         [PublicAPI]
         public static void SetMaxSpeed(this FluxParticleLimitVelocityParameters parameters, float maxSpeed)
         {
-            parameters[(int)FluxParticleLimitVelocityParameter.MaxSpeed] = Mathf.Max(0, maxSpeed);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleLimitVelocityParameter.Store].Reference;
+
+            store.SetFloat("_MaxSpeed", Mathf.Max(0, maxSpeed));
         }
     }
 }

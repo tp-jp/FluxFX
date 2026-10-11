@@ -36,11 +36,7 @@ namespace TpLab.Flux.FX.Editor
             AddInitialVelocity(parameters, authoring.InitialVelocity);
 
             AddVelocityOverLifetime(parameters, plan);
-            AddForce(parameters, plan);
-            AddDrag(parameters, plan);
-            AddNoise(parameters, plan);
             AddVortex(parameters, plan);
-            AddLimitVelocity(parameters, plan);
 
             var gpuCompiler = new FluxParticleGpuParameterCompiler(new FluxParticleGpuModuleRegistry());
             parameters["gpuParameters"] = gpuCompiler.Compile(plan);
@@ -149,42 +145,6 @@ namespace TpLab.Flux.FX.Editor
             };
         }
 
-        void AddForce(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleForceModule>();
-            if (module == null) return;
-
-            var force = module.Force;
-
-            parameters["force"] = new JObject
-            {
-                ["x"] = force.x,
-                ["y"] = force.y,
-                ["z"] = force.z
-            };
-        }
-
-        void AddDrag(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleDragModule>();
-            if (module == null) return;
-
-            parameters["drag"] = module.Drag;
-        }
-
-        void AddNoise(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleNoiseModule>();
-            if (module == null) return;
-
-            parameters["noise"] = new JObject
-            {
-                ["strength"] = module.Strength,
-                ["scale"] = module.Scale,
-                ["speed"] = module.Speed
-            };
-        }
-
         void AddVortex(JObject parameters, FluxParticleCompilePlan plan)
         {
             var module = plan.GetModule<FluxParticleVortexModule>();
@@ -203,14 +163,6 @@ namespace TpLab.Flux.FX.Editor
                 ["axisZ"] = axis.z,
                 ["strength"] = module.Strength
             };
-        }
-
-        void AddLimitVelocity(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleLimitVelocityModule>();
-            if (module == null) return;
-
-            parameters["limitVelocity"] = module.MaxSpeed;
         }
 
         void AddRender(JObject parameters, RenderSettings render, FluxParticleCompilePlan plan)

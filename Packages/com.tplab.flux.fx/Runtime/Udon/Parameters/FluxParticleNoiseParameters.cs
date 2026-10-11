@@ -1,31 +1,28 @@
 using JetBrains.Annotations;
+using TpLab.Flux.FX.Udon;
+using UnityEngine;
 using VRC.SDK3.Data;
-using Mathf = UnityEngine.Mathf;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
     enum FluxParticleNoiseParameter
     {
-        Strength,
-        Scale,
-        Speed,
+        Store,
 
         Count
     }
 
     /// <summary>
-    /// ParticleのNoiseに関するRuntimeパラメーターを保持します。
+    /// ParticleのNoiseに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
     public class FluxParticleNoiseParameters : DataList
     {
-        internal static FluxParticleNoiseParameters New(float strength, float scale, float speed)
+        internal static FluxParticleNoiseParameters New(FluxParticleGpuParameterStore store)
         {
             var data = new DataToken[(int)FluxParticleNoiseParameter.Count];
 
-            data[(int)FluxParticleNoiseParameter.Strength] = Mathf.Max(0, strength);
-            data[(int)FluxParticleNoiseParameter.Scale] = Mathf.Max(0, scale);
-            data[(int)FluxParticleNoiseParameter.Speed] = Mathf.Max(0, speed);
+            data[(int)FluxParticleNoiseParameter.Store] = new DataToken(store);
 
             return (FluxParticleNoiseParameters)new DataList(data);
         }
@@ -40,67 +37,67 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// Noiseの強度を取得します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <returns>Noiseの強度</returns>
         [PublicAPI]
         public static float GetStrength(this FluxParticleNoiseParameters parameters)
         {
-            return (float)parameters[(int)FluxParticleNoiseParameter.Strength].Double;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            return store.GetFloat("_NoiseStrength");
         }
 
         /// <summary>
         /// Noiseの強度を設定します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <param name="strength">Noiseの強度</param>
         [PublicAPI]
         public static void SetStrength(this FluxParticleNoiseParameters parameters, float strength)
         {
-            parameters[(int)FluxParticleNoiseParameter.Strength] = Mathf.Max(0, strength);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            store.SetFloat("_NoiseStrength", Mathf.Max(0, strength));
         }
 
         /// <summary>
         /// Noiseのスケールを取得します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <returns>Noiseのスケール</returns>
         [PublicAPI]
         public static float GetScale(this FluxParticleNoiseParameters parameters)
         {
-            return (float)parameters[(int)FluxParticleNoiseParameter.Scale].Double;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            return store.GetFloat("_NoiseScale");
         }
 
         /// <summary>
         /// Noiseのスケールを設定します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <param name="scale">Noiseのスケール</param>
         [PublicAPI]
         public static void SetScale(this FluxParticleNoiseParameters parameters, float scale)
         {
-            parameters[(int)FluxParticleNoiseParameter.Scale] = Mathf.Max(0, scale);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            store.SetFloat("_NoiseScale", Mathf.Max(0, scale));
         }
 
         /// <summary>
         /// Noiseの時間変化速度を取得します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <returns>Noiseの時間変化速度</returns>
         [PublicAPI]
         public static float GetSpeed(this FluxParticleNoiseParameters parameters)
         {
-            return (float)parameters[(int)FluxParticleNoiseParameter.Speed].Double;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            return store.GetFloat("_NoiseSpeed");
         }
 
         /// <summary>
         /// Noiseの時間変化速度を設定します。
         /// </summary>
-        /// <param name="parameters">Noiseパラメーター</param>
-        /// <param name="speed">Noiseの時間変化速度</param>
         [PublicAPI]
         public static void SetSpeed(this FluxParticleNoiseParameters parameters, float speed)
         {
-            parameters[(int)FluxParticleNoiseParameter.Speed] = Mathf.Max(0, speed);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleNoiseParameter.Store].Reference;
+
+            store.SetFloat("_NoiseSpeed", Mathf.Max(0, speed));
         }
     }
 }
