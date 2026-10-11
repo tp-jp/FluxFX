@@ -111,7 +111,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(compileResult.Success, compileResult.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(compileResult.Compilation);
+            var artifact = new FluxParticleShaderPipeline().BuildVelocity(compileResult.Compilation);
             var runtimeJson = new FluxParticleCompiler().Compile(_firstAuthoring, plan, compileResult.Compilation);
 
             var buildResult = new FluxParticleBuildResult(compileResult.Compilation, artifact, runtimeJson);
@@ -129,7 +129,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(result.Compilation);
+            var artifact = new FluxParticleShaderPipeline().BuildVelocity(result.Compilation);
             var runtimeJson = new FluxParticleCompiler().Compile(authoring, plan, result.Compilation);
 
             return new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson);

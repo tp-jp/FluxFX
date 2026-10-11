@@ -15,7 +15,6 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         GameObject _gameObject;
         FluxParticleAuthoring _authoring;
-        FluxParticleGpuModuleRegistry _registry;
         FluxParticleGpuCompiler _compiler;
         FluxParticleShaderGenerator _generator;
         ShaderArtifactBuilder _builder;
@@ -25,8 +24,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             _gameObject = new GameObject("Shader Generator Test");
             _authoring = _gameObject.AddComponent<FluxParticleAuthoring>();
-            _registry = new FluxParticleGpuModuleRegistry();
-            _compiler = new FluxParticleGpuCompiler(_registry);
+            _compiler = new FluxParticleGpuCompiler(new FluxParticleGpuModuleRegistry());
             _generator = new FluxParticleShaderGenerator();
             _builder = new ShaderArtifactBuilder();
         }
@@ -38,13 +36,25 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void EmptyConfigurationMatchesLegacyShader()
+        public void EmptyConfigurationContainsNoModuleCalls()
         {
-            AssertMatchesLegacy();
+            var source = Generate().Source;
+
+            Assert.IsFalse(source.Contains("FluxFX_Gravity(ctx);"));
+            Assert.IsFalse(source.Contains("FluxFX_Force(ctx);"));
+            Assert.IsFalse(source.Contains("FluxFX_Noise(ctx);"));
+            Assert.IsFalse(source.Contains("FluxFX_Vortex(ctx);"));
+            Assert.IsFalse(source.Contains("FluxFX_Drag(ctx);"));
+            Assert.IsFalse(source.Contains("FluxFX_LimitVelocity(ctx);"));
+
+            Assert.IsFalse(source.Contains("{{MODULE_PROPERTIES}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_UNIFORMS}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_INCLUDES}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_CALLS}}"));
         }
 
         [Test]
-        public void StandardModulesMatchLegacyShader()
+        public void StandardModulesProduceExpectedShader()
         {
             AddModule(new FluxParticleGravityModule());
             AddModule(new FluxParticleForceModule());
@@ -53,7 +63,87 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleDragModule());
             AddModule(new FluxParticleLimitVelocityModule());
 
-            AssertMatchesLegacy();
+            var source = Generate().Source;
+
+            AssertModule(source, "Gravity", "_Gravity", "Vector");
+            AssertModule(source, "Force", "_Force", "Vector");
+            AssertModule(source, "Noise", "_NoiseStrength", "Float");
+            AssertModule(source, "Vortex", "_VortexCenter", "Vector");
+            AssertModule(source, "Drag", "_Drag", "Float");
+            AssertModule(source, "LimitVelocity", "_MaxSpeed", "Float");
+
+            StringAssert.Contains("_NoiseScale (\"_NoiseScale\", Float)", source);
+            StringAssert.Contains("_NoiseSpeed (\"_NoiseSpeed\", Float)", source);
+            StringAssert.Contains("_VortexAxis (\"_VortexAxis\", Vector)", source);
+            StringAssert.Contains("_VortexStrength (\"_VortexStrength\", Float)", source);
+
+            Assert.IsFalse(source.Contains("_NoiseTime"));
+            Assert.IsFalse(source.Contains("FluxFX_LegacyForce"));
+            Assert.IsFalse(source.Contains("FluxFX_LegacyNoise"));
+            Assert.IsFalse(source.Contains("FluxFX_LegacyVortex"));
+            Assert.IsFalse(source.Contains("FluxFX_LegacyLimitVelocity"));
+        }
+
+        [Test]
+        public void UnregisteredModulesAreNotGenerated()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var source = Generate().Source;
+
+            StringAssert.Contains("FluxFX_Gravity(ctx);", source);
+            Assert.IsFalse(source.Contains("FluxFX_Vortex(ctx);"));
+            Assert.IsFalse(source.Contains("_VortexCenter"));
+            Assert.IsFalse(source.Contains("_VortexAxis"));
+            Assert.IsFalse(source.Contains("_VortexStrength"));
+        }
+
+        [Test]
+        public void GeneratorPreservesExecutionOrder()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+            AddModule(new FluxParticleVortexModule());
+            AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleNoiseModule());
+            AddModule(new FluxParticleForceModule());
+            AddModule(new FluxParticleGravityModule());
+
+            var source = Generate().Source;
+
+            AssertExecutionOrder(source,
+                "FluxFX_Gravity(ctx);",
+                "FluxFX_Force(ctx);",
+                "FluxFX_Noise(ctx);",
+                "FluxFX_Vortex(ctx);",
+                "FluxFX_Drag(ctx);",
+                "FluxFX_LimitVelocity(ctx);");
+        }
+
+        [Test]
+        public void DisabledModuleIsStillGeneratedWithEnabledGuard()
+        {
+            AddModule(new FluxParticleForceModule());
+            SetModuleEnabled(0, false);
+
+            var source = Generate().Source;
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName("tplab.fluxfx.force");
+
+            StringAssert.Contains("FluxFX_Force(ctx);", source);
+            StringAssert.Contains("_Force (\"_Force\", Vector)", source);
+            StringAssert.Contains($"if ({enabledName} > 0.5)", source);
+        }
+
+        [Test]
+        public void GeneratedShaderUsesResolvedIncludeArtifact()
+        {
+            AddModule(new FluxParticleForceModule());
+
+            var artifact = Build();
+            var sourcePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl";
+            var generatedPath = artifact.Includes.Get(sourcePath).AssetPath;
+
+            StringAssert.Contains($"#include \"{generatedPath}\"", artifact.Source);
+            Assert.IsFalse(artifact.Source.Contains($"#include \"{sourcePath}\""));
         }
 
         [Test]
@@ -63,11 +153,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var first = Build();
 
-            var serializedObject = new SerializedObject(_authoring);
-            serializedObject.FindProperty("modules")
-                .GetArrayElementAtIndex(0)
-                .FindPropertyRelative("enabled").boolValue = false;
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            SetModuleEnabled(0, false);
 
             var second = Build();
 
@@ -95,6 +181,18 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void SameConfigurationProducesSameArtifact()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var first = Build();
+            var second = Build();
+
+            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
+            Assert.AreEqual(first.Source, second.Source);
+        }
+
+        [Test]
         public void DifferentModulesProduceDifferentArtifacts()
         {
             AddModule(new FluxParticleGravityModule());
@@ -109,30 +207,13 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void GeneratorPreservesExecutionOrder()
-        {
-            AddModule(new FluxParticleLimitVelocityModule());
-            AddModule(new FluxParticleGravityModule());
-            AddModule(new FluxParticleDragModule());
-
-            var source = Generate().Source;
-
-            var gravity = source.IndexOf("FluxFX_Gravity(ctx);");
-            var drag = source.IndexOf("FluxFX_Drag(ctx);");
-            var limit = source.IndexOf("FluxFX_LimitVelocity(ctx);");
-
-            Assert.GreaterOrEqual(gravity, 0);
-            Assert.Greater(drag, gravity);
-            Assert.Greater(limit, drag);
-        }
-
-        [Test]
         public void CompilationCanBeReusedWithoutRecompiling()
         {
             AddModule(new FluxParticleGravityModule());
             AddModule(new FluxParticleNoiseModule());
 
             var compilation = Compile();
+
             var first = _builder.Build(_generator.GenerateVelocity(compilation));
             var second = _builder.Build(_generator.GenerateVelocity(compilation));
 
@@ -140,20 +221,40 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(first.Source, second.Source);
         }
 
-        void AssertMatchesLegacy()
+        [Test]
+        public void ShaderPipelineReusesGeneratedShaderAsset()
         {
-            var plan = FluxParticleCompilePlan.Create(_authoring);
+            AddModule(new FluxParticleGravityModule());
 
-            var legacy = new FluxParticleShaderCompiler(_registry).CompileVelocity(plan);
-            var current = Generate();
+            var pipeline = new FluxParticleShaderPipeline();
+            var artifact = pipeline.BuildVelocity(Compile());
 
-            Assert.AreEqual(legacy.Source, current.Source);
+            var first = pipeline.GetOrCreate(artifact);
+            var second = pipeline.GetOrCreate(artifact);
 
-            var legacyArtifact = _builder.Build(legacy);
-            var currentArtifact = _builder.Build(current);
+            Assert.IsNotNull(first);
+            Assert.AreSame(first, second);
+            Assert.AreEqual(artifact.ShaderName, first.name);
+        }
 
-            Assert.AreEqual(legacyArtifact.ArtifactId, currentArtifact.ArtifactId);
-            Assert.AreEqual(legacyArtifact.Source, currentArtifact.Source);
+        static void AssertModule(string source, string entryPoint, string parameter, string parameterType)
+        {
+            StringAssert.Contains($"FluxFX_{entryPoint}(ctx);", source);
+            StringAssert.Contains($"{parameter} (\"{parameter}\", {parameterType})", source);
+        }
+
+        static void AssertExecutionOrder(string source, params string[] calls)
+        {
+            var previous = -1;
+
+            foreach (var call in calls)
+            {
+                var index = source.IndexOf(call);
+
+                Assert.Greater(index, previous, $"Invalid or missing execution order: {call}");
+
+                previous = index;
+            }
         }
 
         FluxParticleGpuCompilation Compile()
@@ -161,6 +262,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var result = _compiler.Compile(FluxParticleCompilePlan.Create(_authoring));
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
+
             return result.Compilation;
         }
 
@@ -172,6 +274,15 @@ namespace TpLab.Flux.FX.Tests.Editor
         ShaderArtifact Build()
         {
             return _builder.Build(Generate());
+        }
+
+        void SetModuleEnabled(int index, bool enabled)
+        {
+            var serializedObject = new SerializedObject(_authoring);
+            serializedObject.FindProperty("modules")
+                .GetArrayElementAtIndex(index)
+                .FindPropertyRelative("enabled").boolValue = enabled;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
 
         void AddModule(FluxParticleModule module)

@@ -43,7 +43,7 @@ namespace TpLab.Flux.FX.Editor.Preview
 
                 velocityStage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
 
-                var pipeline = new FluxParticleShaderPipeline(registry);
+                var pipeline = new FluxParticleShaderPipeline();
                 var artifact = pipeline.BuildVelocity(result.Compilation);
 
                 velocityShader = pipeline.GetOrCreate(artifact);

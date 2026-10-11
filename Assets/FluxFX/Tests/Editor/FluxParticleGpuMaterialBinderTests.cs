@@ -93,7 +93,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var pipeline = new FluxParticleShaderPipeline(registry);
+            var pipeline = new FluxParticleShaderPipeline();
             var artifact = pipeline.BuildVelocity(result.Compilation);
             var shader = pipeline.GetOrCreate(artifact);
 

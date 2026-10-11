@@ -30,7 +30,7 @@ namespace TpLab.Flux.FX.Editor
             var registry = new FluxParticleGpuModuleRegistry();
             var gpuCompiler = new FluxParticleGpuCompiler(registry);
             var runtimeCompiler = new FluxParticleCompiler();
-            var pipeline = new FluxParticleShaderPipeline(registry);
+            var pipeline = new FluxParticleShaderPipeline();
             var session = new FluxFXCompilationSession();
 
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);

@@ -37,7 +37,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var registry = new FluxParticleGpuModuleRegistry();
             var compiler = new FluxParticleGpuCompiler(registry);
-            var pipeline = new FluxParticleShaderPipeline(registry);
+            var pipeline = new FluxParticleShaderPipeline();
 
             var plan = FluxParticleCompilePlan.Create(_authoring);
             var result = compiler.Compile(plan);
@@ -81,7 +81,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline(registry).BuildVelocity(result.Compilation);
+            var artifact = new FluxParticleShaderPipeline().BuildVelocity(result.Compilation);
             var session = new FluxFXCompilationSession();
 
             var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);

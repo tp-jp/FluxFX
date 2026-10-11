@@ -25,7 +25,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                     return;
                 }
 
-                var pipeline = new FluxParticleShaderPipeline(registry);
+                var pipeline = new FluxParticleShaderPipeline();
                 var artifact = pipeline.BuildVelocity(result.Compilation);
 
                 if (_velocityMaterial.shader.name != artifact.ShaderName)

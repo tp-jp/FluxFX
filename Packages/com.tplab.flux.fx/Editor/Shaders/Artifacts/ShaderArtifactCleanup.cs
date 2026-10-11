@@ -7,7 +7,6 @@ using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
@@ -146,13 +145,22 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
         static void ProtectCurrentAuthoring(HashSet<string> protectedPaths)
         {
             var registry = new FluxParticleGpuModuleRegistry();
-            var pipeline = new FluxParticleShaderPipeline(registry);
+            var compiler = new FluxParticleGpuCompiler(registry);
+            var pipeline = new FluxParticleShaderPipeline();
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
 
             foreach (var authoring in authorings)
             {
                 var plan = FluxParticleCompilePlan.Create(authoring);
-                var artifact = pipeline.BuildVelocity(plan);
+                var result = compiler.Compile(plan);
+
+                if (!result.Success)
+                {
+                    throw new InvalidOperationException(
+                        $"Particle compilation failed during Shader cleanup for '{authoring.name}':\n{result.Validation.GetReport()}");
+                }
+
+                var artifact = pipeline.BuildVelocity(result.Compilation);
 
                 protectedPaths.Add(artifact.AssetPath);
 
