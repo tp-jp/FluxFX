@@ -67,7 +67,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledModuleIsExcluded()
+        public void DisabledModulePreservesParameters()
         {
             AddModule(new FluxParticleGravityModule());
 
@@ -78,7 +78,14 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var velocity = Compile()["velocity"];
 
-            Assert.IsNull(velocity["_Gravity"]);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var definition = registry.Get(typeof(FluxParticleGravityModule));
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+            Assert.IsNotNull(velocity["_Gravity"]);
+            Assert.IsNotNull(velocity[enabledName]);
+            Assert.AreEqual((int)FluxParticleParameterType.Float, (int)velocity[enabledName]["type"]);
+            Assert.AreEqual(0.0f, (float)velocity[enabledName]["value"]);
         }
 
         [Test]
@@ -90,12 +97,32 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new FluxParticleLimitVelocityModule());
 
             var velocity = Compile()["velocity"];
+            var registry = new FluxParticleGpuModuleRegistry();
 
             Assert.IsNotNull(velocity["_Gravity"]);
             Assert.IsNotNull(velocity["_Force"]);
             Assert.IsNotNull(velocity["_Drag"]);
             Assert.IsNotNull(velocity["_MaxSpeed"]);
-            Assert.AreEqual(4, velocity.ToObject<JObject>().Count);
+
+            var moduleTypes = new[]
+            {
+                typeof(FluxParticleGravityModule),
+                typeof(FluxParticleForceModule),
+                typeof(FluxParticleDragModule),
+                typeof(FluxParticleLimitVelocityModule)
+            };
+
+            foreach (var moduleType in moduleTypes)
+            {
+                var definition = registry.Get(moduleType);
+                var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+                Assert.IsNotNull(velocity[enabledName], $"Enabled parameter missing: {definition.ModuleId}");
+                Assert.AreEqual((int)FluxParticleParameterType.Float, (int)velocity[enabledName]["type"]);
+                Assert.AreEqual(1.0f, (float)velocity[enabledName]["value"]);
+            }
+
+            Assert.AreEqual(8, velocity.ToObject<JObject>().Count);
         }
 
         JObject Compile()

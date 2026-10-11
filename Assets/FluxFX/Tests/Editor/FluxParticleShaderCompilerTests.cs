@@ -15,14 +15,14 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         GameObject _gameObject;
         FluxParticleAuthoring _authoring;
-        FluxParticleShaderCompiler _compiler;
+        // FluxParticleShaderCompiler _compiler;
 
         [SetUp]
         public void SetUp()
         {
             _gameObject = new GameObject("FluxFX Shader Compiler Test");
             _authoring = _gameObject.AddComponent<FluxParticleAuthoring>();
-            _compiler = new FluxParticleShaderCompiler(new FluxParticleGpuModuleRegistry());
+            // _compiler = new FluxParticleShaderCompiler(new FluxParticleGpuModuleRegistry());
         }
 
         [TearDown]
@@ -98,9 +98,13 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsFalse(result.Source.Contains("FluxFX_Force(ctx);"));
-            Assert.IsFalse(result.Source.Contains("_Force (\"_Force\", Vector)"));
-            Assert.IsFalse(result.Source.Contains("#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Force.hlsl\""));
+            var registry = new FluxParticleGpuModuleRegistry();
+            var definition = registry.Get(typeof(FluxParticleForceModule));
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+            StringAssert.Contains("FluxFX_Force(ctx);", result.Source);
+            StringAssert.Contains("_Force (\"_Force\", Vector)", result.Source);
+            StringAssert.Contains($"if ({enabledName} > 0.5)", result.Source);
         }
 
         [Test]
@@ -172,10 +176,14 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsFalse(result.Source.Contains("FluxFX_LimitVelocity(ctx);"));
-            Assert.IsFalse(result.Source.Contains("_MaxSpeed (\"_MaxSpeed\", Float)"));
-            Assert.IsFalse(result.Source.Contains("float _MaxSpeed;"));
-            Assert.IsFalse(result.Source.Contains("Modules/LimitVelocity.hlsl"));
+            var registry = new FluxParticleGpuModuleRegistry();
+            var definition = registry.Get(typeof(FluxParticleLimitVelocityModule));
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+            StringAssert.Contains("FluxFX_LimitVelocity(ctx);", result.Source);
+            StringAssert.Contains("_MaxSpeed (\"_MaxSpeed\", Float)", result.Source);
+            StringAssert.Contains("float _MaxSpeed;", result.Source);
+            StringAssert.Contains($"if ({enabledName} > 0.5)", result.Source);
         }
 
         [Test]
@@ -225,11 +233,15 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var result = Compile();
 
-            Assert.IsFalse(result.Source.Contains("FluxFX_Noise(ctx);"));
-            Assert.IsFalse(result.Source.Contains("_NoiseStrength (\"_NoiseStrength\", Float)"));
-            Assert.IsFalse(result.Source.Contains("_NoiseScale (\"_NoiseScale\", Float)"));
-            Assert.IsFalse(result.Source.Contains("_NoiseTime (\"_NoiseTime\", Float)"));
-            Assert.IsFalse(result.Includes.BySourcePath.ContainsKey("Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Noise.hlsl"));
+            var registry = new FluxParticleGpuModuleRegistry();
+            var definition = registry.Get(typeof(FluxParticleNoiseModule));
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+            StringAssert.Contains("FluxFX_Noise(ctx);", result.Source);
+            StringAssert.Contains("_NoiseStrength (\"_NoiseStrength\", Float)", result.Source);
+            StringAssert.Contains("_NoiseScale (\"_NoiseScale\", Float)", result.Source);
+            StringAssert.Contains("_NoiseSpeed (\"_NoiseSpeed\", Float)", result.Source);
+            StringAssert.Contains($"if ({enabledName} > 0.5)", result.Source);
         }
 
         [Test]
@@ -302,6 +314,46 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Greater(vortexIndex, noiseIndex);
             Assert.Greater(dragIndex, vortexIndex);
             Assert.Greater(limitIndex, dragIndex);
+        }
+
+        [Test]
+        public void ForceDisabledStillCompiles()
+        {
+            AddModule(new FluxParticleForceModule());
+
+            var serializedObject = new SerializedObject(_authoring);
+            var modules = serializedObject.FindProperty("modules");
+            modules.GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var result = Compile();
+
+            StringAssert.Contains("FluxFX_Force(ctx);", result.Source);
+            StringAssert.Contains("_Force (\"_Force\", Vector)", result.Source);
+
+            var registry = new FluxParticleGpuModuleRegistry();
+            var definition = registry.Get(typeof(FluxParticleForceModule));
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+
+            StringAssert.Contains($"if ({enabledName} > 0.5)", result.Source);
+        }
+
+        [Test]
+        public void EnabledStateDoesNotChangeShaderArtifact()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var first = Compile();
+
+            var serializedObject = new SerializedObject(_authoring);
+            var modules = serializedObject.FindProperty("modules");
+            modules.GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var second = Compile();
+
+            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
+            Assert.AreEqual(first.Source, second.Source);
         }
 
         ShaderArtifact Compile()

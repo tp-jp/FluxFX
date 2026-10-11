@@ -49,11 +49,13 @@ namespace TpLab.Flux.FX.Editor.Shaders
             {
                 var definition = entry.definition;
                 var path = definition.HlslPath.Replace('\\', '/');
+                var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
 
                 definition.CollectParameters(entry.module, collector);
+                collector.AddFloat(enabledName, 0.0f);
 
                 includes.AppendLine($"#include \"{path}\"");
-                operations.Add((definition.Order, definition.ModuleId, $"{definition.EntryPoint}(ctx);"));
+                operations.Add((definition.Order, definition.ModuleId, $"if ({enabledName} > 0.5)\n{{\n    {definition.EntryPoint}(ctx);\n}}"));
             }
 
             foreach (var parameter in collector.Parameters.OrderBy(x => x.Name, StringComparer.Ordinal))

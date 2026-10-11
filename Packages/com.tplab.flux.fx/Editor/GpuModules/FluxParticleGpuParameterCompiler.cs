@@ -27,6 +27,9 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 if (!_registry.TryGet(module.GetType(), out var definition)) continue;
 
                 definition.CollectParameters(module, collector);
+
+                var enabledName = FluxParticleGpuModuleEnabled.GetParameterName(definition.ModuleId);
+                collector.AddFloat(enabledName, module.Enabled ? 1.0f : 0.0f);
             }
 
             foreach (var parameter in collector.Parameters)

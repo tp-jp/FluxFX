@@ -26,7 +26,7 @@ namespace TpLab.Flux.FX.Editor
 
             foreach (var module in modules)
             {
-                if (module == null || !module.Enabled) continue;
+                if (module == null) continue;
 
                 _modules.Add(module);
 
