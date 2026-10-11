@@ -239,6 +239,68 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(JToken.DeepEquals(firstBindings, secondBindings));
         }
 
+        [Test]
+        public void EmptyConfigurationProducesBothStageParameters()
+        {
+            var parameters = _writer.WriteParameters(Compile());
+
+            Assert.IsNotNull(parameters["velocity"]);
+            Assert.IsNotNull(parameters["position"]);
+            Assert.AreEqual(0, ((JObject)parameters["velocity"]).Count);
+            Assert.AreEqual(0, ((JObject)parameters["position"]).Count);
+        }
+
+        [Test]
+        public void PositionModuleProducesParametersAndBinding()
+        {
+            AddModule(new TestPositionGpuModule());
+
+            var compilation = Compile();
+            var parameters = _writer.WriteParameters(compilation);
+            var bindings = _writer.WriteBindings(compilation);
+
+            var position = parameters["position"];
+            var binding = bindings["test.fluxfx.position"];
+            var stage = compilation.GetStage(FluxParticleExecutionStage.PositionUpdate);
+            var enabledName = stage.Modules[0].EnabledParameter.Name;
+
+            Assert.IsNotNull(position["_TestPositionStrength"]);
+            Assert.IsNotNull(position[enabledName]);
+            Assert.IsNotNull(binding);
+
+            Assert.AreEqual(
+                (int)FluxParticleKernelTarget.Position,
+                (int)binding["target"]);
+
+            Assert.AreEqual(
+                enabledName,
+                (string)binding["enabledParameter"]);
+        }
+
+        [Test]
+        public void SameParameterNameAcrossStagesProducesIndependentData()
+        {
+            TestGpuModuleDefinition.ParameterName = "_SharedStrength";
+            TestPositionGpuModuleDefinition.ParameterName = "_SharedStrength";
+
+            try
+            {
+                AddModule(new TestGpuModule());
+                AddModule(new TestPositionGpuModule());
+
+                var compilation = Compile();
+                var parameters = _writer.WriteParameters(compilation);
+
+                Assert.IsNotNull(parameters["velocity"]["_SharedStrength"]);
+                Assert.IsNotNull(parameters["position"]["_SharedStrength"]);
+            }
+            finally
+            {
+                TestGpuModuleDefinition.ParameterName = "_TestStrength";
+                TestPositionGpuModuleDefinition.ParameterName = "_TestPositionStrength";
+            }
+        }
+
         static void AssertParameterType(JToken velocity, string name, FluxParticleParameterType type)
         {
             var parameter = velocity[name];
