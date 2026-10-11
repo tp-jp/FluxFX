@@ -35,6 +35,7 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string compiledParameters;
 
+        DataDictionary _gpuModuleBindings;
         bool _isPlaying;
         object _emission;
         object _lifetime;
@@ -151,6 +152,22 @@ namespace TpLab.Flux.FX.Udon
             particleSimulation.SetVector(target, name, value);
         }
 
+        [PublicAPI]
+        public bool SetModuleEnabled(string moduleId, bool enabled)
+        {
+            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return false;
+
+            return particleSimulation.SetGpuParameterFloat(target, parameterName, enabled ? 1.0f : 0.0f);
+        }
+
+        [PublicAPI]
+        public bool GetModuleEnabled(string moduleId)
+        {
+            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName)) return false;
+
+            return particleSimulation.GetGpuParameterFloat(target, parameterName) > 0.5f;
+        }
+
         void Start()
         {
             particleState.Initialize(particleCount);
@@ -186,6 +203,7 @@ namespace TpLab.Flux.FX.Udon
                 particleSimulation.InitializeGpuParameters(gpuParameters.DataDictionary);
             }
 
+            InitializeGpuModuleBindings(parameters);
             InitializeSimulation(parameters);
             InitializeRenderer(parameters);
         }
@@ -221,6 +239,15 @@ namespace TpLab.Flux.FX.Udon
                 startDelay,
                 duration,
                 loop);
+        }
+
+        void InitializeGpuModuleBindings(DataDictionary parameters)
+        {
+            _gpuModuleBindings = new DataDictionary();
+
+            if (!parameters.TryGetValue("gpuModuleBindings", out var token)) return;
+
+            _gpuModuleBindings = token.DataDictionary;
         }
 
         void InitializeSimulation(DataDictionary parameters)
@@ -537,6 +564,25 @@ namespace TpLab.Flux.FX.Udon
             }
 
             _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
+        }
+        
+        bool TryGetModuleBinding(string moduleId, out FluxParticleKernelTarget target, out string parameterName)
+        {
+            target = FluxParticleKernelTarget.Velocity;
+            parameterName = null;
+
+            if (_gpuModuleBindings == null || string.IsNullOrEmpty(moduleId) || !_gpuModuleBindings.TryGetValue(moduleId, out var token))
+            {
+                Logger.LogError($"GPU Module is not registered: {moduleId}");
+                return false;
+            }
+
+            var binding = token.DataDictionary;
+
+            target = (FluxParticleKernelTarget)(int)binding["target"].Double;
+            parameterName = binding["enabledParameter"].String;
+
+            return true;
         }
     }
 }

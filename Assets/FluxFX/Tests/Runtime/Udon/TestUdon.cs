@@ -67,5 +67,37 @@ namespace TpLab.Flux.FX.Tests.Udon
 
             Logger.Log("GPU Module Parameters: PASS");
         }
+        
+        public void TestModuleEnabled()
+        {
+            var gravityId = "tplab.fluxfx.gravity";
+            var noiseId = "tplab.fluxfx.noise";
+
+            if (!fluxParticleSystem.SetModuleEnabled(gravityId, false))
+            {
+                Logger.LogError("Failed to disable Gravity.");
+                return;
+            }
+
+            if (fluxParticleSystem.GetModuleEnabled(gravityId))
+            {
+                Logger.LogError("Gravity should be disabled.");
+                return;
+            }
+
+            if (!fluxParticleSystem.SetModuleEnabled(noiseId, true))
+            {
+                Logger.LogError("Failed to enable Noise.");
+                return;
+            }
+
+            if (!fluxParticleSystem.GetModuleEnabled(noiseId))
+            {
+                Logger.LogError("Noise should be enabled.");
+                return;
+            }
+
+            Logger.Log("GPU Module Enabled Binding: PASS");
+        }
     }
 }

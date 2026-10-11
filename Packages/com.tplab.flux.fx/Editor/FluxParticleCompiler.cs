@@ -9,7 +9,6 @@ namespace TpLab.Flux.FX.Editor
 {
     public class FluxParticleCompiler
     {
-
         public string Compile(FluxParticleAuthoring authoring)
         {
             var plan = FluxParticleCompilePlan.Create(authoring);
@@ -37,8 +36,13 @@ namespace TpLab.Flux.FX.Editor
 
             AddVelocityOverLifetime(parameters, plan);
 
-            var gpuCompiler = new FluxParticleGpuParameterCompiler(new FluxParticleGpuModuleRegistry());
-            parameters["gpuParameters"] = gpuCompiler.Compile(plan);
+            var registry = new FluxParticleGpuModuleRegistry();
+
+            var gpuParameterCompiler = new FluxParticleGpuParameterCompiler(registry);
+            var gpuBindingCompiler = new FluxParticleGpuModuleBindingCompiler(registry);
+
+            parameters["gpuParameters"] = gpuParameterCompiler.Compile(plan);
+            parameters["gpuModuleBindings"] = gpuBindingCompiler.Compile(plan);
 
             AddRender(parameters, authoring.Render, plan);
 

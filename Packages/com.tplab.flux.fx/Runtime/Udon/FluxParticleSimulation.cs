@@ -214,6 +214,35 @@ namespace TpLab.Flux.FX.Udon
             particleState.SwapSimulation();
         }
 
+        internal bool SetGpuParameterFloat(FluxParticleKernelTarget target, string name, float value)
+        {
+            var store = GetGpuParameterStore(target);
+            if (store == null) return false;
+
+            return store.SetFloat(name, value);
+        }
+
+        internal float GetGpuParameterFloat(FluxParticleKernelTarget target, string name)
+        {
+            var store = GetGpuParameterStore(target);
+            if (store == null) return 0.0f;
+
+            return store.GetFloat(name);
+        }
+
+        FluxParticleGpuParameterStore GetGpuParameterStore(FluxParticleKernelTarget target)
+        {
+            switch (target)
+            {
+                case FluxParticleKernelTarget.Velocity:
+                    return velocityParameterStore;
+
+                default:
+                    Logger.LogError($"GPU Parameter Store is not supported for target: {target}");
+                    return null;
+            }
+        }
+
         FluxKernel GetKernel(FluxParticleKernelTarget target)
         {
             switch (target)
