@@ -6,22 +6,22 @@ namespace TpLab.Flux.FX.Udon.Parameters
 {
     enum FluxParticleGravityParameter
     {
-        Gravity,
+        Store,
 
         Count
     }
 
     /// <summary>
-    /// ParticleのGravityに関するRuntimeパラメーターを保持します。
+    /// ParticleのGravityに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
     public class FluxParticleGravityParameters : DataList
     {
-        internal static FluxParticleGravityParameters New(Vector3 gravity)
+        internal static FluxParticleGravityParameters New(FluxParticleGpuParameterStore store)
         {
             var data = new DataToken[(int)FluxParticleGravityParameter.Count];
 
-            data[(int)FluxParticleGravityParameter.Gravity] = new DataToken(gravity);
+            data[(int)FluxParticleGravityParameter.Store] = new DataToken(store);
 
             return (FluxParticleGravityParameters)new DataList(data);
         }
@@ -36,23 +36,24 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// Particleに適用するGravityを取得します。
         /// </summary>
-        /// <param name="parameters">Gravityパラメーター</param>
-        /// <returns>Particleに適用するGravity</returns>
         [PublicAPI]
         public static Vector3 GetGravity(this FluxParticleGravityParameters parameters)
         {
-            return (Vector3)parameters[(int)FluxParticleGravityParameter.Gravity].Reference;
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleGravityParameter.Store].Reference;
+            var gravity = store.GetVector("_Gravity");
+
+            return new Vector3(gravity.x, gravity.y, gravity.z);
         }
 
         /// <summary>
         /// Particleに適用するGravityを設定します。
         /// </summary>
-        /// <param name="parameters">Gravityパラメーター</param>
-        /// <param name="gravity">Particleに適用するGravity</param>
         [PublicAPI]
         public static void SetGravity(this FluxParticleGravityParameters parameters, Vector3 gravity)
         {
-            parameters[(int)FluxParticleGravityParameter.Gravity] = new DataToken(gravity);
+            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleGravityParameter.Store].Reference;
+
+            store.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
         }
     }
 }

@@ -36,7 +36,6 @@ namespace TpLab.Flux.FX.Udon
         object _shape;
         object _initialVelocity;
         object _velocityOverLifetime;
-        object _gravity;
         object _force;
         object _drag;
         object _noise;
@@ -53,8 +52,6 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
 
         FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
-
-        FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
 
         FluxParticleForceParameters Force => (FluxParticleForceParameters)_force;
 
@@ -73,14 +70,20 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
 
         [PublicAPI]
-        public void SetVelocityFloat(string name, float value)
-        {
-            SetFloat(FluxParticleKernelTarget.Velocity, name, value);
-        }
-
-        [PublicAPI]
         public void SetFloat(FluxParticleKernelTarget target, string name, float value)
         {
+            if (target == FluxParticleKernelTarget.Velocity)
+            {
+                if (velocityParameterStore == null)
+                {
+                    Logger.LogError("Velocity GPU Parameter Store is not assigned.");
+                    return;
+                }
+
+                velocityParameterStore.SetFloat(name, value);
+                return;
+            }
+
             var kernel = GetKernel(target);
             if (kernel == null) return;
 
@@ -90,6 +93,18 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public void SetVector(FluxParticleKernelTarget target, string name, Vector4 value)
         {
+            if (target == FluxParticleKernelTarget.Velocity)
+            {
+                if (velocityParameterStore == null)
+                {
+                    Logger.LogError("Velocity GPU Parameter Store is not assigned.");
+                    return;
+                }
+
+                velocityParameterStore.SetVector(name, value);
+                return;
+            }
+
             var kernel = GetKernel(target);
             if (kernel == null) return;
 
@@ -101,7 +116,6 @@ namespace TpLab.Flux.FX.Udon
             FluxParticleShapeParameters shape,
             FluxParticleInitialVelocityParameters initialVelocity,
             FluxParticleVelocityOverLifetimeParameters velocityOverLifetime,
-            FluxParticleGravityParameters gravity,
             FluxParticleForceParameters force,
             FluxParticleDragParameters drag,
             FluxParticleNoiseParameters noise,
@@ -112,12 +126,16 @@ namespace TpLab.Flux.FX.Udon
             _shape = shape;
             _initialVelocity = initialVelocity;
             _velocityOverLifetime = velocityOverLifetime;
-            _gravity = gravity;
             _force = force;
             _drag = drag;
             _noise = noise;
             _vortex = vortex;
             _limitVelocity = limitVelocity;
+        }
+
+        internal FluxParticleGpuParameterStore GetVelocityParameterStore()
+        {
+            return velocityParameterStore;
         }
 
         internal void InitializeGpuParameters(DataDictionary gpuParameters)
@@ -250,7 +268,6 @@ namespace TpLab.Flux.FX.Udon
                 velocityParameterStore.Flush();
             }
 
-            var gravity = Gravity.GetGravity();
             var force = Force.GetForce();
             var vortexCenter = Vortex.GetCenter();
             var vortexAxis = Vortex.GetAxis();
@@ -265,7 +282,6 @@ namespace TpLab.Flux.FX.Udon
                 velocityUpdateKernel.SetFloat("_ShapeAngle", Shape.GetAngle());
             }
 
-            velocityUpdateKernel.SetVector("_Gravity", new Vector4(gravity.x, gravity.y, gravity.z, 0));
             velocityUpdateKernel.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
             velocityUpdateKernel.SetFloat("_Drag", Drag.GetDrag());
             velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));

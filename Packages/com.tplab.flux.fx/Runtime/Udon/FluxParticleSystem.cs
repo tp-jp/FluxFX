@@ -180,13 +180,14 @@ namespace TpLab.Flux.FX.Udon
             var parameters = result.DataDictionary;
 
             InitializeEmitter(parameters);
-            InitializeSimulation(parameters);
-            InitializeRenderer(parameters);
 
             if (parameters.TryGetValue("gpuParameters", out var gpuParameters))
             {
                 particleSimulation.InitializeGpuParameters(gpuParameters.DataDictionary);
             }
+
+            InitializeSimulation(parameters);
+            InitializeRenderer(parameters);
         }
 
         void InitializeEmitter(DataDictionary parameters)
@@ -230,7 +231,7 @@ namespace TpLab.Flux.FX.Udon
             InitializeShape(parameters);
             InitializeInitialVelocity(parameters);
             InitializeVelocityOverLifetime(parameters);
-            InitializeGravity(parameters);
+            InitializeGravity();
             InitializeForce(parameters);
             InitializeDrag(parameters);
             InitializeNoise(parameters);
@@ -242,7 +243,6 @@ namespace TpLab.Flux.FX.Udon
                 Shape,
                 InitialVelocity,
                 VelocityOverLifetime,
-                Gravity,
                 Force,
                 Drag,
                 Noise,
@@ -361,21 +361,12 @@ namespace TpLab.Flux.FX.Udon
             VelocityOverLifetime.SetRadial(radial);
         }
 
-        void InitializeGravity(DataDictionary parameters)
+        void InitializeGravity()
         {
-            var gravity = Vector3.zero;
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_Gravity")) return;
 
-            if (parameters.TryGetValue("gravity", out var token))
-            {
-                var data = token.DataDictionary;
-
-                gravity = new Vector3(
-                    (float)data["x"].Double,
-                    (float)data["y"].Double,
-                    (float)data["z"].Double);
-            }
-
-            _gravity = FluxParticleGravityParameters.New(gravity);
+            _gravity = FluxParticleGravityParameters.New(store);
         }
 
         void InitializeForce(DataDictionary parameters)

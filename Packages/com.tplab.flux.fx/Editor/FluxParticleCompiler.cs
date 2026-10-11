@@ -36,7 +36,6 @@ namespace TpLab.Flux.FX.Editor
             AddInitialVelocity(parameters, authoring.InitialVelocity);
 
             AddVelocityOverLifetime(parameters, plan);
-            AddGravity(parameters, plan);
             AddForce(parameters, plan);
             AddDrag(parameters, plan);
             AddNoise(parameters, plan);
@@ -147,21 +146,6 @@ namespace TpLab.Flux.FX.Editor
                 ["offsetY"] = module.Offset.y,
                 ["offsetZ"] = module.Offset.z,
                 ["radial"] = module.Radial
-            };
-        }
-
-        void AddGravity(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleGravityModule>();
-            if (module == null) return;
-
-            var gravity = module.Gravity;
-
-            parameters["gravity"] = new JObject
-            {
-                ["x"] = gravity.x,
-                ["y"] = gravity.y,
-                ["z"] = gravity.z
             };
         }
 

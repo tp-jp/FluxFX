@@ -28,6 +28,12 @@ namespace TpLab.Flux.FX.Udon
         public int PendingCount => _dirtyCount;
 
         [PublicAPI]
+        public bool HasParameter(string name)
+        {
+            return _parameters != null && _parameters.ContainsKey(name);
+        }
+
+        [PublicAPI]
         public void Initialize(FluxKernel kernel)
         {
             if (kernel == null)
