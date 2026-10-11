@@ -47,7 +47,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawModuleEntry(FluxParticleInspectorModuleMetadata definition)
         {
-            if (FindModuleIndex(definition.ModuleType) < 0) return;
+            var index = FindModuleIndex(definition.ModuleType);
+            if (index < 0) return;
 
             var type = definition.ModuleType;
 
@@ -69,7 +70,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 return;
             }
 
-            var index = FindModuleIndex(type);
             var module = _modules.GetArrayElementAtIndex(index);
             var expanded = SessionState.GetBool(definition.ExpandedKey, false);
 

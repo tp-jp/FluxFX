@@ -25,18 +25,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
         const string RenderingModulesExpandedKey = SessionStatePrefix + "RenderingModulesExpanded";
         const string RendererExpandedKey = SessionStatePrefix + "RendererExpanded";
 
-        const string VelocityOverLifetimeExpandedKey = SessionStatePrefix + "VelocityOverLifetimeExpanded";
-        const string GravityExpandedKey = SessionStatePrefix + "GravityExpanded";
-        const string ForceExpandedKey = SessionStatePrefix + "ForceExpanded";
-        const string DragExpandedKey = SessionStatePrefix + "DragExpanded";
-        const string NoiseExpandedKey = SessionStatePrefix + "NoiseExpanded";
-        const string VortexExpandedKey = SessionStatePrefix + "VortexExpanded";
-        const string LimitVelocityExpandedKey = SessionStatePrefix + "LimitVelocityExpanded";
-
         const string ColorOverLifetimeExpandedKey = SessionStatePrefix + "ColorOverLifetimeExpanded";
         const string SizeOverLifetimeExpandedKey = SessionStatePrefix + "SizeOverLifetimeExpanded";
         const string RotationOverLifetimeExpandedKey = SessionStatePrefix + "RotationOverLifetimeExpanded";
-        const string TextureSheetAnimationExpandedKey = SessionStatePrefix + "TextureSheetAnimationExpanded";
 
         static readonly string[] LanguageNames =
         {

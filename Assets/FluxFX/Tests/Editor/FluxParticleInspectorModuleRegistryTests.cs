@@ -154,6 +154,45 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(_registry.Count, types.Count);
         }
 
+        [Test]
+        public void StandardModulesHaveUniqueExpandedKeys()
+        {
+            var keys = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+            var standardCount = 0;
+
+            foreach (var metadata in _registry.GetAll())
+            {
+                if (metadata.IsCustom) continue;
+
+                Assert.IsTrue(keys.Add(metadata.ExpandedKey), $"Duplicate ExpandedKey: {metadata.ExpandedKey}");
+                standardCount++;
+            }
+
+            Assert.AreEqual(11, standardCount);
+        }
+
+        [Test]
+        public void StandardModuleStageClassificationIsComplete()
+        {
+            var velocity = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
+            var position = _registry.GetModules(FluxParticleExecutionStage.PositionUpdate);
+            var rendering = _registry.GetModules(FluxParticleExecutionStage.Rendering);
+
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleGravityModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleForceModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleDragModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleNoiseModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleVortexModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleLimitVelocityModule)));
+
+            Assert.IsTrue(Contains(position, typeof(FluxParticleVelocityOverLifetimeModule)));
+
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleColorOverLifetimeModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleSizeOverLifetimeModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleRotationOverLifetimeModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
+        }
+
         static bool Contains(
             IReadOnlyList<FluxParticleInspectorModuleMetadata> modules,
             System.Type type)
