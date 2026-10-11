@@ -31,6 +31,9 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         FluxParticleGpuParameterStore velocityParameterStore;
 
+        [SerializeField]
+        FluxParticleGpuParameterStore positionParameterStore;
+
         float _simulationTime;
         object _lifetime;
         object _shape;
@@ -57,15 +60,17 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public void SetFloat(FluxParticleKernelTarget target, string name, float value)
         {
+            var store = GetGpuParameterStore(target);
+
+            if (store != null && store.HasParameter(name))
+            {
+                store.SetFloat(name, value);
+                return;
+            }
+
             if (target == FluxParticleKernelTarget.Velocity)
             {
-                if (velocityParameterStore == null)
-                {
-                    Logger.LogError("Velocity GPU Parameter Store is not assigned.");
-                    return;
-                }
-
-                velocityParameterStore.SetFloat(name, value);
+                Logger.LogError($"Velocity GPU parameter is not registered: {name}");
                 return;
             }
 
@@ -78,15 +83,17 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public void SetVector(FluxParticleKernelTarget target, string name, Vector4 value)
         {
+            var store = GetGpuParameterStore(target);
+
+            if (store != null && store.HasParameter(name))
+            {
+                store.SetVector(name, value);
+                return;
+            }
+
             if (target == FluxParticleKernelTarget.Velocity)
             {
-                if (velocityParameterStore == null)
-                {
-                    Logger.LogError("Velocity GPU Parameter Store is not assigned.");
-                    return;
-                }
-
-                velocityParameterStore.SetVector(name, value);
+                Logger.LogError($"Velocity GPU parameter is not registered: {name}");
                 return;
             }
 
@@ -115,30 +122,45 @@ namespace TpLab.Flux.FX.Udon
 
         internal void InitializeGpuParameters(DataDictionary gpuParameters)
         {
-            if (velocityParameterStore == null)
+            InitializeGpuStageParameters(gpuParameters, "velocity", velocityParameterStore, velocityUpdateKernel);
+            InitializeGpuStageParameters(gpuParameters, "position", positionParameterStore, positionUpdateKernel);
+        }
+
+        void InitializeGpuStageParameters(
+            DataDictionary gpuParameters,
+            string stageKey,
+            FluxParticleGpuParameterStore store,
+            FluxKernel kernel)
+        {
+            if (!gpuParameters.TryGetValue(stageKey, out var stageToken)) return;
+
+            var parameters = stageToken.DataDictionary;
+
+            if (store == null)
             {
-                Logger.LogError("Velocity GPU Parameter Store is not assigned.");
+                if (parameters.Count > 0)
+                {
+                    Logger.LogError($"[FluxFX] GPU Parameter Store is not assigned for stage: {stageKey}");
+                }
+
                 return;
             }
 
-            velocityParameterStore.Initialize(velocityUpdateKernel);
+            store.Initialize(kernel);
 
-            if (!gpuParameters.TryGetValue("velocity", out var velocityToken)) return;
-
-            var velocity = velocityToken.DataDictionary;
-            var names = velocity.GetKeys();
+            var names = parameters.GetKeys();
 
             for (var i = 0; i < names.Count; i++)
             {
                 var name = names[i].String;
-                var parameter = velocity[name].DataDictionary;
+                var parameter = parameters[name].DataDictionary;
                 var type = (FluxParticleParameterType)(int)parameter["type"].Double;
                 var value = parameter["value"];
 
                 switch (type)
                 {
                     case FluxParticleParameterType.Float:
-                        velocityParameterStore.RegisterFloat(name, (float)value.Double);
+                        store.RegisterFloat(name, (float)value.Double);
                         break;
 
                     case FluxParticleParameterType.Vector:
@@ -146,7 +168,7 @@ namespace TpLab.Flux.FX.Udon
 
                         if (components.Count != 4)
                         {
-                            Logger.LogError($"GPU Vector parameter requires four components: {name}");
+                            Logger.LogError($"[FluxFX] GPU Vector parameter requires four components: {name}");
                             break;
                         }
 
@@ -156,11 +178,11 @@ namespace TpLab.Flux.FX.Udon
                             (float)components[2].Double,
                             (float)components[3].Double);
 
-                        velocityParameterStore.RegisterVector(name, vector);
+                        store.RegisterVector(name, vector);
                         break;
 
                     default:
-                        Logger.LogError($"Unsupported GPU parameter type: {type} ({name})");
+                        Logger.LogError($"[FluxFX] Unsupported GPU parameter type: {type} ({name})");
                         break;
                 }
             }
@@ -237,8 +259,10 @@ namespace TpLab.Flux.FX.Udon
                 case FluxParticleKernelTarget.Velocity:
                     return velocityParameterStore;
 
+                case FluxParticleKernelTarget.Position:
+                    return positionParameterStore;
+
                 default:
-                    Logger.LogError($"GPU Parameter Store is not supported for target: {target}");
                     return null;
             }
         }
@@ -293,6 +317,11 @@ namespace TpLab.Flux.FX.Udon
 
         void UpdatePosition(float deltaTime)
         {
+            if (positionParameterStore != null)
+            {
+                positionParameterStore.Flush();
+            }
+
             if (particleEmitter.SpawnCount > 0)
             {
                 var shapeSize = Shape.GetSize();
@@ -314,6 +343,7 @@ namespace TpLab.Flux.FX.Udon
             positionUpdateKernel.SetVector("_VelocityOverLifetimeOffset", new Vector4(velocityOverLifetimeOffset.x, velocityOverLifetimeOffset.y, velocityOverLifetimeOffset.z, 0));
             positionUpdateKernel.SetFloat("_VelocityOverLifetimeRadial", VelocityOverLifetime.GetRadial());
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
+            positionUpdateKernel.SetFloat("_FluxFXSimulationTime", _simulationTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
             positionUpdateKernel.SetFloat("_SpawnSeedStart", particleEmitter.SpawnSeedStart);
             positionUpdateKernel.SetFloat("_SpawnCount", particleEmitter.SpawnCount);
