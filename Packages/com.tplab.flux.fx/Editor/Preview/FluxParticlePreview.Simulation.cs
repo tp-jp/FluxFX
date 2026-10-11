@@ -110,6 +110,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             var velocityEnabled = velocityOverLifetime != null && velocityOverLifetime.Enabled;
 
             _positionMaterial.SetFloat("_DeltaTime", deltaTime);
+            _positionMaterial.SetFloat("_FluxFXSimulationTime", _simulationTime);
             _positionMaterial.SetFloat("_SpawnStart", spawnStart);
             _positionMaterial.SetFloat("_SpawnSeedStart", spawnSeedStart);
             _positionMaterial.SetFloat("_SpawnCount", spawnCount);

@@ -3,6 +3,7 @@ using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Editor.Shaders;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
+using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Preview
 {
@@ -10,7 +11,7 @@ namespace TpLab.Flux.FX.Editor.Preview
     {
         public void OnAuthoringChanged()
         {
-            if (!IsPlaying || _velocityMaterial == null) return;
+            if (!IsPlaying || _velocityMaterial == null || _positionMaterial == null) return;
 
             try
             {
@@ -25,16 +26,37 @@ namespace TpLab.Flux.FX.Editor.Preview
                     return;
                 }
 
+                var compilation = result.Compilation;
                 var pipeline = new FluxParticleShaderPipeline();
-                var artifact = pipeline.BuildVelocity(result.Compilation);
 
-                if (_velocityMaterial.shader.name != artifact.ShaderName)
+                var velocityArtifact = pipeline.Build(compilation, FluxParticleExecutionStage.VelocityUpdate);
+                var positionArtifact = pipeline.Build(compilation, FluxParticleExecutionStage.PositionUpdate);
+
+                var velocityShader = _velocityMaterial.shader;
+                var positionShader = _positionMaterial.shader;
+
+                if (velocityShader == null || velocityShader.name != velocityArtifact.ShaderName)
                 {
-                    _velocityMaterial.shader = pipeline.GetOrCreate(artifact);
+                    velocityShader = pipeline.GetOrCreate(velocityArtifact);
                 }
 
-                var stage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
-                new FluxParticleGpuMaterialBinder().Apply(stage, _velocityMaterial);
+                if (positionShader == null || positionShader.name != positionArtifact.ShaderName)
+                {
+                    positionShader = pipeline.GetOrCreate(positionArtifact);
+                }
+
+                _velocityMaterial.shader = velocityShader;
+                _positionMaterial.shader = positionShader;
+
+                var binder = new FluxParticleGpuMaterialBinder();
+
+                binder.Apply(
+                    compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate),
+                    _velocityMaterial);
+
+                binder.Apply(
+                    compilation.GetStage(FluxParticleExecutionStage.PositionUpdate),
+                    _positionMaterial);
 
                 SceneView.RepaintAll();
             }

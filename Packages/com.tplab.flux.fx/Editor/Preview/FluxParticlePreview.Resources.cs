@@ -12,21 +12,18 @@ namespace TpLab.Flux.FX.Editor.Preview
         bool CreateMaterials()
         {
             var initializeShader = Shader.Find("FluxFX/ParticleInitialize");
-            var positionShader = Shader.Find("FluxFX/ParticlePositionUpdate");
             var visualShader = Shader.Find("FluxFX/ParticleVisualUpdate");
             var rotationShader = Shader.Find("FluxFX/ParticleRotationUpdate");
 
-            if (initializeShader == null ||
-                positionShader == null ||
-                visualShader == null ||
-                rotationShader == null)
+            if (initializeShader == null || visualShader == null || rotationShader == null)
             {
                 Logger.LogError("Preview shaders could not be found.", _particleSystem);
                 return false;
             }
 
             Shader velocityShader;
-            FluxParticleGpuStageCompilation velocityStage;
+            Shader positionShader;
+            FluxParticleGpuCompilation compilation;
 
             try
             {
@@ -41,12 +38,15 @@ namespace TpLab.Flux.FX.Editor.Preview
                     return false;
                 }
 
-                velocityStage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
+                compilation = result.Compilation;
 
                 var pipeline = new FluxParticleShaderPipeline();
-                var artifact = pipeline.BuildVelocity(result.Compilation);
 
-                velocityShader = pipeline.GetOrCreate(artifact);
+                var velocityArtifact = pipeline.Build(compilation, FluxParticleExecutionStage.VelocityUpdate);
+                var positionArtifact = pipeline.Build(compilation, FluxParticleExecutionStage.PositionUpdate);
+
+                velocityShader = pipeline.GetOrCreate(velocityArtifact);
+                positionShader = pipeline.GetOrCreate(positionArtifact);
             }
             catch (Exception exception)
             {
@@ -69,7 +69,15 @@ namespace TpLab.Flux.FX.Editor.Preview
             _rotationMaterial = new Material(rotationShader);
             _rotationMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            new FluxParticleGpuMaterialBinder().Apply(velocityStage, _velocityMaterial);
+            var binder = new FluxParticleGpuMaterialBinder();
+
+            binder.Apply(
+                compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate),
+                _velocityMaterial);
+
+            binder.Apply(
+                compilation.GetStage(FluxParticleExecutionStage.PositionUpdate),
+                _positionMaterial);
 
             _currentSourceMaterial = _authoring.Render.Material;
             _renderMaterial = new Material(_currentSourceMaterial);
