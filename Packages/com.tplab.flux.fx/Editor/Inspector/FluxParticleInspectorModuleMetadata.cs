@@ -8,44 +8,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
     /// </summary>
     public sealed class FluxParticleInspectorModuleMetadata
     {
-        /// <summary>
-        /// Moduleの型を取得します。
-        /// </summary>
         public Type ModuleType { get; }
 
-        /// <summary>
-        /// Inspectorの表示名を取得します。
-        /// </summary>
         public string DisplayName { get; }
 
-        /// <summary>
-        /// Inspector内の表示順序を取得します。
-        /// </summary>
         public int DisplayOrder { get; }
 
-        /// <summary>
-        /// Inspectorの展開状態を保存するキーを取得します。
-        /// </summary>
         public string ExpandedKey { get; }
 
-        /// <summary>
-        /// Custom GPU Moduleかどうかを取得します。
-        /// </summary>
         public bool IsCustom { get; }
 
-        /// <summary>
-        /// Moduleが実行されるExecution Stageを取得します。
-        /// </summary>
-        public FluxParticleExecutionStage Stage => ((FluxParticleModule)Activator.CreateInstance(ModuleType)).Stage;
+        public FluxParticleExecutionStage Stage { get; }
 
-        /// <summary>
-        /// ModuleのInspector表示情報を作成します。
-        /// </summary>
-        /// <param name="moduleType">Moduleの型。</param>
-        /// <param name="displayName">Inspector表示名。</param>
-        /// <param name="displayOrder">Inspector表示順序。</param>
-        /// <param name="expandedKey">展開状態の保存キー。</param>
-        /// <param name="isCustom">Custom GPU Moduleかどうか。</param>
         public FluxParticleInspectorModuleMetadata(
             Type moduleType,
             string displayName,
@@ -54,7 +28,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             bool isCustom = false)
         {
             if (moduleType == null) throw new ArgumentNullException(nameof(moduleType));
-            if (moduleType.IsAbstract || !typeof(FluxParticleModule).IsAssignableFrom(moduleType))
+
+            if (moduleType.IsAbstract || moduleType.ContainsGenericParameters || !typeof(FluxParticleModule).IsAssignableFrom(moduleType))
             {
                 throw new ArgumentException($"Invalid Particle Module type: {moduleType.FullName}", nameof(moduleType));
             }
@@ -72,6 +47,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DisplayOrder = displayOrder;
             ExpandedKey = expandedKey;
             IsCustom = isCustom;
+
+            var module = (FluxParticleModule)Activator.CreateInstance(moduleType);
+            Stage = module.Stage;
         }
     }
 }

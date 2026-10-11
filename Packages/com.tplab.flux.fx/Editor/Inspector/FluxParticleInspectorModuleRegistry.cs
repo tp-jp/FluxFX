@@ -14,17 +14,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
         const string SessionStatePrefix = "TpLab.FluxFX.ParticleSystemInspector.";
 
         readonly Dictionary<Type, FluxParticleInspectorModuleMetadata> _metadata = new Dictionary<Type, FluxParticleInspectorModuleMetadata>();
-        readonly Dictionary<FluxParticleExecutionStage, IReadOnlyList<FluxParticleInspectorModuleMetadata>> _stages = new Dictionary<FluxParticleExecutionStage, IReadOnlyList<FluxParticleInspectorModuleMetadata>>();
+        readonly Dictionary<FluxParticleExecutionStage, IReadOnlyList<FluxParticleInspectorModuleMetadata>> _stages =
+            new Dictionary<FluxParticleExecutionStage, IReadOnlyList<FluxParticleInspectorModuleMetadata>>();
+
         readonly IReadOnlyList<FluxParticleInspectorModuleMetadata> _all;
 
-        /// <summary>
-        /// 登録されているModuleの種類数を取得します。
-        /// </summary>
         public int Count => _metadata.Count;
 
-        /// <summary>
-        /// 標準ModuleとCustom GPU Moduleを検出してRegistryを構築します。
-        /// </summary>
         public FluxParticleInspectorModuleRegistry()
         {
             RegisterStandardModules();
@@ -35,25 +31,25 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             _all = all.AsReadOnly();
 
-            foreach (var entry in all)
-            {
-                var stage = entry.Stage;
+            var stages = new Dictionary<FluxParticleExecutionStage, List<FluxParticleInspectorModuleMetadata>>();
 
-                if (!_stages.TryGetValue(stage, out var existing))
+            foreach (var metadata in all)
+            {
+                if (!stages.TryGetValue(metadata.Stage, out var modules))
                 {
-                    _stages.Add(stage, new List<FluxParticleInspectorModuleMetadata>());
+                    modules = new List<FluxParticleInspectorModuleMetadata>();
+                    stages.Add(metadata.Stage, modules);
                 }
 
-                ((List<FluxParticleInspectorModuleMetadata>)_stages[stage]).Add(entry);
+                modules.Add(metadata);
+            }
+
+            foreach (var entry in stages)
+            {
+                _stages.Add(entry.Key, entry.Value.AsReadOnly());
             }
         }
 
-        /// <summary>
-        /// 指定した型のModule表示情報の取得を試みます。
-        /// </summary>
-        /// <param name="moduleType">Moduleの型。</param>
-        /// <param name="metadata">取得した表示情報。存在しない場合はnull。</param>
-        /// <returns>取得できた場合はtrue、それ以外はfalse。</returns>
         public bool TryGet(Type moduleType, out FluxParticleInspectorModuleMetadata metadata)
         {
             if (moduleType == null)
@@ -65,20 +61,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
             return _metadata.TryGetValue(moduleType, out metadata);
         }
 
-        /// <summary>
-        /// 登録されているすべてのModule表示情報を取得します。
-        /// </summary>
-        /// <returns>Module表示情報の一覧。</returns>
         public IReadOnlyList<FluxParticleInspectorModuleMetadata> GetAll()
         {
             return _all;
         }
 
-        /// <summary>
-        /// 指定したExecution StageのModule表示情報を取得します。
-        /// </summary>
-        /// <param name="stage">取得対象のExecution Stage。</param>
-        /// <returns>表示順序で並べられたModule表示情報の一覧。</returns>
         public IReadOnlyList<FluxParticleInspectorModuleMetadata> GetModules(FluxParticleExecutionStage stage)
         {
             if (_stages.TryGetValue(stage, out var modules)) return modules;
@@ -123,17 +110,17 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 if (type.IsAbstract || type.ContainsGenericParameters) continue;
                 if (type.GetConstructor(Type.EmptyTypes) == null) continue;
 
-                var module = (FluxParticleModule)Activator.CreateInstance(type);
-
-                // 現在Custom GPU Moduleを実行できるのはVelocityUpdateのみ。
-                if (module.Stage != FluxParticleExecutionStage.VelocityUpdate) continue;
-
-                Register(new FluxParticleInspectorModuleMetadata(
+                var metadata = new FluxParticleInspectorModuleMetadata(
                     type,
                     ObjectNames.NicifyVariableName(type.Name),
                     1000 + definition.Order,
                     SessionStatePrefix + "CustomModule." + type.FullName,
-                    true));
+                    true);
+
+                // 現在Custom GPU Moduleを実行できるのはVelocityUpdateのみ。
+                if (metadata.Stage != FluxParticleExecutionStage.VelocityUpdate) continue;
+
+                Register(metadata);
             }
         }
 

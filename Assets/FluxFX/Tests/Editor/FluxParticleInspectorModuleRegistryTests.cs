@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Inspector;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -104,8 +105,57 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsEmpty(modules);
         }
 
+        [Test]
+        public void StageModulesAreCached()
+        {
+            var first = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
+            var second = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
+
+            Assert.AreSame(first, second);
+        }
+
+        [Test]
+        public void StageModulesCannotBeModified()
+        {
+            var modules = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
+            var list = modules as System.Collections.Generic.IList<FluxParticleInspectorModuleMetadata>;
+
+            Assert.IsNotNull(list);
+            Assert.IsTrue(list.IsReadOnly);
+            Assert.Throws<System.NotSupportedException>(() => list.Clear());
+        }
+
+        [Test]
+        public void CustomModuleMetadataHasStableIdentity()
+        {
+            Assert.IsTrue(_registry.TryGet(typeof(TestGpuModule), out var first));
+            Assert.IsTrue(_registry.TryGet(typeof(TestGpuModule), out var second));
+
+            Assert.AreSame(first, second);
+            Assert.IsTrue(first.IsCustom);
+            Assert.AreEqual(FluxParticleExecutionStage.VelocityUpdate, first.Stage);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(first.DisplayName));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(first.ExpandedKey));
+        }
+
+        [Test]
+        public void NoModuleAppearsInMultipleStages()
+        {
+            var types = new System.Collections.Generic.HashSet<System.Type>();
+
+            foreach (var metadata in _registry.GetAll())
+            {
+                Assert.IsTrue(types.Add(metadata.ModuleType), $"Duplicate Module: {metadata.ModuleType.FullName}");
+
+                var stageModules = _registry.GetModules(metadata.Stage);
+                Assert.IsTrue(Contains(stageModules, metadata.ModuleType));
+            }
+
+            Assert.AreEqual(_registry.Count, types.Count);
+        }
+
         static bool Contains(
-            System.Collections.Generic.IReadOnlyList<FluxParticleInspectorModuleMetadata> modules,
+            IReadOnlyList<FluxParticleInspectorModuleMetadata> modules,
             System.Type type)
         {
             foreach (var module in modules)
