@@ -39,19 +39,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawEnum(
                 _render.FindPropertyRelative("blendMode"),
                 "Blend Mode");
-
-            EditorGUILayout.Space();
-
-            DrawColorOverLifetime();
-            DrawSizeOverLifetime();
-            DrawRotationOverLifetime();
-
-            _textureSheetAnimationExpanded = DrawOptionalModule<FluxParticleTextureSheetAnimationModule>(
-                L10n.Tr("Texture Sheet Animation"),
-                _textureSheetAnimationExpanded,
-                TextureSheetAnimationExpandedKey);
-
-            DrawAddModuleButton(RendererModuleDefinitions);
         }
 
         void DrawStartSize()

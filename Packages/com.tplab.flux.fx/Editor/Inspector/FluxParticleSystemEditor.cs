@@ -19,7 +19,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         const string EmissionExpandedKey = SessionStatePrefix + "EmissionExpanded";
         const string ShapeExpandedKey = SessionStatePrefix + "ShapeExpanded";
-        const string VelocityExpandedKey = SessionStatePrefix + "VelocityExpanded";
+        const string ModulesExpandedKey = SessionStatePrefix + "ModulesExpanded";
+        const string VelocityUpdateExpandedKey = SessionStatePrefix + "VelocityUpdateExpanded";
+        const string PositionUpdateExpandedKey = SessionStatePrefix + "PositionUpdateExpanded";
+        const string RenderingModulesExpandedKey = SessionStatePrefix + "RenderingModulesExpanded";
         const string RendererExpandedKey = SessionStatePrefix + "RendererExpanded";
 
         const string VelocityOverLifetimeExpandedKey = SessionStatePrefix + "VelocityOverLifetimeExpanded";
@@ -43,21 +46,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         bool _emissionExpanded;
         bool _shapeExpanded;
-        bool _velocityExpanded;
+        bool _modulesExpanded;
         bool _renderExpanded;
-
-        bool _velocityOverLifetimeExpanded;
-        bool _gravityExpanded;
-        bool _forceExpanded;
-        bool _dragExpanded;
-        bool _noiseExpanded;
-        bool _vortexExpanded;
-        bool _limitVelocityExpanded;
 
         bool _colorOverLifetimeExpanded;
         bool _sizeOverLifetimeExpanded;
         bool _rotationOverLifetimeExpanded;
-        bool _textureSheetAnimationExpanded;
+
+        FluxParticleInspectorModuleRegistry _moduleRegistry;
 
         SerializedObject _authoringObject;
 
@@ -81,6 +77,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void OnEnable()
         {
             LoadExpandedStates();
+
+            _moduleRegistry = new FluxParticleInspectorModuleRegistry();
 
             var particleSystem = (FluxParticleSystem)target;
             var authoring = particleSystem.GetComponent<FluxParticleAuthoring>();
@@ -126,7 +124,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawMain();
             DrawEmission();
             DrawShape();
-            DrawVelocity();
+            DrawModules();
             DrawRenderer();
 
             var authoringChanged = _authoringObject.ApplyModifiedProperties();
@@ -237,21 +235,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             _emissionExpanded = SessionState.GetBool(EmissionExpandedKey, false);
             _shapeExpanded = SessionState.GetBool(ShapeExpandedKey, false);
-            _velocityExpanded = SessionState.GetBool(VelocityExpandedKey, false);
+            _modulesExpanded = SessionState.GetBool(ModulesExpandedKey, true);
             _renderExpanded = SessionState.GetBool(RendererExpandedKey, false);
-
-            _velocityOverLifetimeExpanded = SessionState.GetBool(VelocityOverLifetimeExpandedKey, false);
-            _gravityExpanded = SessionState.GetBool(GravityExpandedKey, false);
-            _forceExpanded = SessionState.GetBool(ForceExpandedKey, false);
-            _dragExpanded = SessionState.GetBool(DragExpandedKey, false);
-            _noiseExpanded = SessionState.GetBool(NoiseExpandedKey, false);
-            _vortexExpanded = SessionState.GetBool(VortexExpandedKey, false);
-            _limitVelocityExpanded = SessionState.GetBool(LimitVelocityExpandedKey, false);
 
             _colorOverLifetimeExpanded = SessionState.GetBool(ColorOverLifetimeExpandedKey, false);
             _sizeOverLifetimeExpanded = SessionState.GetBool(SizeOverLifetimeExpandedKey, false);
             _rotationOverLifetimeExpanded = SessionState.GetBool(RotationOverLifetimeExpandedKey, false);
-            _textureSheetAnimationExpanded = SessionState.GetBool(TextureSheetAnimationExpandedKey, false);
         }
     }
 }

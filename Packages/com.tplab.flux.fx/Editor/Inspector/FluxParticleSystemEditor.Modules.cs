@@ -1,4 +1,3 @@
-
 using System;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
@@ -9,56 +8,81 @@ namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleSystemEditor
     {
-        struct ModuleDefinition
+        void DrawModules()
         {
-            public readonly Type Type;
-            public readonly string Label;
-            public readonly string ExpandedKey;
+            _modulesExpanded = DrawSectionHeader(L10n.Tr("MODULES"), _modulesExpanded, ModulesExpandedKey);
+            if (!_modulesExpanded) return;
 
-            public ModuleDefinition(Type type, string label, string expandedKey)
-            {
-                Type = type;
-                Label = label;
-                ExpandedKey = expandedKey;
-            }
+            EditorGUILayout.Space(2);
+
+            DrawModuleStage(FluxParticleExecutionStage.VelocityUpdate, "Velocity Update", VelocityUpdateExpandedKey);
+            DrawModuleStage(FluxParticleExecutionStage.PositionUpdate, "Position Update", PositionUpdateExpandedKey);
+            DrawModuleStage(FluxParticleExecutionStage.Rendering, "Rendering", RenderingModulesExpandedKey);
         }
 
-        static readonly ModuleDefinition[] VelocityModuleDefinitions =
+        void DrawModuleStage(FluxParticleExecutionStage stage, string label, string expandedKey)
         {
-            new ModuleDefinition(typeof(FluxParticleVelocityOverLifetimeModule), "Velocity over Lifetime", VelocityOverLifetimeExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleGravityModule), "Gravity", GravityExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleForceModule), "Force", ForceExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleDragModule), "Drag", DragExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleNoiseModule), "Noise", NoiseExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleVortexModule), "Vortex", VortexExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleLimitVelocityModule), "Limit Velocity", LimitVelocityExpandedKey)
-        };
+            var definitions = _moduleRegistry.GetModules(stage);
+            if (definitions.Count == 0) return;
 
-        static readonly ModuleDefinition[] RendererModuleDefinitions =
+            var expanded = SessionState.GetBool(expandedKey, true);
+            var nextExpanded = EditorGUILayout.Foldout(expanded, L10n.Tr(label), true, EditorStyles.foldoutHeader);
+
+            if (nextExpanded != expanded)
+            {
+                SessionState.SetBool(expandedKey, nextExpanded);
+            }
+
+            if (!nextExpanded) return;
+
+            foreach (var definition in definitions)
+            {
+                DrawModuleEntry(definition);
+            }
+
+            DrawAddModuleButton(definitions);
+
+            EditorGUILayout.Space(4);
+        }
+
+        void DrawModuleEntry(FluxParticleInspectorModuleMetadata definition)
         {
-            new ModuleDefinition(typeof(FluxParticleColorOverLifetimeModule), "Color over Lifetime", ColorOverLifetimeExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleSizeOverLifetimeModule), "Size over Lifetime", SizeOverLifetimeExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleRotationOverLifetimeModule), "Rotation over Lifetime", RotationOverLifetimeExpandedKey),
-            new ModuleDefinition(typeof(FluxParticleTextureSheetAnimationModule), "Texture Sheet Animation", TextureSheetAnimationExpandedKey)
-        };
+            if (FindModuleIndex(definition.ModuleType) < 0) return;
 
-        bool DrawOptionalModule<T>(string label, bool expanded, string sessionStateKey)
-            where T : FluxParticleModule
-        {
-            var moduleIndex = FindModuleIndex(typeof(T));
-            if (moduleIndex < 0) return expanded;
+            var type = definition.ModuleType;
 
-            var module = _modules.GetArrayElementAtIndex(moduleIndex);
+            if (type == typeof(FluxParticleColorOverLifetimeModule))
+            {
+                DrawColorOverLifetime();
+                return;
+            }
 
-            return DrawModule(
-                label,
+            if (type == typeof(FluxParticleSizeOverLifetimeModule))
+            {
+                DrawSizeOverLifetime();
+                return;
+            }
+
+            if (type == typeof(FluxParticleRotationOverLifetimeModule))
+            {
+                DrawRotationOverLifetime();
+                return;
+            }
+
+            var index = FindModuleIndex(type);
+            var module = _modules.GetArrayElementAtIndex(index);
+            var expanded = SessionState.GetBool(definition.ExpandedKey, false);
+
+            DrawModule(
+                L10n.Tr(definition.DisplayName),
                 module,
                 expanded,
-                sessionStateKey,
-                () => ShowRemoveModuleMenu(typeof(T)));
+                definition.ExpandedKey,
+                () => ShowRemoveModuleMenu(type));
         }
 
-        void DrawAddModuleButton(ModuleDefinition[] definitions)
+        void DrawAddModuleButton(
+            System.Collections.Generic.IReadOnlyList<FluxParticleInspectorModuleMetadata> definitions)
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.BeginHorizontal();
@@ -78,40 +102,28 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.EndHorizontal();
         }
 
-        void ShowAddModuleMenu(ModuleDefinition[] definitions, Rect buttonRect)
+        void ShowAddModuleMenu(
+            System.Collections.Generic.IReadOnlyList<FluxParticleInspectorModuleMetadata> definitions,
+            Rect buttonRect)
         {
             var menu = new GenericMenu();
             var availableCount = 0;
 
             foreach (var definition in definitions)
             {
-                if (FindModuleIndex(definition.Type) >= 0) continue;
+                if (FindModuleIndex(definition.ModuleType) >= 0) continue;
 
                 var selectedDefinition = definition;
+                var label = definition.IsCustom
+                    ? "Custom/" + definition.DisplayName
+                    : L10n.Tr(definition.DisplayName);
 
                 menu.AddItem(
-                    new GUIContent(L10n.Tr(selectedDefinition.Label)),
+                    new GUIContent(label),
                     false,
                     () => AddModule(selectedDefinition));
 
                 availableCount++;
-            }
-
-            if (ReferenceEquals(definitions, VelocityModuleDefinitions))
-            {
-                foreach (var definition in GetCustomVelocityModuleDefinitions())
-                {
-                    if (FindModuleIndex(definition.Type) >= 0) continue;
-
-                    var selectedDefinition = definition;
-
-                    menu.AddItem(
-                        new GUIContent("Custom/" + selectedDefinition.Label),
-                        false,
-                        () => AddModule(selectedDefinition));
-
-                    availableCount++;
-                }
             }
 
             if (availableCount == 0)
@@ -143,34 +155,31 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 var module = _modules.GetArrayElementAtIndex(i);
                 if (module.managedReferenceValue == null) continue;
 
-                if (module.managedReferenceValue.GetType() == moduleType)
-                {
-                    return i;
-                }
+                if (module.managedReferenceValue.GetType() == moduleType) return i;
             }
 
             return -1;
         }
 
-        void AddModule(ModuleDefinition definition)
+        void AddModule(FluxParticleInspectorModuleMetadata definition)
         {
             if (_authoringObject == null) return;
 
             _authoringObject.Update();
 
-            if (FindModuleIndex(definition.Type) >= 0) return;
+            if (FindModuleIndex(definition.ModuleType) >= 0) return;
 
             var index = _modules.arraySize;
             _modules.arraySize++;
 
             var module = _modules.GetArrayElementAtIndex(index);
-            module.managedReferenceValue = Activator.CreateInstance(definition.Type);
+            module.managedReferenceValue = Activator.CreateInstance(definition.ModuleType);
 
             _authoringObject.ApplyModifiedProperties();
             _preview?.OnAuthoringChanged();
 
             SessionState.SetBool(definition.ExpandedKey, true);
-            SetModuleExpanded(definition.Type, true);
+            SetModuleExpanded(definition.ModuleType, true);
 
             Repaint();
         }
@@ -193,35 +202,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void SetModuleExpanded(Type moduleType, bool expanded)
         {
-            if (moduleType == typeof(FluxParticleVelocityOverLifetimeModule))
-            {
-                _velocityOverLifetimeExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleGravityModule))
-            {
-                _gravityExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleForceModule))
-            {
-                _forceExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleDragModule))
-            {
-                _dragExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleNoiseModule))
-            {
-                _noiseExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleVortexModule))
-            {
-                _vortexExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleLimitVelocityModule))
-            {
-                _limitVelocityExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleColorOverLifetimeModule))
+            if (moduleType == typeof(FluxParticleColorOverLifetimeModule))
             {
                 _colorOverLifetimeExpanded = expanded;
             }
@@ -232,10 +213,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             else if (moduleType == typeof(FluxParticleRotationOverLifetimeModule))
             {
                 _rotationOverLifetimeExpanded = expanded;
-            }
-            else if (moduleType == typeof(FluxParticleTextureSheetAnimationModule))
-            {
-                _textureSheetAnimationExpanded = expanded;
             }
         }
     }
