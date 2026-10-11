@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using TpLab.Flux.FX.Udon;
 using UnityEngine;
 using VRC.SDK3.Data;
 

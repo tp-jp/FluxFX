@@ -168,6 +168,27 @@ namespace TpLab.Flux.FX.Udon
             return particleSimulation.GetGpuParameterFloat(target, parameterName) > 0.5f;
         }
 
+        [PublicAPI]
+        public DataList GetGpuModuleBinding(string moduleId)
+        {
+            if (!TryGetModuleBinding(moduleId, out var target, out var enabledParameter)) return null;
+
+            var store = particleSimulation.GetGpuParameterStore(target);
+            if (store == null) return null;
+
+            if (!store.HasParameter(enabledParameter))
+            {
+                Logger.LogError($"GPU Module Enabled parameter is not registered: {moduleId}");
+                return null;
+            }
+
+            var data = new DataToken[2];
+            data[0] = new DataToken(store);
+            data[1] = enabledParameter;
+
+            return new DataList(data);
+        }
+
         void Start()
         {
             particleState.Initialize(particleCount);

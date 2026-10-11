@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using TpLab.Flux.FX.Udon;
 using UnityEngine;
 using VRC.SDK3.Data;
 
@@ -24,7 +23,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
             var data = new DataToken[(int)FluxParticleNoiseParameter.Count];
 
             data[(int)FluxParticleNoiseParameter.Store] = new DataToken(store);
-            data[(int)FluxParticleGravityParameter.EnabledParameter] = enabledParameter;
+            data[(int)FluxParticleNoiseParameter.EnabledParameter] = enabledParameter;
 
             return (FluxParticleNoiseParameters)new DataList(data);
         }

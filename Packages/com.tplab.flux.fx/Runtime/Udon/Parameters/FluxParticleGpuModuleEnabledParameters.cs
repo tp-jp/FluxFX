@@ -81,7 +81,8 @@ namespace TpLab.Flux.FX.Udon.Parameters
             WriteEnabled(parameters, enabled);
         }
 
-        static bool ReadEnabled(DataList parameters)
+        [PublicAPI]
+        public static bool ReadEnabled(DataList parameters)
         {
             var store = (FluxParticleGpuParameterStore)parameters[StoreIndex].Reference;
             var name = parameters[EnabledParameterIndex].String;
@@ -89,7 +90,8 @@ namespace TpLab.Flux.FX.Udon.Parameters
             return store.GetFloat(name) > 0.5f;
         }
 
-        static void WriteEnabled(DataList parameters, bool enabled)
+        [PublicAPI]
+        public static void WriteEnabled(DataList parameters, bool enabled)
         {
             var store = (FluxParticleGpuParameterStore)parameters[StoreIndex].Reference;
             var name = parameters[EnabledParameterIndex].String;

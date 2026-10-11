@@ -230,7 +230,7 @@ namespace TpLab.Flux.FX.Udon
             return store.GetFloat(name);
         }
 
-        FluxParticleGpuParameterStore GetGpuParameterStore(FluxParticleKernelTarget target)
+        internal FluxParticleGpuParameterStore GetGpuParameterStore(FluxParticleKernelTarget target)
         {
             switch (target)
             {
