@@ -4,28 +4,18 @@ using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
-    enum FluxParticleForceParameter
-    {
-        Store,
-        EnabledParameter,
-
-        Count
-    }
-
     /// <summary>
     /// ParticleのForceに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
-    public class FluxParticleForceParameters : DataList
+    public class FluxParticleForceParameters : FluxParticleModuleParameters
     {
         internal static FluxParticleForceParameters New(DataList binding)
         {
-            var data = new DataToken[(int)FluxParticleForceParameter.Count];
+            var data = Create(binding);
+            if (data == null) return null;
 
-            data[(int)FluxParticleForceParameter.Store] = binding[0];
-            data[(int)FluxParticleForceParameter.EnabledParameter] = binding[1];
-
-            return (FluxParticleForceParameters)new DataList(data);
+            return (FluxParticleForceParameters)data;
         }
     }
 
@@ -41,8 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static Vector3 GetForce(this FluxParticleForceParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleForceParameter.Store].Reference;
-            var force = store.GetVector("_Force");
+            var force = parameters.GetVector("_Force");
 
             return new Vector3(force.x, force.y, force.z);
         }
@@ -53,9 +42,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetForce(this FluxParticleForceParameters parameters, Vector3 force)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleForceParameter.Store].Reference;
-
-            store.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
+            parameters.SetVector("_Force", new Vector4(force.x, force.y, force.z, 0));
         }
     }
 }

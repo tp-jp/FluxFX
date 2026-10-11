@@ -4,28 +4,18 @@ using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
-    enum FluxParticleDragParameter
-    {
-        Store,
-        EnabledParameter,
-
-        Count
-    }
-
     /// <summary>
     /// ParticleのDragに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
-    public class FluxParticleDragParameters : DataList
+    public class FluxParticleDragParameters : FluxParticleModuleParameters
     {
         internal static FluxParticleDragParameters New(DataList binding)
         {
-            var data = new DataToken[(int)FluxParticleDragParameter.Count];
+            var data = Create(binding);
+            if (data == null) return null;
 
-            data[(int)FluxParticleDragParameter.Store] = binding[0];
-            data[(int)FluxParticleDragParameter.EnabledParameter] = binding[1];
-
-            return (FluxParticleDragParameters)new DataList(data);
+            return (FluxParticleDragParameters)data;
         }
     }
 
@@ -41,9 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static float GetDrag(this FluxParticleDragParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleDragParameter.Store].Reference;
-
-            return store.GetFloat("_Drag");
+            return parameters.GetFloat("_Drag");
         }
 
         /// <summary>
@@ -52,9 +40,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetDrag(this FluxParticleDragParameters parameters, float drag)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleDragParameter.Store].Reference;
-
-            store.SetFloat("_Drag", Mathf.Max(0, drag));
+            parameters.SetFloat("_Drag", Mathf.Max(0, drag));
         }
     }
 }

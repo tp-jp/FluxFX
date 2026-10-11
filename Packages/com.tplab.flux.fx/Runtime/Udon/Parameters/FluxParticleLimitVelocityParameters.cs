@@ -4,28 +4,18 @@ using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
-    enum FluxParticleLimitVelocityParameter
-    {
-        Store,
-        EnabledParameter,
-
-        Count
-    }
-
     /// <summary>
     /// ParticleのLimit Velocityに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
-    public class FluxParticleLimitVelocityParameters : DataList
+    public class FluxParticleLimitVelocityParameters : FluxParticleModuleParameters
     {
         internal static FluxParticleLimitVelocityParameters New(DataList binding)
         {
-            var data = new DataToken[(int)FluxParticleLimitVelocityParameter.Count];
+            var data = Create(binding);
+            if (data == null) return null;
 
-            data[(int)FluxParticleLimitVelocityParameter.Store] = binding[0];
-            data[(int)FluxParticleLimitVelocityParameter.EnabledParameter] = binding[1];
-
-            return (FluxParticleLimitVelocityParameters)new DataList(data);
+            return (FluxParticleLimitVelocityParameters)data;
         }
     }
 
@@ -41,9 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static float GetMaxSpeed(this FluxParticleLimitVelocityParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleLimitVelocityParameter.Store].Reference;
-
-            return store.GetFloat("_MaxSpeed");
+            return parameters.GetFloat("_MaxSpeed");
         }
 
         /// <summary>
@@ -52,9 +40,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetMaxSpeed(this FluxParticleLimitVelocityParameters parameters, float maxSpeed)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleLimitVelocityParameter.Store].Reference;
-
-            store.SetFloat("_MaxSpeed", Mathf.Max(0, maxSpeed));
+            parameters.SetFloat("_MaxSpeed", Mathf.Max(0, maxSpeed));
         }
     }
 }

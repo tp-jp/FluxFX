@@ -4,28 +4,18 @@ using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Parameters
 {
-    enum FluxParticleVortexParameter
-    {
-        Store,
-        EnabledParameter,
-
-        Count
-    }
-
     /// <summary>
     /// ParticleのVortexに関するRuntimeパラメーターを操作します。
     /// </summary>
     [PublicAPI]
-    public class FluxParticleVortexParameters : DataList
+    public class FluxParticleVortexParameters : FluxParticleModuleParameters
     {
         internal static FluxParticleVortexParameters New(DataList binding)
         {
-            var data = new DataToken[(int)FluxParticleVortexParameter.Count];
+            var data = Create(binding);
+            if (data == null) return null;
 
-            data[(int)FluxParticleVortexParameter.Store] = binding[0];
-            data[(int)FluxParticleVortexParameter.EnabledParameter] = binding[1];
-
-            return (FluxParticleVortexParameters)new DataList(data);
+            return (FluxParticleVortexParameters)data;
         }
     }
 
@@ -41,8 +31,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static Vector3 GetCenter(this FluxParticleVortexParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
-            var center = store.GetVector("_VortexCenter");
+            var center = parameters.GetVector("_VortexCenter");
 
             return new Vector3(center.x, center.y, center.z);
         }
@@ -53,9 +42,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetCenter(this FluxParticleVortexParameters parameters, Vector3 center)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
-
-            store.SetVector("_VortexCenter", new Vector4(center.x, center.y, center.z, 0));
+            parameters.SetVector("_VortexCenter", new Vector4(center.x, center.y, center.z, 0));
         }
 
         /// <summary>
@@ -64,8 +51,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static Vector3 GetAxis(this FluxParticleVortexParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
-            var axis = store.GetVector("_VortexAxis");
+            var axis = parameters.GetVector("_VortexAxis");
 
             return new Vector3(axis.x, axis.y, axis.z);
         }
@@ -76,10 +62,9 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetAxis(this FluxParticleVortexParameters parameters, Vector3 axis)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
             var normalized = axis.normalized;
 
-            store.SetVector("_VortexAxis", new Vector4(normalized.x, normalized.y, normalized.z, 0));
+            parameters.SetVector("_VortexAxis", new Vector4(normalized.x, normalized.y, normalized.z, 0));
         }
 
         /// <summary>
@@ -88,9 +73,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static float GetStrength(this FluxParticleVortexParameters parameters)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
-
-            return store.GetFloat("_VortexStrength");
+            return parameters.GetFloat("_VortexStrength");
         }
 
         /// <summary>
@@ -99,9 +82,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         [PublicAPI]
         public static void SetStrength(this FluxParticleVortexParameters parameters, float strength)
         {
-            var store = (FluxParticleGpuParameterStore)parameters[(int)FluxParticleVortexParameter.Store].Reference;
-
-            store.SetFloat("_VortexStrength", Mathf.Max(0, strength));
+            parameters.SetFloat("_VortexStrength", Mathf.Max(0, strength));
         }
     }
 }
