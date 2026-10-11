@@ -34,12 +34,14 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void RegistryRejectsUnknownModule()
+        public void RegistryResolvesNoiseModule()
         {
             var registry = new FluxParticleGpuModuleRegistry();
 
-            Assert.Throws<InvalidOperationException>(() =>
-                registry.Get(typeof(FluxParticleNoiseModule)));
+            var definition = registry.Get(typeof(FluxParticleNoiseModule));
+
+            Assert.IsNotNull(definition);
+            Assert.AreEqual("FluxFX_Noise", definition.EntryPoint);
         }
     }
 }

@@ -205,8 +205,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             StringAssert.Contains("FluxFX_Noise(ctx);", result.Source);
             StringAssert.Contains("_NoiseStrength (\"_NoiseStrength\", Float)", result.Source);
             StringAssert.Contains("_NoiseScale (\"_NoiseScale\", Float)", result.Source);
-            StringAssert.Contains("_NoiseTime (\"_NoiseTime\", Float)", result.Source);
+            StringAssert.Contains("_NoiseSpeed (\"_NoiseSpeed\", Float)", result.Source);
             StringAssert.Contains($"#include \"{includePath}\"", result.Source);
+
+            Assert.IsFalse(result.Source.Contains("_NoiseTime"));
             Assert.IsFalse(result.Source.Contains($"#include \"{sourcePath}\""));
             Assert.IsFalse(result.Source.Contains("FluxFX_LegacyNoise"));
         }

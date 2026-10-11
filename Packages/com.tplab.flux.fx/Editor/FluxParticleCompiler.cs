@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 
@@ -41,6 +42,9 @@ namespace TpLab.Flux.FX.Editor
             AddNoise(parameters, plan);
             AddVortex(parameters, plan);
             AddLimitVelocity(parameters, plan);
+
+            var gpuCompiler = new FluxParticleGpuParameterCompiler(new FluxParticleGpuModuleRegistry());
+            parameters["gpuParameters"] = gpuCompiler.Compile(plan);
 
             AddRender(parameters, authoring.Render, plan);
 
