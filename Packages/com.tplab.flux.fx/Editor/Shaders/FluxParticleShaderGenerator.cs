@@ -9,25 +9,18 @@ namespace TpLab.Flux.FX.Editor.Shaders
 {
     public sealed class FluxParticleShaderGenerator
     {
-        const string VelocityTemplatePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Templates/ParticleVelocityUpdate.shader.template";
-
-        public FluxParticleShaderDraft GenerateVelocity(FluxParticleGpuCompilation compilation)
-        {
-            if (compilation == null) throw new ArgumentNullException(nameof(compilation));
-
-            var stage = compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
-            if (stage == null) throw new InvalidOperationException("GPU Velocity compilation was not found.");
-
-            return GenerateVelocity(stage);
-        }
-
-        public FluxParticleShaderDraft GenerateVelocity(FluxParticleGpuStageCompilation stage)
+        public FluxParticleShaderDraft Generate(
+            FluxParticleGpuStageCompilation stage,
+            FluxParticleGpuStageDescriptor descriptor)
         {
             if (stage == null) throw new ArgumentNullException(nameof(stage));
+            if (descriptor == null) throw new ArgumentNullException(nameof(descriptor));
 
-            if (stage.Stage != FluxParticleExecutionStage.VelocityUpdate)
+            if (stage.Stage != descriptor.Stage)
             {
-                throw new ArgumentException($"Expected VelocityUpdate stage, but received {stage.Stage}.", nameof(stage));
+                throw new ArgumentException(
+                    $"Expected {descriptor.Stage} stage, but received {stage.Stage}.",
+                    nameof(stage));
             }
 
             var properties = new StringBuilder();
@@ -58,22 +51,52 @@ namespace TpLab.Flux.FX.Editor.Shaders
             {
                 includes.AppendLine($"#include \"{module.HlslPath}\"");
 
-                var enabledName = module.EnabledParameter.Name;
-
-                calls.AppendLine($"if ({enabledName} > 0.5)");
+                calls.AppendLine($"if ({module.EnabledParameter.Name} > 0.5)");
                 calls.AppendLine("{");
                 calls.AppendLine($"    {module.EntryPoint}(ctx);");
                 calls.AppendLine("}");
             }
 
-            var source = Normalize(File.ReadAllText(VelocityTemplatePath));
+            var source = Normalize(File.ReadAllText(descriptor.ShaderTemplatePath));
 
             source = ReplaceBlockSlot(source, "{{MODULE_PROPERTIES}}", properties.ToString().TrimEnd());
             source = ReplaceBlockSlot(source, "{{MODULE_UNIFORMS}}", uniforms.ToString().TrimEnd());
             source = ReplaceBlockSlot(source, "{{MODULE_INCLUDES}}", includes.ToString().TrimEnd());
             source = ReplaceBlockSlot(source, "{{MODULE_CALLS}}", calls.ToString().TrimEnd());
 
-            return new FluxParticleShaderDraft(FluxParticleExecutionStage.VelocityUpdate, source);
+            return new FluxParticleShaderDraft(stage.Stage, source);
+        }
+
+        public FluxParticleShaderDraft Generate(
+            FluxParticleGpuCompilation compilation,
+            FluxParticleExecutionStage stage)
+        {
+            if (compilation == null) throw new ArgumentNullException(nameof(compilation));
+
+            var stageCompilation = compilation.GetStage(stage);
+
+            if (stageCompilation == null)
+            {
+                throw new InvalidOperationException($"GPU compilation stage was not found: {stage}.");
+            }
+
+            var descriptor = FluxParticleGpuStageRegistry.GetRequired(stage);
+
+            return Generate(stageCompilation, descriptor);
+        }
+
+        public FluxParticleShaderDraft GenerateVelocity(FluxParticleGpuCompilation compilation)
+        {
+            return Generate(compilation, FluxParticleExecutionStage.VelocityUpdate);
+        }
+
+        public FluxParticleShaderDraft GenerateVelocity(FluxParticleGpuStageCompilation stage)
+        {
+            if (stage == null) throw new ArgumentNullException(nameof(stage));
+
+            var descriptor = FluxParticleGpuStageRegistry.GetRequired(FluxParticleExecutionStage.VelocityUpdate);
+
+            return Generate(stage, descriptor);
         }
 
         static string ReplaceBlockSlot(string source, string slot, string value)

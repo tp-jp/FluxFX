@@ -237,6 +237,112 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(artifact.ShaderName, first.name);
         }
 
+        [Test]
+        public void EmptyPositionStageProducesValidTemplate()
+        {
+            var compilation = Compile();
+            var source = _generator.Generate(compilation, FluxParticleExecutionStage.PositionUpdate).Source;
+
+            StringAssert.Contains("FluxFX_ApplyPositionModules(ctx);", source);
+            StringAssert.Contains("position.xyz = ctx.position;", source);
+            StringAssert.Contains("position.w += _DeltaTime;", source);
+            StringAssert.Contains("CreateSpawnPosition(spawnSeed)", source);
+            StringAssert.Contains("EvaluateVelocityOverLifetime", source);
+
+            Assert.IsFalse(source.Contains("{{MODULE_PROPERTIES}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_UNIFORMS}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_INCLUDES}}"));
+            Assert.IsFalse(source.Contains("{{MODULE_CALLS}}"));
+        }
+
+        [Test]
+        public void PositionModuleGeneratesShader()
+        {
+            AddModule(new TestPositionGpuModule());
+
+            var compilation = Compile();
+            var source = _generator.Generate(compilation, FluxParticleExecutionStage.PositionUpdate).Source;
+            var enabledName = FluxParticleGpuModuleEnabled.GetParameterName("test.fluxfx.position");
+
+            StringAssert.Contains("_TestPositionStrength (\"_TestPositionStrength\", Float)", source);
+            StringAssert.Contains("float _TestPositionStrength;", source);
+            StringAssert.Contains("FluxFX_TestPosition(ctx);", source);
+            StringAssert.Contains($"if ({enabledName} > 0.5)", source);
+            StringAssert.Contains("_FluxFXSimulationTime", source);
+
+            var integration = source.IndexOf("position.w += _DeltaTime;");
+            var moduleCall = source.LastIndexOf("FluxFX_ApplyPositionModules(ctx);");
+            var writeBack = source.LastIndexOf("position.xyz = ctx.position;");
+
+            Assert.Greater(moduleCall, integration);
+            Assert.Greater(writeBack, moduleCall);
+        }
+
+        [Test]
+        public void VelocityAndPositionShadersAreGeneratedIndependently()
+        {
+            AddModule(new TestGpuModule());
+            AddModule(new TestPositionGpuModule());
+
+            var compilation = Compile();
+
+            var velocity = _generator.Generate(compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var position = _generator.Generate(compilation, FluxParticleExecutionStage.PositionUpdate);
+
+            Assert.AreEqual(FluxParticleExecutionStage.VelocityUpdate, velocity.Stage);
+            Assert.AreEqual(FluxParticleExecutionStage.PositionUpdate, position.Stage);
+
+            StringAssert.Contains("FluxFX_CustomLift(ctx);", velocity.Source);
+            StringAssert.Contains("FluxFX_TestPosition(ctx);", position.Source);
+
+            Assert.IsFalse(velocity.Source.Contains("FluxFX_TestPosition(ctx);"));
+            Assert.IsFalse(position.Source.Contains("FluxFX_CustomLift(ctx);"));
+        }
+
+        [Test]
+        public void PositionShaderArtifactCanBeBuilt()
+        {
+            AddModule(new TestPositionGpuModule());
+
+            var compilation = Compile();
+            var pipeline = new FluxParticleShaderPipeline();
+            var artifact = pipeline.Build(compilation, FluxParticleExecutionStage.PositionUpdate);
+
+            Assert.AreEqual(FluxParticleExecutionStage.PositionUpdate, artifact.Stage);
+            StringAssert.StartsWith("Hidden/FluxFX/Generated/PositionUpdate_", artifact.ShaderName);
+            StringAssert.Contains("FluxFX_TestPosition(ctx);", artifact.Source);
+
+            var modulePath = "Assets/FluxFX/Tests/Runtime/Shaders/TestPositionGpuModule.hlsl";
+            var generatedIncludePath = artifact.Includes.Get(modulePath).AssetPath;
+
+            StringAssert.Contains($"#include \"{generatedIncludePath}\"", artifact.Source);
+        }
+
+        [Test]
+        public void PositionModuleEnabledDoesNotChangeArtifactId()
+        {
+            AddModule(new TestPositionGpuModule());
+
+            var pipeline = new FluxParticleShaderPipeline();
+            var first = pipeline.Build(Compile(), FluxParticleExecutionStage.PositionUpdate);
+
+            SetModuleEnabled(0, false);
+
+            var second = pipeline.Build(Compile(), FluxParticleExecutionStage.PositionUpdate);
+
+            Assert.AreEqual(first.ArtifactId, second.ArtifactId);
+            Assert.AreEqual(first.Source, second.Source);
+        }
+
+        [Test]
+        public void UnsupportedStageCannotGenerateShader()
+        {
+            var compilation = Compile();
+
+            Assert.Throws<System.InvalidOperationException>(() =>
+                _generator.Generate(compilation, FluxParticleExecutionStage.Rendering));
+        }
+
         static void AssertModule(string source, string entryPoint, string parameter, string parameterType)
         {
             StringAssert.Contains($"FluxFX_{entryPoint}(ctx);", source);

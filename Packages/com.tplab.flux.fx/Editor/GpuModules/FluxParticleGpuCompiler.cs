@@ -8,8 +8,6 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 {
     public sealed class FluxParticleGpuCompiler
     {
-        const string PositionShaderPath = "Packages/com.tplab.flux.fx/Runtime/Shaders/ParticlePositionUpdate.shader";
-
         static readonly Regex IdentifierPattern = new Regex(
             @"^_[A-Za-z][A-Za-z0-9_]*$",
             RegexOptions.Compiled);
@@ -45,7 +43,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             {
                 stageModules.Add(descriptor.Stage, new List<FluxParticleGpuModuleCompilation>());
                 stageNames.Add(descriptor.Stage, new HashSet<string>(StringComparer.Ordinal));
-                reservedNames.Add(descriptor.Stage, CollectReservedNames(GetValidationShaderPath(descriptor)));
+                reservedNames.Add(descriptor.Stage, CollectReservedNames(descriptor.ShaderTemplatePath));
             }
 
             foreach (var module in plan.Modules)
@@ -192,16 +190,6 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             }
 
             return valid;
-        }
-
-        static string GetValidationShaderPath(FluxParticleGpuStageDescriptor descriptor)
-        {
-            if (descriptor.Stage == FluxParticleExecutionStage.PositionUpdate)
-            {
-                return PositionShaderPath;
-            }
-
-            return descriptor.ShaderTemplatePath;
         }
 
         static HashSet<string> CollectReservedNames(string shaderPath)

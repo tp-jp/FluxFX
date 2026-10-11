@@ -74,10 +74,9 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         public override string ModuleId => "test.fluxfx.position";
 
-        // C6-2ではHLSLを実行しないため、実装用ファイルはC6-3で用意します。
-        public override string HlslPath => "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+        public override string HlslPath => "Assets/FluxFX/Tests/Runtime/Shaders/TestPositionGpuModule.hlsl";
 
-        public override string EntryPoint => "FluxFX_CustomLift";
+        public override string EntryPoint => "FluxFX_TestPosition";
 
         public override int Order => 150;
 
