@@ -41,8 +41,11 @@ namespace TpLab.Flux.FX.Editor
             var gpuParameterCompiler = new FluxParticleGpuParameterCompiler(registry);
             var gpuBindingCompiler = new FluxParticleGpuModuleBindingCompiler(registry);
 
-            parameters["gpuParameters"] = gpuParameterCompiler.Compile(plan);
-            parameters["gpuModuleBindings"] = gpuBindingCompiler.Compile(plan);
+            var gpuParameters = gpuParameterCompiler.Compile(plan);
+            var gpuModuleBindings = gpuBindingCompiler.Compile(plan, gpuParameters);
+
+            parameters["gpuParameters"] = gpuParameters;
+            parameters["gpuModuleBindings"] = gpuModuleBindings;
 
             AddRender(parameters, authoring.Render, plan);
 

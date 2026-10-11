@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;
@@ -84,9 +85,93 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNotNull(bindings["tplab.fluxfx.vortex"]);
         }
 
-        Newtonsoft.Json.Linq.JObject Compile()
+        [Test]
+        public void GravityBindingContainsOwnedParameters()
         {
-            return _compiler.Compile(FluxParticleCompilePlan.Create(_authoring));
+            AddModule(new FluxParticleGravityModule());
+
+            var binding = Compile()["tplab.fluxfx.gravity"];
+            var parameters = binding["parameters"];
+
+            Assert.IsNotNull(parameters);
+            Assert.AreEqual(1, ((JObject)parameters).Count);
+            Assert.AreEqual((int)FluxParticleParameterType.Vector, (int)parameters["_Gravity"]);
+        }
+
+        [Test]
+        public void CustomModuleParametersAreIndependent()
+        {
+            AddModule(new FluxParticleGravityModule());
+            AddModule(new FluxParticleForceModule());
+
+            var bindings = Compile();
+            var gravity = bindings["tplab.fluxfx.gravity"]["parameters"];
+            var force = bindings["tplab.fluxfx.force"]["parameters"];
+
+            Assert.IsNotNull(gravity["_Gravity"]);
+            Assert.IsNull(gravity["_Force"]);
+
+            Assert.IsNotNull(force["_Force"]);
+            Assert.IsNull(force["_Gravity"]);
+        }
+
+        [Test]
+        public void MissingParameterIsRejected()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var gpuParameters = new FluxParticleGpuParameterCompiler(registry).Compile(plan);
+
+            ((JObject)gpuParameters["velocity"]).Remove("_Gravity");
+
+            var exception = Assert.Throws<System.InvalidOperationException>(() => _compiler.Compile(plan, gpuParameters));
+
+            StringAssert.Contains("_Gravity", exception.Message);
+        }
+
+        [Test]
+        public void ParameterTypeMismatchIsRejected()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var gpuParameters = new FluxParticleGpuParameterCompiler(registry).Compile(plan);
+
+            gpuParameters["velocity"]["_Gravity"]["type"] = (int)FluxParticleParameterType.Float;
+
+            var exception = Assert.Throws<System.InvalidOperationException>(() => _compiler.Compile(plan, gpuParameters));
+
+            StringAssert.Contains("_Gravity", exception.Message);
+        }
+
+        [Test]
+        public void UnownedParameterIsRejected()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var gpuParameters = new FluxParticleGpuParameterCompiler(registry).Compile(plan);
+
+            ((JObject)gpuParameters["velocity"]).Add("_Unexpected", new JObject
+            {
+                ["type"] = (int)FluxParticleParameterType.Float,
+                ["value"] = 1.0f
+            });
+
+            Assert.Throws<System.InvalidOperationException>(() => _compiler.Compile(plan, gpuParameters));
+        }
+
+        JObject Compile()
+        {
+            var plan = FluxParticleCompilePlan.Create(_authoring);
+            var registry = new FluxParticleGpuModuleRegistry();
+            var gpuParameters = new FluxParticleGpuParameterCompiler(registry).Compile(plan);
+
+            return _compiler.Compile(plan, gpuParameters);
         }
 
         void AddModule(FluxParticleModule module)
