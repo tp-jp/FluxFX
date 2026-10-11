@@ -25,23 +25,26 @@ namespace TpLab.Flux.FX.Editor.Preview
                 return false;
             }
 
-            var plan = FluxParticleCompilePlan.Create(_authoring);
-            var registry = new FluxParticleGpuModuleRegistry();
-            var validator = new FluxParticleGpuModuleValidator(registry);
-            var validation = validator.Validate(plan);
-
-            if (validation.HasErrors)
-            {
-                Logger.LogError($"Preview GPU Module validation failed:\n{validation.GetReport()}", _particleSystem);
-                return false;
-            }
-
             Shader velocityShader;
+            FluxParticleGpuStageCompilation velocityStage;
 
             try
             {
+                var plan = FluxParticleCompilePlan.Create(_authoring);
+                var registry = new FluxParticleGpuModuleRegistry();
+                var compiler = new FluxParticleGpuCompiler(registry);
+                var result = compiler.Compile(plan);
+
+                if (!result.Success)
+                {
+                    Logger.LogError($"Preview GPU Module compilation failed:\n{result.Validation.GetReport()}", _particleSystem);
+                    return false;
+                }
+
+                velocityStage = result.Compilation.GetStage(FluxParticleExecutionStage.VelocityUpdate);
+
                 var pipeline = new FluxParticleShaderPipeline(registry);
-                var artifact = pipeline.BuildVelocity(plan);
+                var artifact = pipeline.BuildVelocity(result.Compilation);
 
                 velocityShader = pipeline.GetOrCreate(artifact);
             }
@@ -66,16 +69,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _rotationMaterial = new Material(rotationShader);
             _rotationMaterial.hideFlags = HideFlags.HideAndDontSave;
 
-            var collector = new FluxParticleParameterCollector();
-
-            foreach (var module in plan.GetModules(FluxParticleExecutionStage.VelocityUpdate))
-            {
-                if (!registry.TryGet(module.GetType(), out var definition)) continue;
-
-                definition.CollectParameters(module, collector);
-            }
-
-            collector.Apply(_velocityMaterial);
+            new FluxParticleGpuMaterialBinder().Apply(velocityStage, _velocityMaterial);
 
             _currentSourceMaterial = _authoring.Render.Material;
             _renderMaterial = new Material(_currentSourceMaterial);

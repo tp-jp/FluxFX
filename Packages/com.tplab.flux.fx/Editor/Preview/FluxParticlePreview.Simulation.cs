@@ -71,36 +71,6 @@ namespace TpLab.Flux.FX.Editor.Preview
                 speedMax = Mathf.Max(_authoring.InitialVelocity.Min, _authoring.InitialVelocity.Max);
             }
 
-            var gravity = GetGravity();
-            var force = GetForce();
-            var drag = GetDrag();
-
-            var vortexCenter = Vector3.zero;
-            var vortexAxis = Vector3.zero;
-            var vortexStrength = 0.0f;
-
-            var maxSpeed = 0.0f;
-
-            foreach (var module in _authoring.Modules)
-            {
-                if (module is FluxParticleVortexModule vortexModule)
-                {
-                    if (vortexModule.Enabled)
-                    {
-                        vortexCenter = vortexModule.Center;
-                        vortexAxis = vortexModule.Axis.normalized;
-                        vortexStrength = vortexModule.Strength;
-                    }
-                }
-                else if (module is FluxParticleLimitVelocityModule limitVelocityModule)
-                {
-                    if (limitVelocityModule.Enabled)
-                    {
-                        maxSpeed = limitVelocityModule.MaxSpeed;
-                    }
-                }
-            }
-
             var systemRotation = _particleSystem.transform.rotation;
 
             _velocityMaterial.SetFloat("_DeltaTime", deltaTime);
@@ -116,50 +86,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             _velocityMaterial.SetFloat("_ShapeAngle", _authoring.Shape.Angle);
             _velocityMaterial.SetFloat("_SimulationSpace", (int)_authoring.SimulationSpace);
             _velocityMaterial.SetVector("_SystemRotation", new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
-            _velocityMaterial.SetVector("_Gravity", gravity);
-            _velocityMaterial.SetVector("_Force", force);
-            _velocityMaterial.SetFloat("_Drag", drag);
-            _velocityMaterial.SetVector("_VortexCenter", vortexCenter);
-            _velocityMaterial.SetVector("_VortexAxis", vortexAxis);
-            _velocityMaterial.SetFloat("_VortexStrength", vortexStrength);
-            _velocityMaterial.SetFloat("_MaxSpeed", maxSpeed);
             _velocityMaterial.SetTexture("_PositionTex", _currentPosition);
-        }
-
-        Vector3 GetGravity()
-        {
-            foreach (var module in _authoring.Modules)
-            {
-                if (!(module is FluxParticleGravityModule gravityModule)) continue;
-
-                return gravityModule.Enabled ? gravityModule.Gravity : Vector3.zero;
-            }
-
-            return Vector3.zero;
-        }
-
-        Vector3 GetForce()
-        {
-            foreach (var module in _authoring.Modules)
-            {
-                if (!(module is FluxParticleForceModule forceModule)) continue;
-
-                return forceModule.Enabled ? forceModule.Force : Vector3.zero;
-            }
-
-            return Vector3.zero;
-        }
-
-        float GetDrag()
-        {
-            foreach (var module in _authoring.Modules)
-            {
-                if (!(module is FluxParticleDragModule dragModule)) continue;
-
-                return dragModule.Enabled ? dragModule.Drag : 0;
-            }
-
-            return 0;
         }
 
         void ApplyPositionParameters(float deltaTime, int spawnStart, int spawnSeedStart, int spawnCount)
