@@ -1,5 +1,6 @@
 using System;
 using TpLab.Flux.Editor;
+using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Editor.Shaders;
 using TpLab.Flux.FX.Scripts;
@@ -11,7 +12,10 @@ using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Editor
 {
-    public class FluxFXShaderBuildPass : PassBase
+    /// <summary>
+    /// Particle SystemのGPU Moduleをコンパイルし、ShaderとBuild結果を後続Passへ渡します。
+    /// </summary>
+    public class FluxFXCompileBuildPass : PassBase
     {
         const string SourceShaderName = "FluxFX/ParticleVelocityUpdate";
         const string GeneratedShaderPrefix = "Hidden/FluxFX/Generated/Velocity_";
@@ -24,8 +28,9 @@ namespace TpLab.Flux.FX.Editor
         public override void Execute(SceneFlowContext context)
         {
             var registry = new FluxParticleGpuModuleRegistry();
-            var validator = new FluxParticleGpuModuleValidator(registry);
+            var compiler = new FluxParticleGpuCompiler(registry);
             var pipeline = new FluxParticleShaderPipeline(registry);
+            var session = new FluxFXCompilationSession();
 
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var assignedCount = 0;
@@ -36,41 +41,42 @@ namespace TpLab.Flux.FX.Editor
                 if (particleSystem == null) continue;
 
                 var simulation = authoring.GetComponentInChildren<FluxParticleSimulation>(true);
+
                 if (simulation == null)
                 {
                     throw new InvalidOperationException($"FluxParticleSimulation was not found under '{authoring.name}'.");
                 }
 
                 var velocityKernel = FindVelocityKernel(simulation);
+
                 if (velocityKernel == null)
                 {
                     throw new InvalidOperationException($"Velocity FluxKernel was not found under '{authoring.name}'.");
                 }
 
                 var plan = FluxParticleCompilePlan.Create(authoring);
+                var result = compiler.Compile(plan);
 
-                var standardValidation = new FluxParticleCompileValidator().Validate(plan);
-                if (standardValidation.HasErrors)
+                if (!result.Success)
                 {
-                    throw new InvalidOperationException($"Particle validation failed for '{authoring.name}':\n{standardValidation.GetReport()}");
+                    throw new InvalidOperationException($"Particle compilation failed for '{authoring.name}':\n{result.Validation.GetReport()}");
                 }
 
-                var gpuValidation = validator.Validate(plan);
-                if (gpuValidation.HasErrors)
-                {
-                    throw new InvalidOperationException($"GPU Module validation failed for '{authoring.name}':\n{gpuValidation.GetReport()}");
-                }
-
-                var artifact = pipeline.BuildVelocity(plan);
+                var artifact = pipeline.BuildVelocity(result.Compilation);
                 var shader = pipeline.GetOrCreate(artifact);
 
                 velocityKernel.SetProgramVariable("shader", shader);
+
+                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifact));
+
                 assignedCount++;
 
                 Logger.Log($"Shader assigned: {shader.name} to {authoring.name}", authoring);
             }
 
-            Logger.Log($"Shader build completed. Assigned systems: {assignedCount}");
+            context.Data.Add(session);
+
+            Logger.Log($"GPU compilation completed. Systems: {assignedCount}");
         }
 
         static FluxKernel FindVelocityKernel(FluxParticleSimulation simulation)
@@ -84,6 +90,7 @@ namespace TpLab.Flux.FX.Editor
                 if (shader == null) continue;
 
                 var shaderName = shader.name;
+
                 if (shaderName != SourceShaderName && !shaderName.StartsWith(GeneratedShaderPrefix, StringComparison.Ordinal))
                 {
                     continue;
