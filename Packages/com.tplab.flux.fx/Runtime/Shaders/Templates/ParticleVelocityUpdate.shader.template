@@ -28,9 +28,6 @@ Shader "{{SHADER_NAME}}"
             sampler2D_float _MainTex;
             sampler2D_float _PositionTex;
 
-            float4 _VortexCenter;
-            float4 _VortexAxis;
-            float _VortexStrength;
             float _LifetimeMin;
             float _LifetimeMax;
             float _InitialSpeedMin;
@@ -172,30 +169,6 @@ Shader "{{SHADER_NAME}}"
                 return float4(velocity, EvaluateSpawnLifetime(spawnSeed));
             }
 
-            float3 EvaluateVortex(float3 position)
-            {
-                float3 offset = position - _VortexCenter.xyz;
-
-                float axialDistance = dot(offset, _VortexAxis.xyz);
-                float3 radialOffset = offset - _VortexAxis.xyz * axialDistance;
-
-                float radialLength = length(radialOffset);
-
-                if (radialLength <= 0.0001)
-                    return 0;
-
-                float3 radialDirection = radialOffset / radialLength;
-                float3 tangent = cross(_VortexAxis.xyz, radialDirection);
-
-                return tangent * _VortexStrength;
-            }
-
-            void FluxFX_LegacyVortex(inout FluxFXGpuContext ctx)
-            {
-                float3 vortex = EvaluateVortex(ctx.position);
-                ctx.velocity += vortex * ctx.deltaTime;
-            }
-            
             void FluxFX_ApplyVelocityModules(inout FluxFXGpuContext ctx)
             {
                 {{MODULE_CALLS}}

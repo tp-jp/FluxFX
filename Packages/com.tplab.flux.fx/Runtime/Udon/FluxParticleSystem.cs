@@ -235,15 +235,14 @@ namespace TpLab.Flux.FX.Udon
             InitializeForce();
             InitializeDrag();
             InitializeNoise();
-            InitializeVortex(parameters);
+            InitializeVortex();
             InitializeLimitVelocity();
 
             particleSimulation.Initialize(
                 Lifetime,
                 Shape,
                 InitialVelocity,
-                VelocityOverLifetime,
-                Vortex);
+                VelocityOverLifetime);
 
             particleSimulation.SetSimulationSpace(simulationSpace);
         }
@@ -397,30 +396,12 @@ namespace TpLab.Flux.FX.Udon
             _limitVelocity = FluxParticleLimitVelocityParameters.New(store);
         }
 
-        void InitializeVortex(DataDictionary parameters)
+        void InitializeVortex()
         {
-            var center = Vector3.zero;
-            var axis = Vector3.zero;
-            var strength = 0.0f;
+            var store = particleSimulation.GetVelocityParameterStore();
+            if (store == null || !store.HasParameter("_VortexCenter") || !store.HasParameter("_VortexAxis") || !store.HasParameter("_VortexStrength")) return;
 
-            if (parameters.TryGetValue("vortex", out var token))
-            {
-                var data = token.DataDictionary;
-
-                center = new Vector3(
-                    (float)data["centerX"].Double,
-                    (float)data["centerY"].Double,
-                    (float)data["centerZ"].Double);
-
-                axis = new Vector3(
-                    (float)data["axisX"].Double,
-                    (float)data["axisY"].Double,
-                    (float)data["axisZ"].Double);
-
-                strength = (float)data["strength"].Double;
-            }
-
-            _vortex = FluxParticleVortexParameters.New(center, axis, strength);
+            _vortex = FluxParticleVortexParameters.New(store);
         }
 
         void InitializeRenderer(DataDictionary parameters)

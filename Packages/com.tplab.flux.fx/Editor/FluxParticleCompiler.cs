@@ -36,7 +36,6 @@ namespace TpLab.Flux.FX.Editor
             AddInitialVelocity(parameters, authoring.InitialVelocity);
 
             AddVelocityOverLifetime(parameters, plan);
-            AddVortex(parameters, plan);
 
             var gpuCompiler = new FluxParticleGpuParameterCompiler(new FluxParticleGpuModuleRegistry());
             parameters["gpuParameters"] = gpuCompiler.Compile(plan);
@@ -142,26 +141,6 @@ namespace TpLab.Flux.FX.Editor
                 ["offsetY"] = module.Offset.y,
                 ["offsetZ"] = module.Offset.z,
                 ["radial"] = module.Radial
-            };
-        }
-
-        void AddVortex(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleVortexModule>();
-            if (module == null) return;
-
-            var center = module.Center;
-            var axis = module.Axis.normalized;
-
-            parameters["vortex"] = new JObject
-            {
-                ["centerX"] = center.x,
-                ["centerY"] = center.y,
-                ["centerZ"] = center.z,
-                ["axisX"] = axis.x,
-                ["axisY"] = axis.y,
-                ["axisZ"] = axis.z,
-                ["strength"] = module.Strength
             };
         }
 

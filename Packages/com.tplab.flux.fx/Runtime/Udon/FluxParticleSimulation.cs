@@ -36,7 +36,6 @@ namespace TpLab.Flux.FX.Udon
         object _shape;
         object _initialVelocity;
         object _velocityOverLifetime;
-        object _vortex;
         object _startColor;
         object _startSize;
         object _startRotation;
@@ -48,8 +47,6 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
 
         FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
-
-        FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
 
         FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
 
@@ -103,14 +100,12 @@ namespace TpLab.Flux.FX.Udon
             FluxParticleLifetimeParameters lifetime,
             FluxParticleShapeParameters shape,
             FluxParticleInitialVelocityParameters initialVelocity,
-            FluxParticleVelocityOverLifetimeParameters velocityOverLifetime,
-            FluxParticleVortexParameters vortex)
+            FluxParticleVelocityOverLifetimeParameters velocityOverLifetime)
         {
             _lifetime = lifetime;
             _shape = shape;
             _initialVelocity = initialVelocity;
             _velocityOverLifetime = velocityOverLifetime;
-            _vortex = vortex;
         }
 
         internal FluxParticleGpuParameterStore GetVelocityParameterStore()
@@ -248,9 +243,6 @@ namespace TpLab.Flux.FX.Udon
                 velocityParameterStore.Flush();
             }
 
-            var vortexCenter = Vortex.GetCenter();
-            var vortexAxis = Vortex.GetAxis();
-
             if (particleEmitter.SpawnCount > 0)
             {
                 velocityUpdateKernel.SetFloat("_LifetimeMin", Lifetime.GetMin());
@@ -261,9 +253,6 @@ namespace TpLab.Flux.FX.Udon
                 velocityUpdateKernel.SetFloat("_ShapeAngle", Shape.GetAngle());
             }
 
-            velocityUpdateKernel.SetVector("_VortexCenter", new Vector4(vortexCenter.x, vortexCenter.y, vortexCenter.z, 0));
-            velocityUpdateKernel.SetVector("_VortexAxis", new Vector4(vortexAxis.x, vortexAxis.y, vortexAxis.z, 0));
-            velocityUpdateKernel.SetFloat("_VortexStrength", Vortex.GetStrength());
             velocityUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             velocityUpdateKernel.SetFloat("_FluxFXSimulationTime", _simulationTime);
             velocityUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);

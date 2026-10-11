@@ -250,6 +250,60 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Greater(dragIndex, noiseIndex);
         }
 
+        [Test]
+        public void VortexOnly()
+        {
+            AddModule(new FluxParticleVortexModule());
+
+            var result = Compile();
+            var sourcePath = "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Vortex.hlsl";
+            var includePath = result.Includes.Get(sourcePath).AssetPath;
+
+            StringAssert.Contains("FluxFX_Vortex(ctx);", result.Source);
+            StringAssert.Contains("_VortexCenter (\"_VortexCenter\", Vector)", result.Source);
+            StringAssert.Contains("_VortexAxis (\"_VortexAxis\", Vector)", result.Source);
+            StringAssert.Contains("_VortexStrength (\"_VortexStrength\", Float)", result.Source);
+            StringAssert.Contains($"#include \"{includePath}\"", result.Source);
+
+            Assert.IsFalse(result.Source.Contains("FluxFX_LegacyVortex"));
+            Assert.IsFalse(result.Source.Contains($"#include \"{sourcePath}\""));
+        }
+
+        [Test]
+        public void VortexIsExcludedWhenNotAdded()
+        {
+            AddModule(new FluxParticleGravityModule());
+
+            var result = Compile();
+
+            Assert.IsFalse(result.Source.Contains("FluxFX_Vortex(ctx);"));
+            Assert.IsFalse(result.Source.Contains("_VortexCenter"));
+            Assert.IsFalse(result.Source.Contains("_VortexAxis"));
+            Assert.IsFalse(result.Source.Contains("_VortexStrength"));
+            Assert.IsFalse(result.Source.Contains("FluxFX_LegacyVortex"));
+        }
+
+        [Test]
+        public void VortexPreservesExecutionOrder()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+            AddModule(new FluxParticleVortexModule());
+            AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleNoiseModule());
+
+            var result = Compile();
+
+            var noiseIndex = result.Source.IndexOf("FluxFX_Noise(ctx);");
+            var vortexIndex = result.Source.IndexOf("FluxFX_Vortex(ctx);");
+            var dragIndex = result.Source.IndexOf("FluxFX_Drag(ctx);");
+            var limitIndex = result.Source.IndexOf("FluxFX_LimitVelocity(ctx);");
+
+            Assert.GreaterOrEqual(noiseIndex, 0);
+            Assert.Greater(vortexIndex, noiseIndex);
+            Assert.Greater(dragIndex, vortexIndex);
+            Assert.Greater(limitIndex, dragIndex);
+        }
+
         ShaderArtifact Compile()
         {
             var pipeline = new FluxParticleShaderPipeline(new FluxParticleGpuModuleRegistry());

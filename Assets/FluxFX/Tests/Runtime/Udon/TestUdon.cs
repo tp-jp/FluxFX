@@ -54,6 +54,17 @@ namespace TpLab.Flux.FX.Tests.Udon
                 return;
             }
 
+            var vortex = fluxParticleSystem.Vortex;
+            if (vortex == null) return;
+
+            vortex.SetCenter(new Vector3(0, 1, 0));
+            vortex.SetAxis(Vector3.up);
+            vortex.SetStrength(3.0f);
+
+            Logger.Log($"Vortex Center: {vortex.GetCenter()}");
+            Logger.Log($"Vortex Axis: {vortex.GetAxis()}");
+            Logger.Log($"Vortex Strength: {vortex.GetStrength()}");
+
             Logger.Log("GPU Module Parameters: PASS");
         }
     }
