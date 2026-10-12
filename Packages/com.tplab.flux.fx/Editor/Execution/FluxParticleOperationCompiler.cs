@@ -1,45 +1,60 @@
 using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Editor.GpuModules;
+using TpLab.Flux.FX.Editor.Rendering;
 
 namespace TpLab.Flux.FX.Editor.Execution
 {
     /// <summary>
-    /// Particle Moduleに対応するGPU DefinitionからOperationを収集し、
-    /// ExecutionPlanを構築します。
-    /// 旧ExecutionStageからの変換は行わず、各Definitionが直接宣言したOperationを使用します。
+    /// GPU SimulationとRenderingのModule DefinitionからOperationを収集し、
+    /// 単一のExecutionPlanを構築します。
+    /// 旧ExecutionStageから実行先を変換することはありません。
     /// </summary>
     public sealed class FluxParticleOperationCompiler
     {
-        readonly FluxParticleGpuModuleRegistry _registry;
+        readonly FluxParticleGpuModuleRegistry _gpuRegistry;
+        readonly FluxParticleRenderModuleRegistry _renderRegistry;
 
         /// <summary>
-        /// GPU Module Registryを使用するOperation Compilerを生成します。
+        /// GPU Module Registryと標準のRendering Module Registryを使用するCompilerを生成します。
         /// </summary>
-        /// <param name="registry">Module型からDefinitionを解決するRegistry。</param>
-        /// <exception cref="ArgumentNullException">
-        /// Registryがnullの場合に発生します。
-        /// </exception>
-        public FluxParticleOperationCompiler(FluxParticleGpuModuleRegistry registry)
+        /// <param name="gpuRegistry">GPU Module型からDefinitionを解決するRegistry。</param>
+        public FluxParticleOperationCompiler(FluxParticleGpuModuleRegistry gpuRegistry)
+            : this(gpuRegistry, new FluxParticleRenderModuleRegistry())
         {
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         }
 
         /// <summary>
-        /// CompilePlanに登録されたModuleのOperationを収集し、
-        /// ExecutionPlanとして検証・並び替えます。
-        /// Moduleの有効・無効にかかわらずOperationを保持します。
+        /// GPUとRenderingの両Registryを指定してCompilerを生成します。
         /// </summary>
-        /// <param name="plan">Operationの生成対象となるCompilePlan。</param>
-        /// <returns>各DefinitionのOperationを統合したExecutionPlan。</returns>
+        /// <param name="gpuRegistry">GPU Simulation用Definitionを管理するRegistry。</param>
+        /// <param name="renderRegistry">Rendering用Definitionを管理するRegistry。</param>
+        /// <exception cref="ArgumentNullException">
+        /// いずれかのRegistryがnullの場合に発生します。
+        /// </exception>
+        public FluxParticleOperationCompiler(
+            FluxParticleGpuModuleRegistry gpuRegistry,
+            FluxParticleRenderModuleRegistry renderRegistry)
+        {
+            _gpuRegistry = gpuRegistry ?? throw new ArgumentNullException(nameof(gpuRegistry));
+            _renderRegistry = renderRegistry ?? throw new ArgumentNullException(nameof(renderRegistry));
+        }
+
+        /// <summary>
+        /// CompilePlanに登録されたModuleからSimulationとRenderingのOperationを生成します。
+        /// ModuleのEnabled状態にかかわらずOperationを保持します。
+        /// Definitionの不足、登録先の重複、不正なOperationを検出した場合は失敗します。
+        /// </summary>
+        /// <param name="plan">Operation生成対象のCompilePlan。</param>
+        /// <returns>両実行系のOperationを統合したExecutionPlan。</returns>
         /// <exception cref="ArgumentNullException">
         /// CompilePlanがnullの場合に発生します。
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// Definitionの登録漏れや、無効なOperation構成を検出した場合に発生します。
+        /// Definitionの登録やOperationの構成に不整合がある場合に発生します。
         /// </exception>
         /// <exception cref="NotSupportedException">
-        /// ModuleのDefinitionがOperation生成に未対応の場合に発生します。
+        /// 対応DefinitionがOperation生成を実装していない場合に発生します。
         /// </exception>
         public FluxParticleExecutionPlan Compile(FluxParticleCompilePlan plan)
         {
@@ -54,24 +69,53 @@ namespace TpLab.Flux.FX.Editor.Execution
                     throw new InvalidOperationException("CompilePlan contains a null Module.");
                 }
 
-                var definition = _registry.Get(module);
-                var moduleOperations = definition.CreateOperations(module);
+                var moduleType = module.GetType();
+                var hasGpuDefinition = _gpuRegistry.TryGet(moduleType, out var gpuDefinition);
+                var hasRenderDefinition = _renderRegistry.TryGet(moduleType, out var renderDefinition);
+
+                if (hasGpuDefinition && hasRenderDefinition)
+                {
+                    throw new InvalidOperationException(
+                        $"Module has both GPU and Render Definitions: {moduleType.FullName}");
+                }
+
+                if (!hasGpuDefinition && !hasRenderDefinition)
+                {
+                    throw new InvalidOperationException(
+                        $"Module Definition is not registered: {moduleType.FullName}");
+                }
+
+                var moduleId = hasGpuDefinition ? gpuDefinition.ModuleId : renderDefinition.ModuleId;
+                var moduleOperations = hasGpuDefinition
+                    ? gpuDefinition.CreateOperations(module)
+                    : renderDefinition.CreateOperations(module);
 
                 if (moduleOperations == null)
                 {
-                    throw new InvalidOperationException($"Module Definition returned null Operations: {definition.ModuleId}");
+                    throw new InvalidOperationException(
+                        $"Module Definition returned null Operations: {moduleId}");
                 }
 
                 foreach (var operation in moduleOperations)
                 {
                     if (operation == null)
                     {
-                        throw new InvalidOperationException($"Module Definition returned a null Operation: {definition.ModuleId}");
+                        throw new InvalidOperationException(
+                            $"Module Definition returned a null Operation: {moduleId}");
                     }
 
-                    if (operation.ModuleId != definition.ModuleId)
+                    if (operation.ModuleId != moduleId)
                     {
-                        throw new InvalidOperationException($"Operation Module ID does not match Definition: {definition.ModuleId}/{operation.OperationId}");
+                        throw new InvalidOperationException(
+                            $"Operation Module ID does not match Definition: {moduleId}/{operation.OperationId}");
+                    }
+
+                    if (hasRenderDefinition &&
+                        (operation.Target != FluxParticleOperationTarget.Rendering ||
+                         operation.Phase != FluxParticleOperationPhase.Render))
+                    {
+                        throw new InvalidOperationException(
+                            $"Render Definition returned a non-render Operation: {moduleId}/{operation.OperationId}");
                     }
 
                     operations.Add(operation);
