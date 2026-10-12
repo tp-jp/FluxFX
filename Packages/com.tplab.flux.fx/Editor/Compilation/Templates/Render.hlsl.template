@@ -1,9 +1,15 @@
 struct FluxRenderContext
 {
     float unused;
-{{Fields}}};
+    {{Fields}}
+};
+
 FluxRenderContext FluxFX_EvaluateRender(float2 uv, out bool alive)
 {
     FluxRenderContext result = (FluxRenderContext)0;
-{{Lifecycle}}{{Operations}}{{Writes}}    return result;
+    {{Lifecycle}}
+
+    {{Operations}}
+    {{Writes}}
+    return result;
 }

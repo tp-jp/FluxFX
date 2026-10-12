@@ -12,12 +12,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 論理IDをHLSL識別子へ変換します。記号とunderscoreをUTF-16コードで区切ります。
         /// </summary>
-        /// <param name="id">
-        /// 空でない論理ID。
-        /// </param>
-        /// <returns>
-        /// 決定的で一意な識別子。
-        /// </returns>
+        /// <param name="id">空でない論理ID。</param>
+        /// <returns>決定的で一意な識別子。</returns>
         public static string Encode(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("ID is required.", nameof(id));
@@ -38,12 +34,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
         /// <summary>Operation IDの単語をPascalCaseへ変換したContext型名です。
         /// 区切りや大文字小文字による型名の衝突はShader生成時に検出します。</summary>
-        /// <param name="id">
-        /// Operation ID。
-        /// </param>
-        /// <returns>
-        /// 生成するstruct名。
-        /// </returns>
+        /// <param name="id">Operation ID。</param>
+        /// <returns>生成するstruct名。</returns>
         public static string Context(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("ID is required.", nameof(id));
@@ -70,71 +62,39 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// Context内の論理Valueフィールド名です。
-
         /// </summary>
-        /// <param name="id">
-        /// Value ID。
-        /// </param>
-        /// <returns>
-        /// 生成するフィールド名。
-        /// </returns>
+        /// <param name="id">Value ID。</param>
+        /// <returns>生成するフィールド名。</returns>
         public static string Value(string id) => "v_" + Encode(id);
 
         /// <summary>
-
         /// Context内のParameterフィールド名です。
-
         /// </summary>
-        /// <param name="id">
-        /// Parameter ID。
-        /// </param>
-        /// <returns>
-        /// 生成するフィールド名。
-        /// </returns>
+        /// <param name="id">Parameter ID。</param>
+        /// <returns>生成するフィールド名。</returns>
         public static string Parameter(string id) => "p_" + Encode(id);
 
         /// <summary>
-
         /// ParameterのMaterial Property名です。
-
         /// </summary>
-        /// <param name="id">
-        /// Parameter ID。
-        /// </param>
-        /// <returns>
-        /// 生成するUniform名。
-        /// </returns>
+        /// <param name="id">Parameter ID。</param>
+        /// <returns>生成するUniform名。</returns>
         public static string ParameterProperty(string id) => "_FluxParameter_" + Encode(id);
 
         /// <summary>
-
         /// UniformまたはSpawnInput ProviderのMaterial Property名です。
-
         /// </summary>
-        /// <param name="id">
-        /// ProviderのValue ID。
-        /// </param>
-        /// <returns>
-        /// Uniform名またはTexture名。
-        /// </returns>
+        /// <param name="id">ProviderのValue ID。</param>
+        /// <returns>Uniform名またはTexture名。</returns>
         public static string ProviderProperty(string id) => "_FluxProvider_" + Encode(id);
 
         /// <summary>
-
         /// Page Snapshotに対応するTexture Property名です。
-
         /// </summary>
-        /// <param name="pageId">
-        /// 論理Page ID。
-        /// </param>
-        /// <param name="version">
-        /// StepPreviousまたはUpdated。
-        /// </param>
-        /// <returns>
-        /// Sampler名。
-        /// </returns>
+        /// <param name="pageId">論理Page ID。</param>
+        /// <param name="version">StepPreviousまたはUpdated。</param>
+        /// <returns>Sampler名。</returns>
         public static string PageProperty(int pageId, FluxParticlePageVersion version) => "_FluxPage" + pageId + "_" + version;
     }
 
@@ -153,16 +113,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public string LifetimeValueId { get; }
 
         /// <summary>
-
         /// 各Pass共通のLifecycle判定を設定します。
-
         /// </summary>
-        /// <param name="ageValueId">
-        /// AgeのValue ID。
-        /// </param>
-        /// <param name="lifetimeValueId">
-        /// LifetimeのValue ID。
-        /// </param>
+        /// <param name="ageValueId">AgeのValue ID。</param>
+        /// <param name="lifetimeValueId">LifetimeのValue ID。</param>
         public FluxParticleShaderLifecycle(string ageValueId, string lifetimeValueId)
         {
             if (string.IsNullOrWhiteSpace(ageValueId)) throw new ArgumentException("Age ID is required.", nameof(ageValueId));
@@ -173,9 +127,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-
     /// 1回のBlit用Shaderと確定した入力Snapshotです。
-
     /// </summary>
     public sealed class FluxParticleGeneratedPass
     {
@@ -201,9 +153,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-
     /// Shader生成の結果です。Runtimeはこの確定済みの計画を実行します。
-
     /// </summary>
     public sealed class FluxParticleShaderProgram
     {

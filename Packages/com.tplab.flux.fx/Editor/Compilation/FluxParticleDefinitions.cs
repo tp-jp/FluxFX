@@ -208,21 +208,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 論理Valueの型・所有者・書き込み契約を設定します。
         /// </summary>
-        /// <param name="id">
-        /// 識別子。
-        /// </param>
-        /// <param name="type">
-        /// 論理型。
-        /// </param>
-        /// <param name="writePolicy">
-        /// 書き込み権限。
-        /// </param>
-        /// <param name="ownerId">
-        /// 定義の所有者ID。
-        /// </param>
-        /// <param name="maximumUIntValue">
-        /// UIntの最大値。
-        /// </param>
+        /// <param name="id">識別子。</param>
+        /// <param name="type">論理型。</param>
+        /// <param name="writePolicy">書き込み権限。</param>
+        /// <param name="ownerId">定義の所有者ID。</param>
+        /// <param name="maximumUIntValue">UIntの最大値。</param>
         public FluxParticleValueDefinition(
             string id,
             FluxParticleValueType type,
@@ -270,15 +260,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Shader Parameterとその変更契約を設定します。
         /// </summary>
-        /// <param name="id">
-        /// 識別子。
-        /// </param>
-        /// <param name="type">
-        /// 論理型。
-        /// </param>
-        /// <param name="policy">
-        /// Parameter変更契約。
-        /// </param>
+        /// <param name="id">識別子。</param>
+        /// <param name="type">論理型。</param>
+        /// <param name="policy">Parameter変更契約。</param>
         public FluxParticleParameterDefinition(string id, FluxParticleValueType type, FluxParticleParameterPolicy policy)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Parameter ID is required.", nameof(id));
@@ -330,24 +314,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Valueの供給方法と評価実装を設定します。
         /// </summary>
-        /// <param name="valueId">
-        /// 論理ValueのID。
-        /// </param>
-        /// <param name="kind">
-        /// 供給方式または書き込み方式。
-        /// </param>
-        /// <param name="inputs">
-        /// 入力ValueのID一覧。
-        /// </param>
-        /// <param name="parameters">
-        /// 使用ParameterのID一覧。
-        /// </param>
-        /// <param name="hlslPath">
-        /// HLSLファイルのパス。
-        /// </param>
-        /// <param name="entryPoint">
-        /// HLSL関数名。
-        /// </param>
+        /// <param name="valueId">論理ValueのID。</param>
+        /// <param name="kind">供給方式または書き込み方式。</param>
+        /// <param name="inputs">入力ValueのID一覧。</param>
+        /// <param name="parameters">使用ParameterのID一覧。</param>
+        /// <param name="hlslPath">HLSLファイルのパス。</param>
+        /// <param name="entryPoint">HLSL関数名。</param>
         public FluxParticleValueProvider(
             string valueId,
             FluxParticleProviderKind kind,
@@ -395,15 +367,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Operationが参照するValueとバージョンを設定します。
         /// </summary>
-        /// <param name="valueId">
-        /// 論理ValueのID。
-        /// </param>
-        /// <param name="version">
-        /// 参照バージョン。
-        /// </param>
-        /// <param name="producerOperationId">
-        /// 参照元OperationのID。
-        /// </param>
+        /// <param name="valueId">論理ValueのID。</param>
+        /// <param name="version">参照バージョン。</param>
+        /// <param name="producerOperationId">参照元OperationのID。</param>
         public FluxParticleValueRead(string valueId, FluxParticleReadVersion version, string producerOperationId = null)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
@@ -441,12 +407,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Operationの書き込みValueと方式を設定します。
         /// </summary>
-        /// <param name="valueId">
-        /// 論理ValueのID。
-        /// </param>
-        /// <param name="kind">
-        /// 供給方式または書き込み方式。
-        /// </param>
+        /// <param name="valueId">論理ValueのID。</param>
+        /// <param name="kind">供給方式または書き込み方式。</param>
         public FluxParticleValueWrite(string valueId, FluxParticleWriteKind kind)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
@@ -515,36 +477,16 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Operationの入出力・依存関係・HLSL実装を設定します。
         /// </summary>
-        /// <param name="id">
-        /// 識別子。
-        /// </param>
-        /// <param name="ownerId">
-        /// 定義の所有者ID。
-        /// </param>
-        /// <param name="phase">
-        /// Operation実行Phase。
-        /// </param>
-        /// <param name="reads">
-        /// Read契約。
-        /// </param>
-        /// <param name="writes">
-        /// Write契約。
-        /// </param>
-        /// <param name="dependencies">
-        /// 先行OperationのID一覧。
-        /// </param>
-        /// <param name="hlslPath">
-        /// HLSLファイルのパス。
-        /// </param>
-        /// <param name="entryPoint">
-        /// HLSL関数名。
-        /// </param>
-        /// <param name="parameters">
-        /// Contextに供給するParameter ID一覧。
-        /// </param>
-        /// <param name="enabledParameterId">
-        /// 実行条件となるFloat Parameter ID。
-        /// </param>
+        /// <param name="id">識別子。</param>
+        /// <param name="ownerId">定義の所有者ID。</param>
+        /// <param name="phase">Operation実行Phase。</param>
+        /// <param name="reads">Read契約。</param>
+        /// <param name="writes">Write契約。</param>
+        /// <param name="dependencies">先行OperationのID一覧。</param>
+        /// <param name="hlslPath">HLSLファイルのパス。</param>
+        /// <param name="entryPoint">HLSL関数名。</param>
+        /// <param name="parameters">Contextに供給するParameter ID一覧。</param>
+        /// <param name="enabledParameterId">実行条件となるFloat Parameter ID。</param>
         public FluxParticleOperationDefinition(
             string id,
             string ownerId,

@@ -1,0 +1,3 @@
+float age = {{Age}};
+alive = age >= 0.0 && age < {{Lifetime}};
+if (!alive) return result;

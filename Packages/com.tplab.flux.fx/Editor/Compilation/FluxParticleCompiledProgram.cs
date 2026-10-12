@@ -105,15 +105,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 指定したValueがPersistent Stateとして配置されているか調べます。
         /// </summary>
-        /// <param name="valueId">
-        /// 検索対象の論理Value ID。
-        /// </param>
-        /// <param name="binding">
-        /// 見つかったState Binding。存在しない場合はnull。
-        /// </param>
-        /// <returns>
-        /// Persistent Stateとして配置されていればtrue。
-        /// </returns>
+        /// <param name="valueId">検索対象の論理Value ID。</param>
+        /// <param name="binding">見つかったState Binding。存在しない場合はnull。</param>
+        /// <returns>Persistent Stateとして配置されていればtrue。</returns>
         public bool TryGetBinding(string valueId, out FluxParticleStateBinding binding)
         {
             return _bindings.TryGetValue(valueId, out binding);

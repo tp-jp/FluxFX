@@ -20,12 +20,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Module設定を読み取り、Compilationに必要な定義を登録します。
         /// </summary>
-        /// <param name="module">
-        /// 登録対象のModule設定。
-        /// </param>
-        /// <param name="builder">
-        /// 各種定義の登録先。
-        /// </param>
+        /// <param name="module">登録対象のModule設定。</param>
+        /// <param name="builder">各種定義の登録先。</param>
         void Build(FluxParticleModule module, FluxParticleDefinitionBuilder builder);
     }
 
@@ -62,9 +58,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 論理Valueを登録します。重複するIDは同一定義であっても禁止します。
         /// </summary>
-        /// <param name="value">
-        /// 登録するvalue定義。
-        /// </param>
+        /// <param name="value">登録するvalue定義。</param>
         public void AddValue(FluxParticleValueDefinition value)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
@@ -75,9 +69,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Valueの供給方法を登録します。初期実装では各Valueに1つの非永続Providerのみ登録可能です。
         /// </summary>
-        /// <param name="provider">
-        /// 登録するprovider定義。
-        /// </param>
+        /// <param name="provider">登録するprovider定義。</param>
         public void AddProvider(FluxParticleValueProvider provider)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
@@ -88,9 +80,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Runtime変更契約を持つShader Parameterを登録します。
         /// </summary>
-        /// <param name="parameter">
-        /// 登録するparameter定義。
-        /// </param>
+        /// <param name="parameter">登録するparameter定義。</param>
         public void AddParameter(FluxParticleParameterDefinition parameter)
         {
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
@@ -101,9 +91,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 実装情報を含むOperationを登録します。
         /// </summary>
-        /// <param name="operation">
-        /// 登録するoperation定義。
-        /// </param>
+        /// <param name="operation">登録するoperation定義。</param>
         public void AddOperation(FluxParticleOperationDefinition operation)
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));

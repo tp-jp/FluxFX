@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
+using System.IO;
+using UnityEditor.PackageManager;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -16,18 +17,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 検証とLogical Compilationを実行してShaderを生成します。
         /// </summary>
-        /// <param name="definitions">
-        /// CoreとModuleが登録した定義。
-        /// </param>
-        /// <param name="shaderName">
-        /// 生成Shader名の接頭辞。
-        /// </param>
-        /// <param name="lifecycle">
-        /// 生存判定の契約。nullなら全非Spawn粒子をUpdateします。
-        /// </param>
-        /// <returns>
-        /// Shaderソース、Page入力、Parameter契約を含む生成結果。
-        /// </returns>
+        /// <param name="definitions">CoreとModuleが登録した定義。</param>
+        /// <param name="shaderName">生成Shader名の接頭辞。</param>
+        /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします。</param>
+        /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果。</returns>
         public FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions, string shaderName,
             FluxParticleShaderLifecycle lifecycle = null)
         {
@@ -376,20 +369,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             static string ExpandTemplate(string name, IReadOnlyDictionary<string, string> bindings)
             {
-                var path = "Packages/com.tplab.flux.fx/Editor/Compilation/Templates/" + name + ".txt";
-                var template = AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(path);
-                if (template == null) throw new InvalidOperationException($"Shader template not found: {path}");
-                var source = template.text.Replace("\r\n", "\n");
+                var extension = name == "Shader" ? ".shader.template" : ".hlsl.template";
+                var relativePath = "Editor/Compilation/Templates/" + name + extension;
+                var assetPath = "Packages/com.tplab.flux.fx/" + relativePath;
+                var package = PackageInfo.FindForAssetPath(assetPath);
+                if (package == null) throw new InvalidOperationException($"Shader template package not found: {assetPath}");
+                // Resolve the physical path for embedded, local, Git and registry packages alike.
+                var path = Path.Combine(package.resolvedPath, relativePath);
+                var source = File.ReadAllText(path).Replace("\r\n", "\n");
                 var used = new HashSet<string>(StringComparer.Ordinal);
-                // Replace only tokens in the template; inserted HLSL is never processed again.
-                var expanded = Regex.Replace(source, @"\{\{([A-Za-z]+)\}\}", match =>
+                // A standalone token inherits its line's indentation. Inline tokens remain expressions.
+                // Process only the original template so inserted HLSL is never interpreted as a token.
+                const string tokens = @"(?m)^(?<indent>[ \t]*)\{\{(?<block>[A-Za-z]+)\}\}[ \t]*(?:\n|\z)|\{\{(?<inline>[A-Za-z]+)\}\}";
+                var expanded = Regex.Replace(source, tokens, match =>
                 {
-                    var key = match.Groups[1].Value;
+                    var block = match.Groups["block"].Success;
+                    var key = match.Groups[block ? "block" : "inline"].Value;
                     if (!bindings.TryGetValue(key, out var value))
                     {
                         throw new InvalidOperationException($"Unbound template token: {name}/{key}");
                     }
                     used.Add(key);
+                    value = value.Replace("\r\n", "\n");
+                    if (block) return IndentBlock(value, match.Groups["indent"].Value);
+                    if (value.Contains("\n")) throw new InvalidOperationException($"Multiline value requires a standalone template token: {name}/{key}");
                     return value;
                 });
                 foreach (var key in bindings.Keys)
@@ -397,6 +400,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     if (!used.Contains(key)) throw new InvalidOperationException($"Missing template token: {name}/{key}");
                 }
                 return expanded;
+            }
+
+            static string IndentBlock(string source, string indentation)
+            {
+                if (string.IsNullOrWhiteSpace(source)) return "";
+                var lines = source.TrimEnd('\n').Split('\n');
+                var commonIndent = lines.Where(line => !string.IsNullOrWhiteSpace(line))
+                    .Min(line => line.TakeWhile(c => c == ' ' || c == '\t').Count());
+                var result = new StringBuilder();
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        result.Append(indentation).Append(line.Substring(commonIndent));
+                    }
+                    result.Append('\n');
+                }
+                return result.ToString();
             }
         }
     }

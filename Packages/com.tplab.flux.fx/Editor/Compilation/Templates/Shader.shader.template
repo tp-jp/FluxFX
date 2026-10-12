@@ -5,15 +5,20 @@ Shader "{{ShaderName}}"
         Pass
         {
             ZTest Always Cull Off ZWrite Off Blend Off
+
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex vert_img
             #pragma fragment FluxFX_Fragment
+
             #include "UnityCG.cginc"
-{{Code}}float4 FluxFX_Fragment(v2f_img i) : SV_Target
-{
-    return {{Expression}};
-}
+
+            {{Code}}
+
+            float4 FluxFX_Fragment(v2f_img i) : SV_Target
+            {
+                return {{Expression}};
+            }
             ENDHLSL
         }
     }

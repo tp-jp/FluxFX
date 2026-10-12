@@ -2,11 +2,17 @@ float4 FluxFX_Step(float2 uv)
 {
     float4 result = tex2D({{PreviousPage}}, uv);
     bool spawn = tex2D(_FluxSpawnMask, uv).r > 0.5;
-{{Lifecycle}}    if (spawn)
+    {{Lifecycle}}
+
+    if (spawn)
     {
-{{Spawn}}    }
+        {{Spawn}}
+    }
     else if (alive)
     {
-{{Update}}    }
-{{Expiration}}    return result;
+        {{Update}}
+    }
+
+    {{Expiration}}
+    return result;
 }

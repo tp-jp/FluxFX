@@ -23,32 +23,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
         bool disposed;
 
         /// <summary>
-
         /// 確定済みPage Textureです。Stepをまたいで参照をキャッシュしないでください。
-
         /// </summary>
         public IReadOnlyList<RenderTexture> CurrentPages => Array.AsReadOnly(current);
 
         /// <summary>
-
         /// 生成したStep/Clear Shaderから専用MaterialとState RTを作り、全Bufferを初期化します。
-
         /// </summary>
-        /// <param name="program">
-        /// 実行対象の確定Program。
-        /// </param>
-        /// <param name="stepShaders">
-        /// Pass順のImport済みShader。
-        /// </param>
-        /// <param name="clearShaders">
-        /// Page順のImport済みShader。
-        /// </param>
-        /// <param name="width">
-        /// State Textureの幅。
-        /// </param>
-        /// <param name="height">
-        /// State Textureの高さ。
-        /// </param>
+        /// <param name="program">実行対象の確定Program。</param>
+        /// <param name="stepShaders">Pass順のImport済みShader。</param>
+        /// <param name="clearShaders">Page順のImport済みShader。</param>
+        /// <param name="width">State Textureの幅。</param>
+        /// <param name="height">State Textureの高さ。</param>
         public FluxParticleProgramGpuSession(FluxParticleShaderProgram program, IReadOnlyList<Shader> stepShaders,
             IReadOnlyList<Shader> clearShaders, int width, int height)
         {
@@ -86,9 +72,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// 両Bufferを既知の値へ戻します。Static Parameterの変更制限は解除しません。
-
         /// </summary>
         public void Clear()
         {
@@ -109,16 +93,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// Float Parameterを設定します。Staticは最初のStep以降変更できません。
-
         /// </summary>
-        /// <param name="id">
-        /// Parameter ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="id">Parameter ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetFloat(string id, float value)
         {
             var parameter = RequireParameter(id, FluxParticleValueType.Float);
@@ -127,16 +105,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// Float2/3/4 Parameterを設定します。余剰成分はShader側で使いません。
-
         /// </summary>
-        /// <param name="id">
-        /// Parameter ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="id">Parameter ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetVector(string id, Vector4 value)
         {
             var parameter = RequireParameter(id);
@@ -149,16 +121,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// UInt Parameterを設定します。Unityの整数Propertyとして渡します。
-
         /// </summary>
-        /// <param name="id">
-        /// Parameter ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="id">Parameter ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetUInt(string id, uint value)
         {
             RequireParameter(id, FluxParticleValueType.UInt);
@@ -167,16 +133,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// Float Uniform Providerを設定します。DeltaTime等のStepごとの供給に使用します。
-
         /// </summary>
-        /// <param name="valueId">
-        /// Uniform ProviderのValue ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="valueId">Uniform ProviderのValue ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetUniformFloat(string valueId, float value)
         {
             RequireProvider(valueId, FluxParticleProviderKind.Uniform, FluxParticleValueType.Float);
@@ -185,16 +145,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// Float2/3/4 Uniform Providerを設定します。
-
         /// </summary>
-        /// <param name="valueId">
-        /// Uniform ProviderのValue ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="valueId">Uniform ProviderのValue ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetUniformVector(string valueId, Vector4 value)
         {
             var type = RequireProvider(valueId, FluxParticleProviderKind.Uniform);
@@ -204,16 +158,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// UInt Uniform Providerを設定します。
-
         /// </summary>
-        /// <param name="valueId">
-        /// Uniform ProviderのValue ID。
-        /// </param>
-        /// <param name="value">
-        /// 設定値。
-        /// </param>
+        /// <param name="valueId">Uniform ProviderのValue ID。</param>
+        /// <param name="value">設定値。</param>
         public void SetUniformUInt(string valueId, uint value)
         {
             RequireProvider(valueId, FluxParticleProviderKind.Uniform, FluxParticleValueType.UInt);
@@ -222,16 +170,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// SpawnInputをRGBA Textureで供給します。UIntは整数精度を保証できるfloat値で格納します。
-
         /// </summary>
-        /// <param name="valueId">
-        /// SpawnInput ProviderのValue ID。
-        /// </param>
-        /// <param name="texture">
-        /// State RTと同じ寸法でPoint/Clampの線形Texture。
-        /// </param>
+        /// <param name="valueId">SpawnInput ProviderのValue ID。</param>
+        /// <param name="texture">State RTと同じ寸法でPoint/Clampの線形Texture。</param>
         public void SetSpawnInput(string valueId, Texture texture)
         {
             RequireProvider(valueId, FluxParticleProviderKind.SpawnInput);
@@ -241,13 +183,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// 確定したPassを順に実行し、書き込んだPageだけをCommitします。
-
         /// </summary>
-        /// <param name="spawnMask">
-        /// Rが0.5より大きいTexelをSpawnします。nullならSpawnなし。
-        /// </param>
+        /// <param name="spawnMask">Rが0.5より大きいTexelをSpawnします。nullならSpawnなし。</param>
         public void Step(Texture spawnMask = null)
         {
             ThrowIfDisposed();
@@ -295,13 +233,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// RenderSourceを組み込んだMaterialへParameterと最新の確定Pageを供給します。
-
         /// </summary>
-        /// <param name="material">
-        /// 呼び出し元が所有する描画用Material。
-        /// </param>
+        /// <param name="material">呼び出し元が所有する描画用Material。</param>
         public void BindRender(Material material)
         {
             ThrowIfDisposed();
@@ -314,9 +248,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-
         /// State RTとSessionが所有するMaterialを破棄します。呼び出し元のShaderは破棄しません。
-
         /// </summary>
         public void Dispose()
         {
