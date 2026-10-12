@@ -286,7 +286,7 @@ namespace TpLab.Flux.FX.Udon
             InitializeLifetime(parameters);
             InitializeShape(parameters);
             InitializeInitialVelocity(parameters);
-            InitializeVelocityOverLifetime(parameters);
+            InitializeVelocityOverLifetime();
             InitializeGravity();
             InitializeForce();
             InitializeDrag();
@@ -297,8 +297,7 @@ namespace TpLab.Flux.FX.Udon
             particleSimulation.Initialize(
                 Lifetime,
                 Shape,
-                InitialVelocity,
-                VelocityOverLifetime);
+                InitialVelocity);
 
             particleSimulation.SetSimulationSpace(simulationSpace);
         }
@@ -358,58 +357,9 @@ namespace TpLab.Flux.FX.Udon
             _initialVelocity = FluxParticleInitialVelocityParameters.New(min, max);
         }
 
-        void InitializeVelocityOverLifetime(DataDictionary parameters)
+        void InitializeVelocityOverLifetime()
         {
-            var enabled = false;
-            var start = Vector3.zero;
-            var end = Vector3.zero;
-            var orbital = Vector3.zero;
-            var offset = Vector3.zero;
-            var radial = 0.0f;
-
-            if (parameters.TryGetValue("velocityOverLifetime", out var token))
-            {
-                var velocity = token.DataDictionary;
-
-                enabled = true;
-
-                start = new Vector3(
-                    (float)velocity["startX"].Double,
-                    (float)velocity["startY"].Double,
-                    (float)velocity["startZ"].Double);
-
-                end = new Vector3(
-                    (float)velocity["endX"].Double,
-                    (float)velocity["endY"].Double,
-                    (float)velocity["endZ"].Double);
-
-                if (velocity.TryGetValue("orbitalX", out var orbitalXToken))
-                {
-                    orbital = new Vector3(
-                        (float)orbitalXToken.Double,
-                        (float)velocity["orbitalY"].Double,
-                        (float)velocity["orbitalZ"].Double);
-                }
-
-                if (velocity.TryGetValue("offsetX", out var offsetXToken))
-                {
-                    offset = new Vector3(
-                        (float)offsetXToken.Double,
-                        (float)velocity["offsetY"].Double,
-                        (float)velocity["offsetZ"].Double);
-                }
-
-                if (velocity.TryGetValue("radial", out var radialToken))
-                {
-                    radial = (float)radialToken.Double;
-                }
-            }
-
-            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(enabled, start, end);
-
-            VelocityOverLifetime.SetOrbital(orbital);
-            VelocityOverLifetime.SetOffset(offset);
-            VelocityOverLifetime.SetRadial(radial);
+            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.velocity-over-lifetime"));
         }
 
         void InitializeGravity()

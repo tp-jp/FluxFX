@@ -37,12 +37,6 @@ Shader "{{SHADER_NAME}}"
             float4 _SystemPosition;
             float4 _SystemRotation;
             float4 _SystemScale;
-            float _VelocityOverLifetimeEnabled;
-            float4 _VelocityOverLifetimeStart;
-            float4 _VelocityOverLifetimeEnd;
-            float4 _VelocityOverLifetimeOrbital;
-            float4 _VelocityOverLifetimeOffset;
-            float _VelocityOverLifetimeRadial;
             float _DeltaTime;
             float _SpawnStart;
             float _SpawnSeedStart;
@@ -52,13 +46,9 @@ Shader "{{SHADER_NAME}}"
             {{MODULE_UNIFORMS}}
 
             #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl"
+            #include "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXTransform.hlsl"
 
             {{MODULE_INCLUDES}}
-
-            float3 RotateVector(float3 value, float4 rotation)
-            {
-                return value + 2.0 * cross(rotation.xyz, cross(rotation.xyz, value) + rotation.w * value);
-            }
 
             float3 CreateShapeDirection(uint spawnSeed)
             {
@@ -145,65 +135,11 @@ Shader "{{SHADER_NAME}}"
                 if (_SimulationSpace > 0.5)
                 {
                     position *= _SystemScale.xyz;
-                    position = RotateVector(position, _SystemRotation);
+                    position = FluxFX_RotateVector(position, _SystemRotation);
                     position += _SystemPosition.xyz;
                 }
 
                 return position;
-            }
-
-            float3 GetVelocityOverLifetimeCenter()
-            {
-                float3 center = _VelocityOverLifetimeOffset.xyz;
-
-                if (_SimulationSpace > 0.5)
-                {
-                    center *= _SystemScale.xyz;
-                    center = RotateVector(center, _SystemRotation);
-                    center += _SystemPosition.xyz;
-                }
-
-                return center;
-            }
-
-            float3 GetVelocityOverLifetimeOrbital()
-            {
-                float3 orbital = _VelocityOverLifetimeOrbital.xyz;
-
-                if (_SimulationSpace > 0.5)
-                {
-                    orbital = RotateVector(orbital, _SystemRotation);
-                }
-
-                return orbital;
-            }
-
-            float3 EvaluateVelocityOverLifetime(float3 position, float age, float lifetime)
-            {
-                if (_VelocityOverLifetimeEnabled < 0.5 || lifetime <= 0)
-                {
-                    return 0;
-                }
-
-                float normalizedAge = saturate(age / lifetime);
-                float3 velocity = lerp(
-                    _VelocityOverLifetimeStart.xyz,
-                    _VelocityOverLifetimeEnd.xyz,
-                    normalizedAge);
-
-                float3 centerOffset = position - GetVelocityOverLifetimeCenter();
-                float3 orbital = GetVelocityOverLifetimeOrbital();
-
-                velocity += cross(orbital, centerOffset);
-
-                float radialDistance = length(centerOffset);
-
-                if (radialDistance > 0.00001)
-                {
-                    velocity += centerOffset / radialDistance * _VelocityOverLifetimeRadial;
-                }
-
-                return velocity;
             }
 
             void FluxFX_ApplyPositionModules(inout FluxFXGpuContext ctx)
@@ -241,9 +177,7 @@ Shader "{{SHADER_NAME}}"
                 if (!isActive)
                     return 0;
 
-                float3 velocityOverLifetime = EvaluateVelocityOverLifetime(position.xyz, position.w, velocity.w);
-
-                position.xyz += (velocity.xyz + velocityOverLifetime) * _DeltaTime;
+                position.xyz += velocity.xyz * _DeltaTime;
                 position.w += _DeltaTime;
 
                 FluxFXGpuContext ctx;

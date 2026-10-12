@@ -97,18 +97,6 @@ namespace TpLab.Flux.FX.Editor.Preview
             var systemRotation = systemTransform.rotation;
             var systemScale = systemTransform.lossyScale;
 
-            FluxParticleVelocityOverLifetimeModule velocityOverLifetime = null;
-
-            foreach (var module in _authoring.Modules)
-            {
-                if (!(module is FluxParticleVelocityOverLifetimeModule velocityModule)) continue;
-
-                velocityOverLifetime = velocityModule;
-                break;
-            }
-
-            var velocityEnabled = velocityOverLifetime != null && velocityOverLifetime.Enabled;
-
             _positionMaterial.SetFloat("_DeltaTime", deltaTime);
             _positionMaterial.SetFloat("_FluxFXSimulationTime", _simulationTime);
             _positionMaterial.SetFloat("_SpawnStart", spawnStart);
@@ -121,12 +109,6 @@ namespace TpLab.Flux.FX.Editor.Preview
             _positionMaterial.SetVector("_SystemPosition", new Vector4(systemPosition.x, systemPosition.y, systemPosition.z, 0));
             _positionMaterial.SetVector("_SystemRotation", new Vector4(systemRotation.x, systemRotation.y, systemRotation.z, systemRotation.w));
             _positionMaterial.SetVector("_SystemScale", new Vector4(systemScale.x, systemScale.y, systemScale.z, 0));
-            _positionMaterial.SetFloat("_VelocityOverLifetimeEnabled", velocityEnabled ? 1.0f : 0.0f);
-            _positionMaterial.SetVector("_VelocityOverLifetimeStart", velocityEnabled ? velocityOverLifetime.Start : Vector3.zero);
-            _positionMaterial.SetVector("_VelocityOverLifetimeEnd", velocityEnabled ? velocityOverLifetime.End : Vector3.zero);
-            _positionMaterial.SetVector("_VelocityOverLifetimeOrbital", velocityEnabled ? velocityOverLifetime.Orbital : Vector3.zero);
-            _positionMaterial.SetVector("_VelocityOverLifetimeOffset", velocityEnabled ? velocityOverLifetime.Offset : Vector3.zero);
-            _positionMaterial.SetFloat("_VelocityOverLifetimeRadial", velocityEnabled ? velocityOverLifetime.Radial : 0.0f);
             _positionMaterial.SetTexture("_VelocityTex", _nextVelocity);
             _positionMaterial.SetTexture("_CurrentVelocityTex", _currentVelocity);
         }

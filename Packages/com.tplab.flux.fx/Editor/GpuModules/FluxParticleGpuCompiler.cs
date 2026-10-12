@@ -207,8 +207,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
         static bool IsLegacyModule(Type type)
         {
-            return type == typeof(FluxParticleVelocityOverLifetimeModule) ||
-                   type == typeof(FluxParticleColorOverLifetimeModule) ||
+            return type == typeof(FluxParticleColorOverLifetimeModule) ||
                    type == typeof(FluxParticleSizeOverLifetimeModule) ||
                    type == typeof(FluxParticleRotationOverLifetimeModule) ||
                    type == typeof(FluxParticleTextureSheetAnimationModule);

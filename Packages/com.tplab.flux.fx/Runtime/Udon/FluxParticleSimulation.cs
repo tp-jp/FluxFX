@@ -38,7 +38,6 @@ namespace TpLab.Flux.FX.Udon
         object _lifetime;
         object _shape;
         object _initialVelocity;
-        object _velocityOverLifetime;
         object _startColor;
         object _startSize;
         object _startRotation;
@@ -48,8 +47,6 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
 
         FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
-
-        FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
 
         FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
 
@@ -106,13 +103,11 @@ namespace TpLab.Flux.FX.Udon
         internal void Initialize(
             FluxParticleLifetimeParameters lifetime,
             FluxParticleShapeParameters shape,
-            FluxParticleInitialVelocityParameters initialVelocity,
-            FluxParticleVelocityOverLifetimeParameters velocityOverLifetime)
+            FluxParticleInitialVelocityParameters initialVelocity)
         {
             _lifetime = lifetime;
             _shape = shape;
             _initialVelocity = initialVelocity;
-            _velocityOverLifetime = velocityOverLifetime;
         }
 
         internal FluxParticleGpuParameterStore GetVelocityParameterStore()
@@ -331,17 +326,6 @@ namespace TpLab.Flux.FX.Udon
                 positionUpdateKernel.SetVector("_ShapeSize", new Vector4(shapeSize.x, shapeSize.y, shapeSize.z, 0));
             }
 
-            var velocityOverLifetimeStart = VelocityOverLifetime.GetStart();
-            var velocityOverLifetimeEnd = VelocityOverLifetime.GetEnd();
-            var velocityOverLifetimeOrbital = VelocityOverLifetime.GetOrbital();
-            var velocityOverLifetimeOffset = VelocityOverLifetime.GetOffset();
-
-            positionUpdateKernel.SetFloat("_VelocityOverLifetimeEnabled", VelocityOverLifetime.GetEnabled() ? 1.0f : 0.0f);
-            positionUpdateKernel.SetVector("_VelocityOverLifetimeStart", new Vector4(velocityOverLifetimeStart.x, velocityOverLifetimeStart.y, velocityOverLifetimeStart.z, 0));
-            positionUpdateKernel.SetVector("_VelocityOverLifetimeEnd", new Vector4(velocityOverLifetimeEnd.x, velocityOverLifetimeEnd.y, velocityOverLifetimeEnd.z, 0));
-            positionUpdateKernel.SetVector("_VelocityOverLifetimeOrbital", new Vector4(velocityOverLifetimeOrbital.x, velocityOverLifetimeOrbital.y, velocityOverLifetimeOrbital.z, 0));
-            positionUpdateKernel.SetVector("_VelocityOverLifetimeOffset", new Vector4(velocityOverLifetimeOffset.x, velocityOverLifetimeOffset.y, velocityOverLifetimeOffset.z, 0));
-            positionUpdateKernel.SetFloat("_VelocityOverLifetimeRadial", VelocityOverLifetime.GetRadial());
             positionUpdateKernel.SetFloat("_DeltaTime", deltaTime);
             positionUpdateKernel.SetFloat("_FluxFXSimulationTime", _simulationTime);
             positionUpdateKernel.SetFloat("_SpawnStart", particleEmitter.SpawnStart);
