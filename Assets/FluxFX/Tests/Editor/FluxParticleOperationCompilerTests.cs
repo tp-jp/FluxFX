@@ -67,8 +67,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual("apply", operation.OperationId);
             Assert.AreEqual(FluxParticleAttribute.Velocity, operation.ReadAttributes);
             Assert.AreEqual(FluxParticleAttribute.Velocity, operation.WriteAttributes);
-            Assert.AreEqual(1, operation.StateReads.Count);
-            Assert.AreEqual(FluxParticleStateReadSource.Working, operation.StateReads[0].Source);
+            AssertStateRead(operation, FluxParticleAttribute.Velocity, FluxParticleStateReadSource.Working);
         }
 
         /// <summary>
@@ -90,29 +89,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual("apply-position", operations[0].OperationId);
             Assert.AreEqual(4, operations[0].StateReads.Count);
 
-            AssertStateRead(
-                operations[0],
-                FluxParticleAttribute.Position,
-                FluxParticleStateReadSource.Working);
-
-            AssertStateRead(
-                operations[0],
-                FluxParticleAttribute.Age,
-                FluxParticleStateReadSource.Working);
-
-            AssertStateRead(
-                operations[0],
-                FluxParticleAttribute.Velocity,
-                FluxParticleStateReadSource.Updated);
-
-            AssertStateRead(
-                operations[0],
-                FluxParticleAttribute.Lifetime,
-                FluxParticleStateReadSource.Updated);
+            AssertStateRead(operations[0], FluxParticleAttribute.Position, FluxParticleStateReadSource.Working);
+            AssertStateRead(operations[0], FluxParticleAttribute.Age, FluxParticleStateReadSource.Working);
+            AssertStateRead(operations[0], FluxParticleAttribute.Velocity, FluxParticleStateReadSource.Updated);
+            AssertStateRead(operations[0], FluxParticleAttribute.Lifetime, FluxParticleStateReadSource.Updated);
         }
 
         /// <summary>
-        /// 異なるDefinitionのOperationが、実行先ごとに正しく統合されることを確認します。
+        /// GravityとVelocityOverLifetimeのOperationが異なるTargetに正しく分類されることを確認します。
         /// </summary>
         [Test]
         public void GravityAndVelocityOverLifetimeCompileTogether()
@@ -132,14 +116,106 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         /// <summary>
-        /// 未移行のModuleが存在する場合、不完全なExecutionPlanを返さず例外を発生させます。
+        /// Force、Drag、LimitVelocityがWorking Velocityを読み書きすることを確認します。
         /// </summary>
         [Test]
-        public void UnmigratedModuleIsRejected()
+        public void ForceDragAndLimitVelocityUseWorkingVelocity()
         {
+            AddModule(new FluxParticleForceModule());
             AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleLimitVelocityModule());
 
-            Assert.Throws<NotSupportedException>(() => Compile());
+            var operations = Compile().GetOperations(
+                FluxParticleOperationTarget.Velocity,
+                FluxParticleOperationPhase.Update);
+
+            Assert.AreEqual(3, operations.Count);
+            Assert.AreEqual("tplab.fluxfx.force", operations[0].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.drag", operations[1].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.limit-velocity", operations[2].ModuleId);
+
+            foreach (var operation in operations)
+            {
+                Assert.AreEqual(FluxParticleAttribute.Velocity, operation.ReadAttributes);
+                Assert.AreEqual(FluxParticleAttribute.Velocity, operation.WriteAttributes);
+                AssertStateRead(operation, FluxParticleAttribute.Velocity, FluxParticleStateReadSource.Working);
+            }
+        }
+
+        /// <summary>
+        /// NoiseとVortexがPrevious PositionとWorking Velocityを参照することを確認します。
+        /// </summary>
+        [Test]
+        public void NoiseAndVortexUsePreviousPosition()
+        {
+            AddModule(new FluxParticleNoiseModule());
+            AddModule(new FluxParticleVortexModule());
+
+            var operations = Compile().GetOperations(
+                FluxParticleOperationTarget.Velocity,
+                FluxParticleOperationPhase.Update);
+
+            Assert.AreEqual(2, operations.Count);
+            Assert.AreEqual("tplab.fluxfx.noise", operations[0].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.vortex", operations[1].ModuleId);
+
+            foreach (var operation in operations)
+            {
+                Assert.AreEqual(
+                    FluxParticleAttribute.Position | FluxParticleAttribute.Velocity,
+                    operation.ReadAttributes);
+
+                Assert.AreEqual(FluxParticleAttribute.Velocity, operation.WriteAttributes);
+                AssertStateRead(operation, FluxParticleAttribute.Position, FluxParticleStateReadSource.Previous);
+                AssertStateRead(operation, FluxParticleAttribute.Velocity, FluxParticleStateReadSource.Working);
+            }
+        }
+
+        /// <summary>
+        /// 全Velocity ModuleがHLSLの適用順序と同じ順序でExecutionPlanへ登録されることを確認します。
+        /// ModuleのAuthoring登録順序には依存しません。
+        /// </summary>
+        [Test]
+        public void AllVelocityModulesAreSortedByExecutionOrder()
+        {
+            AddModule(new FluxParticleLimitVelocityModule());
+            AddModule(new FluxParticleVortexModule());
+            AddModule(new FluxParticleDragModule());
+            AddModule(new FluxParticleNoiseModule());
+            AddModule(new FluxParticleForceModule());
+            AddModule(new FluxParticleGravityModule());
+
+            var operations = Compile().GetOperations(
+                FluxParticleOperationTarget.Velocity,
+                FluxParticleOperationPhase.Update);
+
+            Assert.AreEqual(6, operations.Count);
+
+            Assert.AreEqual("tplab.fluxfx.gravity", operations[0].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.force", operations[1].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.noise", operations[2].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.vortex", operations[3].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.drag", operations[4].ModuleId);
+            Assert.AreEqual("tplab.fluxfx.limit-velocity", operations[5].ModuleId);
+
+            Assert.AreEqual(100, operations[0].Order);
+            Assert.AreEqual(200, operations[1].Order);
+            Assert.AreEqual(300, operations[2].Order);
+            Assert.AreEqual(400, operations[3].Order);
+            Assert.AreEqual(500, operations[4].Order);
+            Assert.AreEqual(600, operations[5].Order);
+        }
+
+        /// <summary>
+        /// GPU Definitionが登録されていないRendering Moduleを渡した場合に、
+        /// 不完全なExecutionPlanを返さずエラーとなることを確認します。
+        /// </summary>
+        [Test]
+        public void ModuleWithoutGpuDefinitionIsRejected()
+        {
+            AddModule(new FluxParticleColorOverLifetimeModule());
+
+            Assert.Throws<InvalidOperationException>(() => Compile());
         }
 
         /// <summary>
