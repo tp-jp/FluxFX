@@ -6,9 +6,8 @@ namespace TpLab.Flux.FX.Editor.Execution
 {
     /// <summary>
     /// ParticleのOperationを検証・分類し、決定的な順序で保持する実行計画です。
-    /// Target・Phase・属性書き込みの基本的な整合性を検証します。
-    /// GPU Pass間のデータ依存関係、状態Bufferの読み取り時点、
-    /// Shader生成および実際のGPU実行順序は、この段階では管理しません。
+    /// Target・Phase・属性アクセスの整合性と、固定Pass順序に対する読み取り依存関係を検証します。
+    /// Shader生成やGPU Dispatchの実行は担当しません。
     /// </summary>
     public sealed class FluxParticleExecutionPlan
     {
@@ -26,7 +25,7 @@ namespace TpLab.Flux.FX.Editor.Execution
 
         /// <summary>
         /// 検証済みのOperation一覧です。
-        /// Target、Phase、Order、ModuleId、OperationIdの順で並び、外部から変更できません。
+        /// Target、Phase、Order、ModuleId、OperationIdの順に並び、外部から変更できません。
         /// </summary>
         public IReadOnlyList<FluxParticleOperation> Operations => _readOnlyOperations;
 
@@ -43,8 +42,8 @@ namespace TpLab.Flux.FX.Editor.Execution
 
         /// <summary>
         /// Operation一覧から実行計画を生成します。
-        /// 個々のOperationの実行位置と属性アクセスを検証し、
-        /// ModuleIdとOperationIdの重複を検出した後、決定的な順序へ並び替えます。
+        /// 識別子の重複、属性アクセス、状態の読み取り時点を検証した後、
+        /// Target、Phase、Order、ModuleId、OperationIdの順に並び替えます。
         /// </summary>
         /// <param name="operations">実行計画へ登録するOperation一覧。</param>
         /// <returns>検証と並び替えが完了したExecutionPlan。</returns>
@@ -52,8 +51,7 @@ namespace TpLab.Flux.FX.Editor.Execution
         /// Operation一覧がnullの場合に発生します。
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        /// nullのOperation、重複した識別子、不正なTarget・Phase、
-        /// または許可されていない属性アクセスを検出した場合に発生します。
+        /// Operationの構成に不整合がある場合に発生します。
         /// </exception>
         public static FluxParticleExecutionPlan Create(IEnumerable<FluxParticleOperation> operations)
         {
@@ -112,11 +110,10 @@ namespace TpLab.Flux.FX.Editor.Execution
 
         /// <summary>
         /// 指定したTargetとPhaseに属するOperationが存在するか確認します。
-        /// 将来的なGPU Passの実行条件判定などに利用できます。
         /// </summary>
         /// <param name="target">確認対象となるOperationのTarget。</param>
         /// <param name="phase">確認対象となるOperationのPhase。</param>
-        /// <returns>条件に一致するOperationが1つ以上存在する場合はtrue。</returns>
+        /// <returns>条件に一致するOperationが存在する場合はtrue。</returns>
         public bool HasOperations(
             FluxParticleOperationTarget target,
             FluxParticleOperationPhase phase)
@@ -130,8 +127,8 @@ namespace TpLab.Flux.FX.Editor.Execution
         }
 
         /// <summary>
-        /// Operationの実行位置と属性アクセスが、現在定義されている実行モデルに適合するか検証します。
-        /// GPU Pass間のRead/Write依存関係や、複数Operation間の書き込み競合は検証しません。
+        /// Operationの実行位置、論理属性アクセス、読み取り依存関係を検証します。
+        /// 別Operationによる実際の書き込み有無は、ここでは要求しません。
         /// </summary>
         static void ValidateOperation(FluxParticleOperation operation)
         {
@@ -143,15 +140,13 @@ namespace TpLab.Flux.FX.Editor.Execution
 
             if (!Enum.IsDefined(typeof(FluxParticleOperationPhase), operation.Phase))
             {
-                throw new InvalidOperationException(
-                    $"Invalid Operation phase: {operation.ModuleId}/{operation.OperationId}");
+                throw new InvalidOperationException($"Invalid Operation phase: {operation.ModuleId}/{operation.OperationId}");
             }
 
             if ((operation.ReadAttributes & ~DefinedAttributes) != FluxParticleAttribute.None ||
                 (operation.WriteAttributes & ~DefinedAttributes) != FluxParticleAttribute.None)
             {
-                throw new InvalidOperationException(
-                    $"Operation contains undefined attributes: {operation.ModuleId}/{operation.OperationId}");
+                throw new InvalidOperationException($"Operation contains undefined attributes: {operation.ModuleId}/{operation.OperationId}");
             }
 
             if (operation.Target == FluxParticleOperationTarget.Rendering)
@@ -159,32 +154,149 @@ namespace TpLab.Flux.FX.Editor.Execution
                 if (operation.Phase != FluxParticleOperationPhase.Render ||
                     operation.WriteAttributes != FluxParticleAttribute.None)
                 {
-                    throw new InvalidOperationException(
-                        $"Rendering Operation must use Render phase without state writes: {operation.ModuleId}/{operation.OperationId}");
+                    throw new InvalidOperationException($"Rendering Operation must use Render phase without state writes: {operation.ModuleId}/{operation.OperationId}");
+                }
+            }
+            else
+            {
+                if (operation.Phase == FluxParticleOperationPhase.Render)
+                {
+                    throw new InvalidOperationException($"Simulation Operation cannot use Render phase: {operation.ModuleId}/{operation.OperationId}");
                 }
 
-                return;
+                var writableAttributes = GetWritableAttributes(operation.Target);
+                var invalidWrites = operation.WriteAttributes & ~writableAttributes;
+
+                if (invalidWrites != FluxParticleAttribute.None)
+                {
+                    throw new InvalidOperationException($"Operation cannot write {invalidWrites} to {operation.Target}: {operation.ModuleId}/{operation.OperationId}");
+                }
             }
 
-            if (operation.Phase == FluxParticleOperationPhase.Render)
+            ValidateStateReads(operation);
+        }
+
+        /// <summary>
+        /// ReadAttributesとStateReadsの対応を検証します。
+        /// Workingは同じTargetの属性、Updatedは先行Passの属性に限定します。
+        /// </summary>
+        static void ValidateStateReads(FluxParticleOperation operation)
+        {
+            var declaredAttributes = FluxParticleAttribute.None;
+
+            foreach (var read in operation.StateReads)
             {
-                throw new InvalidOperationException(
-                    $"Simulation Operation cannot use Render phase: {operation.ModuleId}/{operation.OperationId}");
+                if (read == null)
+                {
+                    throw new InvalidOperationException($"Operation contains a null state read: {operation.ModuleId}/{operation.OperationId}");
+                }
+
+                var attribute = read.Attribute;
+                var bits = (int)attribute;
+
+                if (attribute == FluxParticleAttribute.None ||
+                    (attribute & ~DefinedAttributes) != FluxParticleAttribute.None ||
+                    (bits & (bits - 1)) != 0)
+                {
+                    throw new InvalidOperationException($"State read must specify one defined attribute: {operation.ModuleId}/{operation.OperationId}");
+                }
+
+                if ((declaredAttributes & attribute) != FluxParticleAttribute.None)
+                {
+                    throw new InvalidOperationException($"Duplicate state read for {attribute}: {operation.ModuleId}/{operation.OperationId}");
+                }
+
+                declaredAttributes |= attribute;
+
+                if (!Enum.IsDefined(typeof(FluxParticleStateReadSource), read.Source))
+                {
+                    throw new InvalidOperationException($"Invalid state read source: {operation.ModuleId}/{operation.OperationId}");
+                }
+
+                if (read.Source == FluxParticleStateReadSource.Previous) continue;
+
+                var owner = GetAttributeTarget(attribute);
+
+                if (read.Source == FluxParticleStateReadSource.Working)
+                {
+                    if (operation.Target != owner)
+                    {
+                        throw new InvalidOperationException($"Working state for {attribute} is not available in {operation.Target}: {operation.ModuleId}/{operation.OperationId}");
+                    }
+
+                    continue;
+                }
+
+                if (GetPassOrder(owner) >= GetPassOrder(operation.Target))
+                {
+                    throw new InvalidOperationException($"Updated state for {attribute} is not available before {operation.Target}: {operation.ModuleId}/{operation.OperationId}");
+                }
             }
 
-            var writableAttributes = GetWritableAttributes(operation.Target);
-            var invalidWrites = operation.WriteAttributes & ~writableAttributes;
-
-            if (invalidWrites != FluxParticleAttribute.None)
+            if (declaredAttributes != operation.ReadAttributes)
             {
-                throw new InvalidOperationException(
-                    $"Operation cannot write {invalidWrites} to {operation.Target}: {operation.ModuleId}/{operation.OperationId}");
+                throw new InvalidOperationException($"State reads do not match ReadAttributes: {operation.ModuleId}/{operation.OperationId}");
+            }
+        }
+
+        /// <summary>
+        /// 論理属性を所有するSimulation Targetを取得します。
+        /// 現行のState Layoutに基づく対応です。
+        /// </summary>
+        static FluxParticleOperationTarget GetAttributeTarget(FluxParticleAttribute attribute)
+        {
+            switch (attribute)
+            {
+                case FluxParticleAttribute.Velocity:
+                case FluxParticleAttribute.Lifetime:
+                    return FluxParticleOperationTarget.Velocity;
+
+                case FluxParticleAttribute.Position:
+                case FluxParticleAttribute.Age:
+                    return FluxParticleOperationTarget.Position;
+
+                case FluxParticleAttribute.StartColor:
+                case FluxParticleAttribute.StartSize:
+                    return FluxParticleOperationTarget.Visual;
+
+                case FluxParticleAttribute.StartRotation:
+                    return FluxParticleOperationTarget.Rotation;
+
+                default:
+                    throw new InvalidOperationException($"Unknown Particle attribute: {attribute}");
+            }
+        }
+
+        /// <summary>
+        /// 現行のGPU実行順序におけるTargetの位置を取得します。
+        /// この順序はGPU Runtimeの実装と一致させる必要があります。
+        /// </summary>
+        static int GetPassOrder(FluxParticleOperationTarget target)
+        {
+            switch (target)
+            {
+                case FluxParticleOperationTarget.Velocity:
+                    return 0;
+
+                case FluxParticleOperationTarget.Position:
+                    return 1;
+
+                case FluxParticleOperationTarget.Visual:
+                    return 2;
+
+                case FluxParticleOperationTarget.Rotation:
+                    return 3;
+
+                case FluxParticleOperationTarget.Rendering:
+                    return 4;
+
+                default:
+                    throw new InvalidOperationException($"Unknown Operation target: {target}");
             }
         }
 
         /// <summary>
         /// 現在のState Layoutにおいて、指定したTargetが変更できる論理属性を取得します。
-        /// 物理Textureの構成が変更された場合は、State Layout側への責務移管を検討します。
         /// </summary>
         static FluxParticleAttribute GetWritableAttributes(FluxParticleOperationTarget target)
         {
@@ -209,7 +321,6 @@ namespace TpLab.Flux.FX.Editor.Execution
 
         /// <summary>
         /// OperationをTarget、Phase、Order、ModuleId、OperationIdの順に比較します。
-        /// 同じ入力から常に同じ順序のExecutionPlanを生成するための比較処理です。
         /// </summary>
         static int CompareOperations(FluxParticleOperation a, FluxParticleOperation b)
         {
