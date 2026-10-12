@@ -19,6 +19,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
         const string IncludeDirectory = "Assets/FluxFX/Generated/Includes/";
 
         readonly Dictionary<string, Entry> _entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
+        bool _dirty;
 
         sealed class Entry
         {
@@ -28,6 +29,8 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             public string SourcePath;
             public string Stage;
         }
+
+        public bool IsDirty => _dirty;
 
         public static ShaderArtifactManifest Load()
         {
@@ -39,7 +42,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
 
             if ((int)root["version"] != FormatVersion)
             {
-                throw new InvalidOperationException("[FluxFX] Unsupported Shader Artifact Manifest version.");
+                throw new InvalidOperationException("Unsupported Shader Artifact Manifest version.");
             }
 
             var entries = (JArray)root["entries"];
@@ -59,7 +62,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
 
                 if (!manifest._entries.TryAdd(entry.Path, entry))
                 {
-                    throw new InvalidOperationException($"[FluxFX] Duplicate Manifest entry: {entry.Path}");
+                    throw new InvalidOperationException($"Duplicate Manifest entry: {entry.Path}");
                 }
             }
 
@@ -70,15 +73,16 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
         {
             if (artifact == null) throw new ArgumentNullException(nameof(artifact));
 
-            var entries = new List<Entry>();
-
-            entries.Add(new Entry
+            var entries = new List<Entry>
             {
-                Path = artifact.AssetPath,
-                Hash = ComputeHash(artifact.Source),
-                Kind = "shader",
-                Stage = artifact.Stage.ToString()
-            });
+                new Entry
+                {
+                    Path = artifact.AssetPath,
+                    Hash = ComputeHash(artifact.Source),
+                    Kind = "shader",
+                    Stage = artifact.Stage.ToString()
+                }
+            };
 
             foreach (var include in artifact.Includes.Artifacts)
             {
@@ -91,91 +95,35 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
                 });
             }
 
-            // 保存前にすべてのファイルを検証する。
             foreach (var entry in entries)
             {
                 ValidateEntry(entry);
 
                 if (!IsUnmodified(entry))
                 {
-                    throw new InvalidOperationException($"[FluxFX] Generated artifact content mismatch: {entry.Path}");
+                    throw new InvalidOperationException($"Generated artifact content mismatch: {entry.Path}");
                 }
-            }
 
-            foreach (var entry in entries)
-            {
                 if (_entries.TryGetValue(entry.Path, out var existing) &&
-                    (existing.Hash != entry.Hash || existing.Kind != entry.Kind))
+                    !HasSameIdentity(existing, entry))
                 {
-                    throw new InvalidOperationException($"[FluxFX] Manifest entry conflict: {entry.Path}");
+                    throw new InvalidOperationException($"Manifest entry conflict: {entry.Path}");
                 }
             }
 
             foreach (var entry in entries)
             {
-                _entries[entry.Path] = entry;
-            }
+                if (_entries.ContainsKey(entry.Path)) continue;
 
-            Save();
-        }
-
-        public bool CanDelete(string path)
-        {
-            return _entries.TryGetValue(path, out var entry) && IsUnmodified(entry);
-        }
-
-        public void Unregister(IEnumerable<string> paths)
-        {
-            var changed = false;
-
-            foreach (var path in paths)
-            {
-                changed |= _entries.Remove(path);
-            }
-
-            if (changed) Save();
-        }
-
-        static void ValidateEntry(Entry entry)
-        {
-            var prefix = entry.Kind == "shader" ? ShaderDirectory :
-                entry.Kind == "include" ? IncludeDirectory : null;
-
-            if (prefix == null ||
-                string.IsNullOrEmpty(entry.Path) ||
-                !entry.Path.StartsWith(prefix, StringComparison.Ordinal) ||
-                !IsDirectChild(entry.Path, prefix) ||
-                string.IsNullOrEmpty(entry.Hash) ||
-                entry.Hash.Length != 64 ||
-                entry.Hash.Any(c => !Uri.IsHexDigit(c)))
-            {
-                throw new InvalidOperationException($"[FluxFX] Invalid Manifest entry: {entry.Path}");
+                _entries.Add(entry.Path, entry);
+                _dirty = true;
             }
         }
 
-        static bool IsDirectChild(string path, string prefix)
+        public void Save()
         {
-            var name = path.Substring(prefix.Length);
+            if (!_dirty) return;
 
-            return name.Length > 0 &&
-                   name != "." &&
-                   name != ".." &&
-                   !name.Contains("/") &&
-                   !name.Contains("\\");
-        }
-
-        static bool IsUnmodified(Entry entry)
-        {
-            if (!File.Exists(entry.Path)) return false;
-
-            return string.Equals(
-                ComputeHash(File.ReadAllText(entry.Path)),
-                entry.Hash,
-                StringComparison.OrdinalIgnoreCase);
-        }
-
-        void Save()
-        {
             var entries = new JArray();
 
             foreach (var entry in _entries.Values.OrderBy(e => e.Path, StringComparer.Ordinal))
@@ -203,13 +151,79 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             }
 
             var json = root.ToString(Formatting.Indented);
-
-            // 内容に変化がなければImportしない。
-            if (File.Exists(ManifestPath) && File.ReadAllText(ManifestPath) == json) return;
+            if (File.Exists(ManifestPath) && File.ReadAllText(ManifestPath) == json)
+            {
+                _dirty = false;
+                return;
+            }
 
             File.WriteAllText(ManifestPath, json, new UTF8Encoding(false));
-
             AssetDatabase.ImportAsset(ManifestPath, ImportAssetOptions.ForceSynchronousImport);
+
+            _dirty = false;
+        }
+
+        public bool CanDelete(string path)
+        {
+            return _entries.TryGetValue(path, out var entry) && IsUnmodified(entry);
+        }
+
+        public void Unregister(IEnumerable<string> paths)
+        {
+            var changed = false;
+
+            foreach (var path in paths)
+            {
+                changed |= _entries.Remove(path);
+            }
+
+            if (changed) Save();
+        }
+
+        static bool HasSameIdentity(Entry a, Entry b)
+        {
+            return a.Hash == b.Hash &&
+                   a.Kind == b.Kind &&
+                   a.Stage == b.Stage &&
+                   a.SourcePath == b.SourcePath;
+        }
+
+        static void ValidateEntry(Entry entry)
+        {
+            var prefix = entry.Kind == "shader" ? ShaderDirectory :
+                entry.Kind == "include" ? IncludeDirectory : null;
+
+            if (prefix == null ||
+                string.IsNullOrEmpty(entry.Path) ||
+                !entry.Path.StartsWith(prefix, StringComparison.Ordinal) ||
+                !IsDirectChild(entry.Path, prefix) ||
+                string.IsNullOrEmpty(entry.Hash) ||
+                entry.Hash.Length != 64 ||
+                entry.Hash.Any(c => !Uri.IsHexDigit(c)))
+            {
+                throw new InvalidOperationException($"Invalid Manifest entry: {entry.Path}");
+            }
+        }
+
+        static bool IsDirectChild(string path, string prefix)
+        {
+            var name = path.Substring(prefix.Length);
+
+            return name.Length > 0 &&
+                   name != "." &&
+                   name != ".." &&
+                   !name.Contains("/") &&
+                   !name.Contains("\\");
+        }
+
+        static bool IsUnmodified(Entry entry)
+        {
+            if (!File.Exists(entry.Path)) return false;
+
+            return string.Equals(
+                ComputeHash(File.ReadAllText(entry.Path)),
+                entry.Hash,
+                StringComparison.OrdinalIgnoreCase);
         }
 
         static string ComputeHash(string content)

@@ -57,9 +57,6 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
                 throw new InvalidOperationException($"Generated Shader is invalid or unsupported: {path}");
             }
 
-            var manifest = ShaderArtifactManifest.Load();
-            manifest.Register(artifact);
-
             if (created)
             {
                 Logger.Log($"Shader created: {path}");

@@ -52,7 +52,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             AssetDatabase.SaveAssets();
 
             Logger.Log(
-                $"[FluxFX] Automatic Shader Cleanup completed. " +
+                $"Automatic Shader Cleanup completed. " +
                 $"Shaders: {deletedShaders}, Includes: {deletedIncludes}");
         }
     }

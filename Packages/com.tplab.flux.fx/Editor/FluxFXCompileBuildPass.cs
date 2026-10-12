@@ -30,6 +30,7 @@ namespace TpLab.Flux.FX.Editor
             var runtimeCompiler = new FluxParticleCompiler();
             var pipeline = new FluxParticleShaderPipeline();
             var session = new FluxFXCompilationSession();
+            var manifest = ShaderArtifactManifest.Load();
 
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var assignedCount = 0;
@@ -66,7 +67,9 @@ namespace TpLab.Flux.FX.Editor
                     kernel.SetProgramVariable("shader", shader);
                     artifacts.Add(artifact);
 
-                    Logger.Log($"[FluxFX] Shader assigned: {shader.name} to {authoring.name}", authoring);
+                    manifest.Register(artifact);
+
+                    Logger.Log($"Shader assigned: {shader.name} to {authoring.name}", authoring);
                 }
 
                 var runtimeJson = runtimeCompiler.Compile(authoring, plan, result.Compilation);
@@ -77,7 +80,9 @@ namespace TpLab.Flux.FX.Editor
 
             context.Data.Add(session);
 
-            Logger.Log($"[FluxFX] Particle compilation completed. Systems: {assignedCount}");
+            manifest.Save();
+
+            Logger.Log($"Particle compilation completed. Systems: {assignedCount}");
         }
     }
 }

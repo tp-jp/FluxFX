@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Tests.Udon
 
             if (parameters == null)
             {
-                Logger.LogError("[FluxFX] Velocity over Lifetime Module is not registered.");
+                Logger.LogError("Velocity over Lifetime Module is not registered.");
                 return;
             }
 
@@ -62,7 +62,7 @@ namespace TpLab.Flux.FX.Tests.Udon
                     break;
 
                 default:
-                    Logger.Log("[FluxFX] Velocity over Lifetime test completed.");
+                    Logger.Log("Velocity over Lifetime test completed.");
                     return;
             }
 
@@ -83,7 +83,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             parameters.SetOffset(Vector3.zero);
             parameters.SetRadial(0);
 
-            Logger.Log("[FluxFX] Step 1: Linear - Up to Down");
+            Logger.Log("Step 1: Linear - Up to Down");
         }
 
         void TestOrbital(FluxParticleVelocityOverLifetimeParameters parameters)
@@ -94,7 +94,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             parameters.SetOffset(Vector3.zero);
             parameters.SetRadial(0);
 
-            Logger.Log("[FluxFX] Step 2: Orbital - Y Axis");
+            Logger.Log("Step 2: Orbital - Y Axis");
         }
 
         void TestRadial(FluxParticleVelocityOverLifetimeParameters parameters)
@@ -105,7 +105,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             parameters.SetOffset(Vector3.zero);
             parameters.SetRadial(2.0f);
 
-            Logger.Log("[FluxFX] Step 3: Radial - Outward");
+            Logger.Log("Step 3: Radial - Outward");
         }
 
         void TestOffset(FluxParticleVelocityOverLifetimeParameters parameters)
@@ -114,21 +114,21 @@ namespace TpLab.Flux.FX.Tests.Udon
             parameters.SetOffset(new Vector3(2, 0, 0));
             parameters.SetRadial(1.0f);
 
-            Logger.Log("[FluxFX] Step 4: Orbital and Radial with Offset");
+            Logger.Log("Step 4: Orbital and Radial with Offset");
         }
 
         void TestDisabled(FluxParticleVelocityOverLifetimeParameters parameters)
         {
             parameters.SetEnabled(false);
 
-            Logger.Log("[FluxFX] Step 5: Module Disabled");
+            Logger.Log("Step 5: Module Disabled");
         }
 
         void TestEnabled(FluxParticleVelocityOverLifetimeParameters parameters)
         {
             parameters.SetEnabled(true);
 
-            Logger.Log("[FluxFX] Step 6: Module Enabled");
+            Logger.Log("Step 6: Module Enabled");
         }
 
         void ValidateParameters(FluxParticleVelocityOverLifetimeParameters parameters)
@@ -141,7 +141,7 @@ namespace TpLab.Flux.FX.Tests.Udon
             var enabled = parameters.GetEnabled();
 
             Logger.Log(
-                $"[FluxFX] Step {_step + 1} Values: " +
+                $"Step {_step + 1} Values: " +
                 $"Enabled={enabled}, " +
                 $"Start={start}, " +
                 $"End={end}, " +

@@ -55,7 +55,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             }
             catch (Exception exception)
             {
-                Logger.LogError($"[FluxFX] Automatic Shader Cleanup failed: {exception}");
+                Logger.LogError($"Automatic Shader Cleanup failed: {exception}");
             }
         }
     }

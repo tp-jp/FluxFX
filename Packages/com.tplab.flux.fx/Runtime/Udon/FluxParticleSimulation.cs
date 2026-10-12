@@ -135,7 +135,7 @@ namespace TpLab.Flux.FX.Udon
             {
                 if (parameters.Count > 0)
                 {
-                    Logger.LogError($"[FluxFX] GPU Parameter Store is not assigned for stage: {stageKey}");
+                    Logger.LogError($"GPU Parameter Store is not assigned for stage: {stageKey}");
                 }
 
                 return;
@@ -163,7 +163,7 @@ namespace TpLab.Flux.FX.Udon
 
                         if (components.Count != 4)
                         {
-                            Logger.LogError($"[FluxFX] GPU Vector parameter requires four components: {name}");
+                            Logger.LogError($"GPU Vector parameter requires four components: {name}");
                             break;
                         }
 
@@ -177,7 +177,7 @@ namespace TpLab.Flux.FX.Udon
                         break;
 
                     default:
-                        Logger.LogError($"[FluxFX] Unsupported GPU parameter type: {type} ({name})");
+                        Logger.LogError($"Unsupported GPU parameter type: {type} ({name})");
                         break;
                 }
             }
