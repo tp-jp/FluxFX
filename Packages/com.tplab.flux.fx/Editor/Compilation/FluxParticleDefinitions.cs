@@ -464,6 +464,17 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public string EntryPoint { get; }
 
         /// <summary>
+        /// OperationのContextへ供給するParameter IDです。HLSLから直接Uniformを参照する必要はありません。
+        /// </summary>
+        public IReadOnlyList<string> Parameters { get; }
+
+        /// <summary>
+        /// 0なら実行を省略するFloat Parameter IDです。nullなら常に実行します。
+        /// 無効時は明示的に読み取った更新前の値を引き継ぎます。
+        /// </summary>
+        public string EnabledParameterId { get; }
+
+        /// <summary>
         /// Operationの入出力・依存関係・HLSL実装を設定します。
         /// </summary>
         /// <param name="id">識別子。</param>
@@ -474,6 +485,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="dependencies">先行OperationのID一覧。</param>
         /// <param name="hlslPath">HLSLファイルのパス。</param>
         /// <param name="entryPoint">HLSL関数名。</param>
+        /// <param name="parameters">Contextに供給するParameter ID一覧。</param>
+        /// <param name="enabledParameterId">実行条件となるFloat Parameter ID。</param>
         public FluxParticleOperationDefinition(
             string id,
             string ownerId,
@@ -482,7 +495,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
             IEnumerable<FluxParticleValueWrite> writes,
             IEnumerable<string> dependencies,
             string hlslPath,
-            string entryPoint)
+            string entryPoint,
+            IEnumerable<string> parameters = null,
+            string enabledParameterId = null)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Operation ID is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(ownerId)) throw new ArgumentException("Owner ID is required.", nameof(ownerId));
@@ -498,6 +513,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             Dependencies = new List<string>(dependencies ?? Array.Empty<string>()).AsReadOnly();
             HlslPath = hlslPath.Replace('\\', '/');
             EntryPoint = entryPoint;
+            Parameters = new List<string>(parameters ?? Array.Empty<string>()).AsReadOnly();
+            EnabledParameterId = enabledParameterId;
         }
     }
 }

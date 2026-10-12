@@ -1,0 +1,361 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace TpLab.Flux.FX.Editor.Compilation
+{
+    /// <summary>
+    /// 新CompilerのState LayoutとOperation宣言だけからShaderとBindingを生成します。
+    /// Operationは専用Contextを更新し、Derived Providerは宣言順の入力・Parameterを引数として値を返します。
+    /// </summary>
+    public sealed class FluxParticleProgramShaderGenerator
+    {
+        /// <summary>検証とLogical Compilationを実行してShaderを生成します。</summary>
+        /// <param name="definitions">CoreとModuleが登録した定義。</param>
+        /// <param name="shaderName">生成Shader名の接頭辞。</param>
+        /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします。</param>
+        /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果。</returns>
+        public FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions, string shaderName,
+            FluxParticleShaderLifecycle lifecycle = null)
+        {
+            if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+            if (string.IsNullOrWhiteSpace(shaderName) || shaderName.Any(c => c == '"' || c == '\\' || char.IsControl(c)))
+            {
+                throw new ArgumentException("A safe Shader name is required.", nameof(shaderName));
+            }
+            var program = new FluxParticleProgramCompiler().Compile(definitions);
+            var emitter = new Emitter(definitions, program, lifecycle);
+            emitter.Validate();
+            var passes = program.ExecutionPlan.Passes.Select(pass => emitter.GeneratePass(pass, shaderName)).ToArray();
+            var clear = program.StateLayout.Pages.Select(page => emitter.GenerateClear(page, shaderName)).ToArray();
+            return new FluxParticleShaderProgram(program, passes, clear, emitter.GenerateRender(),
+                definitions.Values.Values.OrderBy(v => v.Id, StringComparer.Ordinal),
+                definitions.Parameters.Values.OrderBy(p => p.Id, StringComparer.Ordinal),
+                definitions.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal));
+        }
+
+        sealed class Emitter
+        {
+            readonly FluxParticleDefinitionBuilder definitions;
+            readonly FluxParticleCompiledProgram program;
+            readonly FluxParticleShaderLifecycle lifecycle;
+            readonly Dictionary<string, FluxParticleOperationDefinition> originals;
+            Dictionary<string, FluxParticlePageRead> pageReads;
+            HashSet<string> localOperations;
+            HashSet<string> usedProviders;
+            StringBuilder body;
+
+            internal Emitter(FluxParticleDefinitionBuilder definitions, FluxParticleCompiledProgram program, FluxParticleShaderLifecycle lifecycle)
+            {
+                this.definitions = definitions;
+                this.program = program;
+                this.lifecycle = lifecycle;
+                originals = program.Operations.ToDictionary(op => op.Id, StringComparer.Ordinal);
+            }
+
+            internal void Validate()
+            {
+                foreach (var op in program.Operations)
+                {
+                    ValidateImplementation(op.HlslPath, op.EntryPoint);
+                    if (op.Reads.GroupBy(r => r.ValueId).Any(g => g.Count() > 1))
+                    {
+                        throw new InvalidOperationException($"Multiple read versions in one Context are not supported: {op.Id}");
+                    }
+                    foreach (var write in op.Writes.Where(w => w.Kind == FluxParticleWriteKind.Modify))
+                    {
+                        if (!op.Reads.Any(r => r.ValueId == write.ValueId))
+                        {
+                            throw new InvalidOperationException($"Modify requires an explicit read: {op.Id}/{write.ValueId}");
+                        }
+                    }
+                }
+                foreach (var provider in definitions.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived))
+                {
+                    ValidateImplementation(provider.HlslPath, provider.EntryPoint);
+                }
+                // Updated Page contains only the final writer's version, never an intermediate writer's result.
+                foreach (var pass in program.ExecutionPlan.Passes)
+                {
+                    foreach (var read in pass.UpdateOperations.SelectMany(op => op.Reads).Where(r => r.Version == FluxParticleReadVersion.AfterOperation))
+                    {
+                        if (!program.StateLayout.TryGetBinding(read.ValueId, out var binding) || binding.PageId == pass.OutputPageId) continue;
+                        var writer = program.Operations.Last(op => op.Phase == FluxParticlePhase.Update && op.Writes.Any(w => w.ValueId == read.ValueId));
+                        if (writer.Id != read.ProducerOperationId)
+                        {
+                            throw new InvalidOperationException($"Intermediate cross-Page version is not materialized: {read.ProducerOperationId}/{read.ValueId}");
+                        }
+                    }
+                }
+                if (lifecycle == null) return;
+                if (!definitions.Values.TryGetValue(lifecycle.AgeValueId, out var age) || age.Type != FluxParticleValueType.Float ||
+                    !program.StateLayout.TryGetBinding(age.Id, out _) ||
+                    !definitions.Values.TryGetValue(lifecycle.LifetimeValueId, out var lifetime) || lifetime.Type != FluxParticleValueType.Float)
+                {
+                    throw new InvalidOperationException("Lifecycle requires persistent Float Age and Float Lifetime.");
+                }
+                ValidateLifecycleProvider(lifecycle.LifetimeValueId, new HashSet<string>(StringComparer.Ordinal));
+            }
+
+            void ValidateLifecycleProvider(string id, HashSet<string> visited)
+            {
+                if (!visited.Add(id)) return;
+                if (!definitions.Providers.TryGetValue(id, out var provider))
+                {
+                    if (!program.StateLayout.TryGetBinding(id, out _)) throw new InvalidOperationException($"Unbound Lifecycle Value: {id}");
+                    return;
+                }
+                if (provider.Kind != FluxParticleProviderKind.Derived ||
+                    provider.Parameters.Any(p => definitions.Parameters[p].Policy != FluxParticleParameterPolicy.Static))
+                {
+                    throw new InvalidOperationException($"Recomputed Lifecycle requires Derived Providers with Static Parameters: {id}");
+                }
+                foreach (var input in provider.Inputs) ValidateLifecycleProvider(input, visited);
+            }
+
+            static void ValidateImplementation(string path, string entry)
+            {
+                if (string.IsNullOrWhiteSpace(path) || path.Any(c => c == '"' || char.IsControl(c)) ||
+                    !Regex.IsMatch(entry, @"\A[A-Za-z_][A-Za-z0-9_]*\z"))
+                {
+                    throw new InvalidOperationException($"Unsafe HLSL implementation: {path}/{entry}");
+                }
+            }
+
+            internal FluxParticleGeneratedPass GeneratePass(FluxParticleGpuPass pass, string name)
+            {
+                Start();
+                foreach (var read in pass.Reads) AddPageRead(read.PageId, read.Version);
+                var outputPage = program.StateLayout.Pages.Single(p => p.Id == pass.OutputPageId);
+                body.AppendLine("float4 FluxFX_Step(float2 uv)").AppendLine("{");
+                body.AppendLine($"    float4 result = tex2D({Page(pass.OutputPageId, FluxParticlePageVersion.StepPrevious)}, uv);");
+                body.AppendLine("    bool spawn = tex2D(_FluxSpawnMask, uv).r > 0.5;");
+                if (lifecycle != null)
+                {
+                    var age = State(lifecycle.AgeValueId, FluxParticlePageVersion.StepPrevious);
+                    var lifetime = SuppliedOrState(lifecycle.LifetimeValueId);
+                    body.AppendLine($"    float age = {age};").AppendLine($"    float lifetime = {lifetime};");
+                    body.AppendLine("    bool alive = age >= 0.0 && age < lifetime;");
+                }
+                else
+                {
+                    body.AppendLine("    bool alive = true;");
+                }
+                body.AppendLine("    if (spawn)").AppendLine("    {");
+                EmitOperations(pass.SpawnOperations, false);
+                foreach (var binding in outputPage.Bindings)
+                {
+                    var writer = pass.SpawnOperations.LastOrDefault(op => op.Writes.Any(w => w.ValueId == binding.ValueId));
+                    if (writer != null) body.AppendLine($"        result.{Swizzle(binding)} = (float{Suffix(binding.ComponentCount)}){Local(writer.Id)}.{Field(binding.ValueId)};");
+                }
+                body.AppendLine("    }").AppendLine("    else if (alive)").AppendLine("    {");
+                EmitOperations(pass.UpdateOperations, false);
+                foreach (var binding in outputPage.Bindings)
+                {
+                    var writer = pass.UpdateOperations.LastOrDefault(op => op.Writes.Any(w => w.ValueId == binding.ValueId));
+                    if (writer != null) body.AppendLine($"        result.{Swizzle(binding)} = (float{Suffix(binding.ComponentCount)}){Local(writer.Id)}.{Field(binding.ValueId)};");
+                }
+                body.AppendLine("    }");
+                if (lifecycle != null && outputPage.Bindings.Any(b => b.ValueId == lifecycle.AgeValueId))
+                {
+                    var binding = outputPage.Bindings.Single(b => b.ValueId == lifecycle.AgeValueId);
+                    body.AppendLine($"    if (!spawn && (!alive || result.{Swizzle(binding)} >= lifetime))");
+                    body.AppendLine("    {").AppendLine($"        result.{Swizzle(binding)} = -1.0;").AppendLine("    }");
+                }
+                body.AppendLine("    return result;").AppendLine("}");
+                var header = Declarations(pass.SpawnOperations.Concat(pass.UpdateOperations));
+                var source = Wrap(name + "/Step" + pass.Index, header + body, "FluxFX_Step(i.uv)");
+                return new FluxParticleGeneratedPass(pass, source, pageReads.Values.OrderBy(r => r.PageId).ThenBy(r => r.Version));
+            }
+
+            internal string GenerateClear(FluxParticleStatePage page, string name)
+            {
+                var channels = new[] { "0.0", "0.0", "0.0", "0.0" };
+                if (lifecycle != null)
+                {
+                    var age = page.Bindings.FirstOrDefault(b => b.ValueId == lifecycle.AgeValueId);
+                    if (age != null) channels[age.ChannelOffset] = "-1.0";
+                }
+                return Wrap(name + "/Clear" + page.Id, "", "float4(" + string.Join(", ", channels) + ")");
+            }
+
+            internal string GenerateRender()
+            {
+                Start();
+                var operations = program.Operations.Where(op => op.Phase == FluxParticlePhase.Render).ToArray();
+                var outputs = operations.SelectMany(op => op.Writes).Select(w => w.ValueId).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToArray();
+                var result = new StringBuilder("struct FluxRenderContext\n{\n");
+                // HLSL does not allow an empty struct.
+                result.AppendLine("    float unused;");
+                foreach (var id in outputs) result.AppendLine($"    {Type(id)} {Field(id)};");
+                result.AppendLine("};");
+                body.AppendLine("FluxRenderContext FluxFX_EvaluateRender(float2 uv, out bool alive)").AppendLine("{");
+                body.AppendLine("    FluxRenderContext result = (FluxRenderContext)0;");
+                if (lifecycle != null)
+                {
+                    body.AppendLine($"    float age = {State(lifecycle.AgeValueId, FluxParticlePageVersion.Updated)};");
+                    body.AppendLine($"    alive = age >= 0.0 && age < {SuppliedOrState(lifecycle.LifetimeValueId, true)};");
+                    body.AppendLine("    if (!alive) return result;");
+                }
+                else
+                {
+                    body.AppendLine("    alive = true;");
+                }
+                EmitOperations(operations, true);
+                foreach (var id in outputs)
+                {
+                    var writer = operations.Last(op => op.Writes.Any(w => w.ValueId == id));
+                    body.AppendLine($"    result.{Field(id)} = {Local(writer.Id)}.{Field(id)};");
+                }
+                body.AppendLine("    return result;").AppendLine("}");
+                return Declarations(operations) + result + body.ToString();
+            }
+
+            void Start()
+            {
+                pageReads = new Dictionary<string, FluxParticlePageRead>(StringComparer.Ordinal);
+                localOperations = new HashSet<string>(StringComparer.Ordinal);
+                usedProviders = new HashSet<string>(StringComparer.Ordinal);
+                body = new StringBuilder();
+            }
+
+            void EmitOperations(IEnumerable<FluxParticleOperationDefinition> operations, bool render)
+            {
+                localOperations.Clear();
+                foreach (var projected in operations)
+                {
+                    // Keep the full original Context even when Spawn writes were projected to one Page.
+                    var op = originals[projected.Id];
+                    var local = Local(op.Id);
+                    body.AppendLine($"        {FluxParticleHlslNames.Context(op.Id)} {local} = ({FluxParticleHlslNames.Context(op.Id)})0;");
+                    foreach (var read in op.Reads)
+                    {
+                        string expression;
+                        switch (read.Version)
+                        {
+                            case FluxParticleReadVersion.Provided:
+                                expression = SuppliedOrState(read.ValueId, render);
+                                break;
+                            case FluxParticleReadVersion.AfterOperation:
+                                expression = localOperations.Contains(read.ProducerOperationId)
+                                    ? Local(read.ProducerOperationId) + "." + Field(read.ValueId)
+                                    : State(read.ValueId, FluxParticlePageVersion.Updated);
+                                break;
+                            default:
+                                expression = State(read.ValueId, render ? FluxParticlePageVersion.Updated : FluxParticlePageVersion.StepPrevious);
+                                break;
+                        }
+                        body.AppendLine($"        {local}.{Field(read.ValueId)} = {expression};");
+                    }
+                    foreach (var id in op.Parameters)
+                    {
+                        body.AppendLine($"        {local}.{FluxParticleHlslNames.Parameter(id)} = {FluxParticleHlslNames.ParameterProperty(id)};");
+                    }
+                    if (op.EnabledParameterId != null)
+                    {
+                        body.AppendLine($"        if ({FluxParticleHlslNames.ParameterProperty(op.EnabledParameterId)} > 0.5)");
+                        body.AppendLine("        {").AppendLine($"            {op.EntryPoint}({local});").AppendLine("        }");
+                    }
+                    else
+                    {
+                        body.AppendLine($"        {op.EntryPoint}({local});");
+                    }
+                    localOperations.Add(op.Id);
+                }
+            }
+
+            string SuppliedOrState(string id, bool render = false)
+            {
+                if (!definitions.Providers.TryGetValue(id, out var provider))
+                {
+                    return State(id, render ? FluxParticlePageVersion.Updated : FluxParticlePageVersion.StepPrevious);
+                }
+                usedProviders.Add(id);
+                var property = FluxParticleHlslNames.ProviderProperty(id);
+                if (provider.Kind == FluxParticleProviderKind.Uniform) return property;
+                if (provider.Kind == FluxParticleProviderKind.SpawnInput)
+                {
+                    var value = definitions.Values[id];
+                    return $"({Type(id)})tex2D({property}, uv).{"rgba".Substring(0, value.ComponentCount)}";
+                }
+                var arguments = provider.Inputs.Select(input => SuppliedOrState(input, render))
+                    .Concat(provider.Parameters.Select(FluxParticleHlslNames.ParameterProperty));
+                return provider.EntryPoint + "(" + string.Join(", ", arguments) + ")";
+            }
+
+            string State(string id, FluxParticlePageVersion version)
+            {
+                if (!program.StateLayout.TryGetBinding(id, out var binding)) throw new InvalidOperationException($"Unbound Shader Value: {id}");
+                AddPageRead(binding.PageId, version);
+                return $"({Type(id)})tex2D({Page(binding.PageId, version)}, uv).{Swizzle(binding)}";
+            }
+
+            void AddPageRead(int pageId, FluxParticlePageVersion version)
+            {
+                var key = Page(pageId, version);
+                if (!pageReads.ContainsKey(key)) pageReads.Add(key, new FluxParticlePageRead(pageId, version));
+            }
+
+            string Declarations(IEnumerable<FluxParticleOperationDefinition> operations)
+            {
+                var result = new StringBuilder("sampler2D _FluxSpawnMask;\n");
+                foreach (var read in pageReads.Values.OrderBy(r => r.PageId).ThenBy(r => r.Version))
+                {
+                    result.AppendLine($"sampler2D {Page(read.PageId, read.Version)};");
+                }
+                foreach (var p in definitions.Parameters.Values.OrderBy(p => p.Id, StringComparer.Ordinal))
+                {
+                    result.AppendLine($"{HlslType(p.Type)} {FluxParticleHlslNames.ParameterProperty(p.Id)};");
+                }
+                foreach (var p in definitions.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal))
+                {
+                    result.AppendLine($"{(p.Kind == FluxParticleProviderKind.SpawnInput ? "sampler2D" : Type(p.ValueId))} {FluxParticleHlslNames.ProviderProperty(p.ValueId)};");
+                }
+                var unique = operations.Select(op => originals[op.Id]).Distinct().ToArray();
+                foreach (var op in unique)
+                {
+                    result.AppendLine($"struct {FluxParticleHlslNames.Context(op.Id)}").AppendLine("{");
+                    var ids = op.Reads.Select(r => r.ValueId).Concat(op.Writes.Select(w => w.ValueId)).Distinct().OrderBy(id => id, StringComparer.Ordinal);
+                    foreach (var id in ids) result.AppendLine($"    {Type(id)} {Field(id)};");
+                    foreach (var id in op.Parameters.Distinct().OrderBy(id => id, StringComparer.Ordinal))
+                    {
+                        result.AppendLine($"    {HlslType(definitions.Parameters[id].Type)} {FluxParticleHlslNames.Parameter(id)};");
+                    }
+                    if (op.Reads.Count == 0 && op.Writes.Count == 0 && op.Parameters.Count == 0) result.AppendLine("    float unused;");
+                    result.AppendLine("};");
+                }
+                // Provider implementations are plain functions. Context types precede Operation includes.
+                foreach (var path in definitions.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived && usedProviders.Contains(p.ValueId)).Select(p => p.HlslPath)
+                    .Concat(unique.Select(op => op.HlslPath)).Distinct().OrderBy(p => p, StringComparer.Ordinal))
+                {
+                    result.AppendLine($"#include \"{path.Replace('\\', '/')}\"");
+                }
+                return result.ToString();
+            }
+
+            string Type(string id) => HlslType(definitions.Values[id].Type);
+            static string Field(string id) => FluxParticleHlslNames.Value(id);
+            static string Local(string id) => "o_" + FluxParticleHlslNames.Encode(id);
+            static string Page(int id, FluxParticlePageVersion version) => FluxParticleHlslNames.PageProperty(id, version);
+            static string Swizzle(FluxParticleStateBinding binding) => "rgba".Substring(binding.ChannelOffset, binding.ComponentCount);
+            static string Suffix(int count) => count == 1 ? "" : count.ToString();
+
+            static string HlslType(FluxParticleValueType type)
+            {
+                return type == FluxParticleValueType.UInt ? "uint" : "float" + Suffix((int)type);
+            }
+
+            static string Wrap(string name, string code, string expression)
+            {
+                return "Shader \"" + name + "\"\n{\n    SubShader\n    {\n        Pass\n        {\n" +
+                    "            ZTest Always Cull Off ZWrite Off Blend Off\n            HLSLPROGRAM\n" +
+                    "            #pragma target 3.5\n            #pragma vertex vert_img\n            #pragma fragment FluxFX_Fragment\n" +
+                    "            #include \"UnityCG.cginc\"\n" + code +
+                    "float4 FluxFX_Fragment(v2f_img i) : SV_Target\n{\n    return " + expression + ";\n}\n" +
+                    "            ENDHLSL\n        }\n    }\n    Fallback Off\n}\n";
+            }
+        }
+    }
+}

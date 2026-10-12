@@ -97,6 +97,28 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Spawn/Update Operation has no State output: {operation.Id}");
                 }
+                foreach (var parameterId in operation.Parameters)
+                {
+                    if (!definitions.Parameters.TryGetValue(parameterId, out var parameter))
+                    {
+                        throw new InvalidOperationException($"Unknown Operation Parameter: {operation.Id}/{parameterId}");
+                    }
+                    if (parameter.Policy == FluxParticleParameterPolicy.SpawnLocked && operation.Phase != FluxParticlePhase.Spawn)
+                    {
+                        throw new InvalidOperationException($"SpawnLocked Operation Parameter requires materialization: {operation.Id}/{parameterId}");
+                    }
+                }
+                if (operation.EnabledParameterId != null)
+                {
+                    if (operation.Phase != FluxParticlePhase.Update ||
+                        !definitions.Parameters.TryGetValue(operation.EnabledParameterId, out var enabled) ||
+                        enabled.Type != FluxParticleValueType.Float ||
+                        operation.Writes.Any(write => write.Kind != FluxParticleWriteKind.Modify ||
+                            !operation.Reads.Any(read => read.ValueId == write.ValueId)))
+                    {
+                        throw new InvalidOperationException($"Enabled Operation requires Update Modify with explicit fallback reads: {operation.Id}");
+                    }
+                }
                 var written = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var write in operation.Writes)
                 {
@@ -524,7 +546,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 writes,
                 operation.Dependencies,
                 operation.HlslPath,
-                operation.EntryPoint);
+                operation.EntryPoint,
+                operation.Parameters,
+                operation.EnabledParameterId);
         }
 
         static void AddProviderReads(
