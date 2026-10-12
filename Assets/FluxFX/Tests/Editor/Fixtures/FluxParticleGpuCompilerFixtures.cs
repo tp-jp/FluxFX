@@ -48,12 +48,14 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         public static string ParameterName = "_TestStrength";
         public static bool DuplicateParameter;
+        public static string SourcePath = "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+        public static string FunctionName = "FluxFX_CustomLift";
 
         public override string ModuleId => "test.fluxfx.validator";
 
-        public override string HlslPath => "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+        public override string HlslPath => SourcePath;
 
-        public override string EntryPoint => "FluxFX_CustomLift";
+        public override string EntryPoint => FunctionName;
 
         public override int Order => 150;
 

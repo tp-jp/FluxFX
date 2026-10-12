@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
+using TpLab.Flux.FX.Editor.Shaders.Dependencies;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.GpuModules
@@ -38,6 +38,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
             var stageModules = new Dictionary<FluxParticleExecutionStage, List<FluxParticleGpuModuleCompilation>>();
             var stageNames = new Dictionary<FluxParticleExecutionStage, HashSet<string>>();
             var reservedNames = new Dictionary<FluxParticleExecutionStage, HashSet<string>>();
+            var sourceValidator = new FluxParticleGpuModuleSourceValidator();
 
             foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
             {
@@ -72,6 +73,8 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 {
                     continue;
                 }
+
+                if (!sourceValidator.Validate(module, definition, validation)) continue;
 
                 stageModules[module.Stage].Add(compiledModule);
             }
@@ -194,12 +197,15 @@ namespace TpLab.Flux.FX.Editor.GpuModules
 
         static HashSet<string> CollectReservedNames(string shaderPath)
         {
-            var source = File.ReadAllText(shaderPath);
+            var graph = new ShaderDependencyResolver().Resolve(new[] { shaderPath });
             var names = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (Match match in UniformPattern.Matches(source))
+            foreach (var dependency in graph.Sources.Values)
             {
-                names.Add(match.Groups[1].Value);
+                foreach (Match match in UniformPattern.Matches(dependency.Source))
+                {
+                    names.Add(match.Groups[1].Value);
+                }
             }
 
             return names;

@@ -26,6 +26,8 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             TestGpuModuleDefinition.ParameterName = "_TestStrength";
             TestGpuModuleDefinition.DuplicateParameter = false;
+            TestGpuModuleDefinition.SourcePath = "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+            TestGpuModuleDefinition.FunctionName = "FluxFX_CustomLift";
             TestPositionGpuModuleDefinition.ParameterName = "_TestPositionStrength";
         }
 
@@ -36,6 +38,8 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             TestGpuModuleDefinition.ParameterName = "_TestStrength";
             TestGpuModuleDefinition.DuplicateParameter = false;
+            TestGpuModuleDefinition.SourcePath = "Assets/FluxFX/CustomModules/CustomLift.hlsl";
+            TestGpuModuleDefinition.FunctionName = "FluxFX_CustomLift";
             TestPositionGpuModuleDefinition.ParameterName = "_TestPositionStrength";
         }
 
@@ -209,6 +213,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void CommonIncludeUniformCollisionProducesG004()
+        {
+            TestGpuModuleDefinition.ParameterName = "_FluxDestinationCount";
+
+            AddModule(new TestGpuModule());
+
+            AssertFailure("G004");
+        }
+
+        [Test]
         public void DuplicateParameterProducesG005()
         {
             TestGpuModuleDefinition.DuplicateParameter = true;
@@ -216,6 +230,37 @@ namespace TpLab.Flux.FX.Tests.Editor
             AddModule(new TestGpuModule());
 
             AssertFailure("G005");
+        }
+
+        [Test]
+        public void MissingModuleSourceProducesG006()
+        {
+            TestGpuModuleDefinition.SourcePath = "Assets/FluxFX/Tests/Runtime/Shaders/MissingGpuModule.hlsl";
+
+            AddModule(new TestGpuModule());
+
+            AssertFailure("G006");
+        }
+
+        [Test]
+        public void MissingModuleEntryPointProducesG007()
+        {
+            TestGpuModuleDefinition.FunctionName = "FluxFX_MissingEntryPoint";
+
+            AddModule(new TestGpuModule());
+
+            AssertFailure("G007");
+        }
+
+        [Test]
+        public void ValidModuleSourceCompilesSuccessfully()
+        {
+            AddModule(new TestGpuModule());
+
+            var result = Compile();
+
+            AssertSuccess(result);
+            Assert.IsEmpty(result.Validation.Issues);
         }
 
         [Test]
