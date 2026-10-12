@@ -11,8 +11,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
         const string Core = "fluxfx.core";
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/";
 
-        /// <summary>Position/Age・Velocity/SpawnKeyと、RTを使わないColor評価の定義を構築します。</summary>
-        /// <returns>Shader Generatorへ渡せる独立した定義集合。</returns>
+        /// <summary>
+
+        /// Position/Age・Velocity/SpawnKeyと、RTを使わないColor評価の定義を構築します。
+
+        /// </summary>
+        /// <returns>
+        /// Shader Generatorへ渡せる独立した定義集合。
+        /// </returns>
         public static FluxParticleDefinitionBuilder CreateDefinitions()
         {
             var builder = new FluxParticleDefinitionBuilder();
@@ -67,8 +73,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
             return builder;
         }
 
-        /// <summary>Ageが負値なら非生存とする基本Lifecycleを返します。</summary>
-        /// <returns>基本Programの生存判定。</returns>
+        /// <summary>
+
+        /// Ageが負値なら非生存とする基本Lifecycleを返します。
+
+        /// </summary>
+        /// <returns>
+        /// 基本Programの生存判定。
+        /// </returns>
         public static FluxParticleShaderLifecycle CreateLifecycle() => new FluxParticleShaderLifecycle("particle.age", "particle.lifetime");
 
         static void AddValue(FluxParticleDefinitionBuilder builder, string id, FluxParticleValueType type, FluxParticleWritePolicy policy)

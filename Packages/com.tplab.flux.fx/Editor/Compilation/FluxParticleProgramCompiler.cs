@@ -13,8 +13,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 登録済みのValue・Provider・Operationから検証済みProgramを生成します。
         /// </summary>
-        /// <param name="definitions">CoreとModuleから収集した定義。</param>
-        /// <returns>State LayoutとExecutionPlanを含む検証済みProgram。</returns>
+        /// <param name="definitions">
+        /// CoreとModuleから収集した定義。
+        /// </param>
+        /// <returns>
+        /// State LayoutとExecutionPlanを含む検証済みProgram。
+        /// </returns>
         public FluxParticleCompiledProgram Compile(FluxParticleDefinitionBuilder definitions)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));

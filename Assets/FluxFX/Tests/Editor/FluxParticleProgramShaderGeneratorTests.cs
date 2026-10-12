@@ -56,7 +56,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void OperationContextContainsOnlyDeclaredValuesAndParameters()
         {
             var source = Generate().Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "gravity")).Source;
-            var begin = source.IndexOf("struct FluxContext_n_gravity", StringComparison.Ordinal);
+            var begin = source.IndexOf("struct FluxGravityContext", StringComparison.Ordinal);
             var end = source.IndexOf("};", begin, StringComparison.Ordinal);
             var context = source.Substring(begin, end - begin);
             StringAssert.Contains("v_n_particle_002e_velocity", context);
@@ -81,6 +81,49 @@ namespace TpLab.Flux.FX.Tests.Editor
             var ids = new[] { "a.b", "a-b", "a_b", "a_002e_b", "1", "日本語" };
             Assert.AreEqual(ids.Length, ids.Select(FluxParticleHlslNames.Encode).Distinct().Count());
             Assert.IsTrue(ids.Select(FluxParticleHlslNames.Encode).All(id => id.StartsWith("n_", StringComparison.Ordinal)));
+        }
+
+        [TestCase("gravity", "FluxGravityContext")]
+        [TestCase("spawn.velocity", "FluxSpawnVelocityContext")]
+        [TestCase("custom-force", "FluxCustomForceContext")]
+        [TestCase("custom_force", "FluxCustomForceContext")]
+        [TestCase("1", "Flux1Context")]
+        [TestCase("日本語", "FluxX65E5X672CX8A9EContext")]
+        public void ContextTypeUsesPascalCase(string id, string expected)
+        {
+            Assert.AreEqual(expected, FluxParticleHlslNames.Context(id));
+        }
+
+        [TestCase("custom.force", "custom-force")]
+        [TestCase("custom_force", "custom.force")]
+        [TestCase("gravity", "Gravity")]
+        public void RejectContextTypeNameCollisions(string first, string second)
+        {
+            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            foreach (var id in new[] { first, second })
+            {
+                if (definitions.Operations.ContainsKey(id)) continue;
+                definitions.AddOperation(new FluxParticleOperationDefinition(id, "custom", FluxParticlePhase.Render,
+                    Array.Empty<FluxParticleValueRead>(), Array.Empty<FluxParticleValueWrite>(), Array.Empty<string>(),
+                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Gravity.hlsl", "Custom"));
+            }
+            var exception = Assert.Throws<InvalidOperationException>(() => Generate(definitions));
+            StringAssert.Contains("Context type name collision", exception.Message);
+        }
+
+        [Test]
+        public void AllTemplateTokensAreResolvedInStepClearAndRender()
+        {
+            var generated = Generate();
+            foreach (var source in generated.Passes.Select(pass => pass.Source).Concat(generated.ClearSources)
+                .Concat(new[] { generated.RenderSource }))
+            {
+                StringAssert.DoesNotContain("{{", source);
+                StringAssert.DoesNotContain("}}", source);
+            }
+            StringAssert.Contains("if (spawn)", generated.Passes[0].Source);
+            StringAssert.Contains("else if (alive)", generated.Passes[0].Source);
+            StringAssert.Contains("FluxRenderContext FluxFX_EvaluateRender", generated.RenderSource);
         }
 
         [Test]
@@ -206,7 +249,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var definitions = FluxParticleBasicProgram.CreateDefinitions();
             var changed = Copy(definitions, "gravity");
             var op = definitions.Operations["gravity"];
-            var path = WriteInclude("Invalid", "void Invalid(inout FluxContext_n_gravity ctx) { ctx.undeclared = 1.0; }");
+            var path = WriteInclude("Invalid", "void Invalid(inout FluxGravityContext ctx) { ctx.undeclared = 1.0; }");
             changed.AddOperation(new FluxParticleOperationDefinition(op.Id, op.OwnerId, op.Phase, op.Reads,
                 op.Writes, op.Dependencies, path, "Invalid", op.Parameters));
             var source = Generate(changed).Passes.Single(p => p.Plan.UpdateOperations.Any(o => o.Id == "gravity")).Source;
@@ -368,7 +411,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var changed = Copy(definitions, "spawn.velocity");
             changed.AddValue(new FluxParticleValueDefinition("custom.mode", FluxParticleValueType.Float,
                 FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
-            var path = WriteInclude("SpawnMulti", "void FluxFX_SpawnMulti(inout FluxContext_n_spawn_002e_multi ctx)\n{\n" +
+            var path = WriteInclude("SpawnMulti", "void FluxFX_SpawnMulti(inout FluxSpawnMultiContext ctx)\n{\n" +
                 "    ctx.v_n_particle_002e_velocity = ctx.p_n_spawn_002e_velocity;\n" +
                 "    ctx.v_n_particle_002e_spawn_002d_key = ctx.v_n_spawn_002e_key;\n    ctx.v_n_custom_002e_mode = 7.0;\n}\n");
             var source = definitions.Operations["spawn.velocity"];

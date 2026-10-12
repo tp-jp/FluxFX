@@ -1,0 +1,4 @@
+    if (!spawn && (!alive || result.{{Channel}} >= lifetime))
+    {
+        result.{{Channel}} = -1.0;
+    }

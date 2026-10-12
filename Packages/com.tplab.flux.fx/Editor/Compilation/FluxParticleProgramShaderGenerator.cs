@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -12,11 +13,21 @@ namespace TpLab.Flux.FX.Editor.Compilation
     /// </summary>
     public sealed class FluxParticleProgramShaderGenerator
     {
-        /// <summary>検証とLogical Compilationを実行してShaderを生成します。</summary>
-        /// <param name="definitions">CoreとModuleが登録した定義。</param>
-        /// <param name="shaderName">生成Shader名の接頭辞。</param>
-        /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします。</param>
-        /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果。</returns>
+        /// <summary>
+        /// 検証とLogical Compilationを実行してShaderを生成します。
+        /// </summary>
+        /// <param name="definitions">
+        /// CoreとModuleが登録した定義。
+        /// </param>
+        /// <param name="shaderName">
+        /// 生成Shader名の接頭辞。
+        /// </param>
+        /// <param name="lifecycle">
+        /// 生存判定の契約。nullなら全非Spawn粒子をUpdateします。
+        /// </param>
+        /// <returns>
+        /// Shaderソース、Page入力、Parameter契約を含む生成結果。
+        /// </returns>
         public FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions, string shaderName,
             FluxParticleShaderLifecycle lifecycle = null)
         {
@@ -57,6 +68,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             internal void Validate()
             {
+                var collision = program.Operations.GroupBy(op => FluxParticleHlslNames.Context(op.Id), StringComparer.Ordinal)
+                    .FirstOrDefault(group => group.Count() > 1);
+                if (collision != null)
+                {
+                    throw new InvalidOperationException($"Context type name collision: {collision.Key} ({string.Join(", ", collision.Select(op => op.Id))})");
+                }
                 foreach (var op in program.Operations)
                 {
                     ValidateImplementation(op.HlslPath, op.EntryPoint);
@@ -129,44 +146,36 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 Start();
                 foreach (var read in pass.Reads) AddPageRead(read.PageId, read.Version);
                 var outputPage = program.StateLayout.Pages.Single(p => p.Id == pass.OutputPageId);
-                body.AppendLine("float4 FluxFX_Step(float2 uv)").AppendLine("{");
-                body.AppendLine($"    float4 result = tex2D({Page(pass.OutputPageId, FluxParticlePageVersion.StepPrevious)}, uv);");
-                body.AppendLine("    bool spawn = tex2D(_FluxSpawnMask, uv).r > 0.5;");
-                if (lifecycle != null)
-                {
-                    var age = State(lifecycle.AgeValueId, FluxParticlePageVersion.StepPrevious);
-                    var lifetime = SuppliedOrState(lifecycle.LifetimeValueId);
-                    body.AppendLine($"    float age = {age};").AppendLine($"    float lifetime = {lifetime};");
-                    body.AppendLine("    bool alive = age >= 0.0 && age < lifetime;");
-                }
-                else
-                {
-                    body.AppendLine("    bool alive = true;");
-                }
-                body.AppendLine("    if (spawn)").AppendLine("    {");
+                var previousPage = Page(pass.OutputPageId, FluxParticlePageVersion.StepPrevious);
+                var lifecycleCode = lifecycle == null ? "    bool alive = true;\n" :
+                    ExpandTemplate("StepLifecycle", new Dictionary<string, string>
+                    {
+                        ["Age"] = State(lifecycle.AgeValueId, FluxParticlePageVersion.StepPrevious),
+                        ["Lifetime"] = SuppliedOrState(lifecycle.LifetimeValueId)
+                    });
                 EmitOperations(pass.SpawnOperations, false);
-                foreach (var binding in outputPage.Bindings)
-                {
-                    var writer = pass.SpawnOperations.LastOrDefault(op => op.Writes.Any(w => w.ValueId == binding.ValueId));
-                    if (writer != null) body.AppendLine($"        result.{Swizzle(binding)} = (float{Suffix(binding.ComponentCount)}){Local(writer.Id)}.{Field(binding.ValueId)};");
-                }
-                body.AppendLine("    }").AppendLine("    else if (alive)").AppendLine("    {");
+                EmitPageWrites(outputPage, pass.SpawnOperations);
+                var spawnCode = body.ToString();
+                body.Clear();
                 EmitOperations(pass.UpdateOperations, false);
-                foreach (var binding in outputPage.Bindings)
-                {
-                    var writer = pass.UpdateOperations.LastOrDefault(op => op.Writes.Any(w => w.ValueId == binding.ValueId));
-                    if (writer != null) body.AppendLine($"        result.{Swizzle(binding)} = (float{Suffix(binding.ComponentCount)}){Local(writer.Id)}.{Field(binding.ValueId)};");
-                }
-                body.AppendLine("    }");
+                EmitPageWrites(outputPage, pass.UpdateOperations);
+                var updateCode = body.ToString();
+                var expiration = "";
                 if (lifecycle != null && outputPage.Bindings.Any(b => b.ValueId == lifecycle.AgeValueId))
                 {
                     var binding = outputPage.Bindings.Single(b => b.ValueId == lifecycle.AgeValueId);
-                    body.AppendLine($"    if (!spawn && (!alive || result.{Swizzle(binding)} >= lifetime))");
-                    body.AppendLine("    {").AppendLine($"        result.{Swizzle(binding)} = -1.0;").AppendLine("    }");
+                    expiration = ExpandTemplate("Expiration", new Dictionary<string, string> { ["Channel"] = Swizzle(binding) });
                 }
-                body.AppendLine("    return result;").AppendLine("}");
+                var step = ExpandTemplate("Step", new Dictionary<string, string>
+                {
+                    ["PreviousPage"] = previousPage,
+                    ["Lifecycle"] = lifecycleCode,
+                    ["Spawn"] = spawnCode,
+                    ["Update"] = updateCode,
+                    ["Expiration"] = expiration
+                });
                 var header = Declarations(pass.SpawnOperations.Concat(pass.UpdateOperations));
-                var source = Wrap(name + "/Step" + pass.Index, header + body, "FluxFX_Step(i.uv)");
+                var source = Wrap(name + "/Step" + pass.Index, header + step, "FluxFX_Step(i.uv)");
                 return new FluxParticleGeneratedPass(pass, source, pageReads.Values.OrderBy(r => r.PageId).ThenBy(r => r.Version));
             }
 
@@ -186,31 +195,39 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 Start();
                 var operations = program.Operations.Where(op => op.Phase == FluxParticlePhase.Render).ToArray();
                 var outputs = operations.SelectMany(op => op.Writes).Select(w => w.ValueId).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToArray();
-                var result = new StringBuilder("struct FluxRenderContext\n{\n");
-                // HLSL does not allow an empty struct.
-                result.AppendLine("    float unused;");
-                foreach (var id in outputs) result.AppendLine($"    {Type(id)} {Field(id)};");
-                result.AppendLine("};");
-                body.AppendLine("FluxRenderContext FluxFX_EvaluateRender(float2 uv, out bool alive)").AppendLine("{");
-                body.AppendLine("    FluxRenderContext result = (FluxRenderContext)0;");
-                if (lifecycle != null)
-                {
-                    body.AppendLine($"    float age = {State(lifecycle.AgeValueId, FluxParticlePageVersion.Updated)};");
-                    body.AppendLine($"    alive = age >= 0.0 && age < {SuppliedOrState(lifecycle.LifetimeValueId, true)};");
-                    body.AppendLine("    if (!alive) return result;");
-                }
-                else
-                {
-                    body.AppendLine("    alive = true;");
-                }
+                var fields = new StringBuilder();
+                foreach (var id in outputs) fields.AppendLine($"    {Type(id)} {Field(id)};");
+                var lifecycleCode = lifecycle == null ? "    alive = true;\n" :
+                    ExpandTemplate("RenderLifecycle", new Dictionary<string, string>
+                    {
+                        ["Age"] = State(lifecycle.AgeValueId, FluxParticlePageVersion.Updated),
+                        ["Lifetime"] = SuppliedOrState(lifecycle.LifetimeValueId, true)
+                    });
                 EmitOperations(operations, true);
+                var writes = new StringBuilder();
                 foreach (var id in outputs)
                 {
                     var writer = operations.Last(op => op.Writes.Any(w => w.ValueId == id));
-                    body.AppendLine($"    result.{Field(id)} = {Local(writer.Id)}.{Field(id)};");
+                    writes.AppendLine($"    result.{Field(id)} = {Local(writer.Id)}.{Field(id)};");
                 }
-                body.AppendLine("    return result;").AppendLine("}");
-                return Declarations(operations) + result + body.ToString();
+                var render = ExpandTemplate("Render", new Dictionary<string, string>
+                {
+                    ["Fields"] = fields.ToString(),
+                    ["Lifecycle"] = lifecycleCode,
+                    ["Operations"] = body.ToString(),
+                    ["Writes"] = writes.ToString()
+                });
+                return Declarations(operations) + render;
+            }
+
+            void EmitPageWrites(FluxParticleStatePage page, IReadOnlyList<FluxParticleOperationDefinition> operations)
+            {
+                foreach (var binding in page.Bindings)
+                {
+                    var writer = operations.LastOrDefault(op => op.Writes.Any(w => w.ValueId == binding.ValueId));
+                    if (writer == null) continue;
+                    body.AppendLine($"        result.{Swizzle(binding)} = (float{Suffix(binding.ComponentCount)}){Local(writer.Id)}.{Field(binding.ValueId)};");
+                }
             }
 
             void Start()
@@ -349,12 +366,37 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             static string Wrap(string name, string code, string expression)
             {
-                return "Shader \"" + name + "\"\n{\n    SubShader\n    {\n        Pass\n        {\n" +
-                    "            ZTest Always Cull Off ZWrite Off Blend Off\n            HLSLPROGRAM\n" +
-                    "            #pragma target 3.5\n            #pragma vertex vert_img\n            #pragma fragment FluxFX_Fragment\n" +
-                    "            #include \"UnityCG.cginc\"\n" + code +
-                    "float4 FluxFX_Fragment(v2f_img i) : SV_Target\n{\n    return " + expression + ";\n}\n" +
-                    "            ENDHLSL\n        }\n    }\n    Fallback Off\n}\n";
+                return ExpandTemplate("Shader", new Dictionary<string, string>
+                {
+                    ["ShaderName"] = name,
+                    ["Code"] = code,
+                    ["Expression"] = expression
+                });
+            }
+
+            static string ExpandTemplate(string name, IReadOnlyDictionary<string, string> bindings)
+            {
+                var path = "Packages/com.tplab.flux.fx/Editor/Compilation/Templates/" + name + ".txt";
+                var template = AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(path);
+                if (template == null) throw new InvalidOperationException($"Shader template not found: {path}");
+                var source = template.text.Replace("\r\n", "\n");
+                var used = new HashSet<string>(StringComparer.Ordinal);
+                // Replace only tokens in the template; inserted HLSL is never processed again.
+                var expanded = Regex.Replace(source, @"\{\{([A-Za-z]+)\}\}", match =>
+                {
+                    var key = match.Groups[1].Value;
+                    if (!bindings.TryGetValue(key, out var value))
+                    {
+                        throw new InvalidOperationException($"Unbound template token: {name}/{key}");
+                    }
+                    used.Add(key);
+                    return value;
+                });
+                foreach (var key in bindings.Keys)
+                {
+                    if (!used.Contains(key)) throw new InvalidOperationException($"Missing template token: {name}/{key}");
+                }
+                return expanded;
             }
         }
     }
