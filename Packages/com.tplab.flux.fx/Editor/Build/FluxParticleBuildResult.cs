@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Editor.GpuModules;
-using TpLab.Flux.FX.Editor.Shaders;
 using TpLab.Flux.FX.Editor.Shaders.Artifacts;
 using TpLab.Flux.FX.Scripts.Modules;
 
@@ -19,6 +18,8 @@ namespace TpLab.Flux.FX.Editor.Build
         public IReadOnlyDictionary<FluxParticleExecutionStage, ShaderArtifact> ShaderArtifacts { get; }
 
         public ShaderArtifact VelocityArtifact => GetArtifact(FluxParticleExecutionStage.VelocityUpdate);
+
+        public ShaderArtifact PositionArtifact => GetArtifact(FluxParticleExecutionStage.PositionUpdate);
 
         public string RuntimeJson { get; }
 
@@ -66,18 +67,6 @@ namespace TpLab.Flux.FX.Editor.Build
 
             ShaderArtifacts = new System.Collections.ObjectModel.ReadOnlyDictionary<FluxParticleExecutionStage, ShaderArtifact>(_artifacts);
             RuntimeJson = runtimeJson;
-        }
-
-        public FluxParticleBuildResult(
-            FluxParticleGpuCompilation compilation,
-            ShaderArtifact velocityArtifact,
-            string runtimeJson)
-            : this(compilation, new[]
-            {
-                velocityArtifact,
-                new FluxParticleShaderPipeline().Build(compilation, FluxParticleExecutionStage.PositionUpdate)
-            }, runtimeJson)
-        {
         }
 
         public ShaderArtifact GetArtifact(FluxParticleExecutionStage stage)

@@ -5,6 +5,7 @@ using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.GpuModules;
 using TpLab.Flux.FX.Editor.Shaders;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -111,14 +112,23 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(compileResult.Success, compileResult.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline().BuildVelocity(compileResult.Compilation);
+            var pipeline = new FluxParticleShaderPipeline();
+
+            var velocityArtifact = pipeline.Build(compileResult.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(compileResult.Compilation, FluxParticleExecutionStage.PositionUpdate);
             var runtimeJson = new FluxParticleCompiler().Compile(_firstAuthoring, plan, compileResult.Compilation);
 
-            var buildResult = new FluxParticleBuildResult(compileResult.Compilation, artifact, runtimeJson);
+            var buildResult = new FluxParticleBuildResult(
+                compileResult.Compilation,
+                new[] { velocityArtifact, positionArtifact },
+                runtimeJson);
 
             Assert.AreEqual(runtimeJson, buildResult.RuntimeJson);
             Assert.AreSame(compileResult.Compilation, buildResult.Compilation);
-            Assert.AreSame(artifact, buildResult.VelocityArtifact);
+            Assert.AreSame(velocityArtifact, buildResult.VelocityArtifact);
+            Assert.AreSame(velocityArtifact, buildResult.GetArtifact(FluxParticleExecutionStage.VelocityUpdate));
+            Assert.AreSame(positionArtifact, buildResult.GetArtifact(FluxParticleExecutionStage.PositionUpdate));
+            Assert.AreEqual(2, buildResult.ShaderArtifacts.Count);
         }
 
         static FluxParticleBuildResult CreateResult(FluxParticleAuthoring authoring)
@@ -129,10 +139,16 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline().BuildVelocity(result.Compilation);
+            var pipeline = new FluxParticleShaderPipeline();
+
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.PositionUpdate);
             var runtimeJson = new FluxParticleCompiler().Compile(authoring, plan, result.Compilation);
 
-            return new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson);
+            return new FluxParticleBuildResult(
+                result.Compilation,
+                new[] { velocityArtifact, positionArtifact },
+                runtimeJson);
         }
     }
 }

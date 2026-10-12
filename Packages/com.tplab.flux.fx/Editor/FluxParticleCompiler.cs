@@ -60,8 +60,6 @@ namespace TpLab.Flux.FX.Editor
             AddShape(parameters, authoring.Shape);
             AddInitialVelocity(parameters, authoring.InitialVelocity);
 
-            AddVelocityOverLifetime(parameters, plan);
-
             var writer = new FluxParticleGpuRuntimeDataWriter();
 
             parameters["gpuParameters"] = writer.WriteParameters(compilation);
@@ -145,29 +143,6 @@ namespace TpLab.Flux.FX.Editor
                 ["speed"] = initialVelocity.Speed,
                 ["speedMin"] = speedMin,
                 ["speedMax"] = speedMax
-            };
-        }
-
-        void AddVelocityOverLifetime(JObject parameters, FluxParticleCompilePlan plan)
-        {
-            var module = plan.GetModule<FluxParticleVelocityOverLifetimeModule>();
-            if (module == null) return;
-
-            parameters["velocityOverLifetime"] = new JObject
-            {
-                ["startX"] = module.Start.x,
-                ["startY"] = module.Start.y,
-                ["startZ"] = module.Start.z,
-                ["endX"] = module.End.x,
-                ["endY"] = module.End.y,
-                ["endZ"] = module.End.z,
-                ["orbitalX"] = module.Orbital.x,
-                ["orbitalY"] = module.Orbital.y,
-                ["orbitalZ"] = module.Orbital.z,
-                ["offsetX"] = module.Offset.x,
-                ["offsetY"] = module.Offset.y,
-                ["offsetZ"] = module.Offset.z,
-                ["radial"] = module.Radial
             };
         }
 

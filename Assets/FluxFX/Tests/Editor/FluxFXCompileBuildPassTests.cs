@@ -44,9 +44,14 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var artifact = pipeline.BuildVelocity(result.Compilation);
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.PositionUpdate);
             var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
-            var buildResult = new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson);
+
+            var buildResult = new FluxParticleBuildResult(
+                result.Compilation,
+                new[] { velocityArtifact, positionArtifact },
+                runtimeJson);
 
             var session = new FluxFXCompilationSession();
             session.Add(_authoring, buildResult);
@@ -59,7 +64,8 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.AreSame(session, sharedSession);
             Assert.AreSame(result.Compilation, sharedResult.Compilation);
-            Assert.AreSame(artifact, sharedResult.VelocityArtifact);
+            Assert.AreSame(velocityArtifact, sharedResult.VelocityArtifact);
+            Assert.AreSame(positionArtifact, sharedResult.PositionArtifact);
         }
 
         [Test]
@@ -81,11 +87,17 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.IsTrue(result.Success, result.Validation.GetReport());
 
-            var artifact = new FluxParticleShaderPipeline().BuildVelocity(result.Compilation);
+            var pipeline = new FluxParticleShaderPipeline();
+            var velocityArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.VelocityUpdate);
+            var positionArtifact = pipeline.Build(result.Compilation, FluxParticleExecutionStage.PositionUpdate);
             var session = new FluxFXCompilationSession();
 
             var runtimeJson = new FluxParticleCompiler().Compile(_authoring, plan, result.Compilation);
-            session.Add(_authoring, new FluxParticleBuildResult(result.Compilation, artifact, runtimeJson));
+
+            session.Add(_authoring, new FluxParticleBuildResult(
+                result.Compilation,
+                new[] { velocityArtifact, positionArtifact },
+                runtimeJson));
 
             var data = new SceneFlowDataStore();
             data.Add(session);

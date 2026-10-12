@@ -245,9 +245,14 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             StringAssert.Contains("FluxFX_ApplyPositionModules(ctx);", source);
             StringAssert.Contains("position.xyz = ctx.position;", source);
+            StringAssert.Contains("position.xyz += velocity.xyz * _DeltaTime;", source);
             StringAssert.Contains("position.w += _DeltaTime;", source);
             StringAssert.Contains("CreateSpawnPosition(spawnSeed)", source);
-            StringAssert.Contains("EvaluateVelocityOverLifetime", source);
+
+            Assert.IsFalse(source.Contains("EvaluateVelocityOverLifetime"));
+            Assert.IsFalse(source.Contains("FluxFX_VelocityOverLifetime(ctx);"));
+            Assert.IsFalse(source.Contains("_VelocityOverLifetimeStart"));
+            Assert.IsFalse(source.Contains("_VelocityOverLifetimeEnabled"));
 
             Assert.IsFalse(source.Contains("{{MODULE_PROPERTIES}}"));
             Assert.IsFalse(source.Contains("{{MODULE_UNIFORMS}}"));
@@ -341,6 +346,42 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             Assert.Throws<System.InvalidOperationException>(() =>
                 _generator.Generate(compilation, FluxParticleExecutionStage.Rendering));
+        }
+
+        [Test]
+        public void VelocityOverLifetimeShaderHasNoLegacyFixedImplementation()
+        {
+            AddModule(new FluxParticleVelocityOverLifetimeModule());
+
+            var compilation = Compile();
+            var pipeline = new FluxParticleShaderPipeline();
+            var artifact = pipeline.Build(compilation, FluxParticleExecutionStage.PositionUpdate);
+
+            Assert.IsFalse(artifact.Source.Contains("EvaluateVelocityOverLifetime("));
+            Assert.IsFalse(artifact.Source.Contains("velocity.xyz + velocityOverLifetime"));
+            Assert.IsFalse(artifact.Source.Contains("_VelocityOverLifetimeEnabled"));
+
+            StringAssert.Contains("position.xyz += velocity.xyz * _DeltaTime;", artifact.Source);
+            StringAssert.Contains("FluxFX_VelocityOverLifetime(ctx);", artifact.Source);
+
+            Assert.IsNotNull(artifact.Includes.Get(
+                "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/VelocityOverLifetime.hlsl"));
+        }
+
+        [Test]
+        public void EmptyPositionStageHasNoVelocityOverLifetimeModule()
+        {
+            var compilation = Compile();
+            var position = compilation.GetStage(FluxParticleExecutionStage.PositionUpdate);
+            var source = _generator.Generate(compilation, FluxParticleExecutionStage.PositionUpdate).Source;
+
+            Assert.AreEqual(0, position.Modules.Count);
+
+            Assert.IsFalse(source.Contains("FluxFX_VelocityOverLifetime(ctx);"));
+            Assert.IsFalse(source.Contains("_VelocityOverLifetimeStart"));
+            Assert.IsFalse(source.Contains("EvaluateVelocityOverLifetime("));
+
+            StringAssert.Contains("position.xyz += velocity.xyz * _DeltaTime;", source);
         }
 
         static void AssertModule(string source, string entryPoint, string parameter, string parameterType)

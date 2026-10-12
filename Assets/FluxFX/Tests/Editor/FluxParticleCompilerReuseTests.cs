@@ -85,6 +85,51 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(JToken.DeepEquals(first["gpuModuleBindings"], second["gpuModuleBindings"]));
         }
 
+        [Test]
+        public void VelocityOverLifetimeUsesPositionGpuParametersOnly()
+        {
+            AddModule(new FluxParticleVelocityOverLifetimeModule());
+
+            var json = JObject.Parse(_compiler.Compile(_authoring));
+
+            Assert.IsNull(json["velocityOverLifetime"]);
+
+            var position = json["gpuParameters"]["position"];
+            var binding = json["gpuModuleBindings"]["tplab.fluxfx.velocity-over-lifetime"];
+
+            Assert.IsNotNull(position["_VelocityOverLifetimeStart"]);
+            Assert.IsNotNull(position["_VelocityOverLifetimeEnd"]);
+            Assert.IsNotNull(position["_VelocityOverLifetimeOrbital"]);
+            Assert.IsNotNull(position["_VelocityOverLifetimeOffset"]);
+            Assert.IsNotNull(position["_VelocityOverLifetimeRadial"]);
+            Assert.IsNotNull(binding);
+
+            Assert.AreEqual(
+                (int)TpLab.Flux.FX.Udon.FluxParticleKernelTarget.Position,
+                (int)binding["target"]);
+
+            var enabledParameter = (string)binding["enabledParameter"];
+
+            Assert.IsNotNull(position[enabledParameter]);
+        }
+
+        [Test]
+        public void VelocityOverLifetimeProducesEquivalentJson()
+        {
+            AddModule(new FluxParticleVelocityOverLifetimeModule());
+
+            AssertEquivalentJson();
+        }
+
+        [Test]
+        public void VelocityOverLifetimeAndVelocityModulesProduceEquivalentJson()
+        {
+            AddModule(new FluxParticleGravityModule());
+            AddModule(new FluxParticleVelocityOverLifetimeModule());
+
+            AssertEquivalentJson();
+        }
+
         void AssertEquivalentJson()
         {
             var plan = FluxParticleCompilePlan.Create(_authoring);

@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor;
 using TpLab.Flux.FX.Editor.GpuModules;
@@ -323,7 +324,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void LegacyPositionModuleDoesNotBecomeGpuModule()
+        public void VelocityOverLifetimeBecomesPositionGpuModule()
         {
             AddModule(new FluxParticleVelocityOverLifetimeModule());
 
@@ -334,7 +335,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             var position = result.Compilation.GetStage(FluxParticleExecutionStage.PositionUpdate);
 
             Assert.IsNotNull(position);
-            Assert.IsEmpty(position.Modules);
+            Assert.AreEqual(1, position.Modules.Count);
+            Assert.AreEqual("tplab.fluxfx.velocity-over-lifetime", position.Modules[0].ModuleId);
+
+            Assert.IsNotNull(position.Parameters.SingleOrDefault(parameter => parameter.Name == "_VelocityOverLifetimeStart"));
+            Assert.IsNotNull(position.Parameters.SingleOrDefault(parameter => parameter.Name == "_VelocityOverLifetimeEnd"));
+            Assert.IsNotNull(position.Parameters.SingleOrDefault(parameter => parameter.Name == "_VelocityOverLifetimeRadial"));
         }
 
         void AssertFailure(string expectedCode)

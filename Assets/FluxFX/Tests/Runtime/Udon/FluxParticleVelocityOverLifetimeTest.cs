@@ -2,7 +2,6 @@
 using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace TpLab.Flux.FX.Tests.Udon
 {
