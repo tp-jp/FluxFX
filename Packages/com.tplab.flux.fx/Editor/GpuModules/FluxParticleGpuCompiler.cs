@@ -84,6 +84,7 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                 return new FluxParticleGpuCompileResult(null, validation);
             }
 
+            var symbolValidator = new FluxParticleGpuSymbolValidator();
             var stages = new List<FluxParticleGpuStageCompilation>();
 
             foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
@@ -96,7 +97,14 @@ namespace TpLab.Flux.FX.Editor.GpuModules
                     return order != 0 ? order : string.CompareOrdinal(a.ModuleId, b.ModuleId);
                 });
 
+                symbolValidator.Validate(descriptor, modules, validation);
+
                 stages.Add(new FluxParticleGpuStageCompilation(descriptor.Stage, modules));
+            }
+
+            if (validation.HasErrors)
+            {
+                return new FluxParticleGpuCompileResult(null, validation);
             }
 
             return new FluxParticleGpuCompileResult(new FluxParticleGpuCompilation(stages), validation);

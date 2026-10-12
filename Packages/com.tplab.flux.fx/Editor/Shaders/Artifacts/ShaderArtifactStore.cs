@@ -59,11 +59,11 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
 
             if (created)
             {
-                Logger.Log($"Shader created: {path}");
+                Logger.Log($"Shader created: {path}", shader);
             }
             else
             {
-                Logger.Log($"Shader reused: {path}");
+                Logger.Log($"Shader reused: {path}", shader);
             }
 
             return shader;
