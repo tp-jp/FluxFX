@@ -17,6 +17,11 @@ namespace TpLab.Flux.FX.Editor.Build
         public int Count => _results.Count;
 
         /// <summary>
+        /// 登録済みのParticle SystemのBuild結果を取得します。
+        /// </summary>
+        public IEnumerable<FluxParticleBuildResult> Results => _results.Values;
+
+        /// <summary>
         /// Particle SystemのBuild結果を登録します。
         /// </summary>
         /// <param name="authoring">登録対象のParticle SystemのAuthoring。</param>

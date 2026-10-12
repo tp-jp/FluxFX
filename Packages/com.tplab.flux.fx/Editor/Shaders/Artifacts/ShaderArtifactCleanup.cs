@@ -39,7 +39,7 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             @"#\s*include\s*""(?<path>Assets/FluxFX/Generated/Includes/[^""]+)""",
             RegexOptions.Compiled);
 
-        public ShaderArtifactCleanupReport Analyze()
+        public ShaderArtifactCleanupReport Analyze(IEnumerable<string> additionalProtectedPaths = null)
         {
             EnsureScenesSaved();
 
@@ -50,6 +50,14 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             var protectedPaths = CollectProjectDependencies();
 
             ProtectCurrentAuthoring(protectedPaths);
+
+            if (additionalProtectedPaths != null)
+            {
+                foreach (var path in additionalProtectedPaths)
+                {
+                    protectedPaths.Add(path);
+                }
+            }
 
             var protectedShaders = new HashSet<string>(shaders.Where(protectedPaths.Contains), StringComparer.Ordinal);
             var protectedIncludes = new HashSet<string>(includes.Where(protectedPaths.Contains), StringComparer.Ordinal);
@@ -79,21 +87,24 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
             return new ShaderArtifactCleanupReport(shaderCandidates, includeCandidates, protectedShaders.Count, protectedIncludes.Count);
         }
 
-        public int DeleteShaders(IEnumerable<string> selectedPaths)
+        public int DeleteShaders(IEnumerable<string> selectedPaths, IEnumerable<string> protectedPaths = null)
         {
-            return DeleteCandidates(selectedPaths, report => report.ShaderCandidates);
+            return DeleteCandidates(selectedPaths, report => report.ShaderCandidates, protectedPaths);
         }
 
-        public int DeleteIncludes(IEnumerable<string> selectedPaths)
+        public int DeleteIncludes(IEnumerable<string> selectedPaths, IEnumerable<string> protectedPaths = null)
         {
-            return DeleteCandidates(selectedPaths, report => report.IncludeCandidates);
+            return DeleteCandidates(selectedPaths, report => report.IncludeCandidates, protectedPaths);
         }
 
-        int DeleteCandidates(IEnumerable<string> selectedPaths, Func<ShaderArtifactCleanupReport, IReadOnlyList<string>> getCandidates)
+        int DeleteCandidates(
+            IEnumerable<string> selectedPaths,
+            Func<ShaderArtifactCleanupReport, IReadOnlyList<string>> getCandidates,
+            IEnumerable<string> protectedPaths)
         {
             if (selectedPaths == null) throw new ArgumentNullException(nameof(selectedPaths));
 
-            var report = Analyze();
+            var report = Analyze(protectedPaths);
             var allowed = new HashSet<string>(getCandidates(report), StringComparer.Ordinal);
             var paths = selectedPaths.Distinct(StringComparer.Ordinal).ToArray();
 

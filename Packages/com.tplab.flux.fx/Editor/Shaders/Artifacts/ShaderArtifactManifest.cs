@@ -177,7 +177,10 @@ namespace TpLab.Flux.FX.Editor.Shaders.Artifacts
                 changed |= _entries.Remove(path);
             }
 
-            if (changed) Save();
+            if (!changed) return;
+
+            _dirty = true;
+            Save();
         }
 
         static bool HasSameIdentity(Entry a, Entry b)

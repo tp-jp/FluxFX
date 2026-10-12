@@ -100,13 +100,6 @@
       "stage": "PositionUpdate"
     },
     {
-      "path": "Assets/FluxFX/Generated/Shaders/Velocity_439169f0f2ea38993f6e52f36c018746e4697361c3e5505181f61b458e036291.shader",
-      "hash": "e13e1656e3aa36a9cacf2e41b30a88eef1e854cdccf9d34e14dc3f93d6cf4e92",
-      "kind": "shader",
-      "sourcePath": null,
-      "stage": "VelocityUpdate"
-    },
-    {
       "path": "Assets/FluxFX/Generated/Shaders/Velocity_7f7a63ec95652d3be9cdc06534faecaa6fce7e0aa0dd48c568931f1565cbd6aa.shader",
       "hash": "c97ceeecc5fe18158856cafb998c8618210f12458d8500a933f90536341c551a",
       "kind": "shader",
