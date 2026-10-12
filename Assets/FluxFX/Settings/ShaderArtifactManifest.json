@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "path": "Assets/FluxFX/Generated/Includes/FluxCommon_69de307d8807edf68f74190ad801cfd33df48f8a248950adf7372b5fc5f61da9.hlsl",
+      "hash": "69de307d8807edf68f74190ad801cfd33df48f8a248950adf7372b5fc5f61da9",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux/Runtime/Shaders/FluxCommon.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Includes/FluxFXGpuContext_9cd86494503bb0c33e1c5c5e3b6c10338467ca48c3c5d9c2083721e4079a5681.hlsl",
+      "hash": "9cd86494503bb0c33e1c5c5e3b6c10338467ca48c3c5d9c2083721e4079a5681",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXGpuContext.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Includes/FluxFXTransform_d27bee3d6436fb05783fc0cea6e5d66e2b7d9a823b63d28ddd2910c246fe2680.hlsl",
+      "hash": "d27bee3d6436fb05783fc0cea6e5d66e2b7d9a823b63d28ddd2910c246fe2680",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/FluxFXTransform.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Includes/Gravity_cf098aa79bed6ed46a3f681bfe98ff6d2d455140b73496ec86145e0fd75388ee.hlsl",
+      "hash": "cf098aa79bed6ed46a3f681bfe98ff6d2d455140b73496ec86145e0fd75388ee",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/Gravity.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Includes/ParticleCommon_1d45e4b0390a157830af333581d5b6c0c0fb108f137bfb1612288ea059e2f55a.hlsl",
+      "hash": "1d45e4b0390a157830af333581d5b6c0c0fb108f137bfb1612288ea059e2f55a",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Includes/VelocityOverLifetime_21f8fe3b80ff5555a1425d23a0f63b3be885b2be25f3af9140bf7b16d7922f75.hlsl",
+      "hash": "21f8fe3b80ff5555a1425d23a0f63b3be885b2be25f3af9140bf7b16d7922f75",
+      "kind": "include",
+      "sourcePath": "Packages/com.tplab.flux.fx/Runtime/Shaders/Modules/VelocityOverLifetime.hlsl",
+      "stage": null
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Shaders/PositionUpdate_e96165fc61cafb070dbac9a408a3adf31166c4e9e9666396ed8eeed0d6ee377f.shader",
+      "hash": "177203698db448ff983e5d9061187703b46f8183e970276430e4ababbb028e6e",
+      "kind": "shader",
+      "sourcePath": null,
+      "stage": "PositionUpdate"
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Shaders/Velocity_439169f0f2ea38993f6e52f36c018746e4697361c3e5505181f61b458e036291.shader",
+      "hash": "e13e1656e3aa36a9cacf2e41b30a88eef1e854cdccf9d34e14dc3f93d6cf4e92",
+      "kind": "shader",
+      "sourcePath": null,
+      "stage": "VelocityUpdate"
+    },
+    {
+      "path": "Assets/FluxFX/Generated/Shaders/Velocity_7f7a63ec95652d3be9cdc06534faecaa6fce7e0aa0dd48c568931f1565cbd6aa.shader",
+      "hash": "c97ceeecc5fe18158856cafb998c8618210f12458d8500a933f90536341c551a",
+      "kind": "shader",
+      "sourcePath": null,
+      "stage": "VelocityUpdate"
+    }
+  ]
+}
