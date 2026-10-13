@@ -21,8 +21,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// Module設定を読み取り、Compilationに必要な定義を登録します。
         /// </summary>
         /// <param name="module">登録対象のModule設定。</param>
-        /// <param name="builder">各種定義の登録先。</param>
-        void Build(FluxParticleModule module, FluxParticleDefinitionBuilder builder);
+        /// <param name="context">論理定義とParameter初期値の登録先。</param>
+        void Contribute(FluxParticleModule module, FluxParticleProgramContribution context);
     }
 
     /// <summary>
