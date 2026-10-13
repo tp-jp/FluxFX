@@ -1,0 +1,83 @@
+Shader "Hidden/FluxFX/Program/Billboard"
+{
+    Properties
+    {
+        _MainTex ("Texture", 2D) = "white" {}
+        [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
+        [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
+        [HideInInspector] _ZWrite ("ZWrite", Float) = 1
+    }
+    SubShader
+    {
+        Tags { "RenderType" = "Transparent" }
+        Cull Off
+        Blend [_SrcBlend] [_DstBlend]
+        ZWrite [_ZWrite]
+        Pass
+        {
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #include "UnityCG.cginc"
+
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            float4 _FluxStateSize;
+
+            // Render Operations run in the vertex stage, which requires explicit texture LOD.
+            #define tex2D(texture, uv) tex2Dlod(texture, float4(uv, 0.0, 0.0))
+            {{RenderCode}}
+            #undef tex2D
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+                float2 particle : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct v2f
+            {
+                float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
+                float alive : TEXCOORD1;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            v2f vert(appdata input)
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                v2f output;
+                UNITY_INITIALIZE_OUTPUT(v2f, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                float index = input.particle.x;
+                float2 stateUV = (float2(fmod(index, _FluxStateSize.x), floor(index / _FluxStateSize.x)) + 0.5) / _FluxStateSize.xy;
+                bool alive;
+                FluxRenderContext render = FluxFX_EvaluateRender(stateUV, alive);
+                float3 position = {{Position}};
+                float3 center = mul(unity_ObjectToWorld, float4(position, 1.0)).xyz;
+                float3 right = UNITY_MATRIX_I_V._m00_m10_m20;
+                float3 up = UNITY_MATRIX_I_V._m01_m11_m21;
+                float3 vertex = center + (right * input.vertex.x + up * input.vertex.y) * {{Size}};
+                output.vertex = UnityWorldToClipPos(vertex);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                output.color = {{Color}};
+                output.alive = alive && index < _FluxStateSize.z ? 1.0 : 0.0;
+                return output;
+            }
+
+            float4 frag(v2f input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                clip(input.alive - 0.5);
+                return tex2D(_MainTex, input.uv) * input.color;
+            }
+            ENDHLSL
+        }
+    }
+    Fallback Off
+}

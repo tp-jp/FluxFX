@@ -52,6 +52,7 @@ namespace TpLab.Flux.FX.Udon
         Texture2D rotationOverLifetimeLut;
 
         Material _material;
+        Mesh _programMesh;
 
         float _colorOverLifetimeMode;
         float _sizeOverLifetimeMode;
@@ -70,6 +71,24 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
 
         FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
+
+        /// <summary>
+        /// 生成済みBillboard Materialと既存のMesh構築処理を接続します。
+        /// Materialの所有権はProgram Runtimeが保持します。
+        /// </summary>
+        /// <param name="capacity">Particle数。</param>
+        /// <param name="material">Instance専用の描画Material。</param>
+        internal void InitializeProgram(int capacity, Material material)
+        {
+            _programMesh = CreateParticleMesh(capacity);
+            meshFilter.sharedMesh = _programMesh;
+            meshRenderer.sharedMaterial = material;
+        }
+
+        void OnDestroy()
+        {
+            if (_programMesh != null) Destroy(_programMesh);
+        }
 
         internal void Initialize(int capacity)
         {

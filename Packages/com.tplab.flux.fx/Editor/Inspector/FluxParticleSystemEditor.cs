@@ -123,7 +123,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             if (authoringChanged)
             {
-                _preview?.OnAuthoringChanged();
+                if (_authoringObject.FindProperty("useProgramBackend").boolValue)
+                {
+                    _preview?.Stop();
+                }
+                else
+                {
+                    _preview?.OnAuthoringChanged();
+                }
             }
         }
 
@@ -190,6 +197,15 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawPreview()
         {
+            if (_authoringObject.FindProperty("useProgramBackend").boolValue)
+            {
+                if (_preview != null && _preview.IsPlaying)
+                {
+                    _preview.Stop();
+                }
+                EditorGUILayout.HelpBox("Program Backend: use Play Mode to verify the generated runtime. Inspector Preview is not connected yet.", MessageType.Info);
+                return;
+            }
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
                 EditorGUILayout.BeginHorizontal();

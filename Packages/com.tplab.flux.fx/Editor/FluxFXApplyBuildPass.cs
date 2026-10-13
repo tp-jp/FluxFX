@@ -35,7 +35,7 @@ namespace TpLab.Flux.FX.Editor
             foreach (var authoring in authorings)
             {
                 var particleSystem = authoring.GetComponent<FluxParticleSystem>();
-                if (particleSystem == null) continue;
+                if (particleSystem == null || authoring.UseProgramBackend) continue;
 
                 var result = session.GetRequired(authoring);
                 var simulation = authoring.GetComponentInChildren<FluxParticleSimulation>(true);

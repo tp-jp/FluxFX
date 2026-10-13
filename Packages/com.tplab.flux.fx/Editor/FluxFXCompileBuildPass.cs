@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.GpuModules;
@@ -39,6 +40,14 @@ namespace TpLab.Flux.FX.Editor
             {
                 var particleSystem = authoring.GetComponent<FluxParticleSystem>();
                 if (particleSystem == null) continue;
+                if (authoring.UseProgramBackend)
+                {
+                    FluxParticleProgramBuild.Apply(authoring, particleSystem);
+                    assignedCount++;
+                    continue;
+                }
+                FluxParticleProgramBuild.Disable(authoring);
+                particleSystem.SetProgramVariable("particleExecutor", null);
 
                 var simulation = authoring.GetComponentInChildren<FluxParticleSimulation>(true);
 

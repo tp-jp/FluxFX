@@ -13,6 +13,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawSectionHeader(L10n.Tr("MAIN"));
 
             EditorGUILayout.Space(2);
+            EditorGUILayout.PropertyField(_authoringObject.FindProperty("useProgramBackend"), new GUIContent("Program Backend (Phase 3)"));
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("particleCount"), new GUIContent(L10n.Tr("Particle Count")));
 

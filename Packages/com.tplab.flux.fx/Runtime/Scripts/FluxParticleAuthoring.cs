@@ -12,6 +12,9 @@ namespace TpLab.Flux.FX.Scripts
     public class FluxParticleAuthoring : MonoBehaviour
     {
         [SerializeField]
+        bool useProgramBackend;
+
+        [SerializeField]
         FluxParticleSimulationSpace simulationSpace;
 
         [SerializeField]
@@ -34,6 +37,11 @@ namespace TpLab.Flux.FX.Scripts
 
         [SerializeReference]
         List<FluxParticleModule> modules = new List<FluxParticleModule>();
+
+        /// <summary>
+        /// 新Compilerの基本Runtime経路を使用します。未移行の設定はBuild時に検証します。
+        /// </summary>
+        public bool UseProgramBackend => useProgramBackend;
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public PlaybackSettings Playback => playback;

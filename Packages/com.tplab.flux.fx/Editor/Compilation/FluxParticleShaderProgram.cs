@@ -32,8 +32,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             return text.ToString();
         }
 
-        /// <summary>Operation IDの単語をPascalCaseへ変換したContext型名です。
-        /// 区切りや大文字小文字による型名の衝突はShader生成時に検出します。</summary>
+        /// <summary>
+        /// Operation IDの単語をPascalCaseへ変換したContext型名です。
+        /// 区切りや大文字小文字による型名の衝突はShader生成時に検出します。
+        /// </summary>
         /// <param name="id">Operation ID。</param>
         /// <returns>生成するstruct名。</returns>
         public static string Context(string id)

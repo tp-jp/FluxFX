@@ -35,6 +35,11 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string compiledParameters;
 
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleExecutor particleExecutor;
+
+        bool _programReady;
         DataDictionary _gpuModuleBindings;
         bool _isPlaying;
         object _emission;
@@ -54,6 +59,11 @@ namespace TpLab.Flux.FX.Udon
         object _colorOverLifetime;
         object _sizeOverLifetime;
         object _rotationOverLifetime;
+
+        /// <summary>
+        /// 新Backendの論理Parameter APIです。旧Backendを使用する場合はnullです。
+        /// </summary>
+        public FluxParticleExecutor Executor => particleExecutor;
 
         [PublicAPI]
         public int ParticleCount => particleCount;
@@ -131,24 +141,44 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public void Clear()
         {
+            if (particleExecutor != null)
+            {
+                particleExecutor.Clear();
+                return;
+            }
             particleState.Clear();
         }
 
         [PublicAPI]
         public void SetFloat(FluxParticleKernelTarget target, string name, float value)
         {
+            if (particleExecutor != null)
+            {
+                Logger.LogError("Use Executor.SetFloat with a logical Parameter ID for Program Backend.");
+                return;
+            }
             particleSimulation.SetFloat(target, name, value);
         }
 
         [PublicAPI]
         public void SetVector(FluxParticleKernelTarget target, string name, Vector4 value)
         {
+            if (particleExecutor != null)
+            {
+                Logger.LogError("Use Executor.SetVector with a logical Parameter ID for Program Backend.");
+                return;
+            }
             particleSimulation.SetVector(target, name, value);
         }
 
         [PublicAPI]
         public bool SetModuleEnabled(string moduleId, bool enabled)
         {
+            if (particleExecutor != null)
+            {
+                Logger.LogError("Use Executor with a logical Parameter ID for Program Backend.");
+                return false;
+            }
             if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
             {
                 Logger.LogError($"GPU Module is not registered: {moduleId}");
@@ -161,6 +191,11 @@ namespace TpLab.Flux.FX.Udon
         [PublicAPI]
         public bool GetModuleEnabled(string moduleId)
         {
+            if (particleExecutor != null)
+            {
+                Logger.LogError("Use Executor with a logical Parameter ID for Program Backend.");
+                return false;
+            }
             if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
             {
                 Logger.LogError($"GPU Module is not registered: {moduleId}");
@@ -199,6 +234,16 @@ namespace TpLab.Flux.FX.Udon
 
         void Start()
         {
+            if (particleExecutor != null)
+            {
+                if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var compiled)) return;
+                InitializeEmitter(compiled.DataDictionary);
+                _programReady = particleExecutor.Initialize(particleCount);
+                if (!_programReady) return;
+                particleRenderer.InitializeProgram(particleCount, particleExecutor.RenderMaterial);
+                _isPlaying = playOnAwake;
+                return;
+            }
             particleState.Initialize(particleCount);
 
             InitializeCompiledParameters();
@@ -212,6 +257,13 @@ namespace TpLab.Flux.FX.Udon
         void Update()
         {
             var deltaTime = Time.deltaTime;
+            if (particleExecutor != null)
+            {
+                if (!_programReady) return;
+                particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
+                particleExecutor.Step(deltaTime, particleEmitter.SpawnStart, particleEmitter.SpawnCount, particleEmitter.SpawnSeedStart);
+                return;
+            }
 
             particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
             particleSimulation.SetSystemTransform(transform.position, transform.rotation, transform.lossyScale);
