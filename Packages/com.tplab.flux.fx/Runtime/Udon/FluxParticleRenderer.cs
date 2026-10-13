@@ -1,21 +1,17 @@
-using TpLab.Flux.FX.Udon.Parameters;
-using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.Rendering;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
+    /// <summary>
+    /// コンパイル済みParticle ProgramのBillboard描画用Meshを生成して設定します。
+    /// 描画MaterialはFluxParticleExecutorが管理します。
+    /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleRenderer : UdonSharpBehaviour
     {
         const int MaxUInt16VertexCount = 65535;
-
-        const float BlendZero = 0;
-        const float BlendOne = 1;
-        const float BlendSrcAlpha = 5;
-        const float BlendOneMinusSrcAlpha = 10;
 
         [SerializeField]
         MeshFilter meshFilter;
@@ -23,61 +19,13 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         MeshRenderer meshRenderer;
 
-        [HideInInspector]
-        [SerializeField]
-        FluxParticleRenderMode renderMode;
-
-        [HideInInspector]
-        [SerializeField]
-        Mesh sourceMesh;
-
-        [HideInInspector]
-        [SerializeField]
-        Material particleMaterial;
-
-        [HideInInspector]
-        [SerializeField]
-        FluxParticleBlendMode blendMode;
-
-        [HideInInspector]
-        [SerializeField]
-        Texture2D colorOverLifetimeLut;
-
-        [HideInInspector]
-        [SerializeField]
-        Texture2D sizeOverLifetimeLut;
-
-        [HideInInspector]
-        [SerializeField]
-        Texture2D rotationOverLifetimeLut;
-
-        Material _material;
         Mesh _programMesh;
 
-        float _colorOverLifetimeMode;
-        float _sizeOverLifetimeMode;
-        float _rotationOverLifetimeMode;
-        float _textureSheetAnimationEnabled;
-        float _textureSheetTilesX = 1;
-        float _textureSheetTilesY = 1;
-        float _textureSheetCycles = 1;
-        float _simulationSpace;
-        object _colorOverLifetime;
-        object _sizeOverLifetime;
-        object _rotationOverLifetime;
-
-        FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
-
-        FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
-
-        FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
-
         /// <summary>
-        /// 生成済みBillboard Materialと既存のMesh構築処理を接続します。
-        /// Materialの所有権はProgram Runtimeが保持します。
+        /// Billboard用Meshを作成し、コンパイル済みの描画Materialを設定します。
         /// </summary>
         /// <param name="capacity">Particle数。</param>
-        /// <param name="material">Instance専用の描画Material。</param>
+        /// <param name="material">このParticle System専用の描画Material。</param>
         internal void InitializeProgram(int capacity, Material material)
         {
             _programMesh = CreateParticleMesh(capacity);
@@ -88,180 +36,6 @@ namespace TpLab.Flux.FX.Udon
         void OnDestroy()
         {
             if (_programMesh != null) Destroy(_programMesh);
-        }
-
-        internal void Initialize(int capacity)
-        {
-            if (renderMode == FluxParticleRenderMode.Mesh && sourceMesh != null)
-            {
-                meshFilter.mesh = CreateParticleMesh(sourceMesh, capacity);
-            }
-            else
-            {
-                meshFilter.mesh = CreateParticleMesh(capacity);
-            }
-
-            if (particleMaterial != null)
-            {
-                meshRenderer.sharedMaterial = particleMaterial;
-            }
-
-            _material = meshRenderer.material;
-
-            ApplyRenderParameters();
-        }
-
-        internal void SetSimulationSpace(int simulationSpace)
-        {
-            _simulationSpace = simulationSpace;
-        }
-
-        internal void SetRenderParameters(
-            DataDictionary parameters,
-            FluxParticleColorOverLifetimeParameters colorOverLifetime,
-            FluxParticleSizeOverLifetimeParameters sizeOverLifetime,
-            FluxParticleRotationOverLifetimeParameters rotationOverLifetime)
-        {
-            _colorOverLifetime = colorOverLifetime;
-            _sizeOverLifetime = sizeOverLifetime;
-            _rotationOverLifetime = rotationOverLifetime;
-
-            if (parameters.TryGetValue("colorOverLifetime", out var colorToken))
-            {
-                var color = colorToken.DataDictionary;
-
-                _colorOverLifetimeMode = 0;
-
-                if (color.TryGetValue("mode", out var modeToken))
-                {
-                    _colorOverLifetimeMode = (float)modeToken.Double;
-                }
-            }
-            else
-            {
-                _colorOverLifetimeMode = 0;
-            }
-
-            if (parameters.TryGetValue("sizeOverLifetime", out var sizeToken))
-            {
-                var size = sizeToken.DataDictionary;
-
-                _sizeOverLifetimeMode = 0;
-
-                if (size.TryGetValue("mode", out var modeToken))
-                {
-                    _sizeOverLifetimeMode = (float)modeToken.Double;
-                }
-            }
-            else
-            {
-                _sizeOverLifetimeMode = 0;
-            }
-
-            if (parameters.TryGetValue("rotationOverLifetime", out var rotationToken))
-            {
-                var rotation = rotationToken.DataDictionary;
-
-                _rotationOverLifetimeMode = 0;
-
-                if (rotation.TryGetValue("mode", out var modeToken))
-                {
-                    _rotationOverLifetimeMode = (float)modeToken.Double;
-                }
-            }
-            else
-            {
-                _rotationOverLifetimeMode = 0;
-            }
-
-            if (parameters.TryGetValue("textureSheetAnimation", out var textureSheetToken))
-            {
-                var textureSheet = textureSheetToken.DataDictionary;
-
-                _textureSheetAnimationEnabled = 1;
-                _textureSheetTilesX = (float)textureSheet["tilesX"].Double;
-                _textureSheetTilesY = (float)textureSheet["tilesY"].Double;
-                _textureSheetCycles = (float)textureSheet["cycles"].Double;
-            }
-            else
-            {
-                _textureSheetAnimationEnabled = 0;
-                _textureSheetTilesX = 1;
-                _textureSheetTilesY = 1;
-                _textureSheetCycles = 1;
-            }
-        }
-
-        internal void SetState(FluxParticleState state)
-        {
-            SetBuffer("_PositionTex", state.CurrentPosition);
-            SetBuffer("_VelocityTex", state.CurrentVelocity);
-            SetBuffer("_VisualTex", state.CurrentVisual);
-            SetBuffer("_RotationTex", state.CurrentRotation);
-
-            var texture = state.CurrentPosition.Texture;
-            var endColor = ColorOverLifetime.GetEndColor();
-
-            _material.SetFloat("_FluxSourceCount", state.CurrentPosition.Count);
-            _material.SetFloat("_FluxSourceWidth", texture.width);
-            _material.SetFloat("_FluxSourceHeight", texture.height);
-            _material.SetVector("_EndColor", endColor);
-            _material.SetFloat("_EndSize", SizeOverLifetime.GetEndSize());
-            _material.SetVector("_EndRotation", RotationOverLifetime.GetEndRotation());
-            _material.SetFloat("_ColorOverLifetimeEnabled", ColorOverLifetime.GetEnabled() ? 1.0f : 0.0f);
-            _material.SetFloat("_SizeOverLifetimeEnabled", SizeOverLifetime.GetEnabled() ? 1.0f : 0.0f);
-            _material.SetFloat("_RotationOverLifetimeEnabled", RotationOverLifetime.GetEnabled() ? 1.0f : 0.0f);
-        }
-
-        void ApplyRenderParameters()
-        {
-            var mode = (int)renderMode;
-
-            _material.SetFloat("_ColorOverLifetimeMode", _colorOverLifetimeMode);
-            _material.SetFloat("_SizeOverLifetimeMode", _sizeOverLifetimeMode);
-            _material.SetFloat("_RotationOverLifetimeMode", _rotationOverLifetimeMode);
-            _material.SetFloat("_TextureSheetAnimationEnabled", _textureSheetAnimationEnabled);
-            _material.SetFloat("_TextureSheetTilesX", _textureSheetTilesX);
-            _material.SetFloat("_TextureSheetTilesY", _textureSheetTilesY);
-            _material.SetFloat("_TextureSheetCycles", _textureSheetCycles);
-            _material.SetFloat("_SimulationSpace", _simulationSpace);
-            _material.SetFloat("_RenderMode", mode);
-            _material.SetTexture("_ColorOverLifetimeLut", colorOverLifetimeLut);
-            _material.SetTexture("_SizeOverLifetimeLut", sizeOverLifetimeLut);
-            _material.SetTexture("_RotationOverLifetimeLut", rotationOverLifetimeLut);
-
-            ApplyBlendMode();
-        }
-
-        void ApplyBlendMode()
-        {
-            if (blendMode == FluxParticleBlendMode.Alpha)
-            {
-                _material.SetFloat("_SrcBlend", BlendSrcAlpha);
-                _material.SetFloat("_DstBlend", BlendOneMinusSrcAlpha);
-                _material.SetFloat("_ZWrite", 0);
-                _material.renderQueue = (int)RenderQueue.Transparent;
-                return;
-            }
-
-            if (blendMode == FluxParticleBlendMode.Additive)
-            {
-                _material.SetFloat("_SrcBlend", BlendSrcAlpha);
-                _material.SetFloat("_DstBlend", BlendOne);
-                _material.SetFloat("_ZWrite", 0);
-                _material.renderQueue = (int)RenderQueue.Transparent;
-                return;
-            }
-
-            _material.SetFloat("_SrcBlend", BlendOne);
-            _material.SetFloat("_DstBlend", BlendZero);
-            _material.SetFloat("_ZWrite", 1);
-            _material.renderQueue = (int)RenderQueue.Geometry;
-        }
-
-        void SetBuffer(string name, FluxBuffer buffer)
-        {
-            _material.SetTexture(name, buffer.Texture);
         }
 
         Mesh CreateParticleMesh(int capacity)
