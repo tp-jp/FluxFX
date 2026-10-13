@@ -379,8 +379,17 @@ namespace TpLab.Flux.FX.Tests.Editor
                 AssertValue(session, generated, "custom.mode", 0, new Vector4(7, 0, 0, 0));
                 Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("custom.mode", out var binding));
                 var previous = session.CurrentPages[binding.PageId];
+                var pageWrittenWithoutSpawn = generated.Passes.Any(pass =>
+                    pass.Plan.Condition != FluxParticlePassCondition.HasSpawn && pass.Plan.OutputPageId == binding.PageId);
                 session.Step();
-                Assert.AreSame(previous, session.CurrentPages[binding.PageId]);
+                if (pageWrittenWithoutSpawn)
+                {
+                    Assert.AreNotSame(previous, session.CurrentPages[binding.PageId]);
+                }
+                else
+                {
+                    Assert.AreSame(previous, session.CurrentPages[binding.PageId]);
+                }
                 AssertValue(session, generated, "custom.mode", 0, new Vector4(7, 0, 0, 0));
                 session.Step(Texture(Color.clear, new Color(1, 0, 0, 0)));
                 AssertValue(session, generated, "custom.mode", 0, new Vector4(7, 0, 0, 0));
