@@ -164,8 +164,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
             // RenderSource only declares Pages that its Operations read. Position may need a separate sampler.
             var declaration = "sampler2D " + sampler + ";";
             var extra = Program.RenderSource.Contains(declaration) ? "" : declaration + "\n";
+            var pageProperties = string.Join("\n", Program.Program.StateLayout.Pages.Select(page =>
+                $"[HideInInspector] {FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)} (\"State Page {page.Id}\", 2D) = \"black\" {{}}"));
             return FluxParticleProgramShaderGenerator.ExpandTemplate("Billboard", new Dictionary<string, string>
             {
+                ["PageProperties"] = pageProperties,
                 ["RenderCode"] = extra + Program.RenderSource,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),

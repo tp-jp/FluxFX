@@ -108,6 +108,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             var renderer = (Material)runtime.GetProgramVariable("renderMaterial");
             Assert.IsFalse(ShaderUtil.ShaderHasError(renderer.shader));
             Assert.IsTrue(renderer.shader.isSupported);
+            foreach (var page in compiled.Program.Program.StateLayout.Pages)
+            {
+                var property = FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated);
+                Assert.IsTrue(renderer.HasProperty(property), $"Render Shader is missing Page property: {property}");
+            }
         }
 
         [Test]
@@ -191,11 +196,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             runtime.SetProgramVariable("spawnOnly", conditions);
             Assert.IsTrue(runtime.Initialize(4));
             var page = ((int[])runtime.GetProgramVariable("outputPages"))[0];
+            var property = ((string[])runtime.GetProgramVariable("renderPageProperties"))[page];
             var before = runtime.GetCurrentPage(page);
             runtime.Step(0.1f, 0, 0, 0);
             Assert.AreSame(before, runtime.GetCurrentPage(page));
+            Assert.AreSame(before, runtime.RenderMaterial.GetTexture(property));
             runtime.Step(0.1f, 0, 1, 0);
             Assert.AreNotSame(before, runtime.GetCurrentPage(page));
+            Assert.AreSame(runtime.GetCurrentPage(page), runtime.RenderMaterial.GetTexture(property));
         }
 
         [Test]
@@ -242,6 +250,98 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(0, ReadTexture(mask.Texture, 499).r, 0.0001f);
             Assert.AreEqual(1048500, ReadTexture(keys.Texture, 500).r, 0.0001f);
             Assert.AreEqual(23, ReadTexture(keys.Texture, 599).r, 0.0001f);
+        }
+
+        [Test]
+        public void RenderMaterialTracksPageCommitsAndClear()
+        {
+            RequireGraphics();
+            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var runtime = CreateRuntime(compiled, 5);
+            Assert.IsTrue(runtime.Initialize(5));
+
+            var material = runtime.RenderMaterial;
+            var properties = (string[])runtime.GetProgramVariable("renderPageProperties");
+            var initial = new RenderTexture[properties.Length];
+            var stateSize = material.GetVector("_FluxStateSize");
+            Assert.AreEqual(3, stateSize.x);
+            Assert.AreEqual(3, stateSize.y);
+            Assert.AreEqual(5, stateSize.z);
+
+            for (var page = 0; page < properties.Length; page++)
+            {
+                initial[page] = runtime.GetCurrentPage(page);
+                Assert.AreSame(initial[page], material.GetTexture(properties[page]));
+            }
+
+            runtime.Step(0.25f, 4, 2, 10);
+            for (var page = 0; page < properties.Length; page++)
+            {
+                Assert.AreNotSame(initial[page], runtime.GetCurrentPage(page));
+                Assert.AreSame(runtime.GetCurrentPage(page), material.GetTexture(properties[page]));
+            }
+
+            runtime.Clear();
+            for (var page = 0; page < properties.Length; page++)
+            {
+                Assert.AreSame(runtime.GetCurrentPage(page), material.GetTexture(properties[page]));
+            }
+            Assert.AreEqual(-1, ReadValue(runtime, compiled, "particle.age", 4).x, 0.0001f);
+        }
+
+        [Test]
+        public void SpawnInputsDoNotActivateUnusedTexturePixels()
+        {
+            RequireGraphics();
+            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var runtime = CreateRuntime(compiled, 5);
+            Assert.IsTrue(runtime.Initialize(5));
+
+            runtime.Step(0.1f, 4, 3, 1048575);
+            var mask = (FluxBuffer)runtime.GetProgramVariable("spawnMaskBuffer");
+            var keys = (FluxBuffer)runtime.GetProgramVariable("spawnKeyBuffer");
+            Assert.AreEqual(9, mask.Capacity);
+            for (var slot = 0; slot < mask.Capacity; slot++)
+            {
+                var expected = slot == 0 || slot == 1 || slot == 4 ? 1f : 0f;
+                Assert.AreEqual(expected, ReadTexture(mask.Texture, slot).r, 0.0001f, $"SpawnMask slot {slot}");
+            }
+            Assert.AreEqual(1048575, ReadTexture(keys.Texture, 4).r, 0.0001f);
+            Assert.AreEqual(0, ReadTexture(keys.Texture, 0).r, 0.0001f);
+            Assert.AreEqual(1, ReadTexture(keys.Texture, 1).r, 0.0001f);
+            Assert.AreEqual(-1, ReadValue(runtime, compiled, "particle.age", 3).x, 0.0001f);
+        }
+
+        [Test]
+        public void RenderParametersAndTexturesRemainInstanceLocal()
+        {
+            RequireGraphics();
+            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var first = CreateRuntime(compiled);
+            var second = CreateRuntime(compiled);
+            Assert.IsTrue(first.Initialize(4));
+            Assert.IsTrue(second.Initialize(4));
+
+            var parameterIds = (string[])first.GetProgramVariable("parameterIds");
+            var parameterProperties = (string[])first.GetProgramVariable("parameterProperties");
+            var index = Array.IndexOf(parameterIds, "color.start");
+            Assert.GreaterOrEqual(index, 0);
+            var property = parameterProperties[index];
+            var secondColor = second.RenderMaterial.GetVector(property);
+            var changed = new Vector4(0.2f, 0.4f, 0.6f, 0.8f);
+            Assert.IsTrue(first.SetVector("color.start", changed));
+            Assert.AreEqual(changed, first.RenderMaterial.GetVector(property));
+            Assert.AreEqual(secondColor, second.RenderMaterial.GetVector(property));
+
+            first.Step(0.2f, 0, 1, 1);
+            var firstPages = (string[])first.GetProgramVariable("renderPageProperties");
+            var secondPages = (string[])second.GetProgramVariable("renderPageProperties");
+            for (var page = 0; page < firstPages.Length; page++)
+            {
+                Assert.AreSame(first.GetCurrentPage(page), first.RenderMaterial.GetTexture(firstPages[page]));
+                Assert.AreSame(second.GetCurrentPage(page), second.RenderMaterial.GetTexture(secondPages[page]));
+                Assert.AreNotSame(first.RenderMaterial.GetTexture(firstPages[page]), second.RenderMaterial.GetTexture(secondPages[page]));
+            }
         }
 
         FluxParticleExecutor CreateRuntime(FluxParticleAuthoringProgram compiled, int capacity = 4)
