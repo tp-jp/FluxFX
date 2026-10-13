@@ -357,9 +357,12 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         FluxParticleExecutor CreateRuntime(FluxParticleAuthoringProgram compiled, int capacity = 4)
         {
-            var go = new GameObject("Runtime");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            Assert.IsNotNull(prefab);
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             go.transform.SetParent(root.transform, false);
-            var runtime = go.AddUdonSharpComponent<FluxParticleExecutor>();
+            var runtime = go.GetComponentInChildren<FluxParticleExecutor>(true);
+            Assert.IsNotNull(runtime, "Run Tools/FluxFX/Setup Program Backend Prefabs before executing these tests.");
             runtimes.Add(runtime);
             FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, capacity);
             foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))

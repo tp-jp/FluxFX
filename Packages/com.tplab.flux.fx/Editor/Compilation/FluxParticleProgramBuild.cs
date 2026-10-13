@@ -21,6 +21,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public static class FluxParticleProgramBuild
     {
         const string Root = "Assets/FluxFX/Generated/Programs";
+        const string PagePrefabPath = "Assets/FluxFX/Generated/Prefabs/FluxParticlePage.prefab";
+        const string StepPrefabPath = "Assets/FluxFX/Generated/Prefabs/FluxParticleStep.prefab";
 
         /// <summary>
         /// SceneFlowのBuild/Play前処理から新Backendを構成します。
@@ -40,10 +42,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 throw new InvalidOperationException("Program Backend requires the existing Renderer and Emitter.");
             }
             var compiled = new FluxParticleAuthoringProgram(authoring);
-            var runtime = authoring.gameObject.GetUdonSharpComponent<FluxParticleExecutor>();
+            var runtime = authoring.GetComponentInChildren<FluxParticleExecutor>(true);
             if (runtime == null)
             {
-                runtime = authoring.gameObject.AddUdonSharpComponent<FluxParticleExecutor>();
+                throw new InvalidOperationException($"FluxParticleExecutor is missing in prefab '{authoring.name}'. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
             Configure(runtime, compiled, authoring, Root, system.ParticleCount);
             system.SetProgramVariable("particleExecutor", runtime);
@@ -99,23 +101,43 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
             }
             var program = compiled.Program;
+            var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
+            var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
+            if (pagePrefab == null || stepPrefab == null)
+            {
+                throw new InvalidOperationException("Program Backend template Prefabs are missing. Run Tools/FluxFX/Setup Program Backend Prefabs.");
+            }
+
             var generated = CreateGeneratedRoot(runtime);
+            var stepRoot = CreateGroup(generated, "Steps");
+            var pageRoot = CreateGroup(generated, "Pages");
             var steps = program.Passes.Select((pass, index) =>
-                CreateKernel(generated, $"Step {index}", SaveShader(pass.Source, outputRoot))).ToArray();
-            var clears = program.ClearSources.Select((source, index) =>
-                CreateKernel(generated, $"Clear {index}", SaveShader(source, outputRoot))).ToArray();
+                CreateStep(stepRoot, stepPrefab, index, SaveShader(pass.Source, outputRoot))).ToArray();
+            var pageInstances = program.Program.StateLayout.Pages.Select((page, index) =>
+                CreatePage(pageRoot, pagePrefab, index, SaveShader(program.ClearSources[index], outputRoot), bufferCapacity)).ToArray();
+            var clears = pageInstances.Select(page => page.Clear).ToArray();
+            var buffersA = pageInstances.Select(page => page.A).ToArray();
+            var buffersB = pageInstances.Select(page => page.B).ToArray();
+
+            var spawn = runtime.transform.Find("Spawn");
+            if (spawn == null)
+            {
+                throw new InvalidOperationException("Program Backend Spawn GameObject is missing from the fixed Prefab.");
+            }
+            var maskKernel = RequireComponent<FluxKernel>(spawn, "MaskKernel");
+            var keyKernel = RequireComponent<FluxKernel>(spawn, "KeyKernel");
+            var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
+            var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
             var maskShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader");
             var keyShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader");
             if (maskShader == null || keyShader == null || ShaderUtil.ShaderHasError(maskShader) || ShaderUtil.ShaderHasError(keyShader))
             {
                 throw new InvalidOperationException("SpawnInput generation Shaders were not imported correctly.");
             }
-            var maskKernel = CreateKernel(generated, "Spawn Mask", maskShader);
-            var keyKernel = CreateKernel(generated, "Spawn Key", keyShader);
-            var buffersA = program.Program.StateLayout.Pages.Select(page => CreateBuffer(generated, $"Page {page.Id} A", bufferCapacity)).ToArray();
-            var buffersB = program.Program.StateLayout.Pages.Select(page => CreateBuffer(generated, $"Page {page.Id} B", bufferCapacity)).ToArray();
-            var maskBuffer = CreateBuffer(generated, "Spawn Mask Buffer", bufferCapacity);
-            var keyBuffer = CreateBuffer(generated, "Spawn Key Buffer", bufferCapacity);
+            maskKernel.SetProgramVariable("shader", maskShader);
+            keyKernel.SetProgramVariable("shader", keyShader);
+            maskBuffer.SetProgramVariable("initialCount", bufferCapacity);
+            keyBuffer.SetProgramVariable("initialCount", bufferCapacity);
             var renderCode = compiled.GenerateRenderer();
             var shader = SaveShader(renderCode, outputRoot);
             var renderSource = authoring.Render.Material;
@@ -200,26 +222,47 @@ namespace TpLab.Flux.FX.Editor.Compilation
             Object.DestroyImmediate(generated.gameObject);
         }
 
-        static FluxKernel CreateKernel(Transform parent, string name, Shader shader)
+        static Transform CreateGroup(Transform parent, string name)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            var kernel = go.AddUdonSharpComponent<FluxKernel>();
+            var group = new GameObject(name).transform;
+            group.SetParent(parent, false);
+            return group;
+        }
+
+        static T RequireComponent<T>(Transform root, string name) where T : Component
+        {
+            var child = root.Find(name);
+            var component = child == null ? null : child.GetComponent<T>();
+            if (component == null)
+            {
+                throw new InvalidOperationException($"Prefab component is missing: {root.name}/{name} ({typeof(T).Name}).");
+            }
+            return component;
+        }
+
+        static FluxKernel CreateStep(Transform parent, GameObject prefab, int index, Shader shader)
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent.gameObject.scene);
+            instance.name = $"Step {index}";
+            instance.transform.SetParent(parent, false);
+            var kernel = instance.GetComponent<FluxKernel>();
+            if (kernel == null) throw new InvalidOperationException("Step prefab must contain FluxKernel on its root.");
             kernel.SetProgramVariable("shader", shader);
             return kernel;
         }
 
-        static FluxBuffer CreateBuffer(Transform parent, string name, int count)
+        static (FluxBuffer A, FluxBuffer B, FluxKernel Clear) CreatePage(Transform parent, GameObject prefab, int index, Shader shader, int count)
         {
-            if (count < 1 || count > 1048576)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count));
-            }
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            var buffer = go.AddUdonSharpComponent<FluxBuffer>();
-            buffer.SetProgramVariable("initialCount", count);
-            return buffer;
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent.gameObject.scene);
+            instance.name = $"Page {index}";
+            instance.transform.SetParent(parent, false);
+            var bufferA = RequireComponent<FluxBuffer>(instance.transform, "BufferA");
+            var bufferB = RequireComponent<FluxBuffer>(instance.transform, "BufferB");
+            var clear = RequireComponent<FluxKernel>(instance.transform, "ClearKernel");
+            bufferA.SetProgramVariable("initialCount", count);
+            bufferB.SetProgramVariable("initialCount", count);
+            clear.SetProgramVariable("shader", shader);
+            return (bufferA, bufferB, clear);
         }
 
         static Shader SaveShader(string source, string outputRoot)
