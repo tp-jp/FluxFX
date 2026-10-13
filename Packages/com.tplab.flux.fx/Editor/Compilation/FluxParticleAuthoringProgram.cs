@@ -60,8 +60,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     "Finite non-negative start speed range");
             }
             Require(authoring.Render.Mode == FluxParticleRenderMode.Billboard, "Billboard rendering");
-            Require(authoring.Render.StartColorMode == FluxParticleStartColorMode.Constant, "Constant start color");
-            Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant, "Constant start size");
+            Require(authoring.Render.StartColorMode == FluxParticleStartColorMode.Constant ||
+                authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants, "Supported start color mode");
+            Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant ||
+                authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants, "Supported start size mode");
             Require(authoring.Render.StartRotation == Vector3.zero, "Zero start rotation");
             Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleRender", "FluxFX/ParticleRender material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay) &&
@@ -107,12 +109,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
             foreach (var value in source.Values.Values) definitions.AddValue(value);
             foreach (var provider in source.Providers.Values)
             {
-                definitions.AddProvider(provider.ValueId == "particle.lifetime"
-                    ? new FluxParticleValueProvider(provider.ValueId, provider.Kind, provider.Inputs, provider.Parameters,
-                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringLifetime.hlsl", provider.EntryPoint)
-                    : provider);
+                if (provider.ValueId == "particle.start-color" &&
+                    authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
+                {
+                    definitions.AddProvider(new FluxParticleValueProvider(provider.ValueId, FluxParticleProviderKind.Derived,
+                        new[] { "particle.spawn-key" }, new[] { "color.start-min", "color.start-max" },
+                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomStartColor.hlsl", "FluxFX_StartColor"));
+                }
+                else
+                {
+                    definitions.AddProvider(provider.ValueId == "particle.lifetime"
+                        ? new FluxParticleValueProvider(provider.ValueId, provider.Kind, provider.Inputs, provider.Parameters,
+                            "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringLifetime.hlsl", provider.EntryPoint)
+                        : provider);
+                }
             }
-            foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity")) definitions.AddParameter(parameter);
+            var randomColor = authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants;
+            var randomSize = authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants;
+            foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity" &&
+                !(randomColor && parameter.Id == "color.start"))) definitions.AddParameter(parameter);
+            if (randomColor)
+            {
+                definitions.AddParameter(new FluxParticleParameterDefinition("color.start-min", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
+                definitions.AddParameter(new FluxParticleParameterDefinition("color.start-max", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
+            }
             var radialShape = authoring.Shape.Type == FluxParticleShapeType.Sphere ||
                 authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Cone;
             if (radialShape)
@@ -151,7 +171,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 definitions.AddParameter(new FluxParticleParameterDefinition("shape.size", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
             }
             definitions.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
-            definitions.AddParameter(new FluxParticleParameterDefinition("render.size", FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
+            definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
+                randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
             foreach (var operation in source.Operations.Values)
             {
                 if (operation.Id == "render.color" && (color == null || !color.Enabled))
@@ -211,10 +232,26 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["drag"] = new Vector4(drag == null ? 0 : drag.Drag, 0, 0, 0),
                 ["drag.enabled"] = new Vector4(drag != null && drag.Enabled ? 1 : 0, 0, 0, 0),
                 ["lifetime.range"] = new Vector4(min, max, 0, 0),
-                ["color.start"] = authoring.Render.StartColor,
-                ["color.end"] = color == null ? authoring.Render.StartColor : color.EndColor,
-                ["render.size"] = new Vector4(authoring.Render.StartSize, 0, 0, 0)
+                ["color.end"] = color == null ? authoring.Render.StartColor : color.EndColor
             };
+            if (randomColor)
+            {
+                values.Add("color.start-min", authoring.Render.StartColorMin);
+                values.Add("color.start-max", authoring.Render.StartColorMax);
+            }
+            else
+            {
+                values.Add("color.start", authoring.Render.StartColor);
+            }
+            if (randomSize)
+            {
+                values.Add("render.size-range", new Vector4(Mathf.Min(authoring.Render.StartSizeMin, authoring.Render.StartSizeMax),
+                    Mathf.Max(authoring.Render.StartSizeMin, authoring.Render.StartSizeMax), 0, 0));
+            }
+            else
+            {
+                values.Add("render.size", new Vector4(authoring.Render.StartSize, 0, 0, 0));
+            }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
                 values.Add("spawn.speed-range", new Vector4(Mathf.Min(authoring.InitialVelocity.Min, authoring.InitialVelocity.Max),
@@ -247,7 +284,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     }
                 }
             }
-            Require(min >= 0 && authoring.Render.StartSize >= 0, "Non-negative lifetime and size");
+            Require(min >= 0 && (randomSize
+                ? FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax)
+                : FiniteNonNegative(authoring.Render.StartSize)), "Non-negative lifetime and size");
             Program = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Program", FluxParticleBasicProgram.CreateLifecycle());
             InitialValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, Vector4>(values);
         }
@@ -269,13 +308,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var extra = Program.RenderSource.Contains(declaration) ? "" : declaration + "\n";
             var pageProperties = string.Join("\n", Program.Program.StateLayout.Pages.Select(page =>
                 $"[HideInInspector] {FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)} (\"State Page {page.Id}\", 2D) = \"black\" {{}}"));
+            var randomSize = InitialValues.ContainsKey("render.size-range");
+            var sizeExpression = FluxParticleHlslNames.ParameterProperty("render.size");
+            var renderCode = extra + Program.RenderSource;
+            if (randomSize)
+            {
+                if (!Program.Program.StateLayout.TryGetBinding("particle.spawn-key", out var spawnKey))
+                {
+                    throw new InvalidOperationException("Random start size requires particle.spawn-key State.");
+                }
+                var keySampler = FluxParticleHlslNames.PageProperty(spawnKey.PageId, FluxParticlePageVersion.Updated);
+                var keyDeclaration = "sampler2D " + keySampler + ";";
+                if (!renderCode.Contains(keyDeclaration)) renderCode = keyDeclaration + "\n" + renderCode;
+                renderCode = "#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl\"\n" + renderCode;
+                var range = FluxParticleHlslNames.ParameterProperty("render.size-range");
+                var spawnKeyExpression = $"(uint)tex2Dlod({keySampler}, float4(stateUV, 0.0, 0.0)).{"rgba"[spawnKey.ChannelOffset]}";
+                sizeExpression = $"lerp({range}.x, {range}.y, FluxFXRandom01({spawnKeyExpression} * 59u + 43u))";
+            }
             return FluxParticleProgramShaderGenerator.ExpandTemplate("Billboard", new Dictionary<string, string>
             {
                 ["PageProperties"] = pageProperties,
-                ["RenderCode"] = extra + Program.RenderSource,
+                ["RenderCode"] = renderCode,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
-                ["Size"] = FluxParticleHlslNames.ParameterProperty("render.size")
+                ["Size"] = sizeExpression
             });
         }
 

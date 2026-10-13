@@ -171,6 +171,38 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
         }
 
+        [TestCase(FluxParticleStartColorMode.Constant, FluxParticleStartSizeMode.RandomBetweenTwoConstants)]
+        [TestCase(FluxParticleStartColorMode.RandomBetweenTwoConstants, FluxParticleStartSizeMode.Constant)]
+        [TestCase(FluxParticleStartColorMode.RandomBetweenTwoConstants, FluxParticleStartSizeMode.RandomBetweenTwoConstants)]
+        public void RandomStartVisualsUseSpawnKeyWithoutExtraState(
+            FluxParticleStartColorMode colorMode, FluxParticleStartSizeMode sizeMode)
+        {
+            var point = new FluxParticleAuthoringProgram(_authoring);
+            var serialized = new SerializedObject(_authoring);
+            var render = serialized.FindProperty("render");
+            render.FindPropertyRelative("startColorMode").enumValueIndex = (int)colorMode;
+            render.FindPropertyRelative("startSizeMode").enumValueIndex = (int)sizeMode;
+            render.FindPropertyRelative("startSizeMin").floatValue = 0.5f;
+            render.FindPropertyRelative("startSizeMax").floatValue = 2f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            var shader = compiled.GenerateRenderer();
+            if (colorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
+            {
+                Assert.IsTrue(compiled.InitialValues.ContainsKey("color.start-min"));
+                Assert.IsTrue(compiled.InitialValues.ContainsKey("color.start-max"));
+                StringAssert.Contains("AuthoringRandomStartColor.hlsl", compiled.Program.RenderSource);
+            }
+            if (sizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants)
+            {
+                Assert.AreEqual(new Vector4(0.5f, 2f, 0, 0), compiled.InitialValues["render.size-range"]);
+                StringAssert.Contains("FluxFXRandom01", shader);
+                Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("render.size-range", out _));
+            }
+        }
+
         [Test]
         public void SphereRejectsInvalidRadius()
         {
