@@ -41,7 +41,7 @@ namespace TpLab.Flux.FX.Scripts
         /// <summary>
         /// 新Compilerの基本Runtime経路を使用します。未移行の設定はBuild時に検証します。
         /// </summary>
-        public bool UseProgramBackend => useProgramBackend;
+        public bool UseProgramBackend => true;
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public PlaybackSettings Playback => playback;

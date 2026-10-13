@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Editor.Build;
-using TpLab.Flux.FX.Editor.GpuModules;
-using TpLab.Flux.FX.Editor.Shaders;
-using TpLab.Flux.FX.Editor.Shaders.Artifacts;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.SceneFlow.Editor.Cores;
@@ -26,13 +21,7 @@ namespace TpLab.Flux.FX.Editor
 
         public override void Execute(SceneFlowContext context)
         {
-            var registry = new FluxParticleGpuModuleRegistry();
-            var gpuCompiler = new FluxParticleGpuCompiler(registry);
-            var runtimeCompiler = new FluxParticleCompiler();
-            var pipeline = new FluxParticleShaderPipeline();
             var session = new FluxFXCompilationSession();
-            var manifest = ShaderArtifactManifest.Load();
-
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var assignedCount = 0;
 
@@ -40,57 +29,11 @@ namespace TpLab.Flux.FX.Editor
             {
                 var particleSystem = authoring.GetComponent<FluxParticleSystem>();
                 if (particleSystem == null) continue;
-                if (authoring.UseProgramBackend)
-                {
-                    FluxParticleProgramBuild.Apply(authoring, particleSystem);
-                    assignedCount++;
-                    continue;
-                }
-                FluxParticleProgramBuild.Disable(authoring);
-                particleSystem.SetProgramVariable("particleExecutor", null);
-
-                var simulation = authoring.GetComponentInChildren<FluxParticleSimulation>(true);
-
-                if (simulation == null)
-                {
-                    throw new InvalidOperationException($"FluxParticleSimulation was not found under '{authoring.name}'.");
-                }
-
-                var kernels = FluxParticleGpuKernelResolver.Resolve(simulation);
-                var plan = FluxParticleCompilePlan.Create(authoring);
-                var result = gpuCompiler.Compile(plan);
-
-                if (!result.Success)
-                {
-                    throw new InvalidOperationException($"Particle compilation failed for '{authoring.name}':\n{result.Validation.GetReport()}");
-                }
-
-                var artifacts = new List<ShaderArtifact>();
-
-                foreach (var descriptor in FluxParticleGpuStageRegistry.GetAll())
-                {
-                    var artifact = pipeline.Build(result.Compilation, descriptor.Stage);
-                    var shader = pipeline.GetOrCreate(artifact);
-                    var kernel = kernels[descriptor.Stage];
-
-                    kernel.SetProgramVariable("shader", shader);
-                    artifacts.Add(artifact);
-
-                    manifest.Register(artifact);
-
-                    Logger.Log($"Shader assigned: {shader.name} to {authoring.name}", authoring);
-                }
-
-                var runtimeJson = runtimeCompiler.Compile(authoring, plan, result.Compilation);
-
-                session.Add(authoring, new FluxParticleBuildResult(result.Compilation, artifacts, runtimeJson));
+                FluxParticleProgramBuild.Apply(authoring, particleSystem);
                 assignedCount++;
             }
 
             context.Data.Add(session);
-
-            manifest.Save();
-
             Logger.Log($"Particle compilation completed. Systems: {assignedCount}");
         }
     }
