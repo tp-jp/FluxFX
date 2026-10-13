@@ -21,23 +21,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
 
-            var writers = definitions.Operations.Values
-                .Where(op => op.Phase == FluxParticlePhase.Update &&
-                    op.Writes.Any(write => write.ValueId == Velocity)).ToArray();
-            if (writers.Length > 1)
-            {
-                if (writers.Any(op => !op.VelocityOrder.HasValue))
-                {
-                    throw new InvalidOperationException("Velocity writers require explicit VelocityOrder when multiple modules are active.");
-                }
-                var duplicate = writers.GroupBy(op => op.VelocityOrder.Value).FirstOrDefault(group => group.Count() > 1);
-                if (duplicate != null)
-                {
-                    throw new InvalidOperationException($"Conflicting VelocityOrder: {duplicate.Key}.");
-                }
-                writers = writers.OrderBy(op => op.VelocityOrder.Value).ToArray();
-            }
-            if (writers.Length == 0)
+            var finalWriter = FluxParticleValuePipelineResolver.Resolve(definitions, Velocity, operation => operation.VelocityOrder);
+            if (finalWriter == null)
             {
                 // Spawn直後もVelocityのUpdated Pageを作り、Motionから最新値を読めるようにします。
                 var identity = new FluxParticleOperationDefinition("velocity.identity", Core, FluxParticlePhase.Update,
@@ -45,37 +30,21 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     new[] { new FluxParticleValueWrite(Velocity, FluxParticleWriteKind.Modify) }, null,
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/VelocityIdentity.hlsl", "FluxFX_VelocityIdentity");
                 definitions.AddOperation(identity);
-                writers = new[] { identity };
+                finalWriter = identity.Id;
             }
 
-            string previous = null;
-            foreach (var writer in writers)
-            {
-                var reads = writer.Reads.Select(read => read.ValueId == Velocity
-                    ? new FluxParticleValueRead(Velocity, previous == null ? FluxParticleReadVersion.StepPrevious :
-                        FluxParticleReadVersion.AfterOperation, previous)
-                    : read).ToArray();
-                var dependencies = writer.Dependencies.Where(id => id != previous).ToList();
-                if (previous != null) dependencies.Add(previous);
-                definitions.ReplaceOperation(new FluxParticleOperationDefinition(writer.Id, writer.OwnerId,
-                    writer.Phase, reads, writer.Writes, dependencies, writer.HlslPath, writer.EntryPoint,
-                    writer.Parameters, writer.EnabledParameterId, writer.VelocityOrder));
-                previous = writer.Id;
-            }
-
-            var motionReads = new[]
-            {
-                new FluxParticleValueRead(Velocity, previous == null ? FluxParticleReadVersion.StepPrevious :
-                    FluxParticleReadVersion.AfterOperation, previous),
-                new FluxParticleValueRead("particle.position", FluxParticleReadVersion.StepPrevious),
-                new FluxParticleValueRead("particle.age", FluxParticleReadVersion.StepPrevious),
-                new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
-            };
-            definitions.AddOperation(new FluxParticleOperationDefinition("motion", Core, FluxParticlePhase.Update,
-                motionReads, new[] { new FluxParticleValueWrite("particle.position", FluxParticleWriteKind.Modify),
-                    new FluxParticleValueWrite("particle.age", FluxParticleWriteKind.Modify) },
-                previous == null ? Array.Empty<string>() : new[] { previous },
-                "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Motion.hlsl", "FluxFX_Motion"));
+            var motion = new FluxParticleOperationDefinition("motion", Core, FluxParticlePhase.Update,
+                new[]
+                {
+                    new FluxParticleValueRead(Velocity, FluxParticleReadVersion.StepPrevious),
+                    new FluxParticleValueRead("particle.position", FluxParticleReadVersion.StepPrevious),
+                    new FluxParticleValueRead("particle.age", FluxParticleReadVersion.StepPrevious),
+                    new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
+                },
+                new[] { new FluxParticleValueWrite("particle.position", FluxParticleWriteKind.Modify),
+                    new FluxParticleValueWrite("particle.age", FluxParticleWriteKind.Modify) }, null,
+                "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Motion.hlsl", "FluxFX_Motion");
+            definitions.AddOperation(FluxParticleValuePipelineResolver.Connect(motion, Velocity, finalWriter));
         }
     }
 }
