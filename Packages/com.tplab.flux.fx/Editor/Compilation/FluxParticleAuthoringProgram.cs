@@ -79,6 +79,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             FluxParticleGravityModule gravity = null;
             FluxParticleDragModule drag = null;
             FluxParticleColorOverLifetimeModule color = null;
+            FluxParticleRotationOverLifetimeModule rotation = null;
             foreach (var module in authoring.Modules)
             {
                 if (module == null)
@@ -102,15 +103,28 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     Require(c.Mode == FluxParticleColorOverLifetimeMode.Linear, "Linear color over lifetime");
                     color = c;
                 }
+                else if (module is FluxParticleRotationOverLifetimeModule r)
+                {
+                    rotation = r;
+                }
                 else
                 {
                     throw new InvalidOperationException($"Program Backend: module is not migrated: {module.GetType().Name}.");
                 }
             }
+            var hasRotationOverLifetime = rotation != null && rotation.Enabled;
+            if (hasRotationOverLifetime)
+            {
+                Require(rotation.Mode == FluxParticleRotationOverLifetimeMode.Linear, "Linear rotation over lifetime");
+                var endRotation = rotation.EndRotation;
+                Require(endRotation.x == 0 && endRotation.y == 0 && !float.IsNaN(endRotation.z) &&
+                    !float.IsInfinity(endRotation.z), "Billboard rotation over lifetime around Z only");
+            }
+            var hasRotation = hasStartRotation || hasRotationOverLifetime;
             var source = FluxParticleBasicProgram.CreateDefinitions();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
-            if (hasStartRotation)
+            if (hasRotation)
             {
                 definitions.AddValue(new FluxParticleValueDefinition("render.rotation", FluxParticleValueType.Float3,
                     FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
@@ -181,9 +195,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             definitions.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
             definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
                 randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
-            if (hasStartRotation)
+            if (hasRotation)
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+            }
+            if (hasRotationOverLifetime)
+            {
+                definitions.AddParameter(new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
             }
             foreach (var operation in source.Operations.Values)
             {
@@ -233,13 +251,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     definitions.AddOperation(operation);
                 }
             }
-            if (hasStartRotation)
+            if (hasRotation)
             {
                 definitions.AddOperation(new FluxParticleOperationDefinition("render.rotation-start", "fluxfx.core", FluxParticlePhase.Render,
                     Array.Empty<FluxParticleValueRead>(),
                     new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Replace) }, null,
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
                     new[] { "rotation.start" }));
+            }
+            if (hasRotationOverLifetime)
+            {
+                definitions.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", "tplab.fluxfx.rotation-over-lifetime", FluxParticlePhase.Render,
+                    new[] { new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),
+                        new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
+                        new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided) },
+                    new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
+                    new[] { "render.rotation-start" },
+                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRotationOverLifetimeLinear.hlsl",
+                    "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }));
             }
             var life = authoring.Lifetime;
             var min = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Min(life.Min, life.Max);
@@ -272,9 +301,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 values.Add("render.size", new Vector4(authoring.Render.StartSize, 0, 0, 0));
             }
-            if (hasStartRotation)
+            if (hasRotation)
             {
                 values.Add("rotation.start", startRotation);
+            }
+            if (hasRotationOverLifetime)
+            {
+                values.Add("rotation.end", rotation.EndRotation);
             }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
