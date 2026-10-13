@@ -1,4 +1,4 @@
-﻿using TpLab.Flux.FX.Udon.Parameters;
+using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
 

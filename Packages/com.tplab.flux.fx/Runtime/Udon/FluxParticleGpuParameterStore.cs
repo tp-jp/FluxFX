@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
