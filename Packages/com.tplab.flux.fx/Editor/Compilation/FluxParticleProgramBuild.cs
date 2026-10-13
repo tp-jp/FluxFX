@@ -78,16 +78,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// 旧Backendに戻したとき、以前生成したFluxリソース用コンポーネントを削除します。
-        /// </summary>
-        /// <param name="authoring">対象のAuthoring。</param>
-        public static void Disable(FluxParticleAuthoring authoring)
-        {
-            var generated = authoring.transform.Find("__FluxFXGenerated");
-            if (generated != null) DestroyGeneratedRoot(generated);
-        }
-
-        /// <summary>
         /// Compiler出力をUdonで扱える一次元配列へ変換し、Runtimeへ設定します。
         /// </summary>
         /// <param name="runtime">設定対象。Initialize前に呼び出します。</param>

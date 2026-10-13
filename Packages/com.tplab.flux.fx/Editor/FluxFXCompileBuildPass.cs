@@ -1,6 +1,5 @@
 using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.Editor;
-using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.SceneFlow.Editor.Cores;
@@ -21,7 +20,6 @@ namespace TpLab.Flux.FX.Editor
 
         public override void Execute(SceneFlowContext context)
         {
-            var session = new FluxFXCompilationSession();
             var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
             var assignedCount = 0;
 
@@ -33,7 +31,6 @@ namespace TpLab.Flux.FX.Editor
                 assignedCount++;
             }
 
-            context.Data.Add(session);
             Logger.Log($"Particle compilation completed. Systems: {assignedCount}");
         }
     }
