@@ -364,6 +364,133 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(texture);
             }
         }
+        [Test]
+        public void GpuRandomStartColorUsesSpawnKeyAndRemainsStable()
+        {
+            RequireVisualGpu();
+            SetRandomVisualModes(true, true);
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var generated = compiled.Program;
+            var steps = generated.Passes.Select((pass, index) => Import("VisualStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => Import("VisualClear" + index, source)).ToArray();
+            var renderShader = Import("VisualRender", RenderEvaluationShader(generated));
+            using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
+            {
+                session.SetVector("spawn.position", Vector4.zero);
+                session.SetFloat("spawn.speed", 0);
+                session.SetVector("gravity", Vector4.zero);
+                session.SetFloat("gravity.enabled", 0);
+                session.SetFloat("drag", 0);
+                session.SetFloat("drag.enabled", 0);
+                session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
+                session.SetVector("color.start-min", new Vector4(0, 0, 0, 0));
+                session.SetVector("color.start-max", new Vector4(1, 1, 1, 1));
+                session.SetVector("color.end", Vector4.one);
+                session.SetVector("render.size-range", new Vector4(0.5f, 2f, 0, 0));
+                session.SetUniformFloat("step.delta-time", 0);
+                session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
+                var mask = Texture(new Color(1, 0, 0, 0), new Color(1, 0, 0, 0));
+                session.Step(mask);
+
+                var renderMaterial = new Material(renderShader);
+                _objects.Add(renderMaterial);
+                var first = EvaluateColors(session, renderMaterial);
+                Assert.That(first[0].r, Is.InRange(0f, 1f));
+                Assert.That(first[1].r, Is.InRange(0f, 1f));
+                Assert.Greater(Mathf.Abs(first[0].r - first[1].r), 0.00001f);
+                session.SetUniformFloat("step.delta-time", 1f);
+                session.Step();
+                var later = EvaluateColors(session, renderMaterial);
+                for (var i = 0; i < 2; i++)
+                {
+                    Assert.AreEqual(first[i].r, later[i].r, 0.0001f);
+                    Assert.AreEqual(first[i].a, later[i].a, 0.0001f);
+                }
+                session.Clear();
+                session.SetUniformFloat("step.delta-time", 0);
+                session.Step(mask);
+                var repeated = EvaluateColors(session, renderMaterial);
+                for (var i = 0; i < 2; i++) Assert.AreEqual(first[i].r, repeated[i].r, 0.0001f);
+            }
+        }
+
+        [Test]
+        public void RandomSizeBillboardReadsPersistentSpawnKeyWithoutAdditionalPages()
+        {
+            var baseline = new FluxParticleAuthoringProgram(_authoring);
+            SetRandomVisualModes(true, true);
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.IsTrue(compiled.Program.Program.StateLayout.TryGetBinding("particle.spawn-key", out _));
+            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("render.size-range", out _));
+            var shader = compiled.GenerateRenderer();
+            StringAssert.Contains("FluxFXRandom01", shader);
+            StringAssert.Contains("FluxFXRandom01", shader);
+            StringAssert.Contains("59u + 43u", shader);
+        }
+
+        void SetRandomVisualModes(bool color, bool size)
+        {
+            var serialized = new SerializedObject(_authoring);
+            var render = serialized.FindProperty("render");
+            if (color)
+            {
+                render.FindPropertyRelative("startColorMode").enumValueIndex = (int)FluxParticleStartColorMode.RandomBetweenTwoConstants;
+                render.FindPropertyRelative("startColorMin").colorValue = Color.black;
+                render.FindPropertyRelative("startColorMax").colorValue = Color.white;
+            }
+            if (size)
+            {
+                render.FindPropertyRelative("startSizeMode").enumValueIndex = (int)FluxParticleStartSizeMode.RandomBetweenTwoConstants;
+                render.FindPropertyRelative("startSizeMin").floatValue = 0.5f;
+                render.FindPropertyRelative("startSizeMax").floatValue = 2f;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static string RenderEvaluationShader(FluxParticleShaderProgram generated)
+        {
+            return "Shader \"Hidden/FluxFX/Tests/VisualEval\" { SubShader { Pass { ZTest Always Cull Off ZWrite Off\n" +
+                "HLSLPROGRAM\n#pragma target 3.5\n#pragma vertex vert_img\n#pragma fragment frag\n#include \"UnityCG.cginc\"\n" +
+                generated.RenderSource + "\nfloat4 frag(v2f_img i) : SV_Target { bool alive; FluxRenderContext ctx = FluxFX_EvaluateRender(i.uv, alive); " +
+                "return alive ? ctx.valueRenderColor : float4(0,0,0,0); }\nENDHLSL\n} } Fallback Off }";
+        }
+
+        static Color[] EvaluateColors(FluxParticleProgramGpuSession session, Material material)
+        {
+            session.BindRender(material);
+            var target = new RenderTexture(2, 1, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            target.filterMode = FilterMode.Point;
+            target.Create();
+            var active = RenderTexture.active;
+            var texture = new Texture2D(2, 1, TextureFormat.RGBAFloat, false, true);
+            try
+            {
+                Graphics.Blit(null, target, material);
+                RenderTexture.active = target;
+                texture.ReadPixels(new Rect(0, 0, 2, 1), 0, 0);
+                texture.Apply();
+                return texture.GetPixels();
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                Object.DestroyImmediate(texture);
+                target.Release();
+                Object.DestroyImmediate(target);
+            }
+        }
+
+        static void RequireVisualGpu()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures required; do not use -nographics.");
+            }
+        }
         void SetShape(FluxParticleShapeType type, float radius)
         {
             var serialized = new SerializedObject(_authoring);
