@@ -430,6 +430,110 @@ namespace TpLab.Flux.FX.Tests.Editor
             StringAssert.Contains("59u + 43u", shader);
         }
 
+        [Test]
+        public void GpuRandomSizeBillboardRendersStablePerParticleWidths()
+        {
+            RequireVisualGpu();
+            SetRandomVisualModes(false, true);
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var generated = compiled.Program;
+            var steps = generated.Passes.Select((pass, index) => Import("SizeStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => Import("SizeClear" + index, source)).ToArray();
+            var billboard = Import("SizeBillboard", compiled.GenerateRenderer());
+            using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
+            {
+                session.SetVector("spawn.position", Vector4.zero);
+                session.SetFloat("spawn.speed", 0);
+                session.SetVector("gravity", Vector4.zero);
+                session.SetFloat("gravity.enabled", 0);
+                session.SetFloat("drag", 0);
+                session.SetFloat("drag.enabled", 0);
+                session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
+                session.SetVector("color.start", Vector4.one);
+                session.SetVector("color.end", Vector4.one);
+                session.SetVector("render.size-range", new Vector4(0.5f, 2f, 0, 0));
+                session.SetUniformFloat("step.delta-time", 0);
+                session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
+                var mask = Texture(new Color(1, 0, 0, 0), new Color(1, 0, 0, 0));
+                session.Step(mask);
+                var material = new Material(billboard);
+                _objects.Add(material);
+                material.SetTexture("_MainTex", Texture2D.whiteTexture);
+                material.SetVector("_MainTex_ST", new Vector4(1, 1, 0, 0));
+                material.SetVector("_FluxStateSize", new Vector4(2, 1, 2, 0));
+                material.SetFloat("_SrcBlend", 1);
+                material.SetFloat("_DstBlend", 0);
+                material.SetFloat("_ZWrite", 0);
+                var first = new int[2];
+                for (var i = 0; i < 2; i++) first[i] = DrawBillboardWidth(session, material, i);
+                foreach (var width in first) Assert.That(width, Is.InRange(16, 132));
+                Assert.AreNotEqual(first[0], first[1], "Different SpawnKeys should produce different visible sizes.");
+
+                session.SetUniformFloat("step.delta-time", 1f);
+                session.Step();
+                for (var i = 0; i < 2; i++) Assert.AreEqual(first[i], DrawBillboardWidth(session, material, i));
+                session.Clear();
+                session.SetUniformFloat("step.delta-time", 0);
+                session.Step(mask);
+                for (var i = 0; i < 2; i++) Assert.AreEqual(first[i], DrawBillboardWidth(session, material, i));
+            }
+        }
+
+        static int DrawBillboardWidth(FluxParticleProgramGpuSession session, Material material, int particleIndex)
+        {
+            var mesh = new Mesh();
+            var target = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            target.filterMode = FilterMode.Point;
+            target.Create();
+            var pixels = new Texture2D(256, 256, TextureFormat.RGBA32, false, true);
+            var previous = RenderTexture.active;
+            try
+            {
+                mesh.vertices = new[] {
+                    new Vector3(-0.5f, -0.5f, 0), new Vector3(0.5f, -0.5f, 0),
+                    new Vector3(0.5f, 0.5f, 0), new Vector3(-0.5f, 0.5f, 0) };
+                mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+                mesh.uv2 = Enumerable.Repeat(new Vector2(particleIndex, 0), 4).ToArray();
+                mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+                session.BindRender(material);
+                RenderTexture.active = target;
+                GL.Clear(true, true, Color.black);
+                GL.PushMatrix();
+                try
+                {
+                    GL.modelview = Matrix4x4.identity;
+                    GL.LoadProjectionMatrix(Matrix4x4.Ortho(-2, 2, -2, 2, -10, 10));
+                    Assert.IsTrue(material.SetPass(0));
+                    Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
+                }
+                finally
+                {
+                    GL.PopMatrix();
+                }
+                pixels.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
+                pixels.Apply();
+                var row = pixels.GetPixels(0, 128, 256, 1);
+                var left = -1;
+                var right = -1;
+                for (var x = 0; x < row.Length; x++)
+                {
+                    if (row[x].maxColorComponent < 0.2f) continue;
+                    if (left < 0) left = x;
+                    right = x;
+                }
+                Assert.GreaterOrEqual(left, 0, "Billboard produced no visible pixels.");
+                return right - left + 1;
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                Object.DestroyImmediate(mesh);
+                Object.DestroyImmediate(pixels);
+                target.Release();
+                Object.DestroyImmediate(target);
+            }
+        }
+
         void SetRandomVisualModes(bool color, bool size)
         {
             var serialized = new SerializedObject(_authoring);
