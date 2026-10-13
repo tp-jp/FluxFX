@@ -2,3 +2,11 @@
 *.prefab filter=vrc eol=lf text
 *.unity filter=vrc eol=lf text
 LightingData.asset binary
+
+# Unity, UdonSharp and shader sources use CRLF in the working tree.
+*.cs text eol=crlf
+*.shader text eol=crlf
+*.compute text eol=crlf
+*.hlsl text eol=crlf
+*.cginc text eol=crlf
+*.shaderinclude text eol=crlf
