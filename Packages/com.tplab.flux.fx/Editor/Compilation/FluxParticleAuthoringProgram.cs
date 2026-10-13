@@ -109,6 +109,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     : provider);
             }
             foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity")) definitions.AddParameter(parameter);
+            var radialShape = authoring.Shape.Type == FluxParticleShapeType.Sphere ||
+                authoring.Shape.Type == FluxParticleShapeType.Hemisphere;
+            if (radialShape)
+            {
+                definitions.AddValue(new FluxParticleValueDefinition("spawn.direction", FluxParticleValueType.Float3,
+                    FluxParticleWritePolicy.ReadOnly, "fluxfx.core"));
+                var shapeDirectionHlsl = authoring.Shape.Type == FluxParticleShapeType.Sphere
+                    ? "AuthoringSphereSpawnDirection.hlsl" : "AuthoringHemisphereSpawnDirection.hlsl";
+                definitions.AddProvider(new FluxParticleValueProvider("spawn.direction", FluxParticleProviderKind.Derived,
+                    new[] { "spawn.key" }, hlslPath: "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" + shapeDirectionHlsl,
+                    entryPoint: "FluxFX_SpawnDirection"));
+            }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed-range", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Live));
@@ -142,17 +154,25 @@ namespace TpLab.Flux.FX.Editor.Compilation
                         "AuthoringBoxSpawnPosition.hlsl";
                     var shapeParameter = authoring.Shape.Type == FluxParticleShapeType.Box ? "shape.size" : "shape.radius";
                     definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
-                        new[] { new FluxParticleValueRead("spawn.key", FluxParticleReadVersion.Provided) }, operation.Writes, operation.Dependencies,
+                        new[] { new FluxParticleValueRead("spawn.key", FluxParticleReadVersion.Provided) },
+                        operation.Writes, operation.Dependencies,
                         "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" + shapeHlsl, operation.EntryPoint,
                         new[] { "spawn.position", shapeParameter }));
                 }
                 else if (operation.Id == "spawn.velocity")
                 {
                     definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
-                        operation.Reads, operation.Writes, operation.Dependencies,
-                        authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
-                            ? "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomSpawnVelocity.hlsl"
-                            : "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringSpawnVelocity.hlsl", operation.EntryPoint,
+                        radialShape ? operation.Reads.Concat(new[] {
+                            new FluxParticleValueRead("spawn.direction", FluxParticleReadVersion.Provided) }) : operation.Reads,
+                        operation.Writes, operation.Dependencies,
+                        radialShape
+                            ? (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
+                                ? "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRadialRandomSpawnVelocity.hlsl"
+                                : "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRadialSpawnVelocity.hlsl")
+                            : (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
+                                ? "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomSpawnVelocity.hlsl"
+                                : "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringSpawnVelocity.hlsl"),
+                        operation.EntryPoint,
                         new[] { authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
                             ? "spawn.speed-range" : "spawn.speed" }));
                 }

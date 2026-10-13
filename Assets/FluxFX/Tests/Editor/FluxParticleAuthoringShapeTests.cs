@@ -113,6 +113,28 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(compiled.InitialValues.ContainsKey(parameter));
         }
 
+        [TestCase(FluxParticleShapeType.Sphere)]
+        [TestCase(FluxParticleShapeType.Hemisphere)]
+        public void RadialShapeSharesDerivedSpawnDirectionWithoutAdditionalPages(FluxParticleShapeType shape)
+        {
+            var point = new FluxParticleAuthoringProgram(_authoring);
+            SetShape(shape, 2.5f);
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var program = compiled.Program.Program;
+
+            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.IsFalse(program.StateLayout.TryGetBinding("spawn.direction", out _));
+            var position = program.Operations.Single(operation => operation.Id == "spawn.position");
+            var velocity = program.Operations.Single(operation => operation.Id == "spawn.velocity");
+            Assert.IsTrue(position.Reads.Any(read => read.ValueId == "spawn.key" &&
+                read.Version == FluxParticleReadVersion.Provided));
+            Assert.IsTrue(velocity.Reads.Any(read => read.ValueId == "spawn.direction" &&
+                read.Version == FluxParticleReadVersion.Provided));
+            Assert.IsTrue(position.HlslPath.Contains("SpawnPosition.hlsl"));
+            Assert.IsTrue(velocity.HlslPath.Contains("Radial"));
+        }
+
         [Test]
         public void SphereRejectsInvalidRadius()
         {
