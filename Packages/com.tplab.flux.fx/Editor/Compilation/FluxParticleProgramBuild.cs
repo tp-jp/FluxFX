@@ -21,8 +21,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public static class FluxParticleProgramBuild
     {
         const string Root = "Assets/FluxFX/Generated/Programs";
-        const string PagePrefabPath = "Assets/FluxFX/Generated/Prefabs/FluxParticlePage.prefab";
-        const string StepPrefabPath = "Assets/FluxFX/Generated/Prefabs/FluxParticleStep.prefab";
+        const string PagePrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticlePage.prefab";
+        const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
 
         /// <summary>
         /// SceneFlowのBuild/Play前処理から新Backendを構成します。
