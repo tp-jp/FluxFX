@@ -124,57 +124,15 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &26550150 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8964236723213782270, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &29527850 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2895478536513243985, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &41551547 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3185579716746852580, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &130192507 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5493884762694504533, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &136964549 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6110645425195456592, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 1601024357}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &206700675 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7094208337137799322, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &208973531 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6330377903930078214, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &238078128 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8080322500867124689, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &263854020 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 216071571664686397, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 1601024357}
   m_PrefabAsset: {fileID: 0}
@@ -273,30 +231,6 @@ MonoBehaviour:
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
---- !u!1 &437382897 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2228930589913636831, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &437543027 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1574013583241337527, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &460052439 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3301399888267831157, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &463588770 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1574013583241337527, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &476714713 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5249841498212650274, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -309,45 +243,15 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &617711873 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2850678156909822196, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &704343852 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4614318934871768260, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &763353637 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8080322500867124689, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &785121123 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5493884762694504533, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &789985104 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4614318934871768260, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &799946485 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9075302991348205436, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &843097394 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1815391984946204340, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 1601024357}
   m_PrefabAsset: {fileID: 0}
@@ -432,30 +336,6 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 925724771}
   fluxParticleSystem: {fileID: 1217573531}
---- !u!1 &1009139697 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7094208337137799322, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1022695427 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1202912212188870291, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1023137027 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6330377903930078214, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1034251896 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5226299514021081591, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1069902874
 GameObject:
   m_ObjectHideFlags: 0
@@ -548,21 +428,9 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1080175219 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5226299514021081591, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1118045843 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7089382859577951119, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1119965956 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2895478536513243985, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
@@ -584,51 +452,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32da4966f8607654793a3768b848fc1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &1246352841 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3652130021482827837, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1256857973 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5249841498212650274, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1285717114 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2850678156909822196, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1358347371 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3301399888267831157, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1370244027 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8964236723213782270, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1379617928 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6955673039654411533, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1394730907 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1202912212188870291, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1399476867 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3185579716746852580, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 1601024357}
   m_PrefabAsset: {fileID: 0}
@@ -789,18 +615,6 @@ MonoBehaviour:
   fluxParticleSystem: {fileID: 1217573531}
   lowStrength: 1
   highStrength: 5
---- !u!1 &1506899321 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6955673039654411533, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1524821718 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 216071571664686397, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1601024357
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5544,12 +5358,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2a56eb888362ac4590f468133e62e5a, type: 3}
---- !u!1 &1607490231 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3652130021482827837, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1663340799 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2700669343830225459, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -5668,105 +5476,11 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1930212630 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2228930589913636831, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2027436486 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3809686262624099320, guid: f2a56eb888362ac4590f468133e62e5a,
     type: 3}
   m_PrefabInstance: {fileID: 1601024357}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2045046417
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2045046420}
-  - component: {fileID: 2045046419}
-  - component: {fileID: 2045046418}
-  m_Layer: 0
-  m_Name: VelocityOverLifetimeTest
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &2045046418
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2045046417}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 45115577ef41a5b4ca741ed302693907, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  interactTextPlacement: {fileID: 0}
-  interactText: Use
-  interactTextGO: {fileID: 0}
-  proximity: 2
-  SynchronizePosition: 0
-  AllowCollisionOwnershipTransfer: 0
-  Reliable: 0
-  _syncMethod: 1
-  serializedProgramAsset: {fileID: 0}
-  programSource: {fileID: 11400000, guid: bbfef5dffab475f479b54fb650c2a5e0, type: 2}
-  serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
-  publicVariablesUnityEngineObjects: []
-  publicVariablesSerializationDataFormat: 0
---- !u!114 &2045046419
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2045046417}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e1351bb64e782c47bb3504b206adeea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes: []
-  _udonSharpBackingUdonBehaviour: {fileID: 2045046418}
-  fluxParticleSystem: {fileID: 1217573531}
-  interval: 5
---- !u!4 &2045046420
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2045046417}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2081118388 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1815391984946204340, guid: f2a56eb888362ac4590f468133e62e5a,
-    type: 3}
-  m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &2104230982 stripped
 GameObject:
@@ -6830,7 +6544,7 @@ MonoBehaviour:
     ID: 16
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1524821718}
+  - gameObject: {fileID: 0}
     ID: 17
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -6838,59 +6552,59 @@ MonoBehaviour:
     ID: 18
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 463588770}
+  - gameObject: {fileID: 0}
     ID: 19
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1246352841}
+  - gameObject: {fileID: 0}
     ID: 20
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1358347371}
+  - gameObject: {fileID: 0}
     ID: 21
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 2081118388}
+  - gameObject: {fileID: 0}
     ID: 22
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1119965956}
+  - gameObject: {fileID: 0}
     ID: 23
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 41551547}
+  - gameObject: {fileID: 0}
     ID: 24
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1023137027}
+  - gameObject: {fileID: 0}
     ID: 25
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 26550150}
+  - gameObject: {fileID: 0}
     ID: 26
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 785121123}
+  - gameObject: {fileID: 0}
     ID: 27
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1930212630}
+  - gameObject: {fileID: 0}
     ID: 28
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1034251896}
+  - gameObject: {fileID: 0}
     ID: 29
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1379617928}
+  - gameObject: {fileID: 0}
     ID: 31
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 617711873}
+  - gameObject: {fileID: 0}
     ID: 32
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1394730907}
+  - gameObject: {fileID: 0}
     ID: 33
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -6902,7 +6616,7 @@ MonoBehaviour:
     ID: 35
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 263854020}
+  - gameObject: {fileID: 0}
     ID: 36
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -6910,59 +6624,59 @@ MonoBehaviour:
     ID: 37
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 437543027}
+  - gameObject: {fileID: 0}
     ID: 38
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1607490231}
+  - gameObject: {fileID: 0}
     ID: 39
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 460052439}
+  - gameObject: {fileID: 0}
     ID: 40
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 843097394}
+  - gameObject: {fileID: 0}
     ID: 41
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1506899321}
+  - gameObject: {fileID: 0}
     ID: 42
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1285717114}
+  - gameObject: {fileID: 0}
     ID: 43
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 29527850}
+  - gameObject: {fileID: 0}
     ID: 44
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1399476867}
+  - gameObject: {fileID: 0}
     ID: 45
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 208973531}
+  - gameObject: {fileID: 0}
     ID: 46
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1370244027}
+  - gameObject: {fileID: 0}
     ID: 47
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 130192507}
+  - gameObject: {fileID: 0}
     ID: 48
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1022695427}
+  - gameObject: {fileID: 0}
     ID: 49
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 437382897}
+  - gameObject: {fileID: 0}
     ID: 50
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1080175219}
+  - gameObject: {fileID: 0}
     ID: 51
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -6970,11 +6684,11 @@ MonoBehaviour:
     ID: 52
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 1009139697}
+  - gameObject: {fileID: 0}
     ID: 55
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 206700675}
+  - gameObject: {fileID: 0}
     ID: 56
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -6982,15 +6696,15 @@ MonoBehaviour:
     ID: 57
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 789985104}
+  - gameObject: {fileID: 0}
     ID: 58
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 704343852}
+  - gameObject: {fileID: 0}
     ID: 59
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
-  - gameObject: {fileID: 2045046417}
+  - gameObject: {fileID: 0}
     ID: 60
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
@@ -7213,4 +6927,3 @@ SceneRoots:
   - {fileID: 1601024357}
   - {fileID: 1416737692}
   - {fileID: 925724770}
-  - {fileID: 2045046420}
