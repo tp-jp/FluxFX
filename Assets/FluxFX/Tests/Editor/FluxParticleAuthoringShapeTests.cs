@@ -135,6 +135,42 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(velocity.HlslPath.Contains("Radial"));
         }
 
+        [TestCase(FluxParticleStartSpeedMode.Constant)]
+        [TestCase(FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
+        public void ConeUsesShapeParametersAndDerivedVelocityDirectionWithoutExtraPages(FluxParticleStartSpeedMode mode)
+        {
+            var point = new FluxParticleAuthoringProgram(_authoring);
+            SetShape(FluxParticleShapeType.Cone, 2.5f);
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("shape").FindPropertyRelative("angle").floatValue = 30f;
+            serialized.FindProperty("initialVelocity").FindPropertyRelative("mode").enumValueIndex = (int)mode;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.AreEqual(2.5f, compiled.InitialValues["shape.radius"].x);
+            Assert.AreEqual(30f, compiled.InitialValues["shape.angle"].x);
+            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("spawn.direction", out _));
+            var position = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.position");
+            var velocity = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.velocity");
+            CollectionAssert.Contains(position.Parameters.ToArray(), "shape.radius");
+            Assert.IsTrue(velocity.Reads.Any(read => read.ValueId == "spawn.direction" &&
+                read.Version == FluxParticleReadVersion.Provided));
+            StringAssert.EndsWith("/AuthoringConeSpawnPosition.hlsl", position.HlslPath);
+            StringAssert.Contains("AuthoringRadial", velocity.HlslPath);
+        }
+
+        [Test]
+        public void ConeRejectsInvalidAngle()
+        {
+            SetShape(FluxParticleShapeType.Cone, 1f);
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("shape").FindPropertyRelative("angle").floatValue = 90f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+        }
+
         [Test]
         public void SphereRejectsInvalidRadius()
         {
