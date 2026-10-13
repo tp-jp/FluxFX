@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Modules;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
 
