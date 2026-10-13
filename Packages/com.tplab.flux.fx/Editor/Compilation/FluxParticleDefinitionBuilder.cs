@@ -34,6 +34,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         readonly Dictionary<string, FluxParticleValueProvider> _providers = new Dictionary<string, FluxParticleValueProvider>(StringComparer.Ordinal);
         readonly Dictionary<string, FluxParticleParameterDefinition> _parameters = new Dictionary<string, FluxParticleParameterDefinition>(StringComparer.Ordinal);
         readonly Dictionary<string, FluxParticleOperationDefinition> _operations = new Dictionary<string, FluxParticleOperationDefinition>(StringComparer.Ordinal);
+        readonly List<string> _operationOrder = new List<string>();
 
         /// <summary>
         /// 登録したValue定義をIDから参照する辞書です。
@@ -54,6 +55,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// Operation定義をIDから参照する辞書です。
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleOperationDefinition> Operations => _operations;
+
+        /// <summary>
+        /// Operationの登録順です。ModuleのVelocity更新順序にも使用します。
+        /// </summary>
+        public IReadOnlyList<string> OperationOrder => _operationOrder;
 
         /// <summary>
         /// 論理Valueを登録します。重複するIDは同一定義であっても禁止します。
@@ -97,6 +103,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
             if (operation == null) throw new ArgumentNullException(nameof(operation));
             if (_operations.ContainsKey(operation.Id)) throw new InvalidOperationException($"Duplicate Operation ID: {operation.Id}");
             _operations.Add(operation.Id, operation);
+            _operationOrder.Add(operation.Id);
+        }
+
+        /// <summary>
+        /// 依存解決済みのOperation定義に置き換えます。新しいIDは登録できません。
+        /// </summary>
+        /// <param name="operation">同じIDを持つ解決済みOperation。</param>
+        public void ReplaceOperation(FluxParticleOperationDefinition operation)
+        {
+            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (!_operations.ContainsKey(operation.Id)) throw new InvalidOperationException($"Unknown Operation: {operation.Id}");
+            _operations[operation.Id] = operation;
         }
     }
 }

@@ -75,55 +75,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 Require(burst != null && FiniteNonNegative(burst.Time) && burst.Count > 0, "Valid emission bursts");
             }
-            var seen = new HashSet<Type>();
-            FluxParticleGravityModule gravity = null;
-            FluxParticleDragModule drag = null;
-            FluxParticleColorOverLifetimeModule color = null;
-            FluxParticleRotationOverLifetimeModule rotation = null;
-            foreach (var module in authoring.Modules)
-            {
-                if (module == null)
-                {
-                    throw new InvalidOperationException("Program Backend: missing module definition.");
-                }
-                if (!seen.Add(module.GetType()))
-                {
-                    throw new InvalidOperationException($"Program Backend: duplicate module {module.GetType().Name}.");
-                }
-                if (module is FluxParticleGravityModule g)
-                {
-                    gravity = g;
-                }
-                else if (module is FluxParticleDragModule d)
-                {
-                    drag = d;
-                }
-                else if (module is FluxParticleColorOverLifetimeModule c)
-                {
-                    Require(c.Mode == FluxParticleColorOverLifetimeMode.Linear, "Linear color over lifetime");
-                    color = c;
-                }
-                else if (module is FluxParticleRotationOverLifetimeModule r)
-                {
-                    rotation = r;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Program Backend: module is not migrated: {module.GetType().Name}.");
-                }
-            }
-            var hasRotationOverLifetime = rotation != null && rotation.Enabled;
-            if (hasRotationOverLifetime)
-            {
-                Require(rotation.Mode == FluxParticleRotationOverLifetimeMode.Linear, "Linear rotation over lifetime");
-                var endRotation = rotation.EndRotation;
-                Require(endRotation.x == 0 && endRotation.y == 0 && !float.IsNaN(endRotation.z) &&
-                    !float.IsInfinity(endRotation.z), "Billboard rotation over lifetime around Z only");
-            }
-            var hasRotation = hasStartRotation || hasRotationOverLifetime;
             var source = FluxParticleBasicProgram.CreateDefinitions();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
+            var moduleContext = new FluxParticleProgramContribution(definitions);
+            new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
+            var hasRotation = hasStartRotation || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
+                write.ValueId == "render.rotation"));
             if (hasRotation)
             {
                 definitions.AddValue(new FluxParticleValueDefinition("render.rotation", FluxParticleValueType.Float3,
@@ -199,13 +157,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
             }
-            if (hasRotationOverLifetime)
-            {
-                definitions.AddParameter(new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
-            }
             foreach (var operation in source.Operations.Values)
             {
-                if (operation.Id == "render.color" && (color == null || !color.Enabled))
+                if (operation.Id == "gravity" || operation.Id == "drag" || operation.Id == "render.color" ||
+                    operation.Id == "motion")
                 {
                     continue;
                 }
@@ -240,12 +195,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
                         new[] { authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
                             ? "spawn.speed-range" : "spawn.speed" }));
                 }
-                else if (operation.Id == "drag")
-                {
-                    definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
-                        operation.Reads, operation.Writes, operation.Dependencies, operation.HlslPath, operation.EntryPoint,
-                        operation.Parameters.Concat(new[] { "drag.enabled" }), "drag.enabled"));
-                }
                 else
                 {
                     definitions.AddOperation(operation);
@@ -259,29 +208,19 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
                     new[] { "rotation.start" }));
             }
-            if (hasRotationOverLifetime)
-            {
-                definitions.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", "tplab.fluxfx.rotation-over-lifetime", FluxParticlePhase.Render,
-                    new[] { new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),
-                        new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
-                        new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided) },
-                    new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
-                    new[] { "render.rotation-start" },
-                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRotationOverLifetimeLinear.hlsl",
-                    "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }));
-            }
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var life = authoring.Lifetime;
             var min = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Min(life.Min, life.Max);
             var max = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Max(life.Min, life.Max);
             var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
             {
                 ["spawn.position"] = Vector4.zero,
-                ["gravity"] = gravity == null ? Vector4.zero : (Vector4)gravity.Gravity,
-                ["gravity.enabled"] = new Vector4(gravity != null && gravity.Enabled ? 1 : 0, 0, 0, 0),
-                ["drag"] = new Vector4(drag == null ? 0 : drag.Drag, 0, 0, 0),
-                ["drag.enabled"] = new Vector4(drag != null && drag.Enabled ? 1 : 0, 0, 0, 0),
+                ["gravity"] = Vector4.zero,
+                ["gravity.enabled"] = Vector4.zero,
+                ["drag"] = Vector4.zero,
+                ["drag.enabled"] = Vector4.zero,
                 ["lifetime.range"] = new Vector4(min, max, 0, 0),
-                ["color.end"] = color == null ? authoring.Render.StartColor : color.EndColor
+                ["color.end"] = authoring.Render.StartColor
             };
             if (randomColor)
             {
@@ -305,9 +244,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 values.Add("rotation.start", startRotation);
             }
-            if (hasRotationOverLifetime)
+            foreach (var parameter in moduleContext.InitialValues)
             {
-                values.Add("rotation.end", rotation.EndRotation);
+                values[parameter.Key] = parameter.Value;
             }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {

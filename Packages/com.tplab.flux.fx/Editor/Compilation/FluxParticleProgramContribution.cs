@@ -113,6 +113,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
+        /// Core定義のParameterに初期値を設定します。Parameter定義は後から追加される場合があります。
+        /// </summary>
+        /// <param name="id">登録済みParameterのID。</param>
+        /// <param name="value">初期値。</param>
+        public void SetInitialValue(string id, Vector4 value)
+        {
+            if (_initialValues.ContainsKey(id)) throw new InvalidOperationException($"Duplicate Parameter initial value: {id}");
+            for (var i = 0; i < 4; i++)
+            {
+                if (float.IsNaN(value[i]) || float.IsInfinity(value[i]))
+                {
+                    throw new InvalidOperationException($"Non-finite Parameter: {id}");
+                }
+            }
+            _initialValues.Add(id, value);
+        }
+
+        /// <summary>
         /// Operationを登録します。Moduleは自身のOperationのみ新規定義できます。
         /// </summary>
         public void AddOperation(FluxParticleOperationDefinition operation)
