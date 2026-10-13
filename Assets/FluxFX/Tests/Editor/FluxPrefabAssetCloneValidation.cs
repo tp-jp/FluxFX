@@ -195,7 +195,6 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         protected override void ConfigureDependencies(DependencyBuilder builder)
         {
-            builder.After<FluxFXApplyBuildPass>();
             builder.After<FluxPrefabAssetCloneBuildPass>();
         }
 
