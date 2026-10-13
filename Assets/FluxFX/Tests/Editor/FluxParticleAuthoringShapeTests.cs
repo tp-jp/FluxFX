@@ -226,6 +226,112 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [TestCase(FluxParticleShapeType.Sphere, FluxParticleStartSpeedMode.Constant)]
+        [TestCase(FluxParticleShapeType.Hemisphere, FluxParticleStartSpeedMode.Constant)]
+        [TestCase(FluxParticleShapeType.Cone, FluxParticleStartSpeedMode.Constant)]
+        [TestCase(FluxParticleShapeType.Cone, FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
+        [TestCase(FluxParticleShapeType.Hemisphere, FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
+        [TestCase(FluxParticleShapeType.Point, FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
+        public void GpuSpawnDirectionSpeedAndRepeatability(FluxParticleShapeType shape, FluxParticleStartSpeedMode speedMode)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required. Do not use -nographics.");
+            }
+            SetShape(shape, 2.5f);
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("shape").FindPropertyRelative("angle").floatValue = 30f;
+            var velocity = serialized.FindProperty("initialVelocity");
+            velocity.FindPropertyRelative("mode").enumValueIndex = (int)speedMode;
+            velocity.FindPropertyRelative("speed").floatValue = 2f;
+            velocity.FindPropertyRelative("min").floatValue = 1f;
+            velocity.FindPropertyRelative("max").floatValue = 3f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var generated = new FluxParticleAuthoringProgram(_authoring).Program;
+            var steps = generated.Passes.Select((pass, index) => Import("DirectionStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => Import("DirectionClear" + index, source)).ToArray();
+            using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
+            {
+                session.SetVector("spawn.position", Vector4.zero);
+                if (speedMode == FluxParticleStartSpeedMode.Constant) session.SetFloat("spawn.speed", 2f);
+                else session.SetVector("spawn.speed-range", new Vector4(1, 3, 0, 0));
+                if (shape != FluxParticleShapeType.Point) session.SetFloat("shape.radius", 2.5f);
+                if (shape == FluxParticleShapeType.Cone) session.SetFloat("shape.angle", 30f);
+                session.SetVector("gravity", Vector4.zero);
+                session.SetFloat("gravity.enabled", 0);
+                session.SetFloat("drag", 0);
+                session.SetFloat("drag.enabled", 0);
+                session.SetVector("lifetime.range", new Vector4(3, 3, 0, 0));
+                session.SetVector("color.start", Vector4.one);
+                session.SetVector("color.end", Vector4.one);
+                session.SetFloat("render.size", 1);
+                session.SetUniformFloat("step.delta-time", 0);
+                session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
+                var mask = Texture(new Color(1, 0, 0, 0), new Color(1, 0, 0, 0));
+                session.Step(mask);
+                var positions = new Vector3[2];
+                var velocities = new Vector3[2];
+                for (var i = 0; i < 2; i++)
+                {
+                    positions[i] = ReadPosition(session, generated, i);
+                    velocities[i] = ReadVelocity(session, generated, i);
+                    var speed = velocities[i].magnitude;
+                    if (speedMode == FluxParticleStartSpeedMode.Constant) Assert.AreEqual(2f, speed, 0.001f);
+                    else Assert.That(speed, Is.InRange(0.999f, 3.001f));
+                    if (shape == FluxParticleShapeType.Hemisphere)
+                    {
+                        Assert.GreaterOrEqual(positions[i].y, -0.0001f);
+                        Assert.GreaterOrEqual(velocities[i].y, -0.0001f);
+                    }
+                    if (shape == FluxParticleShapeType.Sphere || shape == FluxParticleShapeType.Hemisphere)
+                    {
+                        Assert.LessOrEqual(positions[i].magnitude, 2.501f);
+                        if (positions[i].sqrMagnitude > 0.000001f)
+                            Assert.Greater(Vector3.Dot(positions[i].normalized, velocities[i].normalized), 0.999f);
+                    }
+                    if (shape == FluxParticleShapeType.Cone)
+                    {
+                        Assert.AreEqual(0f, positions[i].y, 0.0001f);
+                        Assert.LessOrEqual(new Vector2(positions[i].x, positions[i].z).magnitude, 2.501f);
+                        Assert.Greater(velocities[i].y, 0f);
+                        Assert.GreaterOrEqual(Vector3.Dot(velocities[i].normalized, Vector3.up),
+                            Mathf.Cos(30f * Mathf.Deg2Rad) - 0.001f);
+                        Assert.GreaterOrEqual(positions[i].x * velocities[i].x + positions[i].z * velocities[i].z, -0.0001f);
+                    }
+                }
+                session.Clear();
+                session.Step(mask);
+                for (var i = 0; i < 2; i++)
+                {
+                    Assert.Less((positions[i] - ReadPosition(session, generated, i)).sqrMagnitude, 0.000001f);
+                    Assert.Less((velocities[i] - ReadVelocity(session, generated, i)).sqrMagnitude, 0.000001f);
+                }
+            }
+        }
+
+        static Vector3 ReadVelocity(FluxParticleProgramGpuSession session, FluxParticleShaderProgram generated, int particle)
+        {
+            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("particle.velocity", out var binding));
+            var source = session.CurrentPages[binding.PageId];
+            var active = RenderTexture.active;
+            var texture = new Texture2D(source.width, source.height, TextureFormat.RGBAFloat, false, true);
+            try
+            {
+                RenderTexture.active = source;
+                texture.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+                texture.Apply();
+                var value = (Vector4)texture.GetPixels()[particle];
+                return new Vector3(value[binding.ChannelOffset], value[binding.ChannelOffset + 1], value[binding.ChannelOffset + 2]);
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                Object.DestroyImmediate(texture);
+            }
+        }
         void SetShape(FluxParticleShapeType type, float radius)
         {
             var serialized = new SerializedObject(_authoring);
