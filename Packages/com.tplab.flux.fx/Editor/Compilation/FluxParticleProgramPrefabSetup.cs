@@ -62,6 +62,21 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 RequireUdon<FluxKernel>(spawn, "KeyKernel");
                 RequireUdon<FluxBuffer>(spawn, "KeyBuffer");
 
+                // 旧PrefabではEmitterがParticleSimulationの子にあるため、先にルートへ移動します。
+                var emitter = main.GetComponentInChildren<FluxParticleEmitter>(true);
+                if (emitter == null)
+                {
+                    throw new InvalidOperationException("[FluxFX] Missing FluxParticleEmitter in main prefab.");
+                }
+                emitter.transform.SetParent(main.transform, false);
+                emitter.name = "Emitter";
+
+                RenameRuntimeChild<FluxParticleRenderer>(main.transform, "ParticleRenderer", "Renderer");
+
+                // Emitterを移動した後で旧StateとSimulationを削除します。
+                RemoveLegacyChild(main.transform, "ParticleSimulation");
+                RemoveLegacyChild(main.transform, "ParticleState");
+
                 // AddUdonSharpComponent queues backing initialization. Save after its pending callbacks.
                 EditorApplication.delayCall += () =>
                 {
@@ -92,6 +107,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 PrefabUtility.UnloadPrefabContents(main);
                 throw;
             }
+        }
+
+        static void RemoveLegacyChild(Transform root, string name)
+        {
+            var child = root.Find(name);
+            if (child != null) Object.DestroyImmediate(child.gameObject);
+        }
+
+        static void RenameRuntimeChild<T>(Transform root, string legacyName, string currentName)
+            where T : UdonSharp.UdonSharpBehaviour
+        {
+            var child = root.Find(currentName);
+            if (child == null) child = root.Find(legacyName);
+            if (child == null || child.GetComponent<T>() == null)
+            {
+                throw new InvalidOperationException($"[FluxFX] Missing {typeof(T).Name} in main prefab.");
+            }
+            child.name = currentName;
         }
 
         static T RequireUdon<T>(Transform parent, string name) where T : UdonSharp.UdonSharpBehaviour
