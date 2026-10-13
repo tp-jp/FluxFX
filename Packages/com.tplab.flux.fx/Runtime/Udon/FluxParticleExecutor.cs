@@ -61,7 +61,6 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer[] _current;
         FluxBuffer[] _next;
         bool[] _updated;
-        Material _render;
         int _count;
         bool _initialized;
         bool _started;
@@ -69,7 +68,7 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// このParticle System専用の描画Materialを取得します。
         /// </summary>
-        public Material RenderMaterial => _render;
+        public Material RenderMaterial => renderMaterial;
 
         /// <summary>
         /// FluxBufferを初期化し、確定済みManifestのGPU実行環境を構築します。
@@ -128,8 +127,7 @@ namespace TpLab.Flux.FX.Udon
                 return false;
             }
 
-            _render = new Material(renderMaterial);
-            _render.SetVector("_FluxStateSize", stateSize);
+            renderMaterial.SetVector("_FluxStateSize", stateSize);
             spawnMaskKernel.SetVector("_FluxStateSize", stateSize);
             spawnKeyKernel.SetVector("_FluxStateSize", stateSize);
             _started = false;
@@ -249,26 +247,12 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// このInstanceが所有する描画Materialを解放します。
-        /// FluxKernelとFluxBufferのリソース所有権はFlux Coreにあります。
+        /// Executorが保持するRuntime参照を解放します。
+        /// 描画MaterialはEditorが生成したAssetであり、Executorは破棄しません。
         /// </summary>
         public void Release()
         {
             _initialized = false;
-            if (_render != null)
-            {
-#if UNITY_EDITOR && !COMPILER_UDONSHARP
-                if (!Application.isPlaying)
-                {
-                    DestroyImmediate(_render);
-                }
-                else
-#endif
-                {
-                    Destroy(_render);
-                }
-            }
-            _render = null;
             _current = null;
             _next = null;
             _updated = null;
@@ -326,15 +310,15 @@ namespace TpLab.Flux.FX.Udon
                 if (parameterTypes[index] == 1) stepKernels[i].SetFloat(property, value.x);
                 else stepKernels[i].SetVector(property, value);
             }
-            if (parameterTypes[index] == 1) _render.SetFloat(property, value.x);
-            else _render.SetVector(property, value);
+            if (parameterTypes[index] == 1) renderMaterial.SetFloat(property, value.x);
+            else renderMaterial.SetVector(property, value);
         }
 
         void BindRender()
         {
             for (var page = 0; page < _current.Length; page++)
             {
-                _render.SetTexture(renderPageProperties[page], _current[page].Texture);
+                renderMaterial.SetTexture(renderPageProperties[page], _current[page].Texture);
             }
         }
 

@@ -160,6 +160,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(second.Initialize(4));
             Assert.AreNotSame(first.GetCurrentPage(0), second.GetCurrentPage(0));
             Assert.AreNotSame(first.RenderMaterial, second.RenderMaterial);
+            Assert.AreSame(first.GetProgramVariable("renderMaterial"), first.RenderMaterial);
+            Assert.AreSame(second.GetProgramVariable("renderMaterial"), second.RenderMaterial);
             Assert.IsTrue(first.SetVector("color.start", new Vector4(1, 0, 0, 0.25f)));
             first.Step(0.1f, 0, 1, 1);
             first.Clear();
@@ -169,6 +171,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(first.SetFloat("unknown", 1));
             Assert.AreEqual(-1, ReadValue(first, compiled, "particle.age", 0).x, 0.0001f);
             Assert.AreEqual(-1, ReadValue(second, compiled, "particle.age", 0).x, 0.0001f);
+            var material = first.RenderMaterial;
+            first.Release();
+            Assert.IsNotNull(material);
+            Assert.AreSame(material, first.RenderMaterial);
+            Assert.AreSame(material, (Material)first.GetProgramVariable("renderMaterial"));
+            Assert.IsTrue(second.SetVector("color.end", new Vector4(0, 1, 0, 1)));
         }
 
         [Test]
