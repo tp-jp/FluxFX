@@ -93,6 +93,26 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
         }
 
+        [TestCase(FluxParticleShapeType.Hemisphere, "AuthoringHemisphereSpawnPosition.hlsl", "shape.radius")]
+        [TestCase(FluxParticleShapeType.Circle, "AuthoringCircleSpawnPosition.hlsl", "shape.radius")]
+        [TestCase(FluxParticleShapeType.Box, "AuthoringBoxSpawnPosition.hlsl", "shape.size")]
+        public void AdditionalShapesUseDeterministicSpawnWithoutNewState(
+            FluxParticleShapeType type, string hlslName, string parameter)
+        {
+            var point = new FluxParticleAuthoringProgram(_authoring);
+            SetShape(type, 2.5f);
+            var compiled = new FluxParticleAuthoringProgram(_authoring);
+
+            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding(parameter, out _));
+            var position = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.position");
+            Assert.IsTrue(position.Reads.Any(read => read.ValueId == "spawn.key" && read.Version == FluxParticleReadVersion.Provided));
+            CollectionAssert.Contains(position.Parameters.ToArray(), parameter);
+            StringAssert.EndsWith("/" + hlslName, position.HlslPath);
+            Assert.IsTrue(compiled.InitialValues.ContainsKey(parameter));
+        }
+
         [Test]
         public void SphereRejectsInvalidRadius()
         {

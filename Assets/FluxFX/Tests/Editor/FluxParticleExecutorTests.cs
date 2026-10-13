@@ -78,7 +78,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [TestCase("simulationSpace", 1)]
-        [TestCase("shape.type", 2)]
+        [TestCase("shape.type", 5)]
         [TestCase("render.mode", 1)]
         [TestCase("render.startColorMode", 1)]
         [TestCase("render.startSizeMode", 1)]
