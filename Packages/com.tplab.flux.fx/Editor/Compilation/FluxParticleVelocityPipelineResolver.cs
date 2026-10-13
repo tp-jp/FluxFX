@@ -21,9 +21,22 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
 
-            var writers = definitions.OperationOrder.Select(id => definitions.Operations[id])
+            var writers = definitions.Operations.Values
                 .Where(op => op.Phase == FluxParticlePhase.Update &&
                     op.Writes.Any(write => write.ValueId == Velocity)).ToArray();
+            if (writers.Length > 1)
+            {
+                if (writers.Any(op => !op.VelocityOrder.HasValue))
+                {
+                    throw new InvalidOperationException("Velocity writers require explicit VelocityOrder when multiple modules are active.");
+                }
+                var duplicate = writers.GroupBy(op => op.VelocityOrder.Value).FirstOrDefault(group => group.Count() > 1);
+                if (duplicate != null)
+                {
+                    throw new InvalidOperationException($"Conflicting VelocityOrder: {duplicate.Key}.");
+                }
+                writers = writers.OrderBy(op => op.VelocityOrder.Value).ToArray();
+            }
             if (writers.Length == 0)
             {
                 // Spawn直後もVelocityのUpdated Pageを作り、Motionから最新値を読めるようにします。
@@ -46,7 +59,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 if (previous != null) dependencies.Add(previous);
                 definitions.ReplaceOperation(new FluxParticleOperationDefinition(writer.Id, writer.OwnerId,
                     writer.Phase, reads, writer.Writes, dependencies, writer.HlslPath, writer.EntryPoint,
-                    writer.Parameters, writer.EnabledParameterId));
+                    writer.Parameters, writer.EnabledParameterId, writer.VelocityOrder));
                 previous = writer.Id;
             }
 
