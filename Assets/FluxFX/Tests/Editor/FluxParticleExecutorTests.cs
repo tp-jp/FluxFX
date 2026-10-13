@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,6 +13,7 @@ using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Tests.Editor
@@ -32,9 +34,18 @@ namespace TpLab.Flux.FX.Tests.Editor
             folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
         }
 
-        [TearDown]
-        public void TearDown()
+        [UnityTearDown]
+        public IEnumerator TearDown()
         {
+            // UdonSharp queues backing UdonBehaviour initialization via EditorApplication.delayCall.
+            // Wait for callbacks queued by AddUdonSharpComponent before destroying their GameObjects.
+            var delayedCallbacksCompleted = false;
+            EditorApplication.delayCall += () => delayedCallbacksCompleted = true;
+            while (!delayedCallbacksCompleted)
+            {
+                yield return null;
+            }
+
             foreach (var runtime in runtimes)
             {
                 if (runtime != null)
