@@ -41,12 +41,15 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawStartSize();
 
             var renderMode = (FluxParticleRenderMode)_render.FindPropertyRelative("mode").enumValueIndex;
-
-            if (renderMode == FluxParticleRenderMode.Mesh)
+            var startRotation = _render.FindPropertyRelative("startRotation");
+            var rotation = startRotation.vector3Value;
+            if (renderMode == FluxParticleRenderMode.Mesh || rotation.x != 0 || rotation.y != 0)
             {
-                EditorGUILayout.PropertyField(
-                    _render.FindPropertyRelative("startRotation"),
-                    new GUIContent(L10n.Tr("Start Rotation")));
+                EditorGUILayout.PropertyField(startRotation, new GUIContent(L10n.Tr("Start Rotation")));
+            }
+            else if (renderMode == FluxParticleRenderMode.Billboard)
+            {
+                EditorGUILayout.PropertyField(startRotation.FindPropertyRelative("z"), new GUIContent(L10n.Tr("Start Rotation")));
             }
         }
 

@@ -64,7 +64,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants, "Supported start color mode");
             Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant ||
                 authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants, "Supported start size mode");
-            Require(authoring.Render.StartRotation == Vector3.zero, "Zero start rotation");
+            var startRotation = authoring.Render.StartRotation;
+            Require(startRotation.x == 0 && startRotation.y == 0 && !float.IsNaN(startRotation.z) &&
+                !float.IsInfinity(startRotation.z), "Billboard start rotation around Z only");
+            var hasStartRotation = startRotation.z != 0;
             Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleRender", "FluxFX/ParticleRender material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay) &&
                 FiniteNonNegative(authoring.Playback.Duration) && authoring.Playback.Duration > 0, "Finite playback and emission settings");
@@ -107,6 +110,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var source = FluxParticleBasicProgram.CreateDefinitions();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
+            if (hasStartRotation)
+            {
+                definitions.AddValue(new FluxParticleValueDefinition("render.rotation", FluxParticleValueType.Float3,
+                    FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
+            }
             foreach (var provider in source.Providers.Values)
             {
                 if (provider.ValueId == "particle.start-color" &&
@@ -173,6 +181,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             definitions.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
             definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
                 randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
+            if (hasStartRotation)
+            {
+                definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+            }
             foreach (var operation in source.Operations.Values)
             {
                 if (operation.Id == "render.color" && (color == null || !color.Enabled))
@@ -221,6 +233,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     definitions.AddOperation(operation);
                 }
             }
+            if (hasStartRotation)
+            {
+                definitions.AddOperation(new FluxParticleOperationDefinition("render.rotation-start", "fluxfx.core", FluxParticlePhase.Render,
+                    Array.Empty<FluxParticleValueRead>(),
+                    new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Replace) }, null,
+                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
+                    new[] { "rotation.start" }));
+            }
             var life = authoring.Lifetime;
             var min = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Min(life.Min, life.Max);
             var max = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Max(life.Min, life.Max);
@@ -251,6 +271,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             else
             {
                 values.Add("render.size", new Vector4(authoring.Render.StartSize, 0, 0, 0));
+            }
+            if (hasStartRotation)
+            {
+                values.Add("rotation.start", startRotation);
             }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
@@ -325,13 +349,21 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 var spawnKeyExpression = $"(uint)tex2Dlod({keySampler}, float4(stateUV, 0.0, 0.0)).{"rgba"[spawnKey.ChannelOffset]}";
                 sizeExpression = $"lerp({range}.x, {range}.y, FluxFXRandom01({spawnKeyExpression} * 59u + 43u))";
             }
+            var rotationCode = Program.Program.Operations.Any(operation => operation.Id == "render.rotation-start")
+                ? "float angle = radians(render." + FluxParticleHlslNames.Value("render.rotation") + ".z);\n" +
+                  "float s;\n" +
+                  "float c;\n" +
+                  "sincos(angle, s, c);\n" +
+                  "float2 quad = float2(input.vertex.x * c - input.vertex.y * s, input.vertex.x * s + input.vertex.y * c);"
+                : "float2 quad = input.vertex.xy;";
             return FluxParticleProgramShaderGenerator.ExpandTemplate("Billboard", new Dictionary<string, string>
             {
                 ["PageProperties"] = pageProperties,
                 ["RenderCode"] = renderCode,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
-                ["Size"] = sizeExpression
+                ["Size"] = sizeExpression,
+                ["RotationCode"] = rotationCode
             });
         }
 

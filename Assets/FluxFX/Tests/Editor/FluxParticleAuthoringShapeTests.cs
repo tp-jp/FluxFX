@@ -204,6 +204,46 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void StartRotationZUsesRenderOperationWithoutAdditionalState()
+        {
+            var baseline = new FluxParticleAuthoringProgram(_authoring);
+            var baselineShader = baseline.GenerateRenderer();
+            Assert.IsFalse(baseline.Program.Program.Operations.Any(operation => operation.Id == "render.rotation-start"));
+            StringAssert.DoesNotContain("sincos(angle, s, c)", baselineShader);
+
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("render").FindPropertyRelative("startRotation").vector3Value = new Vector3(0, 0, 45);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var rotated = new FluxParticleAuthoringProgram(_authoring);
+            Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, rotated.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Program.Passes.Count, rotated.Program.Passes.Count);
+            Assert.AreEqual(new Vector4(0, 0, 45, 0), rotated.InitialValues["rotation.start"]);
+            Assert.IsFalse(rotated.Program.Program.StateLayout.TryGetBinding("render.rotation", out _));
+            var operation = rotated.Program.Program.Operations.Single(value => value.Id == "render.rotation-start");
+            Assert.AreEqual(FluxParticlePhase.Render, operation.Phase);
+            CollectionAssert.Contains(operation.Parameters.ToArray(), "rotation.start");
+            StringAssert.EndsWith("/AuthoringStartRotation.hlsl", operation.HlslPath);
+            var shader = rotated.GenerateRenderer();
+            StringAssert.Contains("render.valueRenderRotation.z", shader);
+            StringAssert.Contains("sincos(angle, s, c)", shader);
+            Import("StartRotationBillboard", shader);
+        }
+
+        [TestCase(45f, 1f, 0f)]
+        [TestCase(45f, 0f, -1f)]
+        [TestCase(float.NaN, 0f, 0f)]
+        [TestCase(float.PositiveInfinity, 0f, 0f)]
+        public void StartRotationRejectsUnsupportedAxesOrNonFiniteAngle(float z, float x, float y)
+        {
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("render").FindPropertyRelative("startRotation").vector3Value = new Vector3(x, y, z);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            StringAssert.Contains("Program Backend", Assert.Throws<InvalidOperationException>(() =>
+                new FluxParticleAuthoringProgram(_authoring)).Message);
+        }
+
+        [Test]
         public void SphereRejectsInvalidRadius()
         {
             SetShape(FluxParticleShapeType.Sphere, -1);
@@ -487,6 +527,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             target.Create();
             var pixels = new Texture2D(256, 256, TextureFormat.RGBA32, false, true);
             var previous = RenderTexture.active;
+            var cameraObject = new GameObject("FluxFX Billboard GPU Test Camera");
+            var camera = cameraObject.AddComponent<Camera>();
+            var commands = new CommandBuffer { name = "FluxFX Billboard GPU Test" };
             try
             {
                 mesh.vertices = new[] {
@@ -495,21 +538,27 @@ namespace TpLab.Flux.FX.Tests.Editor
                 mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
                 mesh.uv2 = Enumerable.Repeat(new Vector2(particleIndex, 0), 4).ToArray();
                 mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+
                 session.BindRender(material);
+                camera.enabled = false;
+                camera.orthographic = true;
+                camera.orthographicSize = 2;
+                camera.aspect = 1;
+                camera.nearClipPlane = 0.1f;
+                camera.farClipPlane = 20;
+                camera.transform.position = new Vector3(0, 0, -10);
+                camera.transform.rotation = Quaternion.identity;
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = Color.black;
+                camera.cullingMask = 0;
+                camera.allowHDR = false;
+                camera.allowMSAA = false;
+                camera.targetTexture = target;
+                commands.DrawMesh(mesh, Matrix4x4.identity, material, 0, 0);
+                camera.AddCommandBuffer(CameraEvent.AfterEverything, commands);
+                camera.Render();
+
                 RenderTexture.active = target;
-                GL.Clear(true, true, Color.black);
-                GL.PushMatrix();
-                try
-                {
-                    GL.modelview = Matrix4x4.identity;
-                    GL.LoadProjectionMatrix(Matrix4x4.Ortho(-2, 2, -2, 2, -10, 10));
-                    Assert.IsTrue(material.SetPass(0));
-                    Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
-                }
-                finally
-                {
-                    GL.PopMatrix();
-                }
                 pixels.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
                 pixels.Apply();
                 var row = pixels.GetPixels(0, 128, 256, 1);
@@ -526,7 +575,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             finally
             {
+                camera.RemoveCommandBuffer(CameraEvent.AfterEverything, commands);
+                camera.targetTexture = null;
+                commands.Release();
                 RenderTexture.active = previous;
+                Object.DestroyImmediate(cameraObject);
                 Object.DestroyImmediate(mesh);
                 Object.DestroyImmediate(pixels);
                 target.Release();
