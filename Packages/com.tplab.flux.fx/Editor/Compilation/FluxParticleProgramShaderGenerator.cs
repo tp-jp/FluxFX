@@ -67,6 +67,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Context type name collision: {collision.Key} ({string.Join(", ", collision.Select(op => op.Id))})");
                 }
+                var valueCollision = definitions.Values.Keys.GroupBy(FluxParticleHlslNames.Value, StringComparer.Ordinal)
+                    .FirstOrDefault(group => group.Count() > 1);
+                if (valueCollision != null)
+                {
+                    throw new InvalidOperationException($"Value field name collision: {valueCollision.Key} ({string.Join(", ", valueCollision)})");
+                }
+                var parameterCollision = definitions.Parameters.Keys.GroupBy(FluxParticleHlslNames.Parameter, StringComparer.Ordinal)
+                    .FirstOrDefault(group => group.Count() > 1);
+                if (parameterCollision != null)
+                {
+                    throw new InvalidOperationException($"Parameter field name collision: {parameterCollision.Key} ({string.Join(", ", parameterCollision)})");
+                }
                 foreach (var op in program.Operations)
                 {
                     ValidateImplementation(op.HlslPath, op.EntryPoint);
@@ -347,7 +359,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             string Type(string id) => HlslType(definitions.Values[id].Type);
             static string Field(string id) => FluxParticleHlslNames.Value(id);
-            static string Local(string id) => "o_" + FluxParticleHlslNames.Encode(id);
+            static string Local(string id) => FluxParticleHlslNames.OperationLocal(id);
             static string Page(int id, FluxParticlePageVersion version) => FluxParticleHlslNames.PageProperty(id, version);
             static string Swizzle(FluxParticleStateBinding binding) => "rgba".Substring(binding.ChannelOffset, binding.ComponentCount);
             static string Suffix(int count) => count == 1 ? "" : count.ToString();

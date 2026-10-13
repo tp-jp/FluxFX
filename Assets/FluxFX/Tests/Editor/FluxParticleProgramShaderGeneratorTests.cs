@@ -45,9 +45,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             var velocity = generated.Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "gravity"));
             var motion = generated.Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "motion"));
             Assert.Less(velocity.Plan.Index, motion.Plan.Index);
-            StringAssert.Contains("FluxFX_Gravity(o_n_gravity)", velocity.Source);
-            StringAssert.Contains("FluxFX_Drag(o_n_drag)", velocity.Source);
-            StringAssert.Contains("o_n_drag.v_n_particle_002e_velocity = o_n_gravity.v_n_particle_002e_velocity", velocity.Source);
+            StringAssert.Contains("FluxFX_Gravity(operationGravity)", velocity.Source);
+            StringAssert.Contains("FluxFX_Drag(operationDrag)", velocity.Source);
+            StringAssert.Contains("operationDrag.valueParticleVelocity = operationGravity.valueParticleVelocity", velocity.Source);
             Assert.IsTrue(motion.Reads.Any(read => read.PageId == velocity.Plan.OutputPageId && read.Version == FluxParticlePageVersion.Updated));
             Assert.IsTrue(velocity.Reads.Any(read => read.PageId == motion.Plan.OutputPageId && read.Version == FluxParticlePageVersion.StepPrevious));
         }
@@ -59,10 +59,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             var begin = source.IndexOf("struct FluxGravityContext", StringComparison.Ordinal);
             var end = source.IndexOf("};", begin, StringComparison.Ordinal);
             var context = source.Substring(begin, end - begin);
-            StringAssert.Contains("v_n_particle_002e_velocity", context);
-            StringAssert.Contains("p_n_gravity", context);
-            StringAssert.DoesNotContain("v_n_particle_002e_position", context);
-            StringAssert.DoesNotContain("p_n_drag", context);
+            StringAssert.Contains("valueParticleVelocity", context);
+            StringAssert.Contains("parameterGravity", context);
+            StringAssert.DoesNotContain("valueParticlePosition", context);
+            StringAssert.DoesNotContain("parameterDrag", context);
         }
 
         [Test]
@@ -71,7 +71,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var generated = Generate();
             StringAssert.Contains("FluxFX_StartColor(_FluxParameter_n_color_002e_start)", generated.RenderSource);
             StringAssert.Contains("FluxFX_Lifetime(", generated.RenderSource);
-            StringAssert.Contains("FluxFX_RenderColor(o_n_render_002e_color)", generated.RenderSource);
+            StringAssert.Contains("FluxFX_RenderColor(operationRenderColor)", generated.RenderSource);
             Assert.AreEqual(2, generated.Passes.Count);
         }
 
@@ -81,6 +81,40 @@ namespace TpLab.Flux.FX.Tests.Editor
             var ids = new[] { "a.b", "a-b", "a_b", "a_002e_b", "1", "日本語" };
             Assert.AreEqual(ids.Length, ids.Select(FluxParticleHlslNames.Encode).Distinct().Count());
             Assert.IsTrue(ids.Select(FluxParticleHlslNames.Encode).All(id => id.StartsWith("n_", StringComparison.Ordinal)));
+        }
+
+        [Test]
+        public void GeneratedFieldsAndOperationLocalsUseReadableCamelCase()
+        {
+            Assert.AreEqual("valueParticlePosition", FluxParticleHlslNames.Value("particle.position"));
+            Assert.AreEqual("valueParticleSpawnKey", FluxParticleHlslNames.Value("particle.spawn-key"));
+            Assert.AreEqual("parameterShapeRadius", FluxParticleHlslNames.Parameter("shape.radius"));
+            Assert.AreEqual("operationSpawnPosition", FluxParticleHlslNames.OperationLocal("spawn.position"));
+            Assert.AreEqual("FluxSpawnPositionContext", FluxParticleHlslNames.Context("spawn.position"));
+        }
+
+        [Test]
+        public void RejectValueFieldNameCollision()
+        {
+            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            definitions.AddValue(new FluxParticleValueDefinition("custom.force", FluxParticleValueType.Float,
+                FluxParticleWritePolicy.ReadOnly, "test"));
+            definitions.AddValue(new FluxParticleValueDefinition("custom-force", FluxParticleValueType.Float,
+                FluxParticleWritePolicy.ReadOnly, "test"));
+            var exception = Assert.Throws<InvalidOperationException>(() => Generate(definitions));
+            StringAssert.Contains("Value field name collision", exception.Message);
+        }
+
+        [Test]
+        public void RejectParameterFieldNameCollision()
+        {
+            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            definitions.AddParameter(new FluxParticleParameterDefinition("custom.force", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live));
+            definitions.AddParameter(new FluxParticleParameterDefinition("custom-force", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live));
+            var exception = Assert.Throws<InvalidOperationException>(() => Generate(definitions));
+            StringAssert.Contains("Parameter field name collision", exception.Message);
         }
 
         [TestCase("gravity", "FluxGravityContext")]
@@ -203,7 +237,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 motion.Writes, new[] { "restore" }, motion.HlslPath, motion.EntryPoint));
             var generated = Generate(changed);
             var source = generated.Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "restore")).Source;
-            StringAssert.Contains("o_n_restore.v_n_particle_002e_velocity = o_n_gravity.v_n_particle_002e_velocity", source);
+            StringAssert.Contains("operationRestore.valueParticleVelocity = operationGravity.valueParticleVelocity", source);
         }
 
         [Test]
@@ -225,9 +259,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(2, projected.Length);
             foreach (var pass in projected)
             {
-                StringAssert.Contains("v_n_custom_002e_mode", pass.Source);
-                StringAssert.Contains("v_n_particle_002e_velocity", pass.Source);
-                StringAssert.Contains("FluxFX_SpawnMulti(o_n_spawn_002e_multi)", pass.Source);
+                StringAssert.Contains("valueCustomMode", pass.Source);
+                StringAssert.Contains("valueParticleVelocity", pass.Source);
+                StringAssert.Contains("FluxFX_SpawnMulti(operationSpawnMulti)", pass.Source);
                 Assert.IsTrue(pass.Plan.SpawnOperations.Single(op => op.Id == "spawn.multi").Writes.All(write =>
                     generated.Program.StateLayout.TryGetBinding(write.ValueId, out var binding) && binding.PageId == pass.Plan.OutputPageId));
             }
@@ -421,8 +455,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             changed.AddValue(new FluxParticleValueDefinition("custom.mode", FluxParticleValueType.Float,
                 FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
             var path = WriteInclude("SpawnMulti", "void FluxFX_SpawnMulti(inout FluxSpawnMultiContext ctx)\n{\n" +
-                "    ctx.v_n_particle_002e_velocity = ctx.p_n_spawn_002e_velocity;\n" +
-                "    ctx.v_n_particle_002e_spawn_002d_key = ctx.v_n_spawn_002e_key;\n    ctx.v_n_custom_002e_mode = 7.0;\n}\n");
+                "    ctx.valueParticleVelocity = ctx.parameterSpawnVelocity;\n" +
+                "    ctx.valueParticleSpawnKey = ctx.valueSpawnKey;\n    ctx.valueCustomMode = 7.0;\n}\n");
             var source = definitions.Operations["spawn.velocity"];
             changed.AddOperation(new FluxParticleOperationDefinition("spawn.multi", source.OwnerId, source.Phase,
                 source.Reads, source.Writes.Concat(new[] { new FluxParticleValueWrite("custom.mode", FluxParticleWriteKind.Initialize) }),
@@ -495,7 +529,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             return "Shader \"Hidden/FluxFX/Phase2Tests/Render\" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off\n" +
                 "HLSLPROGRAM\n#pragma target 3.5\n#pragma vertex vert_img\n#pragma fragment frag\n#include \"UnityCG.cginc\"\n" +
                 generated.RenderSource + "\nfloat4 frag(v2f_img i) : SV_Target { bool alive; FluxRenderContext ctx = FluxFX_EvaluateRender(i.uv, alive); " +
-                "return alive ? ctx.v_n_render_002e_color : float4(0,0,0,0); }\nENDHLSL\n} } Fallback Off }";
+                "return alive ? ctx.valueRenderColor : float4(0,0,0,0); }\nENDHLSL\n} } Fallback Off }";
         }
 
         void Configure(FluxParticleProgramGpuSession session, float lifetime = 10)

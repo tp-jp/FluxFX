@@ -68,14 +68,27 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// </summary>
         /// <param name="id">Value ID。</param>
         /// <returns>生成するフィールド名。</returns>
-        public static string Value(string id) => "v_" + Encode(id);
+        public static string Value(string id) => "value" + ReadableName(id);
 
         /// <summary>
         /// Context内のParameterフィールド名です。
         /// </summary>
         /// <param name="id">Parameter ID。</param>
         /// <returns>生成するフィールド名。</returns>
-        public static string Parameter(string id) => "p_" + Encode(id);
+        public static string Parameter(string id) => "parameter" + ReadableName(id);
+
+        /// <summary>
+        /// Operationの生成HLSLローカル変数名です。
+        /// </summary>
+        /// <param name="id">Operation ID。</param>
+        /// <returns>camelCase形式のローカル変数名。</returns>
+        public static string OperationLocal(string id) => "operation" + ReadableName(id);
+
+        static string ReadableName(string id)
+        {
+            var context = Context(id);
+            return context.Substring("Flux".Length, context.Length - "Flux".Length - "Context".Length);
+        }
 
         /// <summary>
         /// ParameterのMaterial Property名です。
