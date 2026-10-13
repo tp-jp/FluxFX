@@ -40,7 +40,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 Require(FiniteNonNegative(authoring.Shape.Radius), "Non-negative Sphere radius");
             }
-            Require(authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.Constant, "Constant start speed");
+            Require(authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.Constant ||
+                authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants, "Supported start speed mode");
+            if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
+            {
+                Require(FiniteNonNegative(authoring.InitialVelocity.Min) && FiniteNonNegative(authoring.InitialVelocity.Max),
+                    "Finite non-negative start speed range");
+            }
             Require(authoring.Render.Mode == FluxParticleRenderMode.Billboard, "Billboard rendering");
             Require(authoring.Render.StartColorMode == FluxParticleStartColorMode.Constant, "Constant start color");
             Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant, "Constant start size");
@@ -95,7 +101,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     : provider);
             }
             foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity")) definitions.AddParameter(parameter);
-            definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+            if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
+            {
+                definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed-range", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Live));
+            }
+            else
+            {
+                definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+            }
             if (authoring.Shape.Type == FluxParticleShapeType.Sphere)
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("shape.radius", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
@@ -119,8 +132,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
                         operation.Reads, operation.Writes, operation.Dependencies,
-                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringSpawnVelocity.hlsl", operation.EntryPoint,
-                        new[] { "spawn.speed" }));
+                        authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
+                            ? "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomSpawnVelocity.hlsl"
+                            : "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringSpawnVelocity.hlsl", operation.EntryPoint,
+                        new[] { authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants
+                            ? "spawn.speed-range" : "spawn.speed" }));
                 }
                 else if (operation.Id == "drag")
                 {
@@ -139,7 +155,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
             {
                 ["spawn.position"] = Vector4.zero,
-                ["spawn.speed"] = new Vector4(authoring.InitialVelocity.Speed, 0, 0, 0),
                 ["gravity"] = gravity == null ? Vector4.zero : (Vector4)gravity.Gravity,
                 ["gravity.enabled"] = new Vector4(gravity != null && gravity.Enabled ? 1 : 0, 0, 0, 0),
                 ["drag"] = new Vector4(drag == null ? 0 : drag.Drag, 0, 0, 0),
@@ -149,6 +164,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["color.end"] = color == null ? authoring.Render.StartColor : color.EndColor,
                 ["render.size"] = new Vector4(authoring.Render.StartSize, 0, 0, 0)
             };
+            if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
+            {
+                values.Add("spawn.speed-range", new Vector4(Mathf.Min(authoring.InitialVelocity.Min, authoring.InitialVelocity.Max),
+                    Mathf.Max(authoring.InitialVelocity.Min, authoring.InitialVelocity.Max), 0, 0));
+            }
+            else
+            {
+                values.Add("spawn.speed", new Vector4(authoring.InitialVelocity.Speed, 0, 0, 0));
+            }
             if (authoring.Shape.Type == FluxParticleShapeType.Sphere)
             {
                 values.Add("shape.radius", new Vector4(authoring.Shape.Radius, 0, 0, 0));

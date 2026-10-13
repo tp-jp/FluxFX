@@ -81,7 +81,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase("shape.type", 2)]
         [TestCase("render.mode", 1)]
         [TestCase("render.startColorMode", 1)]
-        [TestCase("initialVelocity.mode", 1)]
+        [TestCase("render.startSizeMode", 1)]
         public void UnsupportedSettingsFailBeforeGeneratingAssets(string path, int value)
         {
             var serialized = new SerializedObject(authoring);

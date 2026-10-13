@@ -61,6 +61,39 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void RandomStartSpeedUsesSpawnKeyWithoutAdditionalStatePages()
+        {
+            var constant = new FluxParticleAuthoringProgram(_authoring);
+            var serialized = new SerializedObject(_authoring);
+            var velocity = serialized.FindProperty("initialVelocity");
+            velocity.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleStartSpeedMode.RandomBetweenTwoConstants;
+            velocity.FindPropertyRelative("min").floatValue = 0.5f;
+            velocity.FindPropertyRelative("max").floatValue = 2f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            var random = new FluxParticleAuthoringProgram(_authoring);
+            Assert.AreEqual(constant.Program.Program.StateLayout.Pages.Count, random.Program.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(constant.Program.Passes.Count, random.Program.Passes.Count);
+            Assert.IsFalse(random.InitialValues.ContainsKey("spawn.speed"));
+            Assert.AreEqual(new Vector4(0.5f, 2f, 0, 0), random.InitialValues["spawn.speed-range"]);
+            Assert.IsFalse(random.Program.Program.StateLayout.TryGetBinding("spawn.speed-range", out _));
+            var spawn = random.Program.Program.Operations.Single(op => op.Id == "spawn.velocity");
+            CollectionAssert.Contains(spawn.Parameters.ToArray(), "spawn.speed-range");
+            StringAssert.EndsWith("/AuthoringRandomSpawnVelocity.hlsl", spawn.HlslPath);
+        }
+
+        [Test]
+        public void RandomStartSpeedRejectsNonFiniteRange()
+        {
+            var serialized = new SerializedObject(_authoring);
+            var velocity = serialized.FindProperty("initialVelocity");
+            velocity.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleStartSpeedMode.RandomBetweenTwoConstants;
+            velocity.FindPropertyRelative("min").floatValue = float.NaN;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+        }
+
+        [Test]
         public void SphereRejectsInvalidRadius()
         {
             SetShape(FluxParticleShapeType.Sphere, -1);
