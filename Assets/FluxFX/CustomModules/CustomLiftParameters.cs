@@ -48,13 +48,13 @@ namespace TpLab.Flux.FX.CustomModules
         }
     }
 
-    [PublicAPI]
-    public static class CustomLiftParticleSystemExtensions
-    {
-        [PublicAPI]
-        public static CustomLiftParameters GetCustomLift(this FluxParticleSystem particleSystem)
-        {
-            return CustomLiftParameters.New(particleSystem.TryGetGpuModuleBinding("custom.fluxfx.lift"));
-        }
-    }
+    // [PublicAPI]
+    // public static class CustomLiftParticleSystemExtensions
+    // {
+    //     [PublicAPI]
+    //     public static CustomLiftParameters GetCustomLift(this FluxParticleSystem particleSystem)
+    //     {
+    //         return CustomLiftParameters.New(particleSystem.TryGetGpuModuleBinding("custom.fluxfx.lift"));
+    //     }
+    // }
 }

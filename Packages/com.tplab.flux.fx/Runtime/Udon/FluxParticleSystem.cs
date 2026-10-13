@@ -7,7 +7,8 @@ using VRC.SDK3.Data;
 namespace TpLab.Flux.FX.Udon
 {
     /// <summary>
-    /// GPU上でParticleのSimulationとRenderingを行うParticle Systemです。
+    /// コンパイル済みParticle Programの再生とEmissionを制御します。
+    /// GPU実行とState Page管理はFluxParticleExecutorへ委譲します。
     /// </summary>
     [PublicAPI]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -21,13 +22,7 @@ namespace TpLab.Flux.FX.Udon
         bool playOnAwake = true;
 
         [SerializeField]
-        FluxParticleState particleState;
-
-        [SerializeField]
         FluxParticleEmitter particleEmitter;
-
-        [SerializeField]
-        FluxParticleSimulation particleSimulation;
 
         [SerializeField]
         FluxParticleRenderer particleRenderer;
@@ -40,97 +35,48 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleExecutor particleExecutor;
 
         bool _programReady;
-        DataDictionary _gpuModuleBindings;
         bool _isPlaying;
         object _emission;
-        object _lifetime;
-        object _shape;
-        object _initialVelocity;
-        object _velocityOverLifetime;
-        object _gravity;
-        object _force;
-        object _drag;
-        object _noise;
-        object _vortex;
-        object _limitVelocity;
-        object _startColor;
-        object _startSize;
-        object _startRotation;
-        object _colorOverLifetime;
-        object _sizeOverLifetime;
-        object _rotationOverLifetime;
 
         /// <summary>
-        /// 新Backendの論理Parameter APIです。旧Backendを使用する場合はnullです。
+        /// GPU Programの実行と論理Parameterを管理するExecutorです。
         /// </summary>
+        [PublicAPI]
         public FluxParticleExecutor Executor => particleExecutor;
 
+        /// <summary>
+        /// 使用するParticle Slotの数です。
+        /// </summary>
         [PublicAPI]
         public int ParticleCount => particleCount;
 
+        /// <summary>
+        /// Emission RateをRuntimeから操作するためのParameterです。
+        /// </summary>
         [PublicAPI]
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
 
-        [PublicAPI]
-        public FluxParticleLifetimeParameters Lifetime => (FluxParticleLifetimeParameters)_lifetime;
-
-        [PublicAPI]
-        public FluxParticleShapeParameters Shape => (FluxParticleShapeParameters)_shape;
-
-        [PublicAPI]
-        public FluxParticleInitialVelocityParameters InitialVelocity => (FluxParticleInitialVelocityParameters)_initialVelocity;
-
-        [PublicAPI]
-        public FluxParticleVelocityOverLifetimeParameters VelocityOverLifetime => (FluxParticleVelocityOverLifetimeParameters)_velocityOverLifetime;
-
-        [PublicAPI]
-        public FluxParticleGravityParameters Gravity => (FluxParticleGravityParameters)_gravity;
-
-        [PublicAPI]
-        public FluxParticleForceParameters Force => (FluxParticleForceParameters)_force;
-
-        [PublicAPI]
-        public FluxParticleDragParameters Drag => (FluxParticleDragParameters)_drag;
-
-        [PublicAPI]
-        public FluxParticleNoiseParameters Noise => (FluxParticleNoiseParameters)_noise;
-
-        [PublicAPI]
-        public FluxParticleVortexParameters Vortex => (FluxParticleVortexParameters)_vortex;
-
-        [PublicAPI]
-        public FluxParticleLimitVelocityParameters LimitVelocity => (FluxParticleLimitVelocityParameters)_limitVelocity;
-
-        [PublicAPI]
-        public FluxParticleStartColorParameters StartColor => (FluxParticleStartColorParameters)_startColor;
-
-        [PublicAPI]
-        public FluxParticleStartSizeParameters StartSize => (FluxParticleStartSizeParameters)_startSize;
-
-        [PublicAPI]
-        public FluxParticleStartRotationParameters StartRotation => (FluxParticleStartRotationParameters)_startRotation;
-
-        [PublicAPI]
-        public FluxParticleColorOverLifetimeParameters ColorOverLifetime => (FluxParticleColorOverLifetimeParameters)_colorOverLifetime;
-
-        [PublicAPI]
-        public FluxParticleSizeOverLifetimeParameters SizeOverLifetime => (FluxParticleSizeOverLifetimeParameters)_sizeOverLifetime;
-
-        [PublicAPI]
-        public FluxParticleRotationOverLifetimeParameters RotationOverLifetime => (FluxParticleRotationOverLifetimeParameters)_rotationOverLifetime;
-
+        /// <summary>
+        /// Particleの生成を再開します。
+        /// </summary>
         [PublicAPI]
         public void Play()
         {
             _isPlaying = true;
         }
 
+        /// <summary>
+        /// 新しいParticleの生成を停止します。既存Particleの更新は継続します。
+        /// </summary>
         [PublicAPI]
         public void Stop()
         {
             _isPlaying = false;
         }
 
+        /// <summary>
+        /// Emissionの再生位置を初期化し、生成を再開します。
+        /// </summary>
         [PublicAPI]
         public void Restart()
         {
@@ -138,155 +84,38 @@ namespace TpLab.Flux.FX.Udon
             _isPlaying = true;
         }
 
+        /// <summary>
+        /// 全State Pageを初期化します。Emissionの再生位置は変更しません。
+        /// </summary>
         [PublicAPI]
         public void Clear()
         {
-            if (particleExecutor != null)
-            {
-                particleExecutor.Clear();
-                return;
-            }
-            particleState.Clear();
-        }
-
-        [PublicAPI]
-        public void SetFloat(FluxParticleKernelTarget target, string name, float value)
-        {
-            if (particleExecutor != null)
-            {
-                Logger.LogError("Use Executor.SetFloat with a logical Parameter ID for Program Backend.");
-                return;
-            }
-            particleSimulation.SetFloat(target, name, value);
-        }
-
-        [PublicAPI]
-        public void SetVector(FluxParticleKernelTarget target, string name, Vector4 value)
-        {
-            if (particleExecutor != null)
-            {
-                Logger.LogError("Use Executor.SetVector with a logical Parameter ID for Program Backend.");
-                return;
-            }
-            particleSimulation.SetVector(target, name, value);
-        }
-
-        [PublicAPI]
-        public bool SetModuleEnabled(string moduleId, bool enabled)
-        {
-            if (particleExecutor != null)
-            {
-                Logger.LogError("Use Executor with a logical Parameter ID for Program Backend.");
-                return false;
-            }
-            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
-            {
-                Logger.LogError($"GPU Module is not registered: {moduleId}");
-                return false;
-            }
-
-            return particleSimulation.SetGpuParameterFloat(target, parameterName, enabled ? 1.0f : 0.0f);
-        }
-
-        [PublicAPI]
-        public bool GetModuleEnabled(string moduleId)
-        {
-            if (particleExecutor != null)
-            {
-                Logger.LogError("Use Executor with a logical Parameter ID for Program Backend.");
-                return false;
-            }
-            if (!TryGetModuleBinding(moduleId, out var target, out var parameterName))
-            {
-                Logger.LogError($"GPU Module is not registered: {moduleId}");
-                return false;
-            }
-
-            return particleSimulation.GetGpuParameterFloat(target, parameterName) > 0.5f;
-        }
-
-        [PublicAPI]
-        public DataList GetGpuModuleBinding(string moduleId)
-        {
-            return TryGetGpuModuleBinding(moduleId);
-        }
-
-        [PublicAPI]
-        public DataList TryGetGpuModuleBinding(string moduleId)
-        {
-            if (!TryGetModuleBinding(moduleId, out var target, out var enabledParameter)) return null;
-
-            var store = particleSimulation.GetGpuParameterStore(target);
-            if (store == null) return null;
-
-            if (!store.HasParameter(enabledParameter))
-            {
-                Logger.LogError($"GPU Module Enabled parameter is not registered: {moduleId}");
-                return null;
-            }
-
-            var data = new DataToken[2];
-            data[0] = new DataToken(store);
-            data[1] = enabledParameter;
-
-            return new DataList(data);
+            particleExecutor.Clear();
         }
 
         void Start()
         {
-            if (particleExecutor != null)
+            if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var compiled))
             {
-                if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var compiled)) return;
-                InitializeEmitter(compiled.DataDictionary);
-                _programReady = particleExecutor.Initialize(particleCount);
-                if (!_programReady) return;
-                particleRenderer.InitializeProgram(particleCount, particleExecutor.RenderMaterial);
-                _isPlaying = playOnAwake;
+                Logger.LogError("Particle Program playback parameters are invalid.", this);
                 return;
             }
-            particleState.Initialize(particleCount);
 
-            InitializeCompiledParameters();
+            InitializeEmitter(compiled.DataDictionary);
+            _programReady = particleExecutor.Initialize(particleCount);
+            if (!_programReady) return;
 
-            particleRenderer.Initialize(particleCount);
-            particleRenderer.SetState(particleState);
-
+            particleRenderer.InitializeProgram(particleCount, particleExecutor.RenderMaterial);
             _isPlaying = playOnAwake;
         }
 
         void Update()
         {
+            if (!_programReady) return;
+
             var deltaTime = Time.deltaTime;
-            if (particleExecutor != null)
-            {
-                if (!_programReady) return;
-                particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
-                particleExecutor.Step(deltaTime, particleEmitter.SpawnStart, particleEmitter.SpawnCount, particleEmitter.SpawnSeedStart);
-                return;
-            }
-
             particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
-            particleSimulation.SetSystemTransform(transform.position, transform.rotation, transform.lossyScale);
-            particleSimulation.Simulate(deltaTime);
-            particleRenderer.SetState(particleState);
-        }
-
-        void InitializeCompiledParameters()
-        {
-            if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var result)) return;
-
-            var parameters = result.DataDictionary;
-
-            InitializeEmitter(parameters);
-
-            if (parameters.TryGetValue("gpuParameters", out var gpuParameters))
-            {
-                particleSimulation.InitializeGpuParameters(gpuParameters.DataDictionary);
-            }
-
-            InitializeGpuModuleBindings(parameters);
-            InitializeSimulation(parameters);
-            InitializeRenderer(parameters);
+            particleExecutor.Step(deltaTime, particleEmitter.SpawnStart, particleEmitter.SpawnCount, particleEmitter.SpawnSeedStart);
         }
 
         void InitializeEmitter(DataDictionary parameters)
@@ -305,293 +134,12 @@ namespace TpLab.Flux.FX.Udon
             for (var i = 0; i < bursts.Count; i++)
             {
                 var burst = bursts[i].DataDictionary;
-
                 burstTimes[i] = (float)burst["time"].Double;
                 burstCounts[i] = (int)burst["count"].Double;
             }
 
             _emission = FluxParticleEmissionParameters.New(emissionRate);
-
-            particleEmitter.Initialize(
-                Emission,
-                burstTimes,
-                burstCounts,
-                particleCount,
-                startDelay,
-                duration,
-                loop);
-        }
-
-        void InitializeGpuModuleBindings(DataDictionary parameters)
-        {
-            _gpuModuleBindings = new DataDictionary();
-
-            if (!parameters.TryGetValue("gpuModuleBindings", out var token)) return;
-
-            _gpuModuleBindings = token.DataDictionary;
-        }
-
-        void InitializeSimulation(DataDictionary parameters)
-        {
-            var simulationSpace = (int)parameters["simulationSpace"].Double;
-
-            InitializeLifetime(parameters);
-            InitializeShape(parameters);
-            InitializeInitialVelocity(parameters);
-            InitializeVelocityOverLifetime();
-            InitializeGravity();
-            InitializeForce();
-            InitializeDrag();
-            InitializeNoise();
-            InitializeVortex();
-            InitializeLimitVelocity();
-
-            particleSimulation.Initialize(
-                Lifetime,
-                Shape,
-                InitialVelocity);
-
-            particleSimulation.SetSimulationSpace(simulationSpace);
-        }
-
-        void InitializeLifetime(DataDictionary parameters)
-        {
-            var lifetime = (float)parameters["lifetime"].Double;
-            var lifetimeMin = lifetime;
-            var lifetimeMax = lifetime;
-
-            if (parameters.TryGetValue("lifetimeMin", out var lifetimeMinToken))
-            {
-                lifetimeMin = (float)lifetimeMinToken.Double;
-            }
-
-            if (parameters.TryGetValue("lifetimeMax", out var lifetimeMaxToken))
-            {
-                lifetimeMax = (float)lifetimeMaxToken.Double;
-            }
-
-            _lifetime = FluxParticleLifetimeParameters.New(lifetimeMin, lifetimeMax);
-        }
-
-        void InitializeShape(DataDictionary parameters)
-        {
-            var shape = parameters["shape"].DataDictionary;
-
-            var type = (FluxParticleShapeType)(int)shape["type"].Double;
-            var radius = (float)shape["radius"].Double;
-            var angle = (float)shape["angle"].Double;
-
-            var size = new Vector3(
-                (float)shape["sizeX"].Double,
-                (float)shape["sizeY"].Double,
-                (float)shape["sizeZ"].Double);
-
-            _shape = FluxParticleShapeParameters.New(type, radius, angle, size);
-        }
-
-        void InitializeInitialVelocity(DataDictionary parameters)
-        {
-            var initialVelocity = parameters["initialVelocity"].DataDictionary;
-            var speed = (float)initialVelocity["speed"].Double;
-            var min = speed;
-            var max = speed;
-
-            if (initialVelocity.TryGetValue("speedMin", out var minToken))
-            {
-                min = (float)minToken.Double;
-            }
-
-            if (initialVelocity.TryGetValue("speedMax", out var maxToken))
-            {
-                max = (float)maxToken.Double;
-            }
-
-            _initialVelocity = FluxParticleInitialVelocityParameters.New(min, max);
-        }
-
-        void InitializeVelocityOverLifetime()
-        {
-            _velocityOverLifetime = FluxParticleVelocityOverLifetimeParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.velocity-over-lifetime"));
-        }
-
-        void InitializeGravity()
-        {
-            _gravity = FluxParticleGravityParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.gravity"));
-        }
-
-        void InitializeForce()
-        {
-            _force = FluxParticleForceParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.force"));
-        }
-
-        void InitializeNoise()
-        {
-            _noise = FluxParticleNoiseParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.noise"));
-        }
-
-        void InitializeVortex()
-        {
-            _vortex = FluxParticleVortexParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.vortex"));
-        }
-
-        void InitializeDrag()
-        {
-            _drag = FluxParticleDragParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.drag"));
-        }
-
-        void InitializeLimitVelocity()
-        {
-            _limitVelocity = FluxParticleLimitVelocityParameters.New(TryGetGpuModuleBinding("tplab.fluxfx.limit-velocity"));
-        }
-
-        void InitializeRenderer(DataDictionary parameters)
-        {
-            var simulationSpace = (int)parameters["simulationSpace"].Double;
-            var render = parameters["render"].DataDictionary;
-
-            InitializeStartColor(render);
-            InitializeStartSize(render);
-            InitializeStartRotation(render);
-            InitializeColorOverLifetime(render);
-            InitializeSizeOverLifetime(render);
-            InitializeRotationOverLifetime(render);
-
-            particleSimulation.SetSpawnParameters(StartColor, StartSize, StartRotation);
-            particleRenderer.SetSimulationSpace(simulationSpace);
-            particleRenderer.SetRenderParameters(render, ColorOverLifetime, SizeOverLifetime, RotationOverLifetime);
-        }
-
-        void InitializeStartColor(DataDictionary render)
-        {
-            var startColor = new Color(
-                (float)render["startColorR"].Double,
-                (float)render["startColorG"].Double,
-                (float)render["startColorB"].Double,
-                (float)render["startColorA"].Double);
-
-            var min = startColor;
-            var max = startColor;
-
-            if (render.TryGetValue("startColorMinR", out var minToken))
-            {
-                min = new Color(
-                    (float)minToken.Double,
-                    (float)render["startColorMinG"].Double,
-                    (float)render["startColorMinB"].Double,
-                    (float)render["startColorMinA"].Double);
-            }
-
-            if (render.TryGetValue("startColorMaxR", out var maxToken))
-            {
-                max = new Color(
-                    (float)maxToken.Double,
-                    (float)render["startColorMaxG"].Double,
-                    (float)render["startColorMaxB"].Double,
-                    (float)render["startColorMaxA"].Double);
-            }
-
-            _startColor = FluxParticleStartColorParameters.New(min, max);
-        }
-
-        void InitializeStartSize(DataDictionary render)
-        {
-            var startSize = (float)render["startSize"].Double;
-            var min = startSize;
-            var max = startSize;
-
-            if (render.TryGetValue("startSizeMin", out var minToken))
-            {
-                min = (float)minToken.Double;
-            }
-
-            if (render.TryGetValue("startSizeMax", out var maxToken))
-            {
-                max = (float)maxToken.Double;
-            }
-
-            _startSize = FluxParticleStartSizeParameters.New(min, max);
-        }
-
-        void InitializeStartRotation(DataDictionary render)
-        {
-            var rotation = new Vector3(
-                (float)render["startRotationX"].Double,
-                (float)render["startRotationY"].Double,
-                (float)render["startRotationZ"].Double);
-
-            _startRotation = FluxParticleStartRotationParameters.New(rotation);
-        }
-
-        void InitializeColorOverLifetime(DataDictionary render)
-        {
-            var enabled = false;
-            var endColor = Color.white;
-
-            if (render.TryGetValue("colorOverLifetime", out var token))
-            {
-                var color = token.DataDictionary;
-
-                enabled = true;
-
-                endColor = new Color(
-                    (float)color["endColorR"].Double,
-                    (float)color["endColorG"].Double,
-                    (float)color["endColorB"].Double,
-                    (float)color["endColorA"].Double);
-            }
-
-            _colorOverLifetime = FluxParticleColorOverLifetimeParameters.New(enabled, endColor);
-        }
-
-        void InitializeSizeOverLifetime(DataDictionary render)
-        {
-            var enabled = false;
-            var endSize = 0.0f;
-
-            if (render.TryGetValue("sizeOverLifetime", out var token))
-            {
-                var size = token.DataDictionary;
-
-                enabled = true;
-                endSize = (float)size["endSize"].Double;
-            }
-
-            _sizeOverLifetime = FluxParticleSizeOverLifetimeParameters.New(enabled, endSize);
-        }
-
-        void InitializeRotationOverLifetime(DataDictionary render)
-        {
-            var enabled = false;
-            var endRotation = Vector3.zero;
-
-            if (render.TryGetValue("rotationOverLifetime", out var token))
-            {
-                var rotation = token.DataDictionary;
-
-                enabled = true;
-
-                endRotation = new Vector3(
-                    (float)rotation["endRotationX"].Double,
-                    (float)rotation["endRotationY"].Double,
-                    (float)rotation["endRotationZ"].Double);
-            }
-
-            _rotationOverLifetime = FluxParticleRotationOverLifetimeParameters.New(enabled, endRotation);
-        }
-
-        bool TryGetModuleBinding(string moduleId, out FluxParticleKernelTarget target, out string parameterName)
-        {
-            target = FluxParticleKernelTarget.Velocity;
-            parameterName = null;
-
-            if (_gpuModuleBindings == null || string.IsNullOrEmpty(moduleId) || !_gpuModuleBindings.TryGetValue(moduleId, out var token)) return false;
-
-            var binding = token.DataDictionary;
-
-            target = (FluxParticleKernelTarget)(int)binding["target"].Double;
-            parameterName = binding["enabledParameter"].String;
-
-            return true;
+            particleEmitter.Initialize(Emission, burstTimes, burstCounts, particleCount, startDelay, duration, loop);
         }
     }
 }
