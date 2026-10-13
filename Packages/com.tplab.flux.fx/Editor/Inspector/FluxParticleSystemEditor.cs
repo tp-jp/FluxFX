@@ -1,4 +1,3 @@
-using TpLab.Flux.FX.Editor.Preview;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
@@ -59,8 +58,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         ReorderableList _burstList;
 
-        FluxParticlePreview _preview;
-
         GUIStyle _sectionHeaderLabelStyle;
         GUIStyle _sectionHeaderChevronStyle;
         GUIStyle _moduleHeaderLabelStyle;
@@ -88,13 +85,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             InitializeBurstList();
 
-            _preview = new FluxParticlePreview(particleSystem, authoring);
-        }
-
-        void OnDisable()
-        {
-            _preview?.Dispose();
-            _preview = null;
         }
 
         public override void OnInspectorGUI()
@@ -118,20 +108,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawModules();
             DrawRenderer();
 
-            var authoringChanged = _authoringObject.ApplyModifiedProperties();
+            _authoringObject.ApplyModifiedProperties();
             serializedObject.ApplyModifiedProperties();
-
-            if (authoringChanged)
-            {
-                if (_authoringObject.FindProperty("useProgramBackend").boolValue)
-                {
-                    _preview?.Stop();
-                }
-                else
-                {
-                    _preview?.OnAuthoringChanged();
-                }
-            }
         }
 
         void OnSceneGUI()
@@ -197,45 +175,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawPreview()
         {
-            if (_authoringObject.FindProperty("useProgramBackend").boolValue)
-            {
-                if (_preview != null && _preview.IsPlaying)
-                {
-                    _preview.Stop();
-                }
-                EditorGUILayout.HelpBox("Program Backend: use Play Mode to verify the generated runtime. Inspector Preview is not connected yet.", MessageType.Info);
-                return;
-            }
-            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
-            {
-                EditorGUILayout.BeginHorizontal();
-
-                if (_preview != null && _preview.IsPlaying)
-                {
-                    if (GUILayout.Button(L10n.Tr("Stop")))
-                    {
-                        _preview.Stop();
-                    }
-
-                    if (GUILayout.Button(L10n.Tr("Restart")))
-                    {
-                        _authoringObject.ApplyModifiedProperties();
-                        serializedObject.ApplyModifiedProperties();
-                        _preview.Restart();
-                    }
-                }
-                else
-                {
-                    if (GUILayout.Button(L10n.Tr("Preview")))
-                    {
-                        _authoringObject.ApplyModifiedProperties();
-                        serializedObject.ApplyModifiedProperties();
-                        _preview?.Play();
-                    }
-                }
-
-                EditorGUILayout.EndHorizontal();
-            }
+            EditorGUILayout.HelpBox("Program Backend: use Play Mode to verify the generated runtime. Inspector Preview is not connected yet.", MessageType.Info);
         }
 
         void LoadExpandedStates()
