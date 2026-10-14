@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
@@ -18,7 +17,6 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         GameObject _root;
         FluxParticleAuthoring _authoring;
-        string _temporaryFolder;
         readonly List<Object> _objects = new List<Object>();
 
         [SetUp]
@@ -26,7 +24,6 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             _root = new GameObject("Rotation over Lifetime Test");
             _authoring = _root.AddComponent<FluxParticleAuthoring>();
-            _temporaryFolder = "Assets/FluxFX/Tests/RotationTemporary_" + Guid.NewGuid().ToString("N");
         }
 
         [TearDown]
@@ -37,7 +34,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 if (value != null) Object.DestroyImmediate(value);
             }
             _objects.Clear();
-            if (AssetDatabase.IsValidFolder(_temporaryFolder)) AssetDatabase.DeleteAsset(_temporaryFolder);
             if (_root != null) Object.DestroyImmediate(_root);
         }
 
@@ -110,10 +106,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             SetCurve(curve);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
             var generated = compiled.Shaders;
-            var steps = generated.Passes.Select((pass, index) => Import("RotationStep" + index, pass.Source)).ToArray();
-            var clears = generated.ClearSources.Select((source, index) => Import("RotationClear" + index, source)).ToArray();
-            var renderShader = Import("RotationEvaluation", RenderEvaluationShader(generated));
-            Import("RotationBillboard", compiled.RendererSource);
+            var steps = generated.Passes.Select((pass, index) => CreateShader("RotationStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => CreateShader("RotationClear" + index, source)).ToArray();
+            var renderShader = CreateShader("RotationEvaluation", RenderEvaluationShader(generated));
+            CreateShader("RotationBillboard", compiled.RendererSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
                 session.SetVector("spawn.position", Vector4.zero);
@@ -181,10 +177,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             ConfigureRandomRotation(mesh, lifetime);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
             var generated = compiled.Shaders;
-            var steps = generated.Passes.Select((pass, index) => Import("RandomStep" + index, pass.Source)).ToArray();
-            var clears = generated.ClearSources.Select((source, index) => Import("RandomClear" + index, source)).ToArray();
-            var shader = Import("RandomEvaluation", RenderEvaluationShader(generated));
-            Import("RandomRenderer", compiled.RendererSource);
+            var steps = generated.Passes.Select((pass, index) => CreateShader("RandomStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => CreateShader("RandomClear" + index, source)).ToArray();
+            var shader = CreateShader("RandomEvaluation", RenderEvaluationShader(generated));
+            CreateShader("RandomRenderer", compiled.RendererSource);
             var material = new Material(shader);
             _objects.Add(material);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
@@ -375,18 +371,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        Shader Import(string name, string source)
+        Shader CreateShader(string name, string source)
         {
-            if (!AssetDatabase.IsValidFolder(_temporaryFolder))
-            {
-                AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(_temporaryFolder));
-            }
-            var path = _temporaryFolder + "/" + name + ".shader";
-            File.WriteAllText(path, source.Replace("\r\n", "\n").Replace("\r", "\n"));
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
-            Assert.IsNotNull(shader, path);
-            Assert.IsFalse(ShaderUtil.ShaderHasError(shader), path);
+            var shader = ShaderUtil.CreateShaderAsset(source, true);
+            _objects.Add(shader);
+            Assert.IsNotNull(shader, name);
+            Assert.IsFalse(ShaderUtil.ShaderHasError(shader),
+                name + ": " + string.Join(Environment.NewLine, ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
+            Assert.IsTrue(shader.isSupported, name);
             return shader;
         }
 

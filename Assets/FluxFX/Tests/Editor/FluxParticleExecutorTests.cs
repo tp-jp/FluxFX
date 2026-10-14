@@ -67,18 +67,19 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        // 共通のWorld変換はPoint・Circle・Coneを通常実行し、全Shapeと速度の組み合わせはFull Regressionで検証する。
         [TestCase(FluxParticleShapeType.Point, false)]
-        [TestCase(FluxParticleShapeType.Point, true)]
-        [TestCase(FluxParticleShapeType.Sphere, false)]
-        [TestCase(FluxParticleShapeType.Sphere, true)]
-        [TestCase(FluxParticleShapeType.Hemisphere, false)]
-        [TestCase(FluxParticleShapeType.Hemisphere, true)]
-        [TestCase(FluxParticleShapeType.Circle, false)]
+        [TestCase(FluxParticleShapeType.Point, true, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Sphere, false, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Sphere, true, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Hemisphere, false, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Hemisphere, true, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Circle, false, Category = "Extended", Explicit = true)]
         [TestCase(FluxParticleShapeType.Circle, true)]
-        [TestCase(FluxParticleShapeType.Box, false)]
-        [TestCase(FluxParticleShapeType.Box, true)]
+        [TestCase(FluxParticleShapeType.Box, false, Category = "Extended", Explicit = true)]
+        [TestCase(FluxParticleShapeType.Box, true, Category = "Extended", Explicit = true)]
         [TestCase(FluxParticleShapeType.Cone, false)]
-        [TestCase(FluxParticleShapeType.Cone, true)]
+        [TestCase(FluxParticleShapeType.Cone, true, Category = "Extended", Explicit = true)]
         public void WorldSpawnTransformsPositionAndVelocityAndPreservesEmittedParticles(FluxParticleShapeType shape, bool randomSpeed)
         {
             RequireGraphics();
@@ -563,7 +564,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase(65, 65, 0)]
         [TestCase(65, 5, 7)]
         [TestCase(1024, 1024, 0)]
-        [TestCase(1048576, 1048576, 0, Explicit = true)]
+        [TestCase(1048576, 1048576, 0, Category = "Scale", Explicit = true)]
+        [TestCase(1048576, 1748, 1048575, Category = "Scale", Explicit = true)]
         public void SpawnAllocationUsesEveryAvailableSlotDespiteOccupiedCursor(int capacity, int requests, int start)
         {
             RequireGraphics();

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
@@ -17,7 +16,6 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         GameObject root;
         FluxParticleAuthoring authoring;
-        string folder;
         readonly List<Object> objects = new List<Object>();
 
         [SetUp]
@@ -25,7 +23,6 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             root = new GameObject("Size over Lifetime Test");
             authoring = root.AddComponent<FluxParticleAuthoring>();
-            folder = "Assets/FluxFX/Tests/SizeTemporary_" + Guid.NewGuid().ToString("N");
         }
 
         [TearDown]
@@ -36,7 +33,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 if (value != null) Object.DestroyImmediate(value);
             }
             objects.Clear();
-            if (AssetDatabase.IsValidFolder(folder)) AssetDatabase.DeleteAsset(folder);
             Object.DestroyImmediate(root);
         }
 
@@ -112,10 +108,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             var curve = Configure(mode, random);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var generated = compiled.Shaders;
-            var steps = generated.Passes.Select((pass, index) => Import("Step" + index, pass.Source)).ToArray();
-            var clears = generated.ClearSources.Select((source, index) => Import("Clear" + index, source)).ToArray();
-            Import("Billboard", compiled.RendererSource);
-            var evaluation = Import("Evaluate", string.Join(Environment.NewLine, new[]
+            var steps = generated.Passes.Select((pass, index) => CreateShader("Step" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => CreateShader("Clear" + index, source)).ToArray();
+            CreateShader("Billboard", compiled.RendererSource);
+            var evaluation = CreateShader("Evaluate", string.Join(Environment.NewLine, new[]
             {
                 @"Shader ""Hidden/FluxFX/Tests/SizeEvaluation"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
                 "HLSLPROGRAM",
@@ -200,17 +196,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             return curve;
         }
 
-        Shader Import(string name, string source)
+        Shader CreateShader(string name, string source)
         {
-            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(folder));
-            var path = folder + "/" + name + ".shader";
-            File.WriteAllText(path, source);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
-            Assert.IsNotNull(shader);
+            var shader = ShaderUtil.CreateShaderAsset(source, true);
+            objects.Add(shader);
+            Assert.IsNotNull(shader, name);
             Assert.IsFalse(ShaderUtil.ShaderHasError(shader),
-                string.Join(Environment.NewLine, ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
-            Assert.IsTrue(shader.isSupported);
+                name + ": " + string.Join(Environment.NewLine, ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
+            Assert.IsTrue(shader.isSupported, name);
             return shader;
         }
 
