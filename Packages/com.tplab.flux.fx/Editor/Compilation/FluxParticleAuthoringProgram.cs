@@ -214,7 +214,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
                     new[] { "rotation.start" }));
             }
-            FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var life = authoring.Lifetime;
             var min = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Min(life.Min, life.Max);
             var max = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Max(life.Min, life.Max);
@@ -285,7 +284,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             Require(min >= 0 && (randomSize
                 ? FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax)
                 : FiniteNonNegative(authoring.Render.StartSize)), "Non-negative lifetime and size");
-            Program = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Program", FluxParticleBasicProgram.CreateLifecycle());
+            Program = new FluxParticleProgramComposer().Compose(definitions, "Hidden/FluxFX/Program", FluxParticleBasicProgram.CreateLifecycle());
             InitialValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, Vector4>(values);
         }
 
