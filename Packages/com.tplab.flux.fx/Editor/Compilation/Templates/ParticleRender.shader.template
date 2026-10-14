@@ -1,4 +1,4 @@
-Shader "Hidden/FluxFX/Program/Billboard"
+Shader "{{ShaderName}}"
 {
     Properties
     {
@@ -61,11 +61,7 @@ Shader "Hidden/FluxFX/Program/Billboard"
                 bool alive;
                 FluxRenderContext render = FluxFX_EvaluateRender(stateUV, alive);
                 float3 position = {{Position}};
-                float3 center = {{Center}};
-                float3 right = UNITY_MATRIX_I_V._m00_m10_m20;
-                float3 up = UNITY_MATRIX_I_V._m01_m11_m21;
-                {{RotationCode}}
-                float3 vertex = center + (right * quad.x + up * quad.y) * {{Size}};
+                {{VertexCode}}
                 output.vertex = UnityWorldToClipPos(vertex);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex) * {{UvTransform}}.xy + {{UvTransform}}.zw;
                 output.color = {{Color}};

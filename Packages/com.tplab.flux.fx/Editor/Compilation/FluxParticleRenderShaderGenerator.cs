@@ -1,25 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// ParticleのBillboard描画Shaderを生成します。
+    /// ParticleのBillboard・Mesh描画Shaderを生成します。
     /// </summary>
-    public static class FluxParticleBillboardShaderGenerator
+    public static class FluxParticleRenderShaderGenerator
     {
         /// <summary>
         /// コンパイル済みの描画定義からShaderLabソースを生成します。
         /// </summary>
         /// <param name="program">ParticleのShader生成結果</param>
+        /// <param name="mode">Particleの描画方式</param>
         /// <param name="worldSpace">Stateの位置をワールド座標として扱うか</param>
         /// <returns>ShaderLabソース</returns>
-        public static string Generate(FluxParticleShaderProgram program, bool worldSpace = false)
+        public static string Generate(FluxParticleShaderProgram program, FluxParticleRenderMode mode = FluxParticleRenderMode.Billboard, bool worldSpace = false)
         {
+            if (mode != FluxParticleRenderMode.Billboard && mode != FluxParticleRenderMode.Mesh)
+            {
+                throw new ArgumentOutOfRangeException(nameof(mode));
+            }
             if (!program.Compilation.StateLayout.TryGetBinding("particle.position", out var position))
             {
-                throw new InvalidOperationException("Position State is required for Billboard rendering.");
+                throw new InvalidOperationException("Position State is required for particle rendering.");
             }
             var sampler = FluxParticleHlslNames.PageProperty(position.PageId, FluxParticlePageVersion.Updated);
             var channels = "rgba".Substring(position.ChannelOffset, position.ComponentCount);
@@ -41,17 +47,36 @@ namespace TpLab.Flux.FX.Editor.Compilation
                   "sincos(angle, s, c);\n" +
                   "float2 quad = float2(input.vertex.x * c - input.vertex.y * s, input.vertex.x * s + input.vertex.y * c);"
                 : "float2 quad = input.vertex.xy;";
-            return FluxParticleProgramShaderGenerator.ExpandTemplate("Billboard", new Dictionary<string, string>
+            var vertexCode = "float3 center = " + (worldSpace ? "position" : "mul(unity_ObjectToWorld, float4(position, 1.0)).xyz") + ";\n" +
+                "float3 right = UNITY_MATRIX_I_V._m00_m10_m20;\nfloat3 up = UNITY_MATRIX_I_V._m01_m11_m21;\n" +
+                rotationCode + "\nfloat3 vertex = center + (right * quad.x + up * quad.y) * render." + FluxParticleHlslNames.Value("render.size") + ";";
+            if (mode == FluxParticleRenderMode.Mesh)
             {
+                var hasRotation = program.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start");
+                vertexCode = "float3 local = input.vertex.xyz;\n";
+                if (hasRotation)
+                {
+                    vertexCode += "float3 s, c;\nsincos(radians(render." + FluxParticleHlslNames.Value("render.rotation") + "), s, c);\n" +
+                        "local.xy = float2(local.x * c.z - local.y * s.z, local.x * s.z + local.y * c.z);\n" +
+                        "local.yz = float2(local.y * c.x - local.z * s.x, local.y * s.x + local.z * c.x);\n" +
+                        "local.xz = float2(local.x * c.y + local.z * s.y, -local.x * s.y + local.z * c.y);\n";
+                }
+                vertexCode += "float3 vertex = position + local * render." + FluxParticleHlslNames.Value("render.size") + ";\n";
+                if (!worldSpace)
+                {
+                    vertexCode += "vertex = mul(unity_ObjectToWorld, float4(vertex, 1.0)).xyz;\n";
+                }
+            }
+            return FluxParticleProgramShaderGenerator.ExpandTemplate("ParticleRender.shader.template", new Dictionary<string, string>
+            {
+                ["ShaderName"] = "Hidden/FluxFX/Program/" + mode,
+                ["VertexCode"] = vertexCode,
                 ["PageProperties"] = pageProperties,
                 ["ParameterProperties"] = FluxParticleProgramShaderGenerator.GenerateParameterProperties(program.Compilation),
                 ["RenderCode"] = renderCode,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
-                ["Size"] = "render." + FluxParticleHlslNames.Value("render.size"),
                 ["UvTransform"] = "render." + FluxParticleHlslNames.Value("render.uv-transform"),
-                ["Center"] = worldSpace ? "position" : "mul(unity_ObjectToWorld, float4(position, 1.0)).xyz",
-                ["RotationCode"] = rotationCode
             });
         }
     }

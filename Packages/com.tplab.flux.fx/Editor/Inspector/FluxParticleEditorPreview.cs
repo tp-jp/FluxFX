@@ -351,6 +351,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         Mesh CreateMesh(int count)
         {
+            if (authoring.Render.Mode == FluxParticleRenderMode.Mesh) return CreateMesh(authoring.Render.Mesh, count);
             var vertices = new Vector3[count * 4];
             var uv = new Vector2[count * 4];
             var indices = new Vector2[count * 4];
@@ -378,6 +379,44 @@ namespace TpLab.Flux.FX.Editor.Inspector
             return result;
         }
 
+        Mesh CreateMesh(Mesh source, int count)
+        {
+            var sourceVertices = source.vertices;
+            var sourceUv = source.uv;
+            var sourceTriangles = source.triangles;
+            var vertices = new Vector3[checked(sourceVertices.Length * count)];
+            var uv = new Vector2[vertices.Length];
+            var indices = new Vector2[vertices.Length];
+            var triangles = new int[checked(sourceTriangles.Length * count)];
+            for (var particle = 0; particle < count; particle++)
+            {
+                var offset = particle * sourceVertices.Length;
+                Array.Copy(sourceVertices, 0, vertices, offset, sourceVertices.Length);
+                if (sourceUv.Length == sourceVertices.Length)
+                {
+                    Array.Copy(sourceUv, 0, uv, offset, sourceUv.Length);
+                }
+                for (var vertex = 0; vertex < sourceVertices.Length; vertex++)
+                {
+                    indices[offset + vertex] = new Vector2(particle, 0);
+                }
+                for (var index = 0; index < sourceTriangles.Length; index++)
+                {
+                    triangles[particle * sourceTriangles.Length + index] = offset + sourceTriangles[index];
+                }
+            }
+            var result = Own(new Mesh { name = "FluxFX Preview Mesh" });
+            if (vertices.Length > 65535)
+            {
+                result.indexFormat = IndexFormat.UInt32;
+            }
+            result.vertices = vertices;
+            result.uv = uv;
+            result.uv2 = indices;
+            result.triangles = triangles;
+            result.bounds = new Bounds(Vector3.zero, Vector3.one * 10000);
+            return result;
+        }
         T Own<T>(T value) where T : Object
         {
             value.hideFlags = HideFlags.HideAndDontSave;

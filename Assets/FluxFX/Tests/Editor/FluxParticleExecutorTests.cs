@@ -136,7 +136,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [TestCase("simulationSpace", 99)]
-        [TestCase("render.mode", 1)]
+        [TestCase("render.mode", 99)]
 
         public void UnsupportedSettingsFailBeforeGeneratingAssets(string path, int value)
         {

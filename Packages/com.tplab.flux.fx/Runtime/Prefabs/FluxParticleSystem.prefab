@@ -109,6 +109,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 6288512494526562354}
   meshFilter: {fileID: 1878204517776607317}
   meshRenderer: {fileID: 4309877827322152244}
+  sourceMesh: {fileID: 0}
 --- !u!114 &6288512494526562354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -293,6 +294,9 @@ MonoBehaviour:
   staticParameters: 
   parameterValues: []
   deltaTimeProperty: 
+  simulationTimeProperty: 
+  emitterTransform: {fileID: 0}
+  emitterRowProperties: []
   spawnKeyProperty: 
 --- !u!114 &8132146096100554088
 MonoBehaviour:
@@ -447,7 +451,7 @@ MonoBehaviour:
     max: 3
   render:
     mode: 0
-    mesh: {fileID: 4300000, guid: 4cf7de70d2f2338429032dfe202342b5, type: 2}
+    mesh: {fileID: 0}
     material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
     blendMode: 0
     startColor: {r: 1, g: 1, b: 1, a: 1}

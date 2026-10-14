@@ -49,6 +49,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var playbackParameters = BuildPlaybackParameters(authoring);
             Configure(runtime, compiled, authoring, Root, system.ParticleCount);
             system.SetProgramVariable("particleExecutor", runtime);
+            renderer.SetProgramVariable("sourceMesh", authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null);
+            EditorUtility.SetDirty(renderer);
             system.SetProgramVariable("particleRenderer", renderer);
             system.SetProgramVariable("particleEmitter", emitter);
             system.SetProgramVariable("compiledParameters", playbackParameters);
@@ -68,6 +70,16 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="bufferCapacity">Bufferの初期容量</param>
         public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
         {
+            if (authoring.Render.Mode == FluxParticleRenderMode.Mesh)
+            {
+                var mesh = authoring.Render.Mesh;
+                if (mesh == null || !mesh.isReadable || bufferCapacity < 1 ||
+                    (long)mesh.vertexCount * bufferCapacity > int.MaxValue ||
+                    (long)mesh.triangles.Length * bufferCapacity > int.MaxValue)
+                {
+                    throw new InvalidOperationException("Render Mesh capacity exceeds supported array dimensions or the Mesh is not readable.");
+                }
+            }
             if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
             {
                 throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));

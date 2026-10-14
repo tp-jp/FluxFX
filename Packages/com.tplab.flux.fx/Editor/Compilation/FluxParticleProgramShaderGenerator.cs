@@ -148,7 +148,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 var outputPage = program.StateLayout.Pages.Single(p => p.Id == pass.OutputPageId);
                 var previousPage = Page(pass.OutputPageId, FluxParticlePageVersion.StepPrevious);
                 var lifecycleCode = lifecycle == null ? "    bool alive = true;\n" :
-                    ExpandTemplate("StepLifecycle", new Dictionary<string, string>
+                    ExpandTemplate("StepLifecycle.hlsl.template", new Dictionary<string, string>
                     {
                         ["Age"] = State(lifecycle.AgeValueId, FluxParticlePageVersion.StepPrevious),
                         ["Lifetime"] = SuppliedOrState(lifecycle.LifetimeValueId)
@@ -164,9 +164,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 if (lifecycle != null && outputPage.Bindings.Any(b => b.ValueId == lifecycle.AgeValueId))
                 {
                     var binding = outputPage.Bindings.Single(b => b.ValueId == lifecycle.AgeValueId);
-                    expiration = ExpandTemplate("Expiration", new Dictionary<string, string> { ["Channel"] = Swizzle(binding) });
+                    expiration = ExpandTemplate("Expiration.hlsl.template", new Dictionary<string, string> { ["Channel"] = Swizzle(binding) });
                 }
-                var step = ExpandTemplate("Step", new Dictionary<string, string>
+                var step = ExpandTemplate("Step.hlsl.template", new Dictionary<string, string>
                 {
                     ["PreviousPage"] = previousPage,
                     ["Lifecycle"] = lifecycleCode,
@@ -198,7 +198,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 var fields = new StringBuilder();
                 foreach (var id in outputs) fields.AppendLine($"    {Type(id)} {Field(id)};");
                 var lifecycleCode = lifecycle == null ? "    alive = true;\n" :
-                    ExpandTemplate("RenderLifecycle", new Dictionary<string, string>
+                    ExpandTemplate("RenderLifecycle.hlsl.template", new Dictionary<string, string>
                     {
                         ["Age"] = State(lifecycle.AgeValueId, FluxParticlePageVersion.Updated),
                         ["Lifetime"] = SuppliedOrState(lifecycle.LifetimeValueId, true)
@@ -210,7 +210,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     var writer = operations.Last(op => op.Writes.Any(w => w.ValueId == id));
                     writes.AppendLine($"    result.{Field(id)} = {Local(writer.Id)}.{Field(id)};");
                 }
-                var render = ExpandTemplate("Render", new Dictionary<string, string>
+                var render = ExpandTemplate("Render.hlsl.template", new Dictionary<string, string>
                 {
                     ["Fields"] = fields.ToString(),
                     ["Lifecycle"] = lifecycleCode,
@@ -385,7 +385,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             static string Wrap(string name, string code, string expression)
             {
-                return ExpandTemplate("Shader", new Dictionary<string, string>
+                return ExpandTemplate("Shader.shader.template", new Dictionary<string, string>
                 {
                     ["ShaderName"] = name,
                     ["Code"] = code,
@@ -414,8 +414,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
         internal static string ExpandTemplate(string name, IReadOnlyDictionary<string, string> bindings)
         {
-            var extension = (name == "Shader" || name == "Billboard") ? ".shader.template" : ".hlsl.template";
-            var relativePath = "Editor/Compilation/Templates/" + name + extension;
+            var relativePath = "Editor/Compilation/Templates/" + name;
             var assetPath = "Packages/com.tplab.flux.fx/" + relativePath;
             var package = PackageInfo.FindForAssetPath(assetPath);
             if (package == null) throw new InvalidOperationException($"Shader template package not found: {assetPath}");

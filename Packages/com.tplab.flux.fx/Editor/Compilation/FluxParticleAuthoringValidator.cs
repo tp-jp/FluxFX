@@ -56,7 +56,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ? FiniteNonNegative(authoring.Lifetime.Lifetime)
                 : FiniteNonNegative(authoring.Lifetime.Min) && FiniteNonNegative(authoring.Lifetime.Max),
                 "Finite non-negative lifetime");
-            Require(authoring.Render.Mode == FluxParticleRenderMode.Billboard, "Billboard rendering");
+            Require(authoring.Render.Mode == FluxParticleRenderMode.Billboard || authoring.Render.Mode == FluxParticleRenderMode.Mesh,
+                "Supported render mode");
+            if (authoring.Render.Mode == FluxParticleRenderMode.Mesh)
+            {
+                var mesh = authoring.Render.Mesh;
+                Require(mesh != null && mesh.isReadable && mesh.vertexCount > 0, "Readable non-empty render Mesh");
+                for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)
+                {
+                    Require(mesh.GetTopology(subMesh) == MeshTopology.Triangles, "Triangle render Mesh");
+                }
+                Require(mesh.triangles.Length > 0, "Render Mesh with triangles");
+            }
             Require(authoring.Render.BlendMode == FluxParticleBlendMode.Opaque ||
                 authoring.Render.BlendMode == FluxParticleBlendMode.Alpha ||
                 authoring.Render.BlendMode == FluxParticleBlendMode.Additive, "Supported blend mode");
@@ -69,8 +80,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 : FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax),
                 "Finite non-negative start size");
             var startRotation = authoring.Render.StartRotation;
-            Require(startRotation.x == 0 && startRotation.y == 0 && !float.IsNaN(startRotation.z) &&
-                !float.IsInfinity(startRotation.z), "Billboard start rotation around Z only");
+            Require(!float.IsNaN(startRotation.x) && !float.IsInfinity(startRotation.x) &&
+                !float.IsNaN(startRotation.y) && !float.IsInfinity(startRotation.y) &&
+                !float.IsNaN(startRotation.z) && !float.IsInfinity(startRotation.z), "Finite start rotation");
+            if (authoring.Render.Mode == FluxParticleRenderMode.Billboard)
+            {
+                Require(startRotation.x == 0 && startRotation.y == 0, "Billboard start rotation around Z only");
+            }
             Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleRender", "FluxFX/ParticleRender material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay) &&
                 FiniteNonNegative(authoring.Playback.Duration) && authoring.Playback.Duration > 0, "Finite playback and emission settings");

@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace TpLab.Flux.FX.Udon
 {
     /// <summary>
-    /// コンパイル済みParticle ProgramのBillboard描画用Meshを生成して設定します。
+    /// コンパイル済みParticle Programの描画用Meshを生成して設定します。
     /// 描画MaterialはFluxParticleExecutorが管理します。
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -19,16 +19,19 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         MeshRenderer meshRenderer;
 
+        [SerializeField]
+        Mesh sourceMesh;
+
         Mesh _programMesh;
 
         /// <summary>
-        /// Billboard用Meshを作成し、コンパイル済みの描画Materialを設定します。
+        /// 粒子ごとの描画用Meshを作成し、コンパイル済みの描画Materialを設定します。
         /// </summary>
         /// <param name="capacity">Particle数。</param>
         /// <param name="material">このParticle System専用の描画Material。</param>
         internal void InitializeProgram(int capacity, Material material)
         {
-            _programMesh = CreateParticleMesh(capacity);
+            _programMesh = sourceMesh == null ? CreateParticleMesh(capacity) : CreateParticleMesh(sourceMesh, capacity);
             meshFilter.sharedMesh = _programMesh;
             meshRenderer.sharedMaterial = material;
         }
