@@ -20,7 +20,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
         string _backendPreviewError;
         FluxParticleEditorPreview _particlePreview;
         bool _previewPlaying = true;
-        bool _previewStopped;
         double _lastPreviewTime;
         bool _unityFocused;
         bool _previewRefreshAfterSave;
@@ -249,26 +248,39 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     _backendPreviewSignature = null;
                     EnsureParticlePreview();
                     _previewPlaying = true;
-                    _previewStopped = false;
                 }
                 return;
             }
-            GUILayout.Label(L10n.Tr("PREVIEW") + " / " + target.name, EditorStyles.boldLabel);
-            var selected = _previewPlaying ? 0 : _previewStopped ? 3 : 1;
-            var action = GUILayout.Toolbar(selected, new[]
+            var action = -1;
+            var buttonOptions = new[] { GUILayout.Width(96), GUILayout.Height(22) };
+            EditorGUILayout.BeginHorizontal(GUILayout.Width(288));
+            if (GUILayout.Button(L10n.Tr(_previewPlaying ? "Pause" : "Play"), EditorStyles.miniButtonLeft, buttonOptions))
             {
-                L10n.Tr("Play"), L10n.Tr("Pause"), L10n.Tr("Restart"), L10n.Tr("Stop")
-            }, EditorStyles.miniButton, GUILayout.Width(288), GUILayout.Height(22));
-            if (action != selected)
+                action = 0;
+            }
+            if (GUILayout.Button(L10n.Tr("Restart"), EditorStyles.miniButtonMid, buttonOptions))
             {
-                if (action == 2 || action == 3)
+                action = 1;
+            }
+            if (GUILayout.Button(L10n.Tr("Stop"), EditorStyles.miniButtonRight, buttonOptions))
+            {
+                action = 2;
+            }
+            EditorGUILayout.EndHorizontal();
+            if (action >= 0)
+            {
+                if (action == 0)
+                {
+                    _previewPlaying = !_previewPlaying;
+                }
+                else
                 {
                     _particlePreview.Restart();
+                    _previewPlaying = action == 1;
                 }
-                _previewPlaying = action == 0 || action == 2;
-                _previewStopped = action == 3;
                 _lastPreviewTime = EditorApplication.timeSinceStartup;
                 SceneView.RepaintAll();
+                Repaint();
             }
             GUILayout.Label(L10n.Tr("Playback Time") + ": " + _particlePreview.PlaybackTime.ToString("F2") + " s");
             var count = _particlePreview.AliveCount;

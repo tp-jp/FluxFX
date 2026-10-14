@@ -91,7 +91,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ValidateStartRotation(authoring.Render.StartRotationMin, authoring.Render.Mode);
                 ValidateStartRotation(authoring.Render.StartRotationMax, authoring.Render.Mode);
             }
-            Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleRender", "FluxFX/ParticleRender material or no material");
+            Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleMaterial", "FluxFX/ParticleMaterial material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay) &&
                 FiniteNonNegative(authoring.Playback.Duration) && authoring.Playback.Duration > 0, "Finite playback and emission settings");
             foreach (var burst in authoring.Emission.Bursts)

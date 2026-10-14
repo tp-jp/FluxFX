@@ -1,9 +1,7 @@
-
 using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
-using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Scripts
@@ -11,9 +9,6 @@ namespace TpLab.Flux.FX.Scripts
     [DisallowMultipleComponent]
     public class FluxParticleAuthoring : MonoBehaviour
     {
-        [SerializeField]
-        bool useProgramBackend;
-
         [SerializeField]
         FluxParticleSimulationSpace simulationSpace;
 
@@ -37,11 +32,6 @@ namespace TpLab.Flux.FX.Scripts
 
         [SerializeReference]
         List<FluxParticleModule> modules = new List<FluxParticleModule>();
-
-        /// <summary>
-        /// 新Compilerの基本Runtime経路を使用します。未移行の設定はBuild時に検証します。
-        /// </summary>
-        public bool UseProgramBackend => true;
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public PlaybackSettings Playback => playback;

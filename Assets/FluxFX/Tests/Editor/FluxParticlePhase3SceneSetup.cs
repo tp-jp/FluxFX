@@ -65,7 +65,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             foreach (var system in systems)
             {
                 var authoring = system.GetComponent<FluxParticleAuthoring>();
-                if (authoring == null || !authoring.UseProgramBackend) continue;
+                if (authoring == null) continue;
 
                 if (system.GetComponentInChildren<FluxParticleEmitter>(true) == null ||
                     system.GetComponentInChildren<FluxParticleRenderer>(true) == null)
@@ -116,7 +116,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             systemSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             var authoringSerialized = new SerializedObject(authoring);
-            authoringSerialized.FindProperty("useProgramBackend").boolValue = true;
             authoringSerialized.FindProperty("simulationSpace").enumValueIndex = (int)FluxParticleSimulationSpace.Local;
             authoringSerialized.FindProperty("shape").FindPropertyRelative("type").enumValueIndex = (int)FluxParticleShapeType.Point;
             authoringSerialized.FindProperty("emission").FindPropertyRelative("rate").floatValue = emissionRate;
