@@ -19,7 +19,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var compilation = new FluxParticleProgramCompiler().Compile(definitions);
             var shaders = new FluxParticleProgramShaderGenerator().Generate(compilation, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
-            var rendererSource = FluxParticleBillboardShaderGenerator.Generate(shaders);
+            var rendererSource = FluxParticleBillboardShaderGenerator.Generate(shaders, authoring.SimulationSpace == TpLab.Flux.FX.Udon.FluxParticleSimulationSpace.World);
             return new FluxParticleBuildResult(shaders, initialValues, rendererSource);
         }
     }

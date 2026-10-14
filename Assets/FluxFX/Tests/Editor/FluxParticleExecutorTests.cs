@@ -67,6 +67,63 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [TestCase(FluxParticleShapeType.Point, false)]
+        [TestCase(FluxParticleShapeType.Point, true)]
+        [TestCase(FluxParticleShapeType.Sphere, false)]
+        [TestCase(FluxParticleShapeType.Sphere, true)]
+        [TestCase(FluxParticleShapeType.Hemisphere, false)]
+        [TestCase(FluxParticleShapeType.Hemisphere, true)]
+        [TestCase(FluxParticleShapeType.Circle, false)]
+        [TestCase(FluxParticleShapeType.Circle, true)]
+        [TestCase(FluxParticleShapeType.Box, false)]
+        [TestCase(FluxParticleShapeType.Box, true)]
+        [TestCase(FluxParticleShapeType.Cone, false)]
+        [TestCase(FluxParticleShapeType.Cone, true)]
+        public void WorldSpawnTransformsPositionAndVelocityAndPreservesEmittedParticles(FluxParticleShapeType shape, bool randomSpeed)
+        {
+            RequireGraphics();
+            var serialized = new SerializedObject(authoring);
+            serialized.FindProperty("shape.type").intValue = (int)shape;
+            serialized.FindProperty("initialVelocity.mode").intValue = (int)(randomSpeed
+                ? FluxParticleStartSpeedMode.RandomBetweenTwoConstants : FluxParticleStartSpeedMode.Constant);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var localBuild = FluxParticleBuildPipeline.Build(authoring);
+            var local = CreateRuntime(localBuild);
+            Assert.IsTrue(local.Initialize(4));
+            Assert.IsTrue(local.SetVector("spawn.position", new Vector4(1, 2, 3, 0)));
+            local.Step(0, 0, 1, 17);
+            var localPosition = (Vector3)ReadValue(local, localBuild, "particle.position", 0);
+            var localVelocity = (Vector3)ReadValue(local, localBuild, "particle.velocity", 0);
+
+            serialized.Update();
+            serialized.FindProperty("simulationSpace").intValue = (int)FluxParticleSimulationSpace.World;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            root.transform.SetPositionAndRotation(new Vector3(10, 20, -30), Quaternion.Euler(15, 60, 25));
+            root.transform.localScale = new Vector3(2, 3, 4);
+            var matrix = root.transform.localToWorldMatrix;
+            var worldBuild = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(localBuild.Shaders.Passes.Count, worldBuild.Shaders.Passes.Count);
+            Assert.AreEqual(localBuild.Shaders.Compilation.StateLayout.Pages.Count, worldBuild.Shaders.Compilation.StateLayout.Pages.Count);
+            StringAssert.Contains("float3 center = position;", worldBuild.RendererSource);
+            var world = CreateRuntime(worldBuild);
+            Assert.IsTrue(world.Initialize(4));
+            Assert.IsTrue(world.SetVector("spawn.position", new Vector4(1, 2, 3, 0)));
+            world.Step(0, 0, 1, 17);
+            var position = matrix.MultiplyPoint3x4(localPosition);
+            var velocity = matrix.MultiplyVector(localVelocity);
+            AssertVector(position, ReadValue(world, worldBuild, "particle.position", 0), 0.001f);
+            AssertVector(velocity, ReadValue(world, worldBuild, "particle.velocity", 0), 0.001f);
+
+            root.transform.SetPositionAndRotation(new Vector3(-20, 5, 8), Quaternion.Euler(40, 0, 0));
+            world.Step(0.25f, 0, 0, 18);
+            AssertVector(position + velocity * 0.25f, ReadValue(world, worldBuild, "particle.position", 0), 0.001f);
+            AssertVector(velocity, ReadValue(world, worldBuild, "particle.velocity", 0), 0.001f);
+            world.Clear();
+            world.Step(0, 0, 1, 17);
+            AssertVector(root.transform.localToWorldMatrix.MultiplyPoint3x4(localPosition),
+                ReadValue(world, worldBuild, "particle.position", 0), 0.001f);
+        }
+
         [Test]
         public void AuthoringUsesTwoPagesAndMapsInitialValues()
         {
@@ -78,13 +135,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(program.Shaders.Compilation.Operations.Any(op => op.Id == "render.color"));
         }
 
-        [TestCase("simulationSpace", 1)]
+        [TestCase("simulationSpace", 99)]
         [TestCase("render.mode", 1)]
 
         public void UnsupportedSettingsFailBeforeGeneratingAssets(string path, int value)
         {
             var serialized = new SerializedObject(authoring);
-            serialized.FindProperty(path).enumValueIndex = value;
+            serialized.FindProperty(path).intValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             StringAssert.Contains("Program Backend", Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring)).Message);
             Assert.IsFalse(AssetDatabase.IsValidFolder(folder));

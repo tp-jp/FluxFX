@@ -25,6 +25,16 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var source = FluxParticleCoreDefinitions.Create();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
+            if (authoring.SimulationSpace == FluxParticleSimulationSpace.World)
+            {
+                for (var row = 0; row < 3; row++)
+                {
+                    var id = "emitter.row" + row;
+                    definitions.AddValue(new FluxParticleValueDefinition(id, FluxParticleValueType.Float4,
+                        FluxParticleWritePolicy.ReadOnly, "fluxfx.core"));
+                    definitions.AddProvider(new FluxParticleValueProvider(id, FluxParticleProviderKind.Uniform));
+                }
+            }
             var moduleContext = new FluxParticleProgramContribution(definitions);
             new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
             var hasRotation = authoring.Render.StartRotation.z != 0 || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
@@ -130,7 +140,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 new[] { randomSize ? "render.size-range" : "render.size" },
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" + (randomSize ? "RandomStartSize.hlsl" : "StartSize.hlsl"),
                 "FluxFX_StartSize"));
-            definitions.AddOperation(new FluxParticleOperationDefinition("render.size-start", "fluxfx.core", FluxParticlePhase.Render,
+            AddOperation(authoring, definitions, new FluxParticleOperationDefinition("render.size-start", "fluxfx.core", FluxParticlePhase.Render,
                 new[] { new FluxParticleValueRead("particle.start-size", FluxParticleReadVersion.Provided) },
                 new[] { new FluxParticleValueWrite("render.size", FluxParticleWriteKind.Replace) }, null,
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/RenderStartSize.hlsl", "FluxFX_RenderStartSize"));
@@ -150,7 +160,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                         authoring.Shape.Type == FluxParticleShapeType.Cone ? "AuthoringConeSpawnPosition.hlsl" :
                         "AuthoringBoxSpawnPosition.hlsl";
                     var shapeParameter = authoring.Shape.Type == FluxParticleShapeType.Box ? "shape.size" : "shape.radius";
-                    definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
+                    AddOperation(authoring, definitions, new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
                         new[] { new FluxParticleValueRead("spawn.key", FluxParticleReadVersion.Provided) },
                         operation.Writes, operation.Dependencies,
                         "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" + shapeHlsl, operation.EntryPoint,
@@ -158,7 +168,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 }
                 else if (operation.Id == "spawn.velocity")
                 {
-                    definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
+                    AddOperation(authoring, definitions, new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
                         radialShape ? operation.Reads.Concat(new[] {
                             new FluxParticleValueRead("spawn.direction", FluxParticleReadVersion.Provided) }) : operation.Reads,
                         operation.Writes, operation.Dependencies,
@@ -175,17 +185,32 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 }
                 else
                 {
-                    definitions.AddOperation(operation);
+                    AddOperation(authoring, definitions, operation);
                 }
             }
             if (hasRotation)
             {
-                definitions.AddOperation(new FluxParticleOperationDefinition("render.rotation-start", "fluxfx.core", FluxParticlePhase.Render,
+                AddOperation(authoring, definitions, new FluxParticleOperationDefinition("render.rotation-start", "fluxfx.core", FluxParticlePhase.Render,
                     Array.Empty<FluxParticleValueRead>(),
                     new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Replace) }, null,
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
                     new[] { "rotation.start" }));
             }
+        }
+
+        static void AddOperation(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder definitions,
+            FluxParticleOperationDefinition operation)
+        {
+            if (authoring.SimulationSpace != FluxParticleSimulationSpace.World || operation.Phase != FluxParticlePhase.Spawn)
+            {
+                definitions.AddOperation(operation);
+                return;
+            }
+            var reads = operation.Reads.Concat(Enumerable.Range(0, 3).Select(row =>
+                new FluxParticleValueRead("emitter.row" + row, FluxParticleReadVersion.Provided)));
+            definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
+                reads, operation.Writes, operation.Dependencies, operation.HlslPath.Replace(".hlsl", "World.hlsl"),
+                operation.EntryPoint, operation.Parameters, operation.EnabledParameterId));
         }
     }
 }

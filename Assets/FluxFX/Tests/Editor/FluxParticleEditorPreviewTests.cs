@@ -6,6 +6,7 @@ using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.FX.Editor.Inspector;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
@@ -16,8 +17,9 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleEditorPreviewTests
     {
-        [Test]
-        public void PreviewSimulatesRestartsAndReleasesGpuResources()
+        [TestCase(FluxParticleSimulationSpace.Local)]
+        [TestCase(FluxParticleSimulationSpace.World)]
+        public void PreviewSimulatesRestartsAndReleasesGpuResources(FluxParticleSimulationSpace space)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
                 !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
@@ -30,6 +32,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             try
             {
                 var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("simulationSpace").intValue = (int)space;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                root.transform.SetPositionAndRotation(new Vector3(10, 20, 30), Quaternion.Euler(0, 60, 0));
                 var build = FluxParticleBuildPipeline.Build(authoring);
                 preview = new FluxParticleEditorPreview(build, authoring, 4);
                 var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
@@ -42,6 +48,12 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var spawnPosition = ReadValue(session, build, "particle.position");
                 var spawnVelocity = ReadValue(session, build, "particle.velocity");
                 Assert.AreEqual(authoring.InitialVelocity.Speed, spawnVelocity.magnitude, 0.0001f);
+                var expectedSpawn = space == FluxParticleSimulationSpace.World ? root.transform.position : Vector3.zero;
+                for (var component = 0; component < 3; component++)
+                {
+                    Assert.AreEqual(expectedSpawn[component], spawnPosition[component], 0.0001f);
+                }
+                root.transform.position += new Vector3(50, 50, 50);
                 preview.Step(0.25f);
                 Assert.AreEqual(0.25f, ReadValue(session, build, "particle.age").x, 0.0001f);
                 Assert.AreEqual(0.5, preview.PlaybackTime, 0.0001);

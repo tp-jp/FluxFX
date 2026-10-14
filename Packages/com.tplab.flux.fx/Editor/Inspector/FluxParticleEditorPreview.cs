@@ -175,6 +175,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     Graphics.Blit(null, mask, maskMaterial);
                     Graphics.Blit(null, keys, keyMaterial);
                 }
+                if (authoring.SimulationSpace == FluxParticleSimulationSpace.World)
+                {
+                    var matrix = authoring.transform.localToWorldMatrix;
+                    for (var row = 0; row < 3; row++)
+                    {
+                        session.SetUniformVector("emitter.row" + row, matrix.GetRow(row));
+                    }
+                }
                 session.SetUniformFloat("step.delta-time", deltaTime);
                 if (usesSimulationTime)
                 {

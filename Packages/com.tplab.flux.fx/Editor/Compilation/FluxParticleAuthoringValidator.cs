@@ -20,7 +20,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentNullException(nameof(authoring));
             }
-            Require(authoring.SimulationSpace == FluxParticleSimulationSpace.Local, "Local simulation space");
+            Require(authoring.SimulationSpace == FluxParticleSimulationSpace.Local ||
+                authoring.SimulationSpace == FluxParticleSimulationSpace.World, "Supported simulation space");
             Require(authoring.Shape.Type == FluxParticleShapeType.Point || authoring.Shape.Type == FluxParticleShapeType.Sphere ||
                 authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Circle ||
                 authoring.Shape.Type == FluxParticleShapeType.Box || authoring.Shape.Type == FluxParticleShapeType.Cone, "Supported shape");

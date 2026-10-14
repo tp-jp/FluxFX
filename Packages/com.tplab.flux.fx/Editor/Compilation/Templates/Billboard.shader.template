@@ -61,7 +61,7 @@ Shader "Hidden/FluxFX/Program/Billboard"
                 bool alive;
                 FluxRenderContext render = FluxFX_EvaluateRender(stateUV, alive);
                 float3 position = {{Position}};
-                float3 center = mul(unity_ObjectToWorld, float4(position, 1.0)).xyz;
+                float3 center = {{Center}};
                 float3 right = UNITY_MATRIX_I_V._m00_m10_m20;
                 float3 up = UNITY_MATRIX_I_V._m01_m11_m21;
                 {{RotationCode}}

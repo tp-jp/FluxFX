@@ -58,6 +58,10 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string simulationTimeProperty;
         [SerializeField]
+        Transform emitterTransform;
+        [SerializeField]
+        string[] emitterRowProperties;
+        [SerializeField]
         string spawnKeyProperty;
 
         FluxBuffer[] _current;
@@ -186,6 +190,14 @@ namespace TpLab.Flux.FX.Udon
 
                 var kernel = stepKernels[pass];
                 kernel.SetFloat(deltaTimeProperty, deltaTime);
+                if (emitterRowProperties != null && emitterRowProperties.Length == 3)
+                {
+                    var matrix = emitterTransform.localToWorldMatrix;
+                    for (var row = 0; row < 3; row++)
+                    {
+                        kernel.SetVector(emitterRowProperties[row], matrix.GetRow(row));
+                    }
+                }
                 if (!string.IsNullOrEmpty(simulationTimeProperty))
                 {
                     kernel.SetFloat(simulationTimeProperty, _simulationTime);
@@ -333,6 +345,14 @@ namespace TpLab.Flux.FX.Udon
 
         bool ValidateManifest()
         {
+            if (emitterRowProperties != null && emitterRowProperties.Length != 0)
+            {
+                if (emitterRowProperties.Length != 3 || emitterTransform == null) return false;
+                for (var row = 0; row < 3; row++)
+                {
+                    if (string.IsNullOrEmpty(emitterRowProperties[row])) return false;
+                }
+            }
             if (stepKernels == null || clearKernels == null || clearKernels.Length == 0 || renderMaterial == null) return false;
             if (spawnMaskKernel == null || spawnKeyKernel == null || spawnMaskBuffer == null || spawnKeyBuffer == null) return false;
             if (pageBuffersA == null || pageBuffersB == null || pageBuffersA.Length != clearKernels.Length || pageBuffersB.Length != clearKernels.Length) return false;

@@ -135,6 +135,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
             runtime.SetProgramVariable("renderMaterial", render);
             ConfigureManifest(runtime, program, parameters, parameterValues);
+            runtime.SetProgramVariable("emitterTransform", authoring.transform);
+            runtime.SetProgramVariable("emitterRowProperties", authoring.SimulationSpace == FluxParticleSimulationSpace.World
+                ? Enumerable.Range(0, 3).Select(row => FluxParticleHlslNames.ProviderProperty("emitter.row" + row)).ToArray()
+                : Array.Empty<string>());
             EditorUtility.SetDirty(runtime);
         }
 

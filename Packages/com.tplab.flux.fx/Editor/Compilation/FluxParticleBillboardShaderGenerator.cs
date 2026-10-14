@@ -13,8 +13,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// コンパイル済みの描画定義からShaderLabソースを生成します。
         /// </summary>
         /// <param name="program">ParticleのShader生成結果</param>
+        /// <param name="worldSpace">Stateの位置をワールド座標として扱うか</param>
         /// <returns>ShaderLabソース</returns>
-        public static string Generate(FluxParticleShaderProgram program)
+        public static string Generate(FluxParticleShaderProgram program, bool worldSpace = false)
         {
             if (!program.Compilation.StateLayout.TryGetBinding("particle.position", out var position))
             {
@@ -49,6 +50,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
                 ["Size"] = "render." + FluxParticleHlslNames.Value("render.size"),
                 ["UvTransform"] = "render." + FluxParticleHlslNames.Value("render.uv-transform"),
+                ["Center"] = worldSpace ? "position" : "mul(unity_ObjectToWorld, float4(position, 1.0)).xyz",
                 ["RotationCode"] = rotationCode
             });
         }
