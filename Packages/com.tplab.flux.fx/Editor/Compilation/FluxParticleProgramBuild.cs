@@ -228,6 +228,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             runtime.SetProgramVariable("parameterTypes", parameters.Select(parameter => (int)parameter.Type).ToArray());
             runtime.SetProgramVariable("staticParameters", parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static).ToArray());
             runtime.SetProgramVariable("parameterValues", parameterValues);
+            runtime.SetProgramVariable("simulationTimeProperty", program.Compilation.Providers.ContainsKey("step.time")
+                ? FluxParticleHlslNames.ProviderProperty("step.time") : "");
             runtime.SetProgramVariable("deltaTimeProperty", FluxParticleHlslNames.ProviderProperty("step.delta-time"));
             runtime.SetProgramVariable("spawnKeyProperty", FluxParticleHlslNames.ProviderProperty("spawn.key"));
         }

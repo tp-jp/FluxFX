@@ -105,6 +105,43 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(root);
             }
         }
+        [Test]
+        public void NoisePreviewReceivesSimulationTime()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var root = new GameObject("Noise Preview Test");
+            FluxParticleEditorPreview preview = null;
+            try
+            {
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                typeof(FluxParticleAuthoring).GetField("modules", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(authoring, new System.Collections.Generic.List<TpLab.Flux.FX.Scripts.Modules.FluxParticleModule>
+                    {
+                        new TpLab.Flux.FX.Scripts.Modules.FluxParticleNoiseModule()
+                    });
+                var build = FluxParticleBuildPipeline.Build(authoring);
+                preview = new FluxParticleEditorPreview(build, authoring, 4);
+                var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
+                    .GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                session.SetFloat("spawn.speed", 0);
+                preview.Step(0.25f);
+                preview.Step(0.25f);
+                var velocity = ReadValue(session, build, "particle.velocity");
+                Assert.AreEqual(Mathf.Sin(0.25f) * 0.25f, velocity.x, 0.0005f);
+                Assert.AreEqual(Mathf.Sin(0.25f * 1.17f) * 0.25f, velocity.y, 0.0005f);
+                Assert.AreEqual(Mathf.Sin(0.25f * 0.83f) * 0.25f, velocity.z, 0.0005f);
+            }
+            finally
+            {
+                preview?.Dispose();
+                Object.DestroyImmediate(root);
+            }
+        }
         static Vector4 ReadValue(FluxParticleProgramGpuSession session, FluxParticleBuildResult build, string id)
         {
             Assert.IsTrue(build.Shaders.Compilation.StateLayout.TryGetBinding(id, out var binding));

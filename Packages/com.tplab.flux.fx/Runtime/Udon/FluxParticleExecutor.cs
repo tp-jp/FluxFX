@@ -56,6 +56,8 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string deltaTimeProperty;
         [SerializeField]
+        string simulationTimeProperty;
+        [SerializeField]
         string spawnKeyProperty;
 
         FluxBuffer[] _current;
@@ -64,6 +66,7 @@ namespace TpLab.Flux.FX.Udon
         int _count;
         bool _initialized;
         bool _started;
+        float _simulationTime;
 
         /// <summary>
         /// このParticle System専用の描画Materialを取得します。
@@ -142,11 +145,12 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// 全Pageの両BufferとSpawnMaskを初期状態に戻します。Static Parameterのロックは解除しません。
+        /// 全Pageの両Buffer、SpawnMask、Simulation Timeを初期状態に戻します。Static Parameterのロックは解除しません。
         /// </summary>
         public void Clear()
         {
             if (!_initialized) return;
+            _simulationTime = 0;
 
             for (var page = 0; page < _current.Length; page++)
             {
@@ -182,6 +186,10 @@ namespace TpLab.Flux.FX.Udon
 
                 var kernel = stepKernels[pass];
                 kernel.SetFloat(deltaTimeProperty, deltaTime);
+                if (!string.IsNullOrEmpty(simulationTimeProperty))
+                {
+                    kernel.SetFloat(simulationTimeProperty, _simulationTime);
+                }
                 kernel.SetBuffer("_FluxSpawnMask", spawnMaskBuffer);
                 kernel.SetBuffer(spawnKeyProperty, spawnKeyBuffer);
 
@@ -204,6 +212,7 @@ namespace TpLab.Flux.FX.Udon
                 _current[page] = _next[page];
                 _next[page] = previous;
             }
+            _simulationTime += deltaTime;
             BindRender();
         }
 

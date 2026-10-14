@@ -31,6 +31,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         bool countPending;
         double lastCountTime;
         readonly BurstSettings[] bursts;
+        readonly bool usesSimulationTime;
         double fraction;
         float delay;
         float cycleTime;
@@ -71,6 +72,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             {
                 var width = Mathf.CeilToInt(Mathf.Sqrt(count));
                 var shaders = build.Shaders;
+                usesSimulationTime = shaders.Compilation.Providers.ContainsKey("step.time");
                 session = new FluxParticleProgramGpuSession(shaders,
                     shaders.Passes.Select(pass => CreateShader(pass.Source)).ToArray(),
                     shaders.ClearSources.Select(CreateShader).ToArray(), width, width);
@@ -174,6 +176,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     Graphics.Blit(null, keys, keyMaterial);
                 }
                 session.SetUniformFloat("step.delta-time", deltaTime);
+                if (usesSimulationTime)
+                {
+                    session.SetUniformFloat("step.time", (float)PlaybackTime);
+                }
                 session.Step(visible > 0 ? mask : null);
             }
             finally

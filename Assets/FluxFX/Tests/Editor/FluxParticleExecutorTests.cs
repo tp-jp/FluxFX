@@ -93,7 +93,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void UnsupportedAndDuplicateModulesAreRejected()
         {
-            SetModules(new FluxParticleNoiseModule());
+            SetModules(new FluxParticleTextureSheetAnimationModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
             SetModules(new FluxParticleGravityModule(), new FluxParticleGravityModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
@@ -1166,6 +1166,97 @@ namespace TpLab.Flux.FX.Tests.Editor
             typeof(FluxParticleVortexModule).GetField("strength", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, strength);
             SetModules(module);
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
+        [Test]
+        public void NoiseDependencyOrderHandlesAllOptionalWriters([NUnit.Framework.Range(0, 31)] int presence)
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var modules = new List<FluxParticleModule> { new FluxParticleNoiseModule() };
+            var candidates = new FluxParticleModule[] { new FluxParticleGravityModule(), new FluxParticleForceModule(),
+                new FluxParticleVortexModule(), new FluxParticleDragModule(), new FluxParticleLimitVelocityModule() };
+            var ids = new[] { "gravity", "force", "vortex", "drag", "limit-velocity" };
+            for (var i = candidates.Length - 1; i >= 0; i--)
+            {
+                if ((presence & (1 << i)) != 0)
+                {
+                    modules.Add(candidates[i]);
+                }
+            }
+            var expected = new List<string>();
+            for (var i = 0; i < ids.Length; i++)
+            {
+                if (i == 2) expected.Add("noise");
+                if ((presence & (1 << i)) != 0)
+                {
+                    expected.Add(ids[i]);
+                }
+            }
+            SetModules(modules.ToArray());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            CollectionAssert.AreEqual(expected, compiled.Shaders.Compilation.Operations.Where(operation =>
+                operation.Phase == FluxParticlePhase.Update && operation.Writes.Any(write => write.ValueId == "particle.velocity"))
+                .Select(operation => operation.Id));
+        }
+
+        [Test]
+        public void NoiseGpuUsesSimulationTimeAndPreviousPositionWithLiveChanges()
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleNoiseModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            var position = new Vector3(0.2f, 0.3f, 0.4f);
+            Assert.IsTrue(runtime.SetVector("spawn.position", position));
+            Assert.IsTrue(runtime.SetFloat("noise.strength", 2));
+            Assert.IsTrue(runtime.SetFloat("noise.scale", 1.5f));
+            Assert.IsTrue(runtime.SetFloat("noise.speed", 3));
+            runtime.Step(0.5f, 0, 1, 1);
+            runtime.Step(0.25f, 0, 0, 2);
+            var p = position * 1.5f;
+            var expected = EvaluateNoise(p, 1.5f) * 0.5f;
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0), 0.0005f);
+            AssertVector((Vector4)position + expected * 0.25f, ReadValue(runtime, compiled, "particle.position", 0), 0.0005f);
+            Assert.IsTrue(runtime.SetFloat("noise.scale", 0));
+            Assert.IsTrue(runtime.SetFloat("noise.speed", 0));
+            runtime.Step(0.25f, 0, 0, 3);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0), 0.0005f);
+            Assert.IsTrue(runtime.SetFloat("noise.enabled", 0));
+            Assert.IsTrue(runtime.SetFloat("noise.strength", 5));
+            Assert.IsTrue(runtime.SetFloat("noise.speed", 1));
+            runtime.Step(0.25f, 0, 0, 4);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0), 0.0005f);
+            runtime.Clear();
+            Assert.IsTrue(runtime.SetFloat("noise.enabled", 1));
+            Assert.IsTrue(runtime.SetFloat("noise.strength", 2));
+            Assert.IsTrue(runtime.SetFloat("noise.scale", 1.5f));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.25f, 0, 0, 2);
+            AssertVector(EvaluateNoise(p, 0) * 0.5f, ReadValue(runtime, compiled, "particle.velocity", 0), 0.0005f);
+        }
+
+        [TestCase(-1f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void NoiseRejectsInvalidParameters(float value)
+        {
+            foreach (var field in new[] { "strength", "scale", "speed" })
+            {
+                var module = new FluxParticleNoiseModule();
+                typeof(FluxParticleNoiseModule).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, value);
+                SetModules(module);
+                Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring), field);
+            }
+        }
+
+        static Vector4 EvaluateNoise(Vector3 p, float time)
+        {
+            return new Vector4(Mathf.Sin(p.y * 1.37f + p.z * 0.73f + time),
+                Mathf.Sin(p.z * 1.11f + p.x * 1.53f + time * 1.17f),
+                Mathf.Sin(p.x * 0.91f + p.y * 1.29f + time * 0.83f), 0);
         }
         static string GetAssetIdentity(Object asset)
         {

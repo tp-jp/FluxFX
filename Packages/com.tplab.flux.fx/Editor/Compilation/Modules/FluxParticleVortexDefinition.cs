@@ -36,6 +36,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 new[] { "vortex.center", "vortex.axis", "vortex.strength" }, "vortex.enabled"));
             context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("vortex", "gravity"));
             context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("vortex", "force"));
+            context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("vortex", "noise"));
         }
     }
 }
