@@ -58,6 +58,24 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
 
         /// <summary>
+        /// 一時停止中かどうか
+        /// </summary>
+        [PublicAPI]
+        public bool IsPaused => _isPaused;
+
+        /// <summary>
+        /// Delay待機を含むEmissionの再生中かどうか
+        /// </summary>
+        [PublicAPI]
+        public bool IsEmitting => _programReady && _isPlaying && !_isPaused && !particleEmitter.HasCompleted;
+
+        /// <summary>
+        /// Clear以降のシミュレーション経過秒数
+        /// </summary>
+        [PublicAPI]
+        public float PlaybackTime => _programReady ? particleExecutor.PlaybackTime : 0;
+
+        /// <summary>
         /// 一時停止を解除し、Particleの生成と更新を再開します。
         /// </summary>
         [PublicAPI]

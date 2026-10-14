@@ -21,6 +21,21 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void CompletionTracksNonLoopBoundaryAndResetsWithDelay()
+        {
+            var state = FluxParticleEmissionScheduler.Create(0.25f);
+            Assert.IsFalse(FluxParticleEmissionScheduler.HasCompleted(state));
+            Emit(state, 0.5f, 0, 0.5f, false);
+            Assert.IsFalse(FluxParticleEmissionScheduler.HasCompleted(state));
+            Emit(state, 0.25f, 0, 0.5f, false);
+            Assert.IsTrue(FluxParticleEmissionScheduler.HasCompleted(state));
+            FluxParticleEmissionScheduler.Reset(state, 0.25f);
+            Assert.IsFalse(FluxParticleEmissionScheduler.HasCompleted(state));
+            Emit(state, 2, 0, 0.5f, true);
+            Assert.IsFalse(FluxParticleEmissionScheduler.HasCompleted(state));
+        }
+
+        [Test]
         public void DelayBurstBoundariesAndCompletionAreEvaluatedOnce()
         {
             var state = FluxParticleEmissionScheduler.Create(0.5f);

@@ -16,6 +16,16 @@ namespace TpLab.Flux.FX.Udon
         const int Completed = 4;
 
         /// <summary>
+        /// 非LoopのEmissionが終了したかを返します。
+        /// </summary>
+        /// <param name="state">Scheduler専用の再生状態</param>
+        /// <returns>Emissionが終了している場合はtrue</returns>
+        public static bool HasCompleted(double[] state)
+        {
+            return state[Completed] != 0;
+        }
+
+        /// <summary>
         /// 再生位置を保持する状態を作成します。
         /// </summary>
         /// <param name="startDelay">生成開始までの待機秒数</param>

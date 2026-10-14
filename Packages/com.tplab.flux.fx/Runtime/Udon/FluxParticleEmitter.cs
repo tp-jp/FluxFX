@@ -30,6 +30,8 @@ namespace TpLab.Flux.FX.Udon
 
         public int SpawnCount { get; private set; }
 
+        internal bool HasCompleted => FluxParticleEmissionScheduler.HasCompleted(_playback);
+
         internal void Initialize(
             FluxParticleEmissionParameters parameters,
             float[] burstTimes,

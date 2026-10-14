@@ -78,6 +78,11 @@ namespace TpLab.Flux.FX.Udon
         public Material RenderMaterial => renderMaterial;
 
         /// <summary>
+        /// Clear以降のシミュレーション経過秒数
+        /// </summary>
+        public float PlaybackTime => _simulationTime;
+
+        /// <summary>
         /// FluxBufferを初期化し、確定済みManifestのGPU実行環境を構築します。
         /// </summary>
         /// <param name="count">有効Particle数。</param>

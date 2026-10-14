@@ -416,12 +416,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             var parameters = new TpLab.Flux.FX.Udon.Parameters.FluxParticleEmissionParameters();
             parameters.Add(1d);
             typeof(FluxParticleEmitter).GetMethod("Initialize", flags).Invoke(emitter,
-                new object[] { parameters, new[] { 0f }, new[] { 1 }, 4, 0f, 5f, true });
+                new object[] { parameters, new[] { 0f }, new[] { 1 }, 4, 0f, 0.5f, false });
             typeof(FluxParticleSystem).GetField("particleEmitter", flags).SetValue(system, emitter);
             typeof(FluxParticleSystem).GetField("particleExecutor", flags).SetValue(system, runtime);
             typeof(FluxParticleSystem).GetField("_programReady", flags).SetValue(system, true);
             var simulate = typeof(FluxParticleSystem).GetMethod("Simulate", flags);
             system.Play();
+            Assert.IsFalse(system.IsPaused);
+            Assert.IsTrue(system.IsEmitting);
             simulate.Invoke(system, new object[] { 0.125f });
             Assert.AreEqual(0, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
             var playbackField = typeof(FluxParticleEmitter).GetField("_playback", flags);
@@ -432,17 +434,26 @@ namespace TpLab.Flux.FX.Tests.Editor
             var time = timeField.GetValue(runtime);
 
             system.Pause();
+            Assert.IsTrue(system.IsPaused);
+            Assert.IsFalse(system.IsEmitting);
             simulate.Invoke(system, new object[] { 10f });
             Assert.AreSame(page, runtime.GetCurrentPage(0));
             Assert.AreEqual(time, timeField.GetValue(runtime));
+            Assert.AreEqual(0.125f, system.PlaybackTime, 0.0001f);
             AssertVector(position, ReadValue(runtime, compiled, "particle.position", 0), 0.0001f);
             CollectionAssert.AreEqual(playback, (double[])playbackField.GetValue(emitter));
 
             system.Play();
+            Assert.IsFalse(system.IsPaused);
+            Assert.IsTrue(system.IsEmitting);
             simulate.Invoke(system, new object[] { 0.125f });
             Assert.AreEqual(0.125f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
             system.Pause();
+            Assert.IsTrue(system.IsPaused);
+            Assert.IsFalse(system.IsEmitting);
             system.Stop();
+            Assert.IsFalse(system.IsPaused);
+            Assert.IsFalse(system.IsEmitting);
             playback = (double[])((double[])playbackField.GetValue(emitter)).Clone();
             simulate.Invoke(system, new object[] { 0.125f });
             Assert.AreEqual(0.25f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
@@ -450,10 +461,27 @@ namespace TpLab.Flux.FX.Tests.Editor
             CollectionAssert.AreEqual(playback, (double[])playbackField.GetValue(emitter));
 
             system.Pause();
+            Assert.IsTrue(system.IsPaused);
+            Assert.IsFalse(system.IsEmitting);
             system.Restart();
             simulate.Invoke(system, new object[] { 0.125f });
             Assert.AreEqual(0.375f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
             Assert.AreEqual(1, emitter.SpawnCount);
+            Assert.AreEqual(0.5f, system.PlaybackTime, 0.0001f);
+            Assert.IsTrue(system.IsEmitting);
+            simulate.Invoke(system, new object[] { 0.375f });
+            Assert.IsFalse(system.IsEmitting, "Non-loop emission has completed.");
+            system.Play();
+            Assert.IsFalse(system.IsEmitting, "Play does not reset completed emission.");
+            system.Pause();
+            system.Clear();
+            Assert.IsTrue(system.IsPaused);
+            Assert.AreEqual(0, system.PlaybackTime);
+            Assert.IsFalse(system.IsEmitting);
+            Assert.AreEqual(-1, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            system.Restart();
+            Assert.IsFalse(system.IsPaused);
+            Assert.IsTrue(system.IsEmitting);
         }
 
         [Test]
