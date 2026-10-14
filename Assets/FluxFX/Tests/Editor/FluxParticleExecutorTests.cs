@@ -848,6 +848,99 @@ namespace TpLab.Flux.FX.Tests.Editor
             type.GetField("radial", flags).SetValue(module, radial);
             return module;
         }
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [TestCase(5)]
+        public void ForceDependencyOrderIsIndependentOfModuleRegistration(int permutation)
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var modules = new FluxParticleModule[] { new FluxParticleGravityModule(), new FluxParticleForceModule(), new FluxParticleDragModule() };
+            var orders = new[] { new[] { 0, 1, 2 }, new[] { 0, 2, 1 }, new[] { 1, 0, 2 },
+                new[] { 1, 2, 0 }, new[] { 2, 0, 1 }, new[] { 2, 1, 0 } };
+            SetModules(orders[permutation].Select(index => modules[index]).ToArray());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            var writers = compiled.Shaders.Compilation.Operations.Where(operation => operation.Phase == FluxParticlePhase.Update &&
+                operation.Writes.Any(write => write.ValueId == "particle.velocity")).ToArray();
+            CollectionAssert.AreEqual(new[] { "gravity", "force", "drag" }, writers.Select(operation => operation.Id));
+            Assert.AreEqual("force", writers[2].Reads.Single(read => read.ValueId == "particle.velocity").ProducerOperationId);
+        }
+
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        public void ForceUpdatesGpuVelocityAndSupportsLiveChanges(bool gravity, bool drag)
+        {
+            RequireGraphics();
+            var force = new FluxParticleForceModule();
+            typeof(FluxParticleForceModule).GetField("force", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(force, new Vector3(2, 0, 0));
+            var modules = new List<FluxParticleModule> { force };
+            if (drag)
+            {
+                modules.Add(new FluxParticleDragModule());
+            }
+            if (gravity)
+            {
+                modules.Add(new FluxParticleGravityModule());
+            }
+            SetModules(modules.ToArray());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            if (gravity)
+            {
+                Assert.IsTrue(runtime.SetVector("gravity", new Vector4(0, -2, 0, 0)));
+            }
+            if (drag)
+            {
+                Assert.IsTrue(runtime.SetFloat("drag", 0.4f));
+            }
+            runtime.Step(0, 0, 1, 1);
+            var gravityDelta = gravity ? new Vector4(0, -1, 0, 0) : Vector4.zero;
+            var attenuation = drag ? Mathf.Exp(-0.2f) : 1;
+            var expectedVelocity = (new Vector4(1, 0, 0, 0) + gravityDelta) * attenuation;
+            runtime.Step(0.5f, 0, 0, 2);
+            AssertVector(expectedVelocity, ReadValue(runtime, compiled, "particle.velocity", 0));
+            var expectedPosition = expectedVelocity * 0.5f;
+            AssertVector(expectedPosition, ReadValue(runtime, compiled, "particle.position", 0));
+
+            Assert.IsTrue(runtime.SetVector("force", new Vector4(4, 0, 0, 0)));
+            expectedVelocity = (expectedVelocity + new Vector4(2, 0, 0, 0) + gravityDelta) * attenuation;
+            runtime.Step(0.5f, 0, 0, 3);
+            expectedPosition += expectedVelocity * 0.5f;
+            AssertVector(expectedVelocity, ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(expectedPosition, ReadValue(runtime, compiled, "particle.position", 0));
+
+            Assert.IsTrue(runtime.SetFloat("force.enabled", 0));
+            expectedVelocity = (expectedVelocity + gravityDelta) * attenuation;
+            runtime.Step(0.5f, 0, 0, 4);
+            AssertVector(expectedVelocity, ReadValue(runtime, compiled, "particle.velocity", 0));
+            runtime.Clear();
+            runtime.Step(0, 0, 1, 1);
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, "particle.velocity", 0));
+        }
+
+        [Test]
+        public void DisabledForceAddsNoOperationAndNonFiniteForceIsRejected()
+        {
+            var module = new FluxParticleForceModule();
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(FluxParticleModule).GetField("enabled", flags).SetValue(module, false);
+            SetModules(module);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "force"));
+            Assert.IsFalse(compiled.InitialValues.ContainsKey("force"));
+            typeof(FluxParticleModule).GetField("enabled", flags).SetValue(module, true);
+            typeof(FluxParticleForceModule).GetField("force", flags).SetValue(module, new Vector3(float.NaN, 0, 0));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
         static string GetAssetIdentity(Object asset)
         {
             Assert.IsNotNull(asset);

@@ -29,6 +29,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Drag.hlsl", "FluxFX_Drag",
                 new[] { "drag" }, "drag.enabled"));
             context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "gravity"));
+            context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "force"));
         }
     }
 }

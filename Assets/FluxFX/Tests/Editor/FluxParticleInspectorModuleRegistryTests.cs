@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var modules = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
 
             Assert.IsTrue(Contains(modules, typeof(FluxParticleGravityModule)));
-            Assert.IsFalse(Contains(modules, typeof(FluxParticleForceModule)));
+            Assert.IsTrue(Contains(modules, typeof(FluxParticleForceModule)));
             Assert.IsFalse(Contains(modules, typeof(FluxParticleNoiseModule)));
             Assert.IsFalse(Contains(modules, typeof(FluxParticleVelocityOverLifetimeModule)));
         }
@@ -172,7 +172,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(6, standardCount);
+            Assert.AreEqual(7, standardCount);
         }
 
         [Test]
@@ -183,7 +183,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var rendering = _registry.GetModules(FluxParticleExecutionStage.Rendering);
 
             Assert.IsTrue(Contains(velocity, typeof(FluxParticleGravityModule)));
-            Assert.IsFalse(Contains(velocity, typeof(FluxParticleForceModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleForceModule)));
             Assert.IsTrue(Contains(velocity, typeof(FluxParticleDragModule)));
             Assert.IsFalse(Contains(velocity, typeof(FluxParticleNoiseModule)));
             Assert.IsFalse(Contains(velocity, typeof(FluxParticleVortexModule)));

@@ -87,6 +87,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void RegisterStandardModules()
         {
             RegisterStandard<FluxParticleGravityModule>("Gravity", 100, "GravityExpanded");
+            RegisterStandard<FluxParticleForceModule>("Force", 200, "ForceExpanded");
             RegisterStandard<FluxParticleDragModule>("Drag", 500, "DragExpanded");
 
             RegisterStandard<FluxParticleVelocityOverLifetimeModule>("Velocity over Lifetime", 100, "VelocityOverLifetimeExpanded");
