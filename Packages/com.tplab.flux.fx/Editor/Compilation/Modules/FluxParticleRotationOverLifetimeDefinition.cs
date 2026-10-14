@@ -1,6 +1,7 @@
 using System;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Compilation.Modules
 {
@@ -23,7 +24,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 throw new InvalidOperationException("Unsupported rotation over lifetime mode.");
             }
             var end = rotation.EndRotation;
-            if (end.x != 0 || end.y != 0 || float.IsNaN(end.z) || float.IsInfinity(end.z))
+            if (context.RenderMode == FluxParticleRenderMode.Billboard && (end.x != 0 || end.y != 0))
             {
                 throw new InvalidOperationException("Program Backend currently requires: Billboard rotation over lifetime around Z only.");
             }

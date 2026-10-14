@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {
@@ -15,6 +16,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         readonly Dictionary<string, Vector4> _initialValues;
         readonly IReadOnlyDictionary<string, Vector4> _readOnlyInitialValues;
         readonly string _ownerId;
+
+        /// <summary>
+        /// ビルド対象の描画方式
+        /// </summary>
+        public FluxParticleRenderMode RenderMode { get; }
 
         /// <summary>
         /// 登録済みValue定義の読み取り専用一覧です。
@@ -44,18 +50,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 指定した定義集合へContributionを収集します。
         /// </summary>
-        /// <param name="definitions">CoreとModuleが共有する論理定義集合。</param>
-        public FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions)
-            : this(definitions, new Dictionary<string, Vector4>(StringComparer.Ordinal), null)
+        /// <param name="definitions">CoreとModuleが共有する論理定義集合</param>
+        /// <param name="renderMode">ビルド対象の描画方式</param>
+        public FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, FluxParticleRenderMode renderMode = FluxParticleRenderMode.Billboard)
+            : this(definitions, new Dictionary<string, Vector4>(StringComparer.Ordinal), null, renderMode)
         {
         }
 
-        FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, Dictionary<string, Vector4> initialValues, string ownerId)
+        FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, Dictionary<string, Vector4> initialValues, string ownerId, FluxParticleRenderMode renderMode)
         {
             _definitions = definitions ?? throw new ArgumentNullException(nameof(definitions));
             _initialValues = initialValues;
             _readOnlyInitialValues = new ReadOnlyDictionary<string, Vector4>(_initialValues);
             _ownerId = ownerId;
+            RenderMode = renderMode;
         }
 
         /// <summary>
@@ -67,7 +75,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentException("Module ID is required.", nameof(moduleId));
             }
-            return new FluxParticleProgramContribution(_definitions, _initialValues, moduleId);
+            return new FluxParticleProgramContribution(_definitions, _initialValues, moduleId, RenderMode);
         }
 
         /// <summary>

@@ -35,7 +35,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     definitions.AddProvider(new FluxParticleValueProvider(id, FluxParticleProviderKind.Uniform));
                 }
             }
-            var moduleContext = new FluxParticleProgramContribution(definitions);
+            var moduleContext = new FluxParticleProgramContribution(definitions, authoring.Render.Mode);
             new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
             var hasRotation = authoring.Render.StartRotation != Vector3.zero || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
                 write.ValueId == "render.rotation"));
