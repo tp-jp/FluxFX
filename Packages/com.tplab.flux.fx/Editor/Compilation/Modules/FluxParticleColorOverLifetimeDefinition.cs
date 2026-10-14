@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 
@@ -40,14 +41,20 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
 
         void AddGradient(FluxParticleColorOverLifetimeModule color, FluxParticleProgramContribution context)
         {
-            if (color.Gradient == null || color.Gradient.mode != UnityEngine.GradientMode.Blend)
+            if (color.Gradient == null || (color.Gradient.mode != UnityEngine.GradientMode.Blend && color.Gradient.mode != UnityEngine.GradientMode.Fixed))
             {
-                throw new InvalidOperationException("Color gradient requires Blend mode.");
+                throw new InvalidOperationException("Unsupported color gradient mode.");
             }
-            var samples = new UnityEngine.Vector4[128];
+            var positions = color.Gradient.mode == UnityEngine.GradientMode.Fixed
+                ? color.Gradient.colorKeys.Select(key => key.time).Concat(color.Gradient.alphaKeys.Select(key => key.time))
+                    .Concat(new[] { 0f, 1f }).Distinct().OrderBy(time => time).ToArray()
+                : Array.Empty<float>();
+            var samples = new UnityEngine.Vector4[positions.Length != 0 ? positions.Length : 128];
             for (var i = 0; i < samples.Length; i++)
             {
-                samples[i] = color.Gradient.Evaluate(i / (float)(samples.Length - 1));
+                var time = positions.Length == 0 ? i / (float)(samples.Length - 1)
+                    : i == 0 ? positions[0] : (positions[i - 1] + positions[i]) * 0.5f;
+                samples[i] = color.Gradient.Evaluate(time);
             }
             context.AddValue(new FluxParticleValueDefinition("color.normalized-age", FluxParticleValueType.Float,
                 FluxParticleWritePolicy.ReadOnly, ModuleId));
@@ -57,7 +64,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 new[] { "particle.age", "particle.lifetime" },
                 hlslPath: "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/NormalizedAge.hlsl", entryPoint: "FluxFX_NormalizedAge"));
             context.AddProvider(new FluxParticleValueProvider("color.gradient", FluxParticleProviderKind.LookupTable,
-                new[] { "color.normalized-age" }, lookupVectorSamples: samples));
+                new[] { "color.normalized-age" }, lookupVectorSamples: samples, lookupPositions: positions));
             context.AddOperation(new FluxParticleOperationDefinition("render.color", ModuleId, FluxParticlePhase.Render,
                 new[]
                 {
@@ -67,5 +74,6 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
                 new[] { "render.start" },
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/RenderColorGradient.hlsl", "FluxFX_RenderColorGradient"));
-        }    }
+        }
+    }
 }

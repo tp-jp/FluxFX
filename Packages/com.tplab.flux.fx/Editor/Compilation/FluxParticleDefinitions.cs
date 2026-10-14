@@ -327,6 +327,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public IReadOnlyList<UnityEngine.Vector4> LookupVectorSamples { get; }
 
         /// <summary>
+        /// 階段状LUTの区間終端。先頭は時刻0の値、以降は各終端を含む区間の値。空の場合は等間隔の線形補間
+        /// </summary>
+        public IReadOnlyList<float> LookupPositions { get; }
+
+        /// <summary>
         /// LUTのサンプル数
         /// </summary>
         public int LookupSampleCount => LookupVectorSamples.Count != 0 ? LookupVectorSamples.Count : LookupSamples.Count;
@@ -342,6 +347,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="entryPoint">HLSL関数名</param>
         /// <param name="lookupSamples">0から1の区間に等間隔で配置した固定LUTのサンプル</param>
         /// <param name="lookupVectorSamples">RGBA固定LUTのサンプル</param>
+        /// <param name="lookupPositions">0から1の昇順の階段状LUT切り替え位置</param>
         public FluxParticleValueProvider(
             string valueId,
             FluxParticleProviderKind kind,
@@ -349,7 +355,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
             IEnumerable<string> parameters = null,
             string hlslPath = null,
             string entryPoint = null,
-            IEnumerable<float> lookupSamples = null, IEnumerable<UnityEngine.Vector4> lookupVectorSamples = null)
+            IEnumerable<float> lookupSamples = null,
+            IEnumerable<UnityEngine.Vector4> lookupVectorSamples = null,
+            IEnumerable<float> lookupPositions = null)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
             if (!Enum.IsDefined(typeof(FluxParticleProviderKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
@@ -366,6 +374,23 @@ namespace TpLab.Flux.FX.Editor.Compilation
             EntryPoint = entryPoint;
             LookupSamples = new List<float>(lookupSamples ?? Array.Empty<float>()).AsReadOnly();
             LookupVectorSamples = new List<UnityEngine.Vector4>(lookupVectorSamples ?? Array.Empty<UnityEngine.Vector4>()).AsReadOnly();
+            LookupPositions = new List<float>(lookupPositions ?? Array.Empty<float>()).AsReadOnly();
+            if (LookupPositions.Count != 0)
+            {
+                if (kind != FluxParticleProviderKind.LookupTable || LookupPositions.Count != LookupSampleCount || LookupPositions[0] != 0)
+                {
+                    throw new ArgumentException("Step lookup positions must match samples and start at zero.");
+                }
+                for (var i = 0; i < LookupPositions.Count; i++)
+                {
+                    var position = LookupPositions[i];
+                    if (float.IsNaN(position) || float.IsInfinity(position) || position < 0 || position > 1 ||
+                        i > 0 && position <= LookupPositions[i - 1])
+                    {
+                        throw new ArgumentException("Step lookup positions must be finite, strictly increasing, and within zero to one.");
+                    }
+                }
+            }
             if (LookupSamples.Count != 0 && LookupVectorSamples.Count != 0)
             {
                 throw new ArgumentException("Lookup providers require either scalar or vector samples.");

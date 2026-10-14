@@ -295,6 +295,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     var input = SuppliedOrState(provider.Inputs[0], render);
                     var count = provider.LookupSampleCount;
+                    if (provider.LookupPositions.Count != 0)
+                    {
+                        var terms = provider.LookupPositions.Take(count - 1).Select(position =>
+                            $"((saturate({input}) > {position.ToString("R", System.Globalization.CultureInfo.InvariantCulture)}) ? 1.0 : 0.0)");
+                        var index = string.Join(" + ", terms);
+                        return $"tex2Dlod({property}, float4((({index}) + 0.5) / {count}.0, 0.5, 0.0, 0.0)).{(provider.LookupVectorSamples.Count != 0 ? "rgba" : "r")}";
+                    }
                     return $"tex2Dlod({property}, float4((saturate({input}) * {count - 1}.0 + 0.5) / {count}.0, 0.5, 0.0, 0.0)).{(provider.LookupVectorSamples.Count != 0 ? "rgba" : "r")}";
                 }
                 if (provider.Kind == FluxParticleProviderKind.Uniform) return property;

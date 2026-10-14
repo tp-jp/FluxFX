@@ -74,18 +74,52 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void FixedGradientIsRejected()
+        public void FixedGradientUsesKeyPositionsAndPointSampling()
         {
-            var gradient = Configure();
-            gradient.mode = GradientMode.Fixed;
-            var serialized = new SerializedObject(authoring);
-            serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("gradient").gradientValue = gradient;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+            var gradient = Configure(GradientMode.Fixed);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var provider = compiled.Shaders.Compilation.Providers["color.gradient"];
+            CollectionAssert.AreEqual(new[] { 0f, gradient.colorKeys[1].time, gradient.alphaKeys[1].time, gradient.colorKeys[2].time, 1f }, provider.LookupPositions);
+            Assert.AreEqual(5, provider.LookupSampleCount);
+            Assert.AreEqual(FilterMode.Point, Own(FluxParticleLookupTexture.Create(provider)).filterMode);
         }
 
         [Test]
-        public void GpuGradientMultipliesStartColorAndRestartsAfterClear()
+        public void FixedRgbIntervalsKeepBlueUntilEndOfLifetime()
+        {
+            Configure(GradientMode.Fixed);
+            var gradient = new Gradient { mode = GradientMode.Fixed };
+            gradient.SetKeys(new[]
+            {
+                new GradientColorKey(Color.red, 0.33f),
+                new GradientColorKey(Color.green, 0.66f),
+                new GradientColorKey(Color.blue, 1f)
+            }, new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) });
+            var serialized = new SerializedObject(authoring);
+            serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("gradient").gradientValue = gradient;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var provider = FluxParticleBuildPipeline.Build(authoring).Shaders.Compilation.Providers["color.gradient"];
+            CollectionAssert.AreEqual(new[] { 0f, gradient.colorKeys[0].time, gradient.colorKeys[1].time, 1f }, provider.LookupPositions);
+            Assert.AreEqual((Vector4)Color.red, provider.LookupVectorSamples[0]);
+            Assert.AreEqual((Vector4)Color.red, provider.LookupVectorSamples[1]);
+            Assert.AreEqual((Vector4)Color.green, provider.LookupVectorSamples[2]);
+            Assert.AreEqual((Vector4)Color.blue, provider.LookupVectorSamples[3]);
+        }
+
+        [Test]
+        public void StepLookupRejectsUnorderedAndMismatchedPositions()
+        {
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("test", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f, 1f }, lookupPositions: new[] { 0f, float.NaN }));
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("test", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f, 1f }, lookupPositions: new[] { 0f, 0f }));
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("test", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f, 1f }, lookupPositions: new[] { 0f, 0.5f, 1f }));
+        }
+
+        [TestCase(GradientMode.Blend)]
+        [TestCase(GradientMode.Fixed)]
+        public void GpuGradientMultipliesStartColorAndRestartsAfterClear(GradientMode mode)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
                 !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
@@ -93,7 +127,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 Assert.Ignore("GPU with RGBAFloat textures is required.");
             }
-            var gradient = Configure();
+            var gradient = Configure(mode);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("Step" + index, pass.Source)).ToArray();
@@ -132,12 +166,15 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var mask = Texture(Color.white, Color.white);
                 session.Step(mask);
                 AssertColor(Evaluate(session, material)[0], gradient.Evaluate(0));
-                session.SetUniformFloat("step.delta-time", 4);
-                session.Step();
-                AssertColor(Evaluate(session, material)[0], gradient.Evaluate(0.5f));
-                session.SetUniformFloat("step.delta-time", 2);
-                session.Step();
-                AssertColor(Evaluate(session, material)[0], gradient.Evaluate(0.75f));
+                foreach (var age in new[] { 0.249f, 0.25f, 0.251f, 0.374f, 0.375f, 0.376f, 0.749f, 0.75f, 0.751f, 0.99f })
+                {
+                    session.Clear();
+                    session.SetUniformFloat("step.delta-time", 0);
+                    session.Step(mask);
+                    session.SetUniformFloat("step.delta-time", age * 8);
+                    session.Step();
+                    AssertColor(Evaluate(session, material)[0], gradient.Evaluate(age));
+                }
                 session.Clear();
                 session.SetUniformFloat("step.delta-time", 0);
                 session.Step(mask);
@@ -154,7 +191,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
-        Gradient Configure()
+        Gradient Configure(GradientMode mode = GradientMode.Blend)
         {
             var gradient = new Gradient();
             gradient.SetKeys(new[]
@@ -162,6 +199,22 @@ namespace TpLab.Flux.FX.Tests.Editor
                 new GradientColorKey(new Color(1, 0.2f, 0.1f), 0),
                 new GradientColorKey(new Color(0.2f, 0.4f, 1), 1)
             }, new[] { new GradientAlphaKey(0.2f, 0), new GradientAlphaKey(0.8f, 1) });
+            gradient.mode = mode;
+            if (mode == GradientMode.Fixed)
+            {
+                gradient.SetKeys(new[]
+                {
+                    new GradientColorKey(Color.red, 0),
+                    new GradientColorKey(Color.green, 0.25f),
+                    new GradientColorKey(Color.blue, 0.75f),
+                    new GradientColorKey(Color.white, 1)
+                }, new[]
+                {
+                    new GradientAlphaKey(0.2f, 0),
+                    new GradientAlphaKey(0.6f, 0.375f),
+                    new GradientAlphaKey(0.8f, 1)
+                });
+            }
             var serialized = new SerializedObject(authoring);
             var modules = serialized.FindProperty("modules");
             modules.arraySize = 1;

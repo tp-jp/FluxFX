@@ -301,6 +301,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var samples = provider.LookupVectorSamples.Count != 0 ? provider.LookupVectorSamples.SelectMany(sample => new[] { sample.x, sample.y, sample.z, sample.w }) : provider.LookupSamples;
             var signature = (provider.LookupVectorSamples.Count != 0 ? "rgba:" : "r:") + string.Join(",", samples.Select(sample =>
                 sample.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
+            signature += "|positions:" + string.Join(",", provider.LookupPositions.Select(position =>
+                position.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
             var path = outputRoot + "/Lookup-" + Hash128.Compute(signature) + ".asset";
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (texture == null)

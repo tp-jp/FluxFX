@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var count = provider.LookupSampleCount;
             var texture = new Texture2D(count, 1, TextureFormat.RGBAFloat, false, true)
             {
-                filterMode = FilterMode.Bilinear,
+                filterMode = provider.LookupPositions.Count == 0 ? FilterMode.Bilinear : FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
                 anisoLevel = 0
             };
