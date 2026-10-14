@@ -41,7 +41,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new InvalidOperationException("Program Backend requires the existing Renderer and Emitter.");
             }
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = authoring.GetComponentInChildren<FluxParticleExecutor>(true);
             if (runtime == null)
             {
@@ -84,7 +84,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="compiled">検証済みAuthoring Program。</param>
         /// <param name="authoring">描画MaterialとBlend設定。</param>
         /// <param name="outputRoot">生成Assetの保存先。Assets配下を指定します。</param>
-        public static void Configure(FluxParticleExecutor runtime, FluxParticleAuthoringProgram compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
+        public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
         {
             if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
             {
@@ -128,7 +128,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             keyKernel.SetProgramVariable("shader", keyShader);
             maskBuffer.SetProgramVariable("initialCount", bufferCapacity);
             keyBuffer.SetProgramVariable("initialCount", bufferCapacity);
-            var renderCode = compiled.GenerateRenderer();
+            var renderCode = compiled.RendererSource;
             var shader = SaveShader(renderCode, outputRoot);
             var renderSource = authoring.Render.Material;
             var texture = renderSource == null ? null : renderSource.mainTexture;

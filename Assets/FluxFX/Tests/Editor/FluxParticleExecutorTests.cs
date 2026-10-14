@@ -69,7 +69,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void AuthoringUsesTwoPagesAndMapsInitialValues()
         {
-            var program = new FluxParticleAuthoringProgram(authoring);
+            var program = FluxParticleBuildResult.Create(authoring);
             Assert.AreEqual(2, program.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(2, program.Program.Passes.Count);
             Assert.AreEqual(1, program.InitialValues["spawn.speed"].x);
@@ -85,7 +85,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty(path).enumValueIndex = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            StringAssert.Contains("Program Backend", Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(authoring)).Message);
+            StringAssert.Contains("Program Backend", Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(authoring)).Message);
             Assert.IsFalse(AssetDatabase.IsValidFolder(folder));
         }
 
@@ -93,16 +93,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void UnsupportedAndDuplicateModulesAreRejected()
         {
             SetModules(new FluxParticleNoiseModule());
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(authoring));
             SetModules(new FluxParticleGravityModule(), new FluxParticleGravityModule());
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(authoring));
         }
 
         [Test]
         public void RuntimeManifestPreservesResolvedBindingsAndImportsRenderer()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled);
             CollectionAssert.AreEqual(compiled.Program.Passes.Select(p => p.Plan.OutputPageId), (int[])runtime.GetProgramVariable("outputPages"));
             CollectionAssert.AreEqual(compiled.Program.Passes.SelectMany(p => p.Reads).Select(r => FluxParticleHlslNames.PageProperty(r.PageId, r.Version)),
@@ -129,7 +129,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             RequireGraphics();
             SetModules(new FluxParticleGravityModule());
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled);
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0.5f, 0, 1, 7);
@@ -149,7 +149,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void SpawnOverflowKeepsLastOccurrenceAndWrapsTwentyBitKeys()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled);
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0.1f, 3, 6, 1048574);
@@ -167,7 +167,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void StaticLockSurvivesClearAndInstancesOwnTheirResources()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var first = CreateRuntime(compiled);
             var second = CreateRuntime(compiled);
             Assert.IsTrue(first.Initialize(4));
@@ -197,7 +197,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void SkippedPassRetainsItsCurrentTexture()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled);
             // Mark a Page conditional to exercise the Runtime commit rule independently of Authoring.
             var conditions = (bool[])runtime.GetProgramVariable("spawnOnly");
@@ -219,7 +219,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void SpawnInputsAreGeneratedInFluxBuffersAndClearedBetweenSteps()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled);
             Assert.IsTrue(runtime.Initialize(4));
 
@@ -247,7 +247,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void SpawnGpuGenerationDoesNotRequireFluxUploadCapacity()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled, 1024);
             Assert.IsTrue(runtime.Initialize(1024));
             runtime.Step(0.1f, 500, 600, 1048500);
@@ -265,7 +265,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RenderMaterialTracksPageCommitsAndClear()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled, 5);
             Assert.IsTrue(runtime.Initialize(5));
 
@@ -302,7 +302,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void SpawnInputsDoNotActivateUnusedTexturePixels()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var runtime = CreateRuntime(compiled, 5);
             Assert.IsTrue(runtime.Initialize(5));
 
@@ -325,7 +325,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RenderParametersAndTexturesRemainInstanceLocal()
         {
             RequireGraphics();
-            var compiled = new FluxParticleAuthoringProgram(authoring);
+            var compiled = FluxParticleBuildResult.Create(authoring);
             var first = CreateRuntime(compiled);
             var second = CreateRuntime(compiled);
             Assert.IsTrue(first.Initialize(4));
@@ -353,7 +353,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
-        FluxParticleExecutor CreateRuntime(FluxParticleAuthoringProgram compiled, int capacity = 4)
+        FluxParticleExecutor CreateRuntime(FluxParticleBuildResult compiled, int capacity = 4)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
             Assert.IsNotNull(prefab);
@@ -396,7 +396,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
-        static Vector4 ReadValue(FluxParticleExecutor runtime, FluxParticleAuthoringProgram compiled, string id, int slot)
+        static Vector4 ReadValue(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, string id, int slot)
         {
             Assert.IsTrue(compiled.Program.Program.StateLayout.TryGetBinding(id, out var binding));
             var texture = runtime.GetCurrentPage(binding.PageId);

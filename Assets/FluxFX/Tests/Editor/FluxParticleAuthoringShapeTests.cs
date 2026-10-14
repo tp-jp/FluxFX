@@ -43,9 +43,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void SphereUsesSpawnKeyWithoutAdditionalStatePages()
         {
-            var point = new FluxParticleAuthoringProgram(_authoring);
+            var point = FluxParticleBuildResult.Create(_authoring);
             SetShape(FluxParticleShapeType.Sphere, 2.5f);
-            var sphere = new FluxParticleAuthoringProgram(_authoring);
+            var sphere = FluxParticleBuildResult.Create(_authoring);
 
             Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, sphere.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(point.Program.Passes.Count, sphere.Program.Passes.Count);
@@ -63,7 +63,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RandomStartSpeedUsesSpawnKeyWithoutAdditionalStatePages()
         {
-            var constant = new FluxParticleAuthoringProgram(_authoring);
+            var constant = FluxParticleBuildResult.Create(_authoring);
             var serialized = new SerializedObject(_authoring);
             var velocity = serialized.FindProperty("initialVelocity");
             velocity.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleStartSpeedMode.RandomBetweenTwoConstants;
@@ -71,7 +71,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             velocity.FindPropertyRelative("max").floatValue = 2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var random = new FluxParticleAuthoringProgram(_authoring);
+            var random = FluxParticleBuildResult.Create(_authoring);
             Assert.AreEqual(constant.Program.Program.StateLayout.Pages.Count, random.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(constant.Program.Passes.Count, random.Program.Passes.Count);
             Assert.IsFalse(random.InitialValues.ContainsKey("spawn.speed"));
@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             velocity.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleStartSpeedMode.RandomBetweenTwoConstants;
             velocity.FindPropertyRelative("min").floatValue = float.NaN;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(_authoring));
         }
 
         [TestCase(FluxParticleShapeType.Hemisphere, "AuthoringHemisphereSpawnPosition.hlsl", "shape.radius")]
@@ -99,9 +99,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void AdditionalShapesUseDeterministicSpawnWithoutNewState(
             FluxParticleShapeType type, string hlslName, string parameter)
         {
-            var point = new FluxParticleAuthoringProgram(_authoring);
+            var point = FluxParticleBuildResult.Create(_authoring);
             SetShape(type, 2.5f);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
 
             Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
@@ -117,9 +117,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase(FluxParticleShapeType.Hemisphere)]
         public void RadialShapeSharesDerivedSpawnDirectionWithoutAdditionalPages(FluxParticleShapeType shape)
         {
-            var point = new FluxParticleAuthoringProgram(_authoring);
+            var point = FluxParticleBuildResult.Create(_authoring);
             SetShape(shape, 2.5f);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             var program = compiled.Program.Program;
 
             Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
@@ -139,14 +139,14 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase(FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
         public void ConeUsesShapeParametersAndDerivedVelocityDirectionWithoutExtraPages(FluxParticleStartSpeedMode mode)
         {
-            var point = new FluxParticleAuthoringProgram(_authoring);
+            var point = FluxParticleBuildResult.Create(_authoring);
             SetShape(FluxParticleShapeType.Cone, 2.5f);
             var serialized = new SerializedObject(_authoring);
             serialized.FindProperty("shape").FindPropertyRelative("angle").floatValue = 30f;
             serialized.FindProperty("initialVelocity").FindPropertyRelative("mode").enumValueIndex = (int)mode;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
             Assert.AreEqual(2.5f, compiled.InitialValues["shape.radius"].x);
@@ -168,7 +168,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var serialized = new SerializedObject(_authoring);
             serialized.FindProperty("shape").FindPropertyRelative("angle").floatValue = 90f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(_authoring));
         }
 
         [TestCase(FluxParticleStartColorMode.Constant, FluxParticleStartSizeMode.RandomBetweenTwoConstants)]
@@ -177,7 +177,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RandomStartVisualsUseSpawnKeyWithoutExtraState(
             FluxParticleStartColorMode colorMode, FluxParticleStartSizeMode sizeMode)
         {
-            var point = new FluxParticleAuthoringProgram(_authoring);
+            var point = FluxParticleBuildResult.Create(_authoring);
             var serialized = new SerializedObject(_authoring);
             var render = serialized.FindProperty("render");
             render.FindPropertyRelative("startColorMode").enumValueIndex = (int)colorMode;
@@ -185,10 +185,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             render.FindPropertyRelative("startSizeMin").floatValue = 0.5f;
             render.FindPropertyRelative("startSizeMax").floatValue = 2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
-            var shader = compiled.GenerateRenderer();
+            var shader = compiled.RendererSource;
             if (colorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
             {
                 Assert.IsTrue(compiled.InitialValues.ContainsKey("color.start-min"));
@@ -206,8 +206,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void StartRotationZUsesRenderOperationWithoutAdditionalState()
         {
-            var baseline = new FluxParticleAuthoringProgram(_authoring);
-            var baselineShader = baseline.GenerateRenderer();
+            var baseline = FluxParticleBuildResult.Create(_authoring);
+            var baselineShader = baseline.RendererSource;
             Assert.IsFalse(baseline.Program.Program.Operations.Any(operation => operation.Id == "render.rotation-start"));
             StringAssert.DoesNotContain("sincos(angle, s, c)", baselineShader);
 
@@ -215,7 +215,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.FindProperty("render").FindPropertyRelative("startRotation").vector3Value = new Vector3(0, 0, 45);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var rotated = new FluxParticleAuthoringProgram(_authoring);
+            var rotated = FluxParticleBuildResult.Create(_authoring);
             Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, rotated.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(baseline.Program.Passes.Count, rotated.Program.Passes.Count);
             Assert.AreEqual(new Vector4(0, 0, 45, 0), rotated.InitialValues["rotation.start"]);
@@ -224,7 +224,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(FluxParticlePhase.Render, operation.Phase);
             CollectionAssert.Contains(operation.Parameters.ToArray(), "rotation.start");
             StringAssert.EndsWith("/AuthoringStartRotation.hlsl", operation.HlslPath);
-            var shader = rotated.GenerateRenderer();
+            var shader = rotated.RendererSource;
             StringAssert.Contains("render.valueRenderRotation.z", shader);
             StringAssert.Contains("sincos(angle, s, c)", shader);
             Import("StartRotationBillboard", shader);
@@ -240,16 +240,16 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.FindProperty("render").FindPropertyRelative("startRotation").vector3Value = new Vector3(x, y, z);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             StringAssert.Contains("Program Backend", Assert.Throws<InvalidOperationException>(() =>
-                new FluxParticleAuthoringProgram(_authoring)).Message);
+                FluxParticleBuildResult.Create(_authoring)).Message);
         }
 
         [Test]
         public void SphereRejectsInvalidRadius()
         {
             SetShape(FluxParticleShapeType.Sphere, -1);
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(_authoring));
             SetShape(FluxParticleShapeType.Sphere, float.NaN);
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(_authoring));
         }
 
         [Test]
@@ -263,7 +263,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             SetShape(FluxParticleShapeType.Sphere, 2.5f);
-            var generated = new FluxParticleAuthoringProgram(_authoring).Program;
+            var generated = FluxParticleBuildResult.Create(_authoring).Program;
             var steps = generated.Passes.Select((pass, index) => Import("Step" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("Clear" + index, source)).ToArray();
 
@@ -318,7 +318,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             velocity.FindPropertyRelative("max").floatValue = 3f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var generated = new FluxParticleAuthoringProgram(_authoring).Program;
+            var generated = FluxParticleBuildResult.Create(_authoring).Program;
             var steps = generated.Passes.Select((pass, index) => Import("DirectionStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("DirectionClear" + index, source)).ToArray();
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
@@ -401,7 +401,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             RequireVisualGpu();
             SetRandomVisualModes(true, true);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             var generated = compiled.Program;
             var steps = generated.Passes.Select((pass, index) => Import("VisualStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("VisualClear" + index, source)).ToArray();
@@ -445,14 +445,14 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RandomSizeBillboardReadsPersistentSpawnKeyWithoutAdditionalPages()
         {
-            var baseline = new FluxParticleAuthoringProgram(_authoring);
+            var baseline = FluxParticleBuildResult.Create(_authoring);
             SetRandomVisualModes(true, true);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(baseline.Program.Passes.Count, compiled.Program.Passes.Count);
             Assert.IsTrue(compiled.Program.Program.StateLayout.TryGetBinding("particle.spawn-key", out _));
             Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("render.size-range", out _));
-            var shader = compiled.GenerateRenderer();
+            var shader = compiled.RendererSource;
             StringAssert.Contains("FluxFXRandom01", shader);
             StringAssert.Contains("FluxFXRandom01", shader);
             StringAssert.Contains("59u + 43u", shader);
@@ -463,11 +463,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             RequireVisualGpu();
             SetRandomVisualModes(false, true);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             var generated = compiled.Program;
             var steps = generated.Passes.Select((pass, index) => Import("SizeStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("SizeClear" + index, source)).ToArray();
-            var billboard = Import("SizeBillboard", compiled.GenerateRenderer());
+            var billboard = Import("SizeBillboard", compiled.RendererSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
                 session.SetVector("spawn.position", Vector4.zero);

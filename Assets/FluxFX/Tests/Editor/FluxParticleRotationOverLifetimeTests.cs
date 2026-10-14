@@ -45,11 +45,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase(45f)]
         public void LinearRotationUsesRenderOperationsWithoutNewState(float startAngle)
         {
-            var baseline = new FluxParticleAuthoringProgram(_authoring);
+            var baseline = FluxParticleBuildResult.Create(_authoring);
             SetStartRotation(startAngle);
             AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Linear);
 
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             var program = compiled.Program.Program;
             Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
             Assert.AreEqual(baseline.Program.Passes.Count, compiled.Program.Passes.Count);
@@ -70,14 +70,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             CollectionAssert.Contains(update.Parameters.ToArray(), "rotation.end");
             StringAssert.EndsWith("/AuthoringRotationOverLifetimeLinear.hlsl", update.HlslPath);
             StringAssert.Contains("FluxFX_RenderRotationOverLifetime", compiled.Program.RenderSource);
-            StringAssert.Contains("render.valueRenderRotation.z", compiled.GenerateRenderer());
+            StringAssert.Contains("render.valueRenderRotation.z", compiled.RendererSource);
         }
 
         [Test]
         public void DisabledModuleDoesNotAddRotationEvaluation()
         {
             AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Curve, false);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             Assert.IsFalse(compiled.Program.Program.Operations.Any(op => op.Id == "render.rotation-start"));
             Assert.IsFalse(compiled.Program.Program.Operations.Any(op => op.Id == "render.rotation-over-lifetime"));
             Assert.IsFalse(compiled.InitialValues.ContainsKey("rotation.end"));
@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RejectsUnsupportedRotationSettings(FluxParticleRotationOverLifetimeMode mode, float x, float y, float z)
         {
             AddRotationModule(new Vector3(x, y, z), mode);
-            Assert.Throws<InvalidOperationException>(() => new FluxParticleAuthoringProgram(_authoring));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildResult.Create(_authoring));
         }
 
         [Test]
@@ -105,12 +105,12 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             SetStartRotation(45f);
             AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Linear);
-            var compiled = new FluxParticleAuthoringProgram(_authoring);
+            var compiled = FluxParticleBuildResult.Create(_authoring);
             var generated = compiled.Program;
             var steps = generated.Passes.Select((pass, index) => Import("RotationStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("RotationClear" + index, source)).ToArray();
             var renderShader = Import("RotationEvaluation", RenderEvaluationShader(generated));
-            Import("RotationBillboard", compiled.GenerateRenderer());
+            Import("RotationBillboard", compiled.RendererSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
                 session.SetVector("spawn.position", Vector4.zero);
