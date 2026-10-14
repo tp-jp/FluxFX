@@ -59,6 +59,12 @@ namespace TpLab.Flux.FX.Scripts
         RandomBetweenTwoConstants
     }
 
+    public enum FluxParticleStartRotationMode
+    {
+        Constant,
+        RandomBetweenTwoConstants
+    }
+
     public enum FluxParticleStartColorMode
     {
         Constant,
@@ -259,6 +265,15 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeField]
         Vector3 startRotation;
 
+        [SerializeField]
+        FluxParticleStartRotationMode startRotationMode;
+
+        [SerializeField]
+        Vector3 startRotationMin;
+
+        [SerializeField]
+        Vector3 startRotationMax = new Vector3(0, 0, 360);
+
         public FluxParticleRenderMode Mode => mode;
         public Mesh Mesh => mesh;
         public Material Material => material;
@@ -272,5 +287,8 @@ namespace TpLab.Flux.FX.Scripts
         public float StartSizeMin => startSizeMin;
         public float StartSizeMax => startSizeMax;
         public Vector3 StartRotation => startRotation;
+        public FluxParticleStartRotationMode StartRotationMode => startRotationMode;
+        public Vector3 StartRotationMin => startRotationMin;
+        public Vector3 StartRotationMax => startRotationMax;
     }
 }

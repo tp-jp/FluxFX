@@ -37,7 +37,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             }
             var moduleContext = new FluxParticleProgramContribution(definitions, authoring.Render.Mode);
             new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
-            var hasRotation = authoring.Render.StartRotation != Vector3.zero || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
+            var hasRotation = authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants ||
+                authoring.Render.StartRotation != Vector3.zero || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
                 write.ValueId == "render.rotation"));
             if (hasRotation)
             {
@@ -148,7 +149,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
             if (hasRotation)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                if (authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants)
+                {
+                    definitions.AddValue(new FluxParticleValueDefinition("particle.start-rotation", FluxParticleValueType.Float3,
+                        FluxParticleWritePolicy.ReadOnly, "fluxfx.core"));
+                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start-min", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start-max", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                    definitions.AddProvider(new FluxParticleValueProvider("particle.start-rotation", FluxParticleProviderKind.Derived,
+                        new[] { "particle.spawn-key" }, new[] { "rotation.start-min", "rotation.start-max" },
+                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/RandomStartRotation.hlsl", "FluxFX_StartRotation"));
+                }
+                else
+                {
+                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                }
             }
             foreach (var operation in source.Operations.Values)
             {
@@ -190,11 +204,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
             }
             if (hasRotation)
             {
+                var randomRotation = authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants;
                 AddOperation(authoring, definitions, new FluxParticleOperationDefinition("render.rotation-start", "fluxfx.core", FluxParticlePhase.Render,
-                    Array.Empty<FluxParticleValueRead>(),
+                    randomRotation ? new[] { new FluxParticleValueRead("particle.start-rotation", FluxParticleReadVersion.Provided) }
+                        : Array.Empty<FluxParticleValueRead>(),
                     new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Replace) }, null,
-                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
-                    new[] { "rotation.start" }));
+                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" +
+                        (randomRotation ? "RenderRandomStartRotation.hlsl" : "AuthoringStartRotation.hlsl"), "FluxFX_RenderRotationStart",
+                    randomRotation ? Array.Empty<string>() : new[] { "rotation.start" }));
             }
         }
 

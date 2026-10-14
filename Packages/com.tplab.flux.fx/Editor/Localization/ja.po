@@ -376,3 +376,12 @@ msgstr "Spawn属性"
 
 msgid "This module is not supported by the current backend. Disabling it does not allow building. Remove it or provide a current Module Definition."
 msgstr "このModuleは現行Backendで未対応です。無効化してもビルドできません。削除するか、現行方式のModule Definitionを追加してください。"
+
+msgid "Start Rotation Mode"
+msgstr "初期回転モード"
+
+msgid "Start Rotation Min"
+msgstr "初期回転の最小値"
+
+msgid "Start Rotation Max"
+msgstr "初期回転の最大値"

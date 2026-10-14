@@ -79,13 +79,17 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ? FiniteNonNegative(authoring.Render.StartSize)
                 : FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax),
                 "Finite non-negative start size");
-            var startRotation = authoring.Render.StartRotation;
-            Require(!float.IsNaN(startRotation.x) && !float.IsInfinity(startRotation.x) &&
-                !float.IsNaN(startRotation.y) && !float.IsInfinity(startRotation.y) &&
-                !float.IsNaN(startRotation.z) && !float.IsInfinity(startRotation.z), "Finite start rotation");
-            if (authoring.Render.Mode == FluxParticleRenderMode.Billboard)
+            Require(authoring.Render.StartRotationMode == FluxParticleStartRotationMode.Constant ||
+                authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants,
+                "Supported start rotation mode");
+            if (authoring.Render.StartRotationMode == FluxParticleStartRotationMode.Constant)
             {
-                Require(startRotation.x == 0 && startRotation.y == 0, "Billboard start rotation around Z only");
+                ValidateStartRotation(authoring.Render.StartRotation, authoring.Render.Mode);
+            }
+            else
+            {
+                ValidateStartRotation(authoring.Render.StartRotationMin, authoring.Render.Mode);
+                ValidateStartRotation(authoring.Render.StartRotationMax, authoring.Render.Mode);
             }
             Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleRender", "FluxFX/ParticleRender material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay) &&
@@ -93,6 +97,17 @@ namespace TpLab.Flux.FX.Editor.Compilation
             foreach (var burst in authoring.Emission.Bursts)
             {
                 Require(burst != null && FiniteNonNegative(burst.Time) && burst.Count > 0, "Valid emission bursts");
+            }
+        }
+
+        static void ValidateStartRotation(Vector3 rotation, FluxParticleRenderMode mode)
+        {
+            Require(!float.IsNaN(rotation.x) && !float.IsInfinity(rotation.x) &&
+                !float.IsNaN(rotation.y) && !float.IsInfinity(rotation.y) &&
+                !float.IsNaN(rotation.z) && !float.IsInfinity(rotation.z), "Finite start rotation");
+            if (mode == FluxParticleRenderMode.Billboard)
+            {
+                Require(rotation.x == 0 && rotation.y == 0, "Billboard start rotation around Z only");
             }
         }
 

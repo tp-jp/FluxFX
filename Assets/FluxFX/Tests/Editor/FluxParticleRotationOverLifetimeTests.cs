@@ -147,6 +147,169 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RandomStartRotationUsesSpawnKeyWithoutNewStateOrPass(bool mesh)
+        {
+            var baseline = FluxParticleBuildPipeline.Build(_authoring);
+            ConfigureRandomRotation(mesh, false);
+            var compiled = FluxParticleBuildPipeline.Build(_authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("particle.start-rotation", out _));
+            Assert.IsFalse(compiled.InitialValues.ContainsKey("rotation.start"));
+            Assert.AreEqual(FluxParticleParameterPolicy.Static, compiled.Shaders.Compilation.Parameters["rotation.start-min"].Policy);
+            Assert.AreEqual(mesh ? new Vector4(-90, -30, -180, 0) : new Vector4(0, 0, -180, 0),
+                compiled.InitialValues["rotation.start-min"]);
+            Assert.AreEqual(mesh ? new Vector4(90, 120, 180, 0) : new Vector4(0, 0, 180, 0),
+                compiled.InitialValues["rotation.start-max"]);
+            CollectionAssert.Contains(compiled.Shaders.Compilation.Providers["particle.start-rotation"].Inputs, "particle.spawn-key");
+        }
+
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void GpuRandomRotationIsStablePerParticleComposesWithLifetimeAndReplays(bool mesh, bool lifetime)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            ConfigureRandomRotation(mesh, lifetime);
+            var compiled = FluxParticleBuildPipeline.Build(_authoring);
+            var generated = compiled.Shaders;
+            var steps = generated.Passes.Select((pass, index) => Import("RandomStep" + index, pass.Source)).ToArray();
+            var clears = generated.ClearSources.Select((source, index) => Import("RandomClear" + index, source)).ToArray();
+            var shader = Import("RandomEvaluation", RenderEvaluationShader(generated));
+            Import("RandomRenderer", compiled.RendererSource);
+            var material = new Material(shader);
+            _objects.Add(material);
+            using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
+            {
+                foreach (var parameter in generated.Compilation.Parameters.Values)
+                {
+                    var value = compiled.InitialValues[parameter.Id];
+                    if (parameter.Type == FluxParticleValueType.Float) session.SetFloat(parameter.Id, value.x);
+                    else session.SetVector(parameter.Id, value);
+                }
+                session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
+                session.SetFloat("spawn.speed", 0);
+                session.SetUniformFloat("step.delta-time", 0);
+                session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
+                var mask = Texture(Color.white, Color.white);
+                session.Step(mask);
+                var first = EvaluateRotations(session, material);
+                Assert.Greater(Mathf.Abs(first[0].b - first[1].b), 0.001f);
+                var min = compiled.InitialValues["rotation.start-min"];
+                var max = compiled.InitialValues["rotation.start-max"];
+                for (var particle = 0; particle < 2; particle++)
+                {
+                    for (var axis = 0; axis < 3; axis++)
+                    {
+                        Assert.That(first[particle][axis], Is.InRange(min[axis] - 0.001f, max[axis] + 0.001f));
+                    }
+                }
+                session.SetUniformFloat("step.delta-time", 2);
+                session.Step();
+                var middle = EvaluateRotations(session, material);
+                var delta = lifetime ? (Vector3)_authoring.Modules.OfType<FluxParticleRotationOverLifetimeModule>().Single().EndRotation * 0.2f
+                    : Vector3.zero;
+                for (var particle = 0; particle < 2; particle++)
+                {
+                    for (var axis = 0; axis < 3; axis++)
+                    {
+                        Assert.AreEqual(first[particle][axis] + delta[axis], middle[particle][axis], 0.002f);
+                    }
+                }
+                Assert.Throws<InvalidOperationException>(() => session.SetVector("rotation.start-min", Vector4.one));
+                session.Clear();
+                session.SetUniformFloat("step.delta-time", 0);
+                session.Step(mask);
+                var replay = EvaluateRotations(session, material);
+                for (var particle = 0; particle < 2; particle++)
+                {
+                    for (var axis = 0; axis < 3; axis++)
+                    {
+                        Assert.AreEqual(first[particle][axis], replay[particle][axis], 0.002f);
+                    }
+                }
+            }
+        }
+
+        [TestCase("startRotationMin", 1f, 0f, 0f)]
+        [TestCase("startRotationMax", 0f, 1f, 0f)]
+        [TestCase("startRotationMin", 0f, 0f, float.NaN)]
+        [TestCase("startRotationMax", 0f, 0f, float.PositiveInfinity)]
+        public void RandomBillboardRotationRejectsUnsupportedRanges(string field, float x, float y, float z)
+        {
+            ConfigureRandomRotation(false, false);
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("render").FindPropertyRelative(field).vector3Value = new Vector3(x, y, z);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(_authoring));
+        }
+
+        [Test]
+        public void UnknownStartRotationModeIsRejected()
+        {
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("render.startRotationMode").intValue = 99;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(_authoring));
+        }
+        void ConfigureRandomRotation(bool mesh, bool lifetime)
+        {
+            var serialized = new SerializedObject(_authoring);
+            var render = serialized.FindProperty("render");
+            render.FindPropertyRelative("startRotationMode").intValue = (int)FluxParticleStartRotationMode.RandomBetweenTwoConstants;
+            render.FindPropertyRelative("startRotationMin").vector3Value = mesh ? new Vector3(90, -30, 180) : new Vector3(0, 0, 180);
+            render.FindPropertyRelative("startRotationMax").vector3Value = mesh ? new Vector3(-90, 120, -180) : new Vector3(0, 0, -180);
+            render.FindPropertyRelative("startRotation").vector3Value = new Vector3(float.NaN, 0, 0);
+            if (mesh)
+            {
+                var source = new Mesh
+                {
+                    vertices = new[] { Vector3.zero, Vector3.right, Vector3.up },
+                    triangles = new[] { 0, 1, 2 }
+                };
+                _objects.Add(source);
+                render.FindPropertyRelative("mode").intValue = (int)FluxParticleRenderMode.Mesh;
+                render.FindPropertyRelative("mesh").objectReferenceValue = source;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (lifetime)
+            {
+                AddRotationModule(mesh ? new Vector3(30, 60, 90) : new Vector3(0, 0, 90), FluxParticleRotationOverLifetimeMode.Linear);
+            }
+        }
+
+        static Color[] EvaluateRotations(FluxParticleProgramGpuSession session, Material material)
+        {
+            session.BindRender(material);
+            var target = new RenderTexture(2, 1, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var texture = new Texture2D(2, 1, TextureFormat.RGBAFloat, false, true);
+            var previous = RenderTexture.active;
+            try
+            {
+                target.Create();
+                Graphics.Blit(null, target, material);
+                RenderTexture.active = target;
+                texture.ReadPixels(new Rect(0, 0, 2, 1), 0, 0);
+                texture.Apply();
+                return texture.GetPixels();
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                target.Release();
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(texture);
+            }
+        }
+
         [Test]
         public void CurveBakesFixedLookupWithoutNewStateOrPass()
         {
@@ -219,7 +382,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(_temporaryFolder));
             }
             var path = _temporaryFolder + "/" + name + ".shader";
-            File.WriteAllText(path, source);
+            File.WriteAllText(path, source.Replace("\r\n", "\n").Replace("\r", "\n"));
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             Assert.IsNotNull(shader, path);
@@ -240,7 +403,8 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static string RenderEvaluationShader(FluxParticleShaderProgram generated)
         {
-            return "Shader \"Hidden/FluxFX/Tests/RotationEvaluation\" { SubShader { Pass { ZTest Always Cull Off ZWrite Off\n" +
+            return "Shader \"Hidden/FluxFX/Tests/RotationEvaluation\" { Properties {\n" +
+                FluxParticleProgramShaderGenerator.GenerateParameterProperties(generated.Compilation) + "\n} SubShader { Pass { ZTest Always Cull Off ZWrite Off\n" +
                 "HLSLPROGRAM\n#pragma target 3.5\n#pragma vertex vert_img\n#pragma fragment frag\n#include \"UnityCG.cginc\"\n" +
                 generated.RenderSource + "\nfloat4 frag(v2f_img i) : SV_Target { bool alive; FluxRenderContext ctx = FluxFX_EvaluateRender(i.uv, alive); " +
                 "return alive ? float4(ctx.valueRenderRotation, 1) : float4(0,0,0,0); }\nENDHLSL\n} } Fallback Off }";

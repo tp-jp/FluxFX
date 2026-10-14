@@ -40,19 +40,38 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawStartColor();
             DrawStartSize();
 
-            var renderMode = (FluxParticleRenderMode)_render.FindPropertyRelative("mode").enumValueIndex;
-            var startRotation = _render.FindPropertyRelative("startRotation");
-            var rotation = startRotation.vector3Value;
-            if (renderMode == FluxParticleRenderMode.Mesh || rotation.x != 0 || rotation.y != 0)
+            DrawStartRotation();
+        }
+
+        void DrawStartRotation()
+        {
+            var mode = _render.FindPropertyRelative("startRotationMode");
+            DrawEnum(mode, "Start Rotation Mode");
+            if ((FluxParticleStartRotationMode)mode.intValue == FluxParticleStartRotationMode.Constant)
             {
-                EditorGUILayout.PropertyField(startRotation, new GUIContent(L10n.Tr("Start Rotation")));
+                DrawStartRotationValue("startRotation", "Start Rotation");
             }
-            else if (renderMode == FluxParticleRenderMode.Billboard)
+            else
             {
-                EditorGUILayout.PropertyField(startRotation.FindPropertyRelative("z"), new GUIContent(L10n.Tr("Start Rotation")));
+                DrawStartRotationValue("startRotationMin", "Start Rotation Min");
+                DrawStartRotationValue("startRotationMax", "Start Rotation Max");
             }
         }
 
+        void DrawStartRotationValue(string propertyName, string label)
+        {
+            var property = _render.FindPropertyRelative(propertyName);
+            var rotation = property.vector3Value;
+            var renderMode = (FluxParticleRenderMode)_render.FindPropertyRelative("mode").intValue;
+            if (renderMode == FluxParticleRenderMode.Mesh || rotation.x != 0 || rotation.y != 0)
+            {
+                EditorGUILayout.PropertyField(property, new GUIContent(L10n.Tr(label)));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(property.FindPropertyRelative("z"), new GUIContent(L10n.Tr(label)));
+            }
+        }
         void DrawLifetime()
         {
             var mode = _lifetime.FindPropertyRelative("mode");

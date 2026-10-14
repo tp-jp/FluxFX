@@ -53,7 +53,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
             }
             if (hasRotation)
             {
-                values.Add("rotation.start", startRotation);
+                if (authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants)
+                {
+                    values.Add("rotation.start-min", Vector3.Min(authoring.Render.StartRotationMin, authoring.Render.StartRotationMax));
+                    values.Add("rotation.start-max", Vector3.Max(authoring.Render.StartRotationMin, authoring.Render.StartRotationMax));
+                }
+                else
+                {
+                    values.Add("rotation.start", startRotation);
+                }
             }
             foreach (var parameter in moduleValues)
             {
