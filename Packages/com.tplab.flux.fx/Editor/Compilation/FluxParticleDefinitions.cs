@@ -167,7 +167,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 入力Value・Parameterから計算します。
         /// </summary>
-        Derived
+        Derived,
+
+        /// <summary>
+        /// Render Phaseで固定LUTを線形補間して取得します。
+        /// </summary>
+        LookupTable
     }
 
     /// <summary>
@@ -287,12 +292,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public string ValueId { get; }
 
         /// <summary>
-        /// Uniform・SpawnInput・Derivedの供給方法です。
+        /// Valueの供給方法
         /// </summary>
         public FluxParticleProviderKind Kind { get; }
 
         /// <summary>
-        /// Derived評価で参照するValueのID一覧です。
+        /// 評価で参照するValueのID一覧
         /// </summary>
         public IReadOnlyList<string> Inputs { get; }
 
@@ -312,21 +317,28 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public string EntryPoint { get; }
 
         /// <summary>
+        /// 0から1の区間に等間隔で配置した固定LUTのサンプル
+        /// </summary>
+        public IReadOnlyList<float> LookupSamples { get; }
+
+        /// <summary>
         /// Valueの供給方法と評価実装を設定します。
         /// </summary>
-        /// <param name="valueId">論理ValueのID。</param>
-        /// <param name="kind">供給方式または書き込み方式。</param>
-        /// <param name="inputs">入力ValueのID一覧。</param>
-        /// <param name="parameters">使用ParameterのID一覧。</param>
-        /// <param name="hlslPath">HLSLファイルのパス。</param>
-        /// <param name="entryPoint">HLSL関数名。</param>
+        /// <param name="valueId">論理ValueのID</param>
+        /// <param name="kind">供給方式または書き込み方式</param>
+        /// <param name="inputs">入力ValueのID一覧</param>
+        /// <param name="parameters">使用ParameterのID一覧</param>
+        /// <param name="hlslPath">HLSLファイルのパス</param>
+        /// <param name="entryPoint">HLSL関数名</param>
+        /// <param name="lookupSamples">0から1の区間に等間隔で配置した固定LUTのサンプル</param>
         public FluxParticleValueProvider(
             string valueId,
             FluxParticleProviderKind kind,
             IEnumerable<string> inputs = null,
             IEnumerable<string> parameters = null,
             string hlslPath = null,
-            string entryPoint = null)
+            string entryPoint = null,
+            IEnumerable<float> lookupSamples = null)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
             if (!Enum.IsDefined(typeof(FluxParticleProviderKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
@@ -341,6 +353,25 @@ namespace TpLab.Flux.FX.Editor.Compilation
             Parameters = new List<string>(parameters ?? Array.Empty<string>()).AsReadOnly();
             HlslPath = hlslPath;
             EntryPoint = entryPoint;
+            LookupSamples = new List<float>(lookupSamples ?? Array.Empty<float>()).AsReadOnly();
+            if (kind == FluxParticleProviderKind.LookupTable)
+            {
+                if (Inputs.Count != 1 || Parameters.Count != 0 || LookupSamples.Count < 2 || LookupSamples.Count > 4096)
+                {
+                    throw new ArgumentException("Lookup providers require one Float input and 2 to 4096 samples.");
+                }
+                foreach (var sample in LookupSamples)
+                {
+                    if (float.IsNaN(sample) || float.IsInfinity(sample))
+                    {
+                        throw new ArgumentException("Lookup samples must be finite.");
+                    }
+                }
+            }
+            else if (LookupSamples.Count != 0)
+            {
+                throw new ArgumentException("Only LookupTable providers may declare lookup samples.");
+            }
         }
     }
 

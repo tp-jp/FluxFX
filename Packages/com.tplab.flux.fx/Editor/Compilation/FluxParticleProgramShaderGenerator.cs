@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var passes = program.ExecutionPlan.Passes.Select(pass => emitter.GeneratePass(pass, shaderName)).ToArray();
             var clear = program.StateLayout.Pages.Select(page => emitter.GenerateClear(page, shaderName)).ToArray();
             return new FluxParticleShaderProgram(program, passes, clear, emitter.GenerateRender(),
-                program.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal));
+                program.Providers.Values.Where(p => (p.Kind == FluxParticleProviderKind.Uniform || p.Kind == FluxParticleProviderKind.SpawnInput)).OrderBy(p => p.ValueId, StringComparer.Ordinal));
         }
 
         sealed class Emitter
@@ -291,6 +291,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 }
                 usedProviders.Add(id);
                 var property = FluxParticleHlslNames.ProviderProperty(id);
+                if (provider.Kind == FluxParticleProviderKind.LookupTable)
+                {
+                    var input = SuppliedOrState(provider.Inputs[0], render);
+                    var count = provider.LookupSamples.Count;
+                    return $"tex2Dlod({property}, float4((saturate({input}) * {count - 1}.0 + 0.5) / {count}.0, 0.5, 0.0, 0.0)).r";
+                }
                 if (provider.Kind == FluxParticleProviderKind.Uniform) return property;
                 if (provider.Kind == FluxParticleProviderKind.SpawnInput)
                 {
@@ -326,9 +332,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     result.AppendLine($"{HlslType(p.Type)} {FluxParticleHlslNames.ParameterProperty(p.Id)};");
                 }
-                foreach (var p in program.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal))
+                foreach (var p in program.Providers.Values.Where(p => (p.Kind == FluxParticleProviderKind.Uniform || p.Kind == FluxParticleProviderKind.SpawnInput)).OrderBy(p => p.ValueId, StringComparer.Ordinal))
                 {
                     result.AppendLine($"{(p.Kind == FluxParticleProviderKind.SpawnInput ? "sampler2D" : Type(p.ValueId))} {FluxParticleHlslNames.ProviderProperty(p.ValueId)};");
+                }
+                foreach (var provider in program.Providers.Values.Where(provider =>
+                    provider.Kind == FluxParticleProviderKind.LookupTable && usedProviders.Contains(provider.ValueId))
+                    .OrderBy(provider => provider.ValueId, StringComparer.Ordinal))
+                {
+                    result.AppendLine($"sampler2D {FluxParticleHlslNames.ProviderProperty(provider.ValueId)};");
                 }
                 var unique = operations.Select(op => originals[op.Id]).Distinct().ToArray();
                 foreach (var op in unique)

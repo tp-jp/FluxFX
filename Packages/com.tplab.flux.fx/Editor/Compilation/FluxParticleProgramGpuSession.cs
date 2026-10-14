@@ -8,11 +8,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
     /// <summary>
     /// 生成ProgramをUnity Editorで検証するGPU Backendです。
     /// 1Pageにつき2RTを確保し、StepPreviousを保持したまま全Pass実行後にCommitします。
-    /// Udon Runtimeへの組み込みは、この検証用Sessionの責務に含みません。
     /// </summary>
     public sealed class FluxParticleProgramGpuSession : IDisposable
     {
         readonly FluxParticleShaderProgram program;
+        readonly List<Texture2D> lookupTextures = new List<Texture2D>();
         readonly Material[] steps;
         readonly Material[] clears;
         readonly RenderTexture[] current;
@@ -61,6 +61,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     clears[i] = CreateMaterial(clearShaders[i]);
                     current[i] = CreateTexture(width, height);
                     next[i] = CreateTexture(width, height);
+                }
+                foreach (var provider in program.Compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable))
+                {
+                    var texture = FluxParticleLookupTexture.Create(provider);
+                    lookupTextures.Add(texture);
+                    bindings.Add("lookup:" + provider.ValueId, material =>
+                        material.SetTexture(FluxParticleHlslNames.ProviderProperty(provider.ValueId), texture));
                 }
                 Clear();
             }
@@ -254,6 +261,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             if (disposed) return;
             disposed = true;
+            foreach (var texture in lookupTextures)
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
             foreach (var material in steps.Concat(clears))
             {
                 if (material != null) UnityEngine.Object.DestroyImmediate(material);

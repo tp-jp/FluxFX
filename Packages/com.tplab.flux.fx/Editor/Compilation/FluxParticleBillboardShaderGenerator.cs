@@ -28,6 +28,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var extra = program.RenderSource.Contains(declaration) ? "" : declaration + "\n";
             var pageProperties = string.Join("\n", program.Compilation.StateLayout.Pages.Select(page =>
                 $"[HideInInspector] {FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)} (\"State Page {page.Id}\", 2D) = \"black\" {{}}"));
+            foreach (var provider in program.Compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable)
+                .OrderBy(provider => provider.ValueId, StringComparer.Ordinal))
+            {
+                pageProperties += Environment.NewLine + "[HideInInspector] " + FluxParticleHlslNames.ProviderProperty(provider.ValueId) +
+                    @" (""Lookup Table"", 2D) = ""white"" {}";
+            }
             var randomSize = initialValues.ContainsKey("render.size-range");
             var sizeExpression = FluxParticleHlslNames.ParameterProperty("render.size");
             var renderCode = extra + program.RenderSource;

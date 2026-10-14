@@ -39,6 +39,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Provider has undefined Value: {provider.ValueId}");
                 }
+                if (provider.Kind == FluxParticleProviderKind.LookupTable &&
+                    (definitions.Values[provider.ValueId].Type != FluxParticleValueType.Float ||
+                        !definitions.Values.TryGetValue(provider.Inputs[0], out var input) || input.Type != FluxParticleValueType.Float))
+                {
+                    throw new InvalidOperationException($"Lookup provider requires Float output and input: {provider.ValueId}");
+                }
                 foreach (var parameterId in provider.Parameters)
                 {
                     if (!definitions.Parameters.ContainsKey(parameterId))
@@ -263,6 +269,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     throw new InvalidOperationException($"Unresolved provider input: {valueId}");
                 }
                 return;
+            }
+            if (provider.Kind == FluxParticleProviderKind.LookupTable && phase != FluxParticlePhase.Render)
+            {
+                throw new InvalidOperationException($"Lookup provider is only supported in Render: {valueId}");
             }
             if (provider.Kind == FluxParticleProviderKind.SpawnInput && phase != FluxParticlePhase.Spawn)
             {

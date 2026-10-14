@@ -1,25 +1,29 @@
 using System;
+using System.Linq;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.Compilation.Modules
 {
     /// <summary>
-    /// Linear Rotation over LifetimeのRender Operationを提供します。
+    /// Rotation over LifetimeのRender Operationを提供します。
     /// </summary>
     public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
+        const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/";
+        const int CurveSamples = 128;
+
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var rotation = (FluxParticleRotationOverLifetimeModule)module;
-            if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear)
+            if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear &&
+                rotation.Mode != FluxParticleRotationOverLifetimeMode.Curve)
             {
-                throw new InvalidOperationException("Program Backend currently requires: Linear rotation over lifetime.");
+                throw new InvalidOperationException("Unsupported rotation over lifetime mode.");
             }
-
             var end = rotation.EndRotation;
             if (end.x != 0 || end.y != 0 || float.IsNaN(end.z) || float.IsInfinity(end.z))
             {
@@ -28,16 +32,40 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
 
             context.AddParameter(new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3,
                 FluxParticleParameterPolicy.Live), end);
-            context.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", ModuleId, FluxParticlePhase.Render,
-                new[]
+            var reads = new[]
+            {
+                new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),
+                new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
+                new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided)
+            };
+            var hlsl = "AuthoringRotationOverLifetimeLinear.hlsl";
+            if (rotation.Mode == FluxParticleRotationOverLifetimeMode.Curve)
+            {
+                var curve = rotation.Curve;
+                if (curve == null || curve.length == 0 || curve.keys.Any(key =>
+                    float.IsNaN(key.time) || float.IsInfinity(key.time) || float.IsNaN(key.value) || float.IsInfinity(key.value)))
                 {
-                    new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),
-                    new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
-                    new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided)
-                },
-                new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
-                new[] { "render.rotation-start" },
-                "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRotationOverLifetimeLinear.hlsl",
+                    throw new InvalidOperationException("Rotation curve requires finite keys.");
+                }
+                var samples = Enumerable.Range(0, CurveSamples).Select(index => curve.Evaluate(index / (float)(CurveSamples - 1))).ToArray();
+                context.AddValue(new FluxParticleValueDefinition("rotation.normalized-age", FluxParticleValueType.Float,
+                    FluxParticleWritePolicy.ReadOnly, ModuleId));
+                context.AddValue(new FluxParticleValueDefinition("rotation.curve", FluxParticleValueType.Float,
+                    FluxParticleWritePolicy.ReadOnly, ModuleId));
+                context.AddProvider(new FluxParticleValueProvider("rotation.normalized-age", FluxParticleProviderKind.Derived,
+                    new[] { "particle.age", "particle.lifetime" }, hlslPath: Hlsl + "NormalizedAge.hlsl", entryPoint: "FluxFX_NormalizedAge"));
+                context.AddProvider(new FluxParticleValueProvider("rotation.curve", FluxParticleProviderKind.LookupTable,
+                    new[] { "rotation.normalized-age" }, lookupSamples: samples));
+                reads = new[]
+                {
+                    reads[0],
+                    new FluxParticleValueRead("rotation.curve", FluxParticleReadVersion.Provided)
+                };
+                hlsl = "AuthoringRotationOverLifetimeCurve.hlsl";
+            }
+            context.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", ModuleId, FluxParticlePhase.Render,
+                reads, new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
+                new[] { "render.rotation-start" }, Hlsl + hlsl,
                 "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }));
         }
     }

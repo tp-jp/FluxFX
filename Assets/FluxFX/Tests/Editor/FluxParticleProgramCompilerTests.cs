@@ -343,6 +343,41 @@ namespace TpLab.Flux.FX.Tests.Editor
             return builder;
         }
 
+        [TestCase(FluxParticlePhase.Spawn)]
+        [TestCase(FluxParticlePhase.Update)]
+        public void LookupProviderRejectsSimulationUsage(FluxParticlePhase phase)
+        {
+            var definitions = new FluxParticleDefinitionBuilder();
+            AddValue(definitions, "lookup.input", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
+            AddValue(definitions, "lookup.value", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
+            AddValue(definitions, "lookup.state", FluxParticleValueType.Float, FluxParticleWritePolicy.SharedMutable);
+            definitions.AddProvider(new FluxParticleValueProvider("lookup.input", FluxParticleProviderKind.Uniform));
+            definitions.AddProvider(new FluxParticleValueProvider("lookup.value", FluxParticleProviderKind.LookupTable,
+                new[] { "lookup.input" }, lookupSamples: new[] { 0f, 1f }));
+            definitions.AddOperation(Operation("lookup.spawn", Core, FluxParticlePhase.Spawn,
+                phase == FluxParticlePhase.Spawn ? new[] { Read("lookup.value", FluxParticleReadVersion.Provided) } :
+                    Array.Empty<FluxParticleValueRead>(),
+                new[] { Write("lookup.state", FluxParticleWriteKind.Initialize) }));
+            if (phase == FluxParticlePhase.Update)
+            {
+                definitions.AddOperation(Operation("lookup.update", Core, FluxParticlePhase.Update,
+                    new[] { Read("lookup.value", FluxParticleReadVersion.Provided) },
+                    new[] { Write("lookup.state", FluxParticleWriteKind.Replace) }));
+            }
+            StringAssert.Contains("only supported in Render", Assert.Throws<InvalidOperationException>(() =>
+                new FluxParticleProgramCompiler().Compile(definitions)).Message);
+        }
+
+        [Test]
+        public void LookupProviderRejectsInvalidSamples()
+        {
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("lookup", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f }));
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("lookup", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f, float.NaN }));
+            Assert.Throws<ArgumentException>(() => new FluxParticleValueProvider("lookup", FluxParticleProviderKind.LookupTable,
+                new[] { "input" }, lookupSamples: new[] { 0f, float.PositiveInfinity }));
+        }
         static void AddValue(FluxParticleDefinitionBuilder builder, string id, FluxParticleValueType type, FluxParticleWritePolicy policy)
         {
             builder.AddValue(new FluxParticleValueDefinition(id, type, policy, Core, type == FluxParticleValueType.UInt ? 1048575u : (uint?)null));

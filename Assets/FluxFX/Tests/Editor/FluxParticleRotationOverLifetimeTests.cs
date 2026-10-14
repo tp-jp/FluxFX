@@ -83,7 +83,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(compiled.InitialValues.ContainsKey("rotation.end"));
         }
 
-        [TestCase(FluxParticleRotationOverLifetimeMode.Curve, 0f, 0f, 180f)]
+        [TestCase((FluxParticleRotationOverLifetimeMode)99, 0f, 0f, 180f)]
         [TestCase(FluxParticleRotationOverLifetimeMode.Linear, 1f, 0f, 180f)]
         [TestCase(FluxParticleRotationOverLifetimeMode.Linear, 0f, -1f, 180f)]
         [TestCase(FluxParticleRotationOverLifetimeMode.Linear, 0f, 0f, float.PositiveInfinity)]
@@ -93,8 +93,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(_authoring));
         }
 
-        [Test]
-        public void GpuLinearRotationTracksAgeAndReplaysAfterClear()
+        [TestCase(FluxParticleRotationOverLifetimeMode.Linear)]
+        [TestCase(FluxParticleRotationOverLifetimeMode.Curve)]
+        public void GpuRotationTracksAgeAndReplaysAfterClear(FluxParticleRotationOverLifetimeMode mode)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
                 !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
@@ -104,7 +105,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             SetStartRotation(45f);
-            AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Linear);
+            AddRotationModule(new Vector3(0, 0, 180), mode);
+            var curve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(1, 0));
+            SetCurve(curve);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
             var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("RotationStep" + index, pass.Source)).ToArray();
@@ -131,10 +134,12 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.AreEqual(45f, EvaluateRotation(session, renderMaterial), 0.01f);
                 session.SetUniformFloat("step.delta-time", 2f);
                 session.Step();
-                Assert.AreEqual(81f, EvaluateRotation(session, renderMaterial), 0.05f);
+                Assert.AreEqual(45 + 180 * (mode == FluxParticleRotationOverLifetimeMode.Curve ? curve.Evaluate(0.2f) : 0.2f),
+                    EvaluateRotation(session, renderMaterial), 0.05f);
                 session.SetUniformFloat("step.delta-time", 3f);
                 session.Step();
-                Assert.AreEqual(135f, EvaluateRotation(session, renderMaterial), 0.05f);
+                Assert.AreEqual(45 + 180 * (mode == FluxParticleRotationOverLifetimeMode.Curve ? curve.Evaluate(0.5f) : 0.5f),
+                    EvaluateRotation(session, renderMaterial), 0.05f);
                 session.Clear();
                 session.SetUniformFloat("step.delta-time", 0f);
                 session.Step(mask);
@@ -142,6 +147,48 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [Test]
+        public void CurveBakesFixedLookupWithoutNewStateOrPass()
+        {
+            var baseline = FluxParticleBuildPipeline.Build(_authoring);
+            AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Curve);
+            var curve = AnimationCurve.Linear(0, -0.5f, 1, 1.5f);
+            SetCurve(curve);
+            var compiled = FluxParticleBuildPipeline.Build(_authoring);
+            var program = compiled.Shaders.Compilation;
+            var provider = program.Providers["rotation.curve"];
+            Assert.AreEqual(FluxParticleProviderKind.LookupTable, provider.Kind);
+            Assert.AreEqual(128, provider.LookupSamples.Count);
+            Assert.AreEqual(-0.5f, provider.LookupSamples[0]);
+            Assert.AreEqual(1.5f, provider.LookupSamples.Last());
+            for (var i = 0; i < provider.LookupSamples.Count; i++)
+            {
+                Assert.AreEqual(curve.Evaluate(i / (float)(provider.LookupSamples.Count - 1)), provider.LookupSamples[i], 0.00001f);
+            }
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.IsFalse(program.StateLayout.TryGetBinding("rotation.curve", out _));
+            Assert.IsFalse(compiled.Shaders.ExternalProviders.Any(value => value.ValueId == "rotation.curve"));
+            StringAssert.Contains("tex2Dlod", compiled.Shaders.RenderSource);
+            SetCurve(AnimationCurve.Linear(0, 1, 1, 0));
+            Assert.AreEqual(-0.5f, provider.LookupSamples[0]);
+        }
+
+        [Test]
+        public void RejectsEmptyRotationCurve()
+        {
+            AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Curve);
+            SetCurve(new AnimationCurve());
+            StringAssert.Contains("finite keys", Assert.Throws<InvalidOperationException>(() =>
+                FluxParticleBuildPipeline.Build(_authoring)).Message);
+        }
+
+        void SetCurve(AnimationCurve curve)
+        {
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("curve").animationCurveValue = curve;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
         void SetStartRotation(float z)
         {
             var serialized = new SerializedObject(_authoring);
@@ -160,7 +207,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.Update();
             var module = serialized.FindProperty("modules").GetArrayElementAtIndex(index);
             module.FindPropertyRelative("enabled").boolValue = enabled;
-            module.FindPropertyRelative("mode").enumValueIndex = (int)mode;
+            module.FindPropertyRelative("mode").intValue = (int)mode;
             module.FindPropertyRelative("endRotation").vector3Value = endRotation;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }

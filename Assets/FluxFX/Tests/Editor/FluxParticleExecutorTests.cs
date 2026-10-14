@@ -478,6 +478,44 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [Test]
+        public void CurveLookupAssetIsSharedAndBoundToRuntimeRenderMaterials()
+        {
+            RequireGraphics();
+            if (!SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("RGBAFloat texture support is required.");
+            }
+            SetModules(new FluxParticleRotationOverLifetimeModule());
+            var curve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(1, 0));
+            var serialized = new SerializedObject(authoring);
+            var module = serialized.FindProperty("modules").GetArrayElementAtIndex(0);
+            module.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleRotationOverLifetimeMode.Curve;
+            module.FindPropertyRelative("endRotation").vector3Value = new Vector3(0, 0, 180);
+            module.FindPropertyRelative("curve").animationCurveValue = curve;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var first = CreateRuntime(compiled);
+            var second = CreateRuntime(compiled);
+            var firstRender = (Material)first.GetProgramVariable("renderMaterial");
+            var secondRender = (Material)second.GetProgramVariable("renderMaterial");
+            var property = FluxParticleHlslNames.ProviderProperty("rotation.curve");
+            var texture = firstRender.GetTexture(property);
+            Assert.IsNotNull(texture);
+            Assert.AreEqual(128, texture.width);
+            Assert.AreEqual(1, texture.height);
+            Assert.AreEqual(FilterMode.Bilinear, texture.filterMode);
+            Assert.AreEqual(TextureWrapMode.Clamp, texture.wrapMode);
+            Assert.AreSame(texture, secondRender.GetTexture(property));
+            Assert.IsTrue(AssetDatabase.Contains(texture));
+            Assert.AreNotSame(firstRender, secondRender);
+            Assert.IsTrue(first.Initialize(4));
+            Assert.IsTrue(first.SetVector("lifetime.range", new Vector4(10, 10, 0, 0)));
+            first.Step(0, 0, 1, 1);
+            first.Step(2, 0, 0, 2);
+            Assert.AreSame(texture, first.RenderMaterial.GetTexture(property));
+            AssertCustomRender(first, compiled, new Color(0, 0, 180 * curve.Evaluate(0.2f), 1), true);
+        }
         [TestCase(false)]
         [TestCase(true)]
         public void CustomStateModuleRunsThroughAuthoringAndRuntime(bool reverse)
@@ -540,7 +578,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(compiled.InitialValues.ContainsKey(TestStateDefinition.Strength));
         }
 
-        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected)
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, bool rotation = false)
         {
             var source = string.Join(Environment.NewLine, new[]
             {
@@ -552,7 +590,9 @@ namespace TpLab.Flux.FX.Tests.Editor
                 @"#include ""UnityCG.cginc""",
                 compiled.Shaders.RenderSource,
                 "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
-                "return alive ? value.valueRenderColor : float4(0, 0, 0, 0); }",
+                rotation
+                    ? "return alive ? float4(value.valueRenderRotation, 1) : float4(0, 0, 0, 0); }"
+                    : "return alive ? value.valueRenderColor : float4(0, 0, 0, 0); }",
                 "ENDHLSL",
                 "} } Fallback Off }"
             });
@@ -579,9 +619,28 @@ namespace TpLab.Flux.FX.Tests.Editor
                     material.SetTexture(FluxParticleHlslNames.PageProperty(statePage.Id, FluxParticlePageVersion.Updated),
                         runtime.GetCurrentPage(statePage.Id));
                 }
+                foreach (var provider in compiled.Shaders.Compilation.Providers.Values.Where(value => value.Kind == FluxParticleProviderKind.LookupTable))
+                {
+                    var property = FluxParticleHlslNames.ProviderProperty(provider.ValueId);
+                    material.SetTexture(property, runtime.RenderMaterial.GetTexture(property));
+                }
+                var parameterProperties = (string[])runtime.GetProgramVariable("parameterProperties");
+                var parameterTypes = (int[])runtime.GetProgramVariable("parameterTypes");
+                for (var i = 0; i < parameterProperties.Length; i++)
+                {
+                    var property = parameterProperties[i];
+                    if (parameterTypes[i] == 1)
+                    {
+                        material.SetFloat(property, runtime.RenderMaterial.GetFloat(property));
+                    }
+                    else
+                    {
+                        material.SetVector(property, runtime.RenderMaterial.GetVector(property));
+                    }
+                }
                 target.Create();
                 Graphics.Blit(null, target, material);
-                AssertVector(expected, ReadTexture(target, 0));
+                AssertVector(expected, ReadTexture(target, 0), rotation ? 0.05f : 0.0001f);
                 AssertVector(Vector4.zero, ReadTexture(target, 2));
             }
             finally
@@ -592,11 +651,11 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(material);
             }
         }
-        static void AssertVector(Vector4 expected, Vector4 actual)
+        static void AssertVector(Vector4 expected, Vector4 actual, float tolerance = 0.0001f)
         {
             for (var component = 0; component < 4; component++)
             {
-                Assert.AreEqual(expected[component], actual[component], 0.0001f, $"Component {component}");
+                Assert.AreEqual(expected[component], actual[component], tolerance, $"Component {component}");
             }
         }
 

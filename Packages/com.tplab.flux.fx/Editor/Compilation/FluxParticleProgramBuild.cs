@@ -191,6 +191,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             render.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);
             render.SetFloat("_ZWrite", blend == FluxParticleBlendMode.Opaque ? 1 : 0);
             render.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
+            foreach (var provider in compiled.Shaders.Compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable))
+            {
+                render.SetTexture(FluxParticleHlslNames.ProviderProperty(provider.ValueId), SaveLookupTexture(provider, outputRoot));
+            }
             EditorUtility.SetDirty(render);
             return render;
         }
@@ -288,6 +292,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
             bufferB.SetProgramVariable("initialCount", count);
             clear.SetProgramVariable("shader", shader);
             return (bufferA, bufferB, clear);
+        }
+
+        static Texture2D SaveLookupTexture(FluxParticleValueProvider provider, string outputRoot)
+        {
+            var signature = string.Join(",", provider.LookupSamples.Select(sample =>
+                sample.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
+            var path = outputRoot + "/Lookup-" + Hash128.Compute(signature) + ".asset";
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (texture == null)
+            {
+                texture = FluxParticleLookupTexture.Create(provider);
+                AssetDatabase.CreateAsset(texture, path);
+            }
+            return texture;
         }
 
         static Shader SaveShader(string source, string outputRoot)
