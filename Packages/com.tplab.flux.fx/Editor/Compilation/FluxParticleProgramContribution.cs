@@ -143,6 +143,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
             _definitions.AddOperation(operation);
         }
 
+        /// <summary>
+        /// 自身のOperationが、存在する場合だけ別のOperationの後に実行されることを宣言します。
+        /// </summary>
+        public void AddOptionalDependency(FluxParticleOptionalOperationDependency dependency)
+        {
+            if (dependency == null) throw new ArgumentNullException(nameof(dependency));
+            if (_ownerId != null && (!_definitions.Operations.TryGetValue(dependency.OperationId, out var operation) ||
+                operation.OwnerId != _ownerId))
+            {
+                throw new InvalidOperationException($"Module {_ownerId} cannot constrain Operation {dependency.OperationId}.");
+            }
+            _definitions.AddOptionalDependency(dependency);
+        }
+
         void RequireOwner(string ownerId)
         {
             if (_ownerId != null && ownerId != _ownerId)

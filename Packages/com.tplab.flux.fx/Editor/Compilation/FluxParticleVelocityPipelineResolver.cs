@@ -21,7 +21,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
 
-            var finalWriter = FluxParticleValuePipelineResolver.Resolve(definitions, Velocity, operation => operation.VelocityOrder);
+            var finalWriter = FluxParticleValuePipelineResolver.Resolve(definitions, Velocity, definitions.OptionalDependencies);
             if (finalWriter == null)
             {
                 // Spawn直後もVelocityのUpdated Pageを作り、Motionから最新値を読めるようにします。

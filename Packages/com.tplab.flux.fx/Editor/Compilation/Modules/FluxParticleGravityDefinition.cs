@@ -25,7 +25,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 },
                 new[] { new FluxParticleValueWrite("particle.velocity", FluxParticleWriteKind.Modify) }, null,
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Gravity.hlsl", "FluxFX_Gravity",
-                new[] { "gravity" }, "gravity.enabled", velocityOrder: 100));
+                new[] { "gravity" }, "gravity.enabled"));
         }
     }
 }

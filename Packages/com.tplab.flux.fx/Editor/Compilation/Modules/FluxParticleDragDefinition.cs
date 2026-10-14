@@ -25,7 +25,8 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 },
                 new[] { new FluxParticleValueWrite("particle.velocity", FluxParticleWriteKind.Modify) }, null,
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Drag.hlsl", "FluxFX_Drag",
-                new[] { "drag" }, "drag.enabled", velocityOrder: 500));
+                new[] { "drag" }, "drag.enabled"));
+            context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "gravity"));
         }
     }
 }

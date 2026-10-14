@@ -143,6 +143,32 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
+        /// Optional Dependencyを考慮したWriterの順序を確定し、入力と先行Operationを接続します。
+        /// </summary>
+        public static string Resolve(FluxParticleDefinitionBuilder definitions, string valueId,
+            IReadOnlyList<FluxParticleOptionalOperationDependency> optionalDependencies)
+        {
+            if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+            var order = FluxParticleOptionalDependencyResolver.OrderWriters(definitions, valueId, optionalDependencies);
+            string previous = null;
+            foreach (var id in order)
+            {
+                var writer = definitions.Operations[id];
+                var reads = writer.Reads.Select(read => read.ValueId == valueId
+                    ? new FluxParticleValueRead(valueId, previous == null ? FluxParticleReadVersion.StepPrevious :
+                        FluxParticleReadVersion.AfterOperation, previous)
+                    : read).ToArray();
+                var dependencies = writer.Dependencies.ToList();
+                if (previous != null && !dependencies.Contains(previous)) dependencies.Add(previous);
+                definitions.ReplaceOperation(new FluxParticleOperationDefinition(writer.Id, writer.OwnerId,
+                    writer.Phase, reads, writer.Writes, dependencies, writer.HlslPath, writer.EntryPoint,
+                    writer.Parameters, writer.EnabledParameterId, writer.VelocityOrder));
+                previous = writer.Id;
+            }
+            return previous;
+        }
+
+        /// <summary>
         /// Update Consumerの対象Value読み取りを最終Writerに接続します。
         /// </summary>
         public static FluxParticleOperationDefinition Connect(FluxParticleOperationDefinition consumer,

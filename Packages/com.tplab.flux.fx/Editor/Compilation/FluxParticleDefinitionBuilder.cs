@@ -14,6 +14,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         readonly Dictionary<string, FluxParticleParameterDefinition> _parameters = new Dictionary<string, FluxParticleParameterDefinition>(StringComparer.Ordinal);
         readonly Dictionary<string, FluxParticleOperationDefinition> _operations = new Dictionary<string, FluxParticleOperationDefinition>(StringComparer.Ordinal);
         readonly List<string> _operationOrder = new List<string>();
+        readonly List<FluxParticleOptionalOperationDependency> _optionalDependencies = new List<FluxParticleOptionalOperationDependency>();
 
         /// <summary>
         /// 登録したValue定義をIDから参照する辞書です。
@@ -39,6 +40,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// Operationの登録順です。ModuleのVelocity更新順序にも使用します。
         /// </summary>
         public IReadOnlyList<string> OperationOrder => _operationOrder;
+
+        /// <summary>
+        /// 対象Operationが存在する場合だけ適用する順序制約です。
+        /// </summary>
+        public IReadOnlyList<FluxParticleOptionalOperationDependency> OptionalDependencies => _optionalDependencies;
 
         /// <summary>
         /// 論理Valueを登録します。重複するIDは同一定義であっても禁止します。
@@ -83,6 +89,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
             if (_operations.ContainsKey(operation.Id)) throw new InvalidOperationException($"Duplicate Operation ID: {operation.Id}");
             _operations.Add(operation.Id, operation);
             _operationOrder.Add(operation.Id);
+        }
+
+        /// <summary>
+        /// Operationの存在を条件とする順序制約を登録します。
+        /// </summary>
+        public void AddOptionalDependency(FluxParticleOptionalOperationDependency dependency)
+        {
+            if (dependency == null) throw new ArgumentNullException(nameof(dependency));
+            _optionalDependencies.Add(dependency);
         }
 
         /// <summary>
