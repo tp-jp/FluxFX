@@ -36,6 +36,7 @@ namespace TpLab.Flux.FX.Udon
 
         bool _programReady;
         bool _isPlaying;
+        bool _isPaused;
         object _emission;
 
         /// <summary>
@@ -57,12 +58,13 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
 
         /// <summary>
-        /// Particleの生成を再開します。
+        /// 一時停止を解除し、Particleの生成と更新を再開します。
         /// </summary>
         [PublicAPI]
         public void Play()
         {
             _isPlaying = true;
+            _isPaused = false;
         }
 
         /// <summary>
@@ -72,6 +74,7 @@ namespace TpLab.Flux.FX.Udon
         public void Stop()
         {
             _isPlaying = false;
+            _isPaused = false;
         }
 
         /// <summary>
@@ -82,6 +85,7 @@ namespace TpLab.Flux.FX.Udon
         {
             particleEmitter.ResetPlayback();
             _isPlaying = true;
+            _isPaused = false;
         }
 
         /// <summary>
@@ -91,6 +95,15 @@ namespace TpLab.Flux.FX.Udon
         public void Clear()
         {
             particleExecutor.Clear();
+        }
+
+        /// <summary>
+        /// Particleの生成と更新を一時停止します。
+        /// </summary>
+        [PublicAPI]
+        public void Pause()
+        {
+            _isPaused = true;
         }
 
         void Start()
@@ -111,9 +124,12 @@ namespace TpLab.Flux.FX.Udon
 
         void Update()
         {
-            if (!_programReady) return;
+            Simulate(Time.deltaTime);
+        }
 
-            var deltaTime = Time.deltaTime;
+        void Simulate(float deltaTime)
+        {
+            if (!_programReady || _isPaused) return;
             particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
             particleExecutor.Step(deltaTime, particleEmitter.SpawnStart, particleEmitter.SpawnCount, particleEmitter.SpawnSeedStart);
         }

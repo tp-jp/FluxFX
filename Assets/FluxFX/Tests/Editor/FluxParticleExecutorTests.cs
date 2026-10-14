@@ -404,6 +404,59 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreSame(generated, runtime.transform.Find("__FluxFXGenerated"));
         }
         [Test]
+        public void RuntimePausePreservesGpuAndEmissionUntilPlayAndStopResumesExistingParticles()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            var emitter = system.GetComponentInChildren<FluxParticleEmitter>(true);
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var parameters = new TpLab.Flux.FX.Udon.Parameters.FluxParticleEmissionParameters();
+            parameters.Add(1d);
+            typeof(FluxParticleEmitter).GetMethod("Initialize", flags).Invoke(emitter,
+                new object[] { parameters, new[] { 0f }, new[] { 1 }, 4, 0f, 5f, true });
+            typeof(FluxParticleSystem).GetField("particleEmitter", flags).SetValue(system, emitter);
+            typeof(FluxParticleSystem).GetField("particleExecutor", flags).SetValue(system, runtime);
+            typeof(FluxParticleSystem).GetField("_programReady", flags).SetValue(system, true);
+            var simulate = typeof(FluxParticleSystem).GetMethod("Simulate", flags);
+            system.Play();
+            simulate.Invoke(system, new object[] { 0.125f });
+            Assert.AreEqual(0, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            var playbackField = typeof(FluxParticleEmitter).GetField("_playback", flags);
+            var playback = (double[])((double[])playbackField.GetValue(emitter)).Clone();
+            var page = runtime.GetCurrentPage(0);
+            var position = ReadValue(runtime, compiled, "particle.position", 0);
+            var timeField = typeof(FluxParticleExecutor).GetField("_simulationTime", flags);
+            var time = timeField.GetValue(runtime);
+
+            system.Pause();
+            simulate.Invoke(system, new object[] { 10f });
+            Assert.AreSame(page, runtime.GetCurrentPage(0));
+            Assert.AreEqual(time, timeField.GetValue(runtime));
+            AssertVector(position, ReadValue(runtime, compiled, "particle.position", 0), 0.0001f);
+            CollectionAssert.AreEqual(playback, (double[])playbackField.GetValue(emitter));
+
+            system.Play();
+            simulate.Invoke(system, new object[] { 0.125f });
+            Assert.AreEqual(0.125f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            system.Pause();
+            system.Stop();
+            playback = (double[])((double[])playbackField.GetValue(emitter)).Clone();
+            simulate.Invoke(system, new object[] { 0.125f });
+            Assert.AreEqual(0.25f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            Assert.AreEqual(0, emitter.SpawnCount);
+            CollectionAssert.AreEqual(playback, (double[])playbackField.GetValue(emitter));
+
+            system.Pause();
+            system.Restart();
+            simulate.Invoke(system, new object[] { 0.125f });
+            Assert.AreEqual(0.375f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            Assert.AreEqual(1, emitter.SpawnCount);
+        }
+
+        [Test]
         public void SpawnThenGravityUpdatesVelocityPositionAndAge()
         {
             RequireGraphics();
