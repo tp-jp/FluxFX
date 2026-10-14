@@ -7670,7 +7670,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[1000]
-      value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleColorOverLifetimeModule
+      value: Assembly-CSharp TpLab.Flux.FX.CustomModules.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -7785,7 +7785,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[1000].enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -7870,7 +7870,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[1000].strength
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -7956,6 +7956,21 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[1003].endColor.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}

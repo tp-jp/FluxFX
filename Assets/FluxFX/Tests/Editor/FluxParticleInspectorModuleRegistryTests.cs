@@ -73,9 +73,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void UnsupportedCustomStageIsNotRegistered()
+        public void UnregisteredModuleIsNotAvailable()
         {
-            Assert.IsFalse(_registry.TryGet(typeof(UnsupportedStageGpuModule), out _));
+            Assert.IsFalse(_registry.TryGet(typeof(UnregisteredParticleModule), out _));
         }
 
         [Test]
@@ -216,7 +216,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void InjectedRenderDefinitionIsAvailableWithoutLegacyGpuDefinition()
+        public void InjectedRenderDefinitionIsAvailable()
         {
             var compilation = new FluxParticleModuleRegistry(new IFluxParticleModuleDefinition[]
             {
@@ -229,12 +229,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(metadata.IsCustom);
         }
 
-        [Test]
-        public void LegacyGpuDefinitionsDoNotExposeModules()
-        {
-            Assert.IsFalse(_registry.TryGet(typeof(TestGpuModule), out _));
-            Assert.IsFalse(_registry.TryGet(typeof(TestPositionGpuModule), out _));
-        }
         static bool Contains(
             IReadOnlyList<FluxParticleInspectorModuleMetadata> modules,
             System.Type type)

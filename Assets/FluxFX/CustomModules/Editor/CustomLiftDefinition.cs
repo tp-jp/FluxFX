@@ -1,0 +1,46 @@
+using System;
+using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Modules;
+using TpLab.Flux.FX.Scripts.Modules;
+using UnityEngine;
+
+namespace TpLab.Flux.FX.CustomModules.Editor
+{
+    /// <summary>
+    /// Custom Liftの時間変化する加速度を登録します。
+    /// </summary>
+    public sealed class CustomLiftDefinition : IFluxParticleModuleDefinition
+    {
+        public Type ModuleType => typeof(CustomLiftModule);
+        public string ModuleId => "custom.fluxfx.lift";
+
+        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        {
+            var lift = (CustomLiftModule)module;
+            context.AddParameter(new FluxParticleParameterDefinition("custom-lift.strength", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new Vector4(lift.Strength, 0, 0, 0));
+            context.AddParameter(new FluxParticleParameterDefinition("custom-lift.direction", FluxParticleValueType.Float3,
+                FluxParticleParameterPolicy.Live), lift.Direction);
+            context.AddParameter(new FluxParticleParameterDefinition("custom-lift.enabled", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
+            if (!context.Providers.ContainsKey("step.time"))
+            {
+                context.AddProvider(new FluxParticleValueProvider("step.time", FluxParticleProviderKind.Uniform));
+            }
+            context.AddOperation(new FluxParticleOperationDefinition("custom-lift", ModuleId, FluxParticlePhase.Update,
+                new[]
+                {
+                    new FluxParticleValueRead("particle.velocity", FluxParticleReadVersion.StepPrevious),
+                    new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided),
+                    new FluxParticleValueRead("step.time", FluxParticleReadVersion.Provided)
+                },
+                new[] { new FluxParticleValueWrite("particle.velocity", FluxParticleWriteKind.Modify) }, null,
+                "Assets/FluxFX/CustomModules/CustomLift.hlsl", "FluxFX_CustomLift",
+                new[] { "custom-lift.strength", "custom-lift.direction" }, "custom-lift.enabled"));
+            foreach (var operation in new[] { "gravity", "force", "noise", "vortex", "drag", "limit-velocity" })
+            {
+                context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("custom-lift", operation));
+            }
+        }
+    }
+}

@@ -124,6 +124,53 @@ namespace TpLab.Flux.FX.Tests.Editor
                 ReadValue(world, worldBuild, "particle.position", 0), 0.001f);
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ExternalCustomLiftRunsThroughCurrentRegistryRuntimeAndLiveParameters(bool noise)
+        {
+            RequireGraphics();
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var definition = new FluxParticleModuleRegistry().GetAll().Single(value => value.ModuleId == "custom.fluxfx.lift");
+            var module = (FluxParticleModule)Activator.CreateInstance(definition.ModuleType);
+            SetModules(noise ? new[] { module, new FluxParticleNoiseModule() } : new[] { module });
+            var serialized = new SerializedObject(authoring);
+            var lift = serialized.FindProperty("modules").GetArrayElementAtIndex(0);
+            lift.FindPropertyRelative("strength").floatValue = 8;
+            lift.FindPropertyRelative("direction").vector3Value = Vector3.up;
+            if (noise)
+            {
+                serialized.FindProperty("modules").GetArrayElementAtIndex(1).FindPropertyRelative("strength").floatValue = 0;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.5f, 0, 0, 2);
+            AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(new Vector4(0, 1, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            runtime.Step(0.25f, 0, 0, 3);
+            var y = 2 + 8 * (0.5f + 0.5f * Mathf.Sin(1)) * 0.25f;
+            AssertVector(new Vector4(0, y, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            Assert.IsTrue(runtime.SetFloat("custom-lift.strength", 2));
+            Assert.IsTrue(runtime.SetVector("custom-lift.direction", Vector3.right));
+            runtime.Step(0.25f, 0, 0, 4);
+            var expected = new Vector4(2 * (0.5f + 0.5f * Mathf.Sin(1.5f)) * 0.25f, y, 0, 0);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0));
+            Assert.IsTrue(runtime.SetFloat("custom-lift.enabled", 0));
+            runtime.Step(0.25f, 0, 0, 5);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0));
+            runtime.Clear();
+            Assert.IsTrue(runtime.SetFloat("custom-lift.enabled", 1));
+            Assert.IsTrue(runtime.SetFloat("custom-lift.strength", 8));
+            Assert.IsTrue(runtime.SetVector("custom-lift.direction", Vector3.up));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.5f, 0, 0, 2);
+            AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+        }
         [Test]
         public void AuthoringUsesTwoPagesAndMapsInitialValues()
         {
@@ -150,7 +197,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void UnsupportedAndDuplicateModulesAreRejected()
         {
-            SetModules(new UnregisteredGpuModule());
+            SetModules(new UnregisteredParticleModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
             SetModules(new FluxParticleGravityModule(), new FluxParticleGravityModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
