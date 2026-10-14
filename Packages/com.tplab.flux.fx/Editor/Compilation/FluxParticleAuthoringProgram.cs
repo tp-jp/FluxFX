@@ -35,7 +35,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             FluxParticleAuthoringDefinitionBuilder.AddProviders(authoring, source, definitions);
             FluxParticleAuthoringDefinitionBuilder.AddOperationsAndParameters(authoring, source, definitions, hasRotation);
             var values = FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation);
-            Program = new FluxParticleProgramComposer().Compose(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
+            Program = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
             InitialValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, Vector4>(values);
         }
 
