@@ -172,76 +172,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringStartRotation.hlsl", "FluxFX_RenderRotationStart",
                     new[] { "rotation.start" }));
             }
-            var life = authoring.Lifetime;
-            var min = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Min(life.Min, life.Max);
-            var max = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Max(life.Min, life.Max);
-            var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
-            {
-                ["spawn.position"] = Vector4.zero,
-                ["lifetime.range"] = new Vector4(min, max, 0, 0),
-                ["color.end"] = authoring.Render.StartColor
-            };
-            if (randomColor)
-            {
-                values.Add("color.start-min", authoring.Render.StartColorMin);
-                values.Add("color.start-max", authoring.Render.StartColorMax);
-            }
-            else
-            {
-                values.Add("color.start", authoring.Render.StartColor);
-            }
-            if (randomSize)
-            {
-                values.Add("render.size-range", new Vector4(Mathf.Min(authoring.Render.StartSizeMin, authoring.Render.StartSizeMax),
-                    Mathf.Max(authoring.Render.StartSizeMin, authoring.Render.StartSizeMax), 0, 0));
-            }
-            else
-            {
-                values.Add("render.size", new Vector4(authoring.Render.StartSize, 0, 0, 0));
-            }
-            if (hasRotation)
-            {
-                values.Add("rotation.start", startRotation);
-            }
-            foreach (var parameter in moduleContext.InitialValues)
-            {
-                values[parameter.Key] = parameter.Value;
-            }
-            if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
-            {
-                values.Add("spawn.speed-range", new Vector4(Mathf.Min(authoring.InitialVelocity.Min, authoring.InitialVelocity.Max),
-                    Mathf.Max(authoring.InitialVelocity.Min, authoring.InitialVelocity.Max), 0, 0));
-            }
-            else
-            {
-                values.Add("spawn.speed", new Vector4(authoring.InitialVelocity.Speed, 0, 0, 0));
-            }
-            if (authoring.Shape.Type == FluxParticleShapeType.Sphere || authoring.Shape.Type == FluxParticleShapeType.Hemisphere ||
-                authoring.Shape.Type == FluxParticleShapeType.Circle || authoring.Shape.Type == FluxParticleShapeType.Cone)
-            {
-                values.Add("shape.radius", new Vector4(authoring.Shape.Radius, 0, 0, 0));
-            }
-            if (authoring.Shape.Type == FluxParticleShapeType.Cone)
-            {
-                values.Add("shape.angle", new Vector4(authoring.Shape.Angle, 0, 0, 0));
-            }
-            if (authoring.Shape.Type == FluxParticleShapeType.Box)
-            {
-                values.Add("shape.size", authoring.Shape.Size);
-            }
-            foreach (var value in values)
-            {
-                for (var c = 0; c < 4; c++)
-                {
-                    if (float.IsNaN(value.Value[c]) || float.IsInfinity(value.Value[c]))
-                    {
-                        throw new InvalidOperationException($"Non-finite Parameter: {value.Key}");
-                    }
-                }
-            }
-            Require(min >= 0 && (randomSize
-                ? FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax)
-                : FiniteNonNegative(authoring.Render.StartSize)), "Non-negative lifetime and size");
+            var values = FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation);
             Program = new FluxParticleProgramComposer().Compose(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
             InitialValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, Vector4>(values);
         }
