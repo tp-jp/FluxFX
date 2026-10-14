@@ -19,6 +19,57 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleEditorPreviewTests
     {
+        [TestCase(4097)]
+        [TestCase(16385)]
+        public void InspectorPreviewUsesRuntimeCountAndSpawnsLastSlot(int count)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat) || !SystemInfo.supports32bitsIndexBuffer)
+            {
+                Assert.Ignore("GPU with RGBAFloat textures and 32bit mesh indices is required.");
+            }
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            try
+            {
+                var system = root.GetComponent<FluxParticleSystem>();
+                var authoring = root.GetComponent<FluxParticleAuthoring>();
+                if (authoring == null) authoring = root.AddComponent<FluxParticleAuthoring>();
+                var systemObject = new SerializedObject(system);
+                systemObject.FindProperty("particleCount").intValue = count;
+                systemObject.ApplyModifiedPropertiesWithoutUndo();
+                var authoringObject = new SerializedObject(authoring);
+                authoringObject.FindProperty("emission.rate").floatValue = 0;
+                authoringObject.FindProperty("emission.bursts").arraySize = 1;
+                var burst = authoringObject.FindProperty("emission.bursts").GetArrayElementAtIndex(0);
+                burst.FindPropertyRelative("time").floatValue = 0;
+                burst.FindPropertyRelative("count").intValue = count;
+                authoringObject.ApplyModifiedPropertiesWithoutUndo();
+                editor = UnityEditor.Editor.CreateEditor(system, typeof(FluxParticleSystemEditor));
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                typeof(FluxParticleSystemEditor).GetMethod("EnsureParticlePreview", flags).Invoke(editor, null);
+                var preview = (FluxParticleEditorPreview)typeof(FluxParticleSystemEditor).GetField("_particlePreview", flags).GetValue(editor);
+                Assert.IsNotNull(preview, (string)typeof(FluxParticleSystemEditor).GetField("_backendPreviewError", flags).GetValue(editor));
+                Assert.AreEqual(system.ParticleCount, preview.Count);
+                var mesh = (Mesh)typeof(FluxParticleEditorPreview).GetField("mesh", flags).GetValue(preview);
+                Assert.AreEqual(count * 4, mesh.vertexCount);
+                Assert.AreEqual(count * 4 > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16, mesh.indexFormat);
+                Assert.AreEqual(count - 1, mesh.uv2[mesh.vertexCount - 1].x);
+                preview.Step(0.125f);
+                var build = (FluxParticleBuildResult)typeof(FluxParticleSystemEditor).GetField("_backendPreview", flags).GetValue(editor);
+                var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview).GetField("session", flags).GetValue(preview);
+                Assert.AreEqual(0, ReadValue(session, build, "particle.age", count - 1).x, 0.0001f);
+                Assert.AreEqual(count - 1, ReadValue(session, build, "particle.spawn-key", count - 1).x, 0.0001f);
+            }
+            finally
+            {
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [TestCase(FluxParticleRenderMode.Billboard, FluxParticleSimulationSpace.Local)]
         [TestCase(FluxParticleRenderMode.Billboard, FluxParticleSimulationSpace.World)]
         [TestCase(FluxParticleRenderMode.Mesh, FluxParticleSimulationSpace.Local)]
@@ -378,7 +429,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(root);
             }
         }
-        static Vector4 ReadValue(FluxParticleProgramGpuSession session, FluxParticleBuildResult build, string id)
+        static Vector4 ReadValue(FluxParticleProgramGpuSession session, FluxParticleBuildResult build, string id, int slot = 0)
         {
             Assert.IsTrue(build.Shaders.Compilation.StateLayout.TryGetBinding(id, out var binding));
             var page = session.CurrentPages[binding.PageId];
@@ -389,7 +440,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 RenderTexture.active = page;
                 texture.ReadPixels(new Rect(0, 0, page.width, page.height), 0, 0);
                 texture.Apply();
-                var pixel = (Vector4)texture.GetPixel(0, 0);
+                var pixel = (Vector4)texture.GetPixel(slot % page.width, slot / page.width);
                 var result = Vector4.zero;
                 for (var i = 0; i < binding.ComponentCount; i++) result[i] = pixel[binding.ChannelOffset + i];
                 return result;

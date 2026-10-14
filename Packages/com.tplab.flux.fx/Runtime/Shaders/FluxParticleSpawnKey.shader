@@ -19,11 +19,12 @@ Shader "Hidden/FluxFX/Program/SpawnKey"
 
             float4 frag(v2f_img i) : SV_Target
             {
-                float2 pixel = floor(i.uv * _FluxStateSize.xy);
-                float index = pixel.y * _FluxStateSize.x + pixel.x;
-                float offset = fmod(index - _FluxSpawnFirst + _FluxStateSize.z, _FluxStateSize.z);
-                float key = index < _FluxStateSize.z && offset < _FluxSpawnCount
-                    ? fmod(_FluxSpawnSeedBase + offset, 1048576.0) : 0.0;
+                uint2 pixel = (uint2)floor(i.uv * _FluxStateSize.xy);
+                uint capacity = (uint)_FluxStateSize.z;
+                uint index = pixel.y * (uint)_FluxStateSize.x + pixel.x;
+                uint offset = (index + capacity - (uint)_FluxSpawnFirst) % capacity;
+                float key = index < capacity && offset < (uint)_FluxSpawnCount
+                    ? ((uint)_FluxSpawnSeedBase + offset) % 1048576u : 0.0;
                 return float4(key, 0.0, 0.0, 0.0);
             }
             ENDHLSL

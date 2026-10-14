@@ -30,10 +30,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="system">接続先のParticle System</param>
         public static void Apply(FluxParticleAuthoring authoring, FluxParticleSystem system)
         {
-            if (system.ParticleCount < 1 || system.ParticleCount > 1048576)
-            {
-                throw new InvalidOperationException("Particle count must be in [1, 1048576].");
-            }
             var renderer = authoring.GetComponentInChildren<FluxParticleRenderer>(true);
             var emitter = authoring.GetComponentInChildren<FluxParticleEmitter>(true);
             if (renderer == null || emitter == null)
@@ -74,20 +70,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
             if (authoring.Render.Mode == FluxParticleRenderMode.Mesh)
             {
                 var mesh = authoring.Render.Mesh;
-                if (mesh == null || !mesh.isReadable || bufferCapacity < 1 ||
-                    (long)mesh.vertexCount * bufferCapacity > int.MaxValue ||
-                    (long)mesh.triangles.Length * bufferCapacity > int.MaxValue)
+                if (mesh == null || !mesh.isReadable)
                 {
-                    throw new InvalidOperationException("Render Mesh capacity exceeds supported array dimensions or the Mesh is not readable.");
+                    throw new InvalidOperationException("Render Mesh must be assigned and readable.");
                 }
             }
             if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
             {
                 throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
             }
-            if (bufferCapacity < 1 || bufferCapacity > 1048576)
+            var sourceMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
+            var maximum = FluxParticleCapacityValidator.GetMaximumCount(sourceMesh);
+            if (bufferCapacity < 1 || bufferCapacity > maximum)
             {
-                throw new ArgumentOutOfRangeException(nameof(bufferCapacity), "Buffer capacity must be in [1, 1048576].");
+                throw new ArgumentOutOfRangeException(nameof(bufferCapacity), $"Buffer capacity must be in [1, {maximum}] for this GPU and render Mesh.");
             }
             var program = compiled.Shaders;
             var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();

@@ -391,3 +391,6 @@ msgstr "カリング範囲"
 
 msgid "Renderer-local bounds used for culling. Include the full particle travel range, including in World simulation."
 msgstr "Rendererのローカル座標で指定するカリング範囲。Worldシミュレーションでも、Particleの移動範囲全体を含めてください。"
+
+msgid "Maximum Particle Count (Current GPU)"
+msgstr "最大Particle数（現在のGPU）"

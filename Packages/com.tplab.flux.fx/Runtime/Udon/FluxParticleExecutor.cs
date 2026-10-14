@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Udon
         public bool Initialize(int count)
         {
             if (_initialized) return true;
-            if (count < 1 || count > 1048576 || !ValidateManifest())
+            if (count < 1 || count > FluxParticleCapacity.MaximumExactCount || !ValidateManifest())
             {
                 Logger.LogError("Particle Executor Manifest is invalid.", this);
                 return false;
@@ -294,6 +294,11 @@ namespace TpLab.Flux.FX.Udon
             if (buffer.Capacity < count)
             {
                 Logger.LogError($"Particle Buffer capacity is too small: {buffer.Capacity} < {count}.", this);
+                return false;
+            }
+            if (!buffer.Texture.IsCreated())
+            {
+                Logger.LogError("Particle Buffer RenderTexture allocation failed.", this);
                 return false;
             }
             buffer.SetCount(count);

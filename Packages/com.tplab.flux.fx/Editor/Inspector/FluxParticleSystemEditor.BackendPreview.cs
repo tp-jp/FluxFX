@@ -16,6 +16,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
     {
         const string BackendExpandedKey = SessionStatePrefix + "BackendExpanded";
         FluxParticleBuildResult _backendPreview;
+        int _backendMaximumCount;
         string _backendPreviewSignature;
         string _backendPreviewError;
         FluxParticleEditorPreview _particlePreview;
@@ -56,6 +57,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var lookups = compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable).ToArray();
             var width = Math.Ceiling(Math.Sqrt(Math.Max(0, count)));
             var stateBytes = width * width * pages.Count * 2 * 16;
+            EditorGUILayout.LabelField(L10n.Tr("Maximum Particle Count (Current GPU)"), _backendMaximumCount.ToString());
             EditorGUILayout.LabelField(L10n.Tr("State Pages"), pages.Count.ToString());
             EditorGUILayout.LabelField(L10n.Tr("State RenderTextures"), (pages.Count * 2).ToString());
             EditorGUILayout.LabelField(L10n.Tr("Estimated State Memory"), (stateBytes / (1024 * 1024)).ToString("F2") + " MiB");
@@ -113,7 +115,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 try
                 {
                     _backendPreview = FluxParticleBuildPipeline.Build(authoring);
-                    _particlePreview = new FluxParticleEditorPreview(_backendPreview, authoring, Mathf.Clamp(count, 1, 4096));
+                    var renderMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
+                    _backendMaximumCount = FluxParticleCapacityValidator.GetMaximumCount(renderMesh);
+                    _particlePreview = new FluxParticleEditorPreview(_backendPreview, authoring, count);
                     _lastPreviewTime = EditorApplication.timeSinceStartup;
                     SceneView.RepaintAll();
                 }

@@ -131,6 +131,12 @@ namespace TpLab.Flux.FX.Udon
                 return;
             }
 
+            var maximum = particleRenderer.MaximumParticleCount;
+            if (particleCount < 1 || particleCount > maximum)
+            {
+                Logger.LogError($"Particle count must be in [1, {maximum}] for this render Mesh and numeric precision.", this);
+                return;
+            }
             InitializeEmitter(compiled.DataDictionary);
             _programReady = particleExecutor.Initialize(particleCount);
             if (!_programReady) return;

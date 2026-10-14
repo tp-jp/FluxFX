@@ -26,6 +26,8 @@ namespace TpLab.Flux.FX.Udon
 
         Mesh _programMesh;
 
+        internal int MaximumParticleCount => FluxParticleCapacity.GetMaximumCount(sourceMesh);
+
         /// <summary>
         /// 粒子ごとの描画用Meshを作成し、コンパイル済みの描画Materialを設定します。
         /// </summary>

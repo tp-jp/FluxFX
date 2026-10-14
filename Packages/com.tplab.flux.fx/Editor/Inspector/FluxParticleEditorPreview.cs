@@ -62,7 +62,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
         /// <param name="count">プレビューのParticle数</param>
         public FluxParticleEditorPreview(FluxParticleBuildResult build, FluxParticleAuthoring authoring, int count)
         {
-            if (count < 1 || count > 4096) throw new ArgumentOutOfRangeException(nameof(count));
+            var sourceMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
+            var maximum = FluxParticleCapacityValidator.GetMaximumCount(sourceMesh);
+            if (count < 1 || count > maximum)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count), $"Particle count must be in [1, {maximum}] for this GPU and render Mesh.");
+            }
             this.authoring = authoring;
             Count = count;
             var bursts = authoring.Emission.Bursts.OrderBy(burst => burst.Time).ToArray();
@@ -71,7 +76,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             emissionState = FluxParticleEmissionScheduler.Create(authoring.Playback.StartDelay);
             try
             {
-                var width = Mathf.CeilToInt(Mathf.Sqrt(count));
+                var width = FluxParticleCapacity.GetTextureWidth(count);
                 var shaders = build.Shaders;
                 usesSimulationTime = shaders.Compilation.Providers.ContainsKey("step.time");
                 session = new FluxParticleProgramGpuSession(shaders,
@@ -329,6 +334,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 for (var j = 0; j < 6; j++) triangles[i * 6 + j] = i * 4 + order[j];
             }
             var result = Own(new Mesh { name = "FluxFX Preview Mesh" });
+            if (vertices.Length > 65535)
+            {
+                result.indexFormat = IndexFormat.UInt32;
+            }
             result.vertices = vertices;
             result.uv = uv;
             result.uv2 = indices;

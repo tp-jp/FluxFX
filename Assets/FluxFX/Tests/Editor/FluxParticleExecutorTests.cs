@@ -391,8 +391,43 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [Test]
+        public void SpawnShadersKeepExactOffsetsAtMaximumStateCapacity()
+        {
+            RequireGraphics();
+            var mask = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader"));
+            var key = new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader"));
+            var texture = new RenderTexture(1, 1, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var active = RenderTexture.active;
+            try
+            {
+                Assert.IsTrue(texture.Create());
+                var size = new Vector4(4096, 4096, FluxParticleCapacity.MaximumExactCount, 0);
+                var indexAtCenter = 2048 * 4096 + 2048;
+                mask.SetVector("_FluxStateSize", size);
+                mask.SetFloat("_FluxSpawnFirst", indexAtCenter - 1);
+                mask.SetFloat("_FluxSpawnCount", 1);
+                Graphics.Blit(null, texture, mask);
+                Assert.AreEqual(0, ReadTexture(texture, 0).r, 0.0001f);
+                key.SetVector("_FluxStateSize", size);
+                key.SetFloat("_FluxSpawnFirst", indexAtCenter - 1);
+                key.SetFloat("_FluxSpawnCount", 2);
+                key.SetFloat("_FluxSpawnSeedBase", 1048575);
+                Graphics.Blit(null, texture, key);
+                Assert.AreEqual(0, ReadTexture(texture, 0).r, 0.0001f);
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                texture.Release();
+                Object.DestroyImmediate(texture);
+                Object.DestroyImmediate(mask);
+                Object.DestroyImmediate(key);
+            }
+        }
+
         [TestCase(0)]
-        [TestCase(1048577)]
+        [TestCase(FluxParticleCapacity.MaximumExactCount + 1)]
         public void InvalidBufferCapacityPreservesExistingGeneratedHierarchy(int capacity)
         {
             RequireGraphics();
