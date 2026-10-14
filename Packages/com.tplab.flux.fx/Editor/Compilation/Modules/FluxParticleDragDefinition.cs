@@ -30,6 +30,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 new[] { "drag" }, "drag.enabled"));
             context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "gravity"));
             context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "force"));
+            context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("drag", "vortex"));
         }
     }
 }

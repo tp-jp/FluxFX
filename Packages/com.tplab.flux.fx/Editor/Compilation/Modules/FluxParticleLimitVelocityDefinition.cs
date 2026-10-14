@@ -28,7 +28,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
                 new[] { new FluxParticleValueWrite("particle.velocity", FluxParticleWriteKind.Modify) }, null,
                 "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/LimitVelocity.hlsl", "FluxFX_LimitVelocity",
                 new[] { "limit-velocity.max-speed" }, "limit-velocity.enabled"));
-            foreach (var operation in new[] { "gravity", "force", "drag" })
+            foreach (var operation in new[] { "gravity", "force", "vortex", "drag" })
             {
                 context.AddOptionalDependency(new FluxParticleOptionalOperationDependency("limit-velocity", operation));
             }

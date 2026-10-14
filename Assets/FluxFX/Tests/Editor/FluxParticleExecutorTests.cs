@@ -1046,6 +1046,127 @@ namespace TpLab.Flux.FX.Tests.Editor
             SetModules(module);
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
         }
+        [Test]
+        public void VortexDependencyOrderHandlesOptionalWriters([NUnit.Framework.Range(0, 15)] int presence)
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var modules = new List<FluxParticleModule> { new FluxParticleVortexModule() };
+            var expected = new List<string>();
+            var candidates = new FluxParticleModule[] { new FluxParticleGravityModule(), new FluxParticleForceModule(),
+                new FluxParticleDragModule(), new FluxParticleLimitVelocityModule() };
+            for (var i = candidates.Length - 1; i >= 0; i--)
+            {
+                if ((presence & (1 << i)) != 0)
+                {
+                    modules.Add(candidates[i]);
+                }
+            }
+            if ((presence & 1) != 0)
+            {
+                expected.Add("gravity");
+            }
+            if ((presence & 2) != 0)
+            {
+                expected.Add("force");
+            }
+            expected.Add("vortex");
+            if ((presence & 4) != 0)
+            {
+                expected.Add("drag");
+            }
+            if ((presence & 8) != 0)
+            {
+                expected.Add("limit-velocity");
+            }
+            SetModules(modules.ToArray());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            CollectionAssert.AreEqual(expected, compiled.Shaders.Compilation.Operations.Where(operation =>
+                operation.Phase == FluxParticlePhase.Update && operation.Writes.Any(write => write.ValueId == "particle.velocity"))
+                .Select(operation => operation.Id));
+        }
+
+        [Test]
+        public void VortexGpuUsesPreviousPositionAndSupportsLiveChanges()
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleVortexModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(2, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("vortex.axis", new Vector4(0, 0, 2, 0)));
+            Assert.IsTrue(runtime.SetFloat("vortex.strength", 4));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.5f, 0, 0, 2);
+            AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(new Vector4(2, 1, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.IsTrue(runtime.SetVector("vortex.axis", new Vector4(0, 0, -5, 0)));
+            Assert.IsTrue(runtime.SetVector("vortex.center", new Vector4(1, 1, 0, 0)));
+            Assert.IsTrue(runtime.SetFloat("vortex.strength", 2));
+            runtime.Step(0.5f, 0, 0, 3);
+            AssertVector(new Vector4(0, 1, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(new Vector4(2, 1.5f, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.IsTrue(runtime.SetFloat("vortex.enabled", 0));
+            runtime.Step(0.5f, 0, 0, 4);
+            AssertVector(new Vector4(0, 1, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            runtime.Clear();
+            runtime.Step(0, 0, 1, 1);
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, "particle.velocity", 0));
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void VortexZeroAxisAndAxialPositionRemainFinite(bool zeroAxis)
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleVortexModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("vortex.axis", zeroAxis ? Vector4.zero : new Vector4(0, 0, 3, 0)));
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(0, 0, 2, 0)));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.5f, 0, 0, 2);
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, "particle.velocity", 0));
+        }
+
+        [Test]
+        public void VortexGpuPrecedesDragAndLimitVelocity()
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleLimitVelocityModule(), new FluxParticleVortexModule(),
+                new FluxParticleDragModule(), new FluxParticleForceModule(), new FluxParticleGravityModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(2, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("gravity", new Vector4(0, -2, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("force", new Vector4(2, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("vortex.axis", new Vector4(0, 0, 2, 0)));
+            Assert.IsTrue(runtime.SetFloat("vortex.strength", 4));
+            Assert.IsTrue(runtime.SetFloat("drag", Mathf.Log(2)));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(1, 0, 0, 2);
+            var expected = new Vector4(1, 1, 0, 0).normalized;
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(new Vector4(2, 0, 0, 0) + expected, ReadValue(runtime, compiled, "particle.position", 0));
+        }
+
+        [TestCase(-1f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void VortexRejectsInvalidStrength(float strength)
+        {
+            var module = new FluxParticleVortexModule();
+            typeof(FluxParticleVortexModule).GetField("strength", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, strength);
+            SetModules(module);
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
         static string GetAssetIdentity(Object asset)
         {
             Assert.IsNotNull(asset);
