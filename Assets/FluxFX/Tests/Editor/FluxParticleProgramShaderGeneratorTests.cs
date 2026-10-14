@@ -38,11 +38,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void BasicProgramGeneratesTwoPagesAndTwoPassesWithoutVisualState()
         {
             var generated = Generate();
-            Assert.AreEqual(2, generated.Program.StateLayout.Pages.Count);
+            Assert.AreEqual(2, generated.Compilation.StateLayout.Pages.Count);
             Assert.AreEqual(2, generated.Passes.Count);
             Assert.AreEqual(2, generated.ClearSources.Count);
-            Assert.IsFalse(generated.Program.StateLayout.TryGetBinding("particle.start-color", out _));
-            Assert.IsFalse(generated.Program.StateLayout.TryGetBinding("render.color", out _));
+            Assert.IsFalse(generated.Compilation.StateLayout.TryGetBinding("particle.start-color", out _));
+            Assert.IsFalse(generated.Compilation.StateLayout.TryGetBinding("render.color", out _));
             var velocity = generated.Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "gravity"));
             var motion = generated.Passes.Single(p => p.Plan.UpdateOperations.Any(op => op.Id == "motion"));
             Assert.Less(velocity.Plan.Index, motion.Plan.Index);
@@ -165,10 +165,41 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void ClearInitializesNegativeAgeInItsActualChannel()
         {
             var generated = Generate();
-            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("particle.age", out var age));
+            Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding("particle.age", out var age));
             var channels = new[] { "0.0", "0.0", "0.0", "0.0" };
             channels[age.ChannelOffset] = "-1.0";
             StringAssert.Contains("float4(" + string.Join(", ", channels) + ")", generated.ClearSources[age.PageId]);
+        }
+
+        [Test]
+        public void ShaderGenerationUsesCompiledSnapshotAfterBuilderChanges()
+        {
+            var definitions = CreateDefinitions();
+            var compilation = new FluxParticleProgramCompiler().Compile(definitions);
+            var generator = new FluxParticleProgramShaderGenerator();
+            var first = generator.Generate(compilation, "Hidden/FluxFX/Snapshot", FluxParticleCoreDefinitions.CreateLifecycle());
+
+            definitions.AddValue(new FluxParticleValueDefinition("custom.force", FluxParticleValueType.Float,
+                FluxParticleWritePolicy.ReadOnly, "test"));
+            definitions.AddValue(new FluxParticleValueDefinition("custom-force", FluxParticleValueType.Float,
+                FluxParticleWritePolicy.ReadOnly, "test"));
+            definitions.AddParameter(new FluxParticleParameterDefinition("custom.parameter",
+                FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+            definitions.AddProvider(new FluxParticleValueProvider("custom.force", FluxParticleProviderKind.Uniform));
+            var gravity = definitions.Operations["gravity"];
+            definitions.ReplaceOperation(new FluxParticleOperationDefinition(gravity.Id, gravity.OwnerId, gravity.Phase,
+                gravity.Reads, gravity.Writes, gravity.Dependencies, "Changed.hlsl", gravity.EntryPoint,
+                gravity.Parameters, gravity.EnabledParameterId));
+
+            var second = generator.Generate(compilation, "Hidden/FluxFX/Snapshot", FluxParticleCoreDefinitions.CreateLifecycle());
+            Assert.AreSame(compilation, second.Compilation);
+            Assert.IsFalse(compilation.Values.ContainsKey("custom.force"));
+            Assert.IsFalse(compilation.Parameters.ContainsKey("custom.parameter"));
+            Assert.IsFalse(compilation.Providers.ContainsKey("custom.force"));
+            CollectionAssert.AreEqual(first.Passes.Select(pass => pass.Source), second.Passes.Select(pass => pass.Source));
+            CollectionAssert.AreEqual(first.ClearSources, second.ClearSources);
+            Assert.AreEqual(first.RenderSource, second.RenderSource);
+            Assert.Throws<InvalidOperationException>(() => Generate(definitions));
         }
 
         [Test]
@@ -264,7 +295,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 StringAssert.Contains("valueParticleVelocity", pass.Source);
                 StringAssert.Contains("FluxFX_SpawnMulti(operationSpawnMulti)", pass.Source);
                 Assert.IsTrue(pass.Plan.SpawnOperations.Single(op => op.Id == "spawn.multi").Writes.All(write =>
-                    generated.Program.StateLayout.TryGetBinding(write.ValueId, out var binding) && binding.PageId == pass.Plan.OutputPageId));
+                    generated.Compilation.StateLayout.TryGetBinding(write.ValueId, out var binding) && binding.PageId == pass.Plan.OutputPageId));
             }
         }
 
@@ -412,7 +443,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 AssertValue(session, generated, "particle.velocity", 0, new Vector4(2, 0, 0, 0));
                 AssertValue(session, generated, "particle.spawn-key", 0, new Vector4(123, 0, 0, 0));
                 AssertValue(session, generated, "custom.mode", 0, new Vector4(7, 0, 0, 0));
-                Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("custom.mode", out var binding));
+                Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding("custom.mode", out var binding));
                 var previous = session.CurrentPages[binding.PageId];
                 var pageWrittenWithoutSpawn = generated.Passes.Any(pass =>
                     pass.Plan.Condition != FluxParticlePassCondition.HasSpawn && pass.Plan.OutputPageId == binding.PageId);
@@ -492,7 +523,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions = null)
         {
-            return new FluxParticleProgramShaderGenerator().Generate(definitions ?? CreateDefinitions(),
+            return new FluxParticleProgramShaderGenerator().Generate(new FluxParticleProgramCompiler().Compile(definitions ?? CreateDefinitions()),
                 "Hidden/FluxFX/Phase2Tests", FluxParticleCoreDefinitions.CreateLifecycle());
         }
 
@@ -607,7 +638,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static Vector4 ReadValue(FluxParticleProgramGpuSession session, FluxParticleShaderProgram generated, string id, int particle)
         {
-            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding(id, out var binding));
+            Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding(id, out var binding));
             var pixel = (Vector4)ReadPixels(session.CurrentPages[binding.PageId])[particle];
             var value = Vector4.zero;
             for (var i = 0; i < binding.ComponentCount; i++) value[i] = pixel[binding.ChannelOffset + i];
@@ -617,7 +648,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         static void AssertValue(FluxParticleProgramGpuSession session, FluxParticleShaderProgram generated, string id, int particle, Vector4 expected)
         {
             var actual = ReadValue(session, generated, id, particle);
-            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding(id, out var binding));
+            Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding(id, out var binding));
             for (var i = 0; i < binding.ComponentCount; i++) Assert.That(actual[i], Is.EqualTo(expected[i]).Within(1e-4), id + "[" + i + "]");
         }
     }

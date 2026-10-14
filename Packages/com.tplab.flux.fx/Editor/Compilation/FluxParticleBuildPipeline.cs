@@ -17,8 +17,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             FluxParticleAuthoringValidator.Validate(authoring);
             var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initialValues);
             FluxParticleVelocityPipelineResolver.Resolve(definitions);
-            var program = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
-            return new FluxParticleBuildResult(program, initialValues);
+            var compilation = new FluxParticleProgramCompiler().Compile(definitions);
+            var shaders = new FluxParticleProgramShaderGenerator().Generate(compilation, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
+            var rendererSource = FluxParticleBillboardShaderGenerator.Generate(shaders, initialValues);
+            return new FluxParticleBuildResult(shaders, initialValues, rendererSource);
         }
     }
 }

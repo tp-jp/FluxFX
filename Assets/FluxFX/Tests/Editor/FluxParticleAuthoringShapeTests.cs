@@ -47,17 +47,17 @@ namespace TpLab.Flux.FX.Tests.Editor
             SetShape(FluxParticleShapeType.Sphere, 2.5f);
             var sphere = FluxParticleBuildPipeline.Build(_authoring);
 
-            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, sphere.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(point.Program.Passes.Count, sphere.Program.Passes.Count);
+            Assert.AreEqual(point.Shaders.Compilation.StateLayout.Pages.Count, sphere.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Shaders.Passes.Count, sphere.Shaders.Passes.Count);
             Assert.IsFalse(point.InitialValues.ContainsKey("shape.radius"));
             Assert.AreEqual(2.5f, sphere.InitialValues["shape.radius"].x);
-            Assert.IsFalse(sphere.Program.Program.StateLayout.TryGetBinding("shape.radius", out _));
+            Assert.IsFalse(sphere.Shaders.Compilation.StateLayout.TryGetBinding("shape.radius", out _));
 
-            var position = sphere.Program.Program.Operations.Single(operation => operation.Id == "spawn.position");
+            var position = sphere.Shaders.Compilation.Operations.Single(operation => operation.Id == "spawn.position");
             Assert.IsTrue(position.Reads.Any(read => read.ValueId == "spawn.key" && read.Version == FluxParticleReadVersion.Provided));
             CollectionAssert.Contains(position.Parameters.ToArray(), "shape.radius");
             StringAssert.EndsWith("/AuthoringSphereSpawnPosition.hlsl", position.HlslPath);
-            StringAssert.EndsWith("/SpawnPosition.hlsl", point.Program.Program.Operations.Single(operation => operation.Id == "spawn.position").HlslPath);
+            StringAssert.EndsWith("/SpawnPosition.hlsl", point.Shaders.Compilation.Operations.Single(operation => operation.Id == "spawn.position").HlslPath);
         }
 
         [Test]
@@ -72,12 +72,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             var random = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.AreEqual(constant.Program.Program.StateLayout.Pages.Count, random.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(constant.Program.Passes.Count, random.Program.Passes.Count);
+            Assert.AreEqual(constant.Shaders.Compilation.StateLayout.Pages.Count, random.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(constant.Shaders.Passes.Count, random.Shaders.Passes.Count);
             Assert.IsFalse(random.InitialValues.ContainsKey("spawn.speed"));
             Assert.AreEqual(new Vector4(0.5f, 2f, 0, 0), random.InitialValues["spawn.speed-range"]);
-            Assert.IsFalse(random.Program.Program.StateLayout.TryGetBinding("spawn.speed-range", out _));
-            var spawn = random.Program.Program.Operations.Single(op => op.Id == "spawn.velocity");
+            Assert.IsFalse(random.Shaders.Compilation.StateLayout.TryGetBinding("spawn.speed-range", out _));
+            var spawn = random.Shaders.Compilation.Operations.Single(op => op.Id == "spawn.velocity");
             CollectionAssert.Contains(spawn.Parameters.ToArray(), "spawn.speed-range");
             StringAssert.EndsWith("/AuthoringRandomSpawnVelocity.hlsl", spawn.HlslPath);
         }
@@ -103,10 +103,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             SetShape(type, 2.5f);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
 
-            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
-            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding(parameter, out _));
-            var position = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.position");
+            Assert.AreEqual(point.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding(parameter, out _));
+            var position = compiled.Shaders.Compilation.Operations.Single(operation => operation.Id == "spawn.position");
             Assert.IsTrue(position.Reads.Any(read => read.ValueId == "spawn.key" && read.Version == FluxParticleReadVersion.Provided));
             CollectionAssert.Contains(position.Parameters.ToArray(), parameter);
             StringAssert.EndsWith("/" + hlslName, position.HlslPath);
@@ -120,10 +120,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             var point = FluxParticleBuildPipeline.Build(_authoring);
             SetShape(shape, 2.5f);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            var program = compiled.Program.Program;
+            var program = compiled.Shaders.Compilation;
 
-            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
-            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.AreEqual(point.Shaders.Compilation.StateLayout.Pages.Count, program.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
             Assert.IsFalse(program.StateLayout.TryGetBinding("spawn.direction", out _));
             var position = program.Operations.Single(operation => operation.Id == "spawn.position");
             var velocity = program.Operations.Single(operation => operation.Id == "spawn.velocity");
@@ -147,13 +147,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.AreEqual(point.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
             Assert.AreEqual(2.5f, compiled.InitialValues["shape.radius"].x);
             Assert.AreEqual(30f, compiled.InitialValues["shape.angle"].x);
-            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("spawn.direction", out _));
-            var position = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.position");
-            var velocity = compiled.Program.Program.Operations.Single(operation => operation.Id == "spawn.velocity");
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("spawn.direction", out _));
+            var position = compiled.Shaders.Compilation.Operations.Single(operation => operation.Id == "spawn.position");
+            var velocity = compiled.Shaders.Compilation.Operations.Single(operation => operation.Id == "spawn.velocity");
             CollectionAssert.Contains(position.Parameters.ToArray(), "shape.radius");
             Assert.IsTrue(velocity.Reads.Any(read => read.ValueId == "spawn.direction" &&
                 read.Version == FluxParticleReadVersion.Provided));
@@ -186,20 +186,20 @@ namespace TpLab.Flux.FX.Tests.Editor
             render.FindPropertyRelative("startSizeMax").floatValue = 2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.AreEqual(point.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(point.Program.Passes.Count, compiled.Program.Passes.Count);
+            Assert.AreEqual(point.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(point.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
             var shader = compiled.RendererSource;
             if (colorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
             {
                 Assert.IsTrue(compiled.InitialValues.ContainsKey("color.start-min"));
                 Assert.IsTrue(compiled.InitialValues.ContainsKey("color.start-max"));
-                StringAssert.Contains("AuthoringRandomStartColor.hlsl", compiled.Program.RenderSource);
+                StringAssert.Contains("AuthoringRandomStartColor.hlsl", compiled.Shaders.RenderSource);
             }
             if (sizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants)
             {
                 Assert.AreEqual(new Vector4(0.5f, 2f, 0, 0), compiled.InitialValues["render.size-range"]);
                 StringAssert.Contains("FluxFXRandom01", shader);
-                Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("render.size-range", out _));
+                Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("render.size-range", out _));
             }
         }
 
@@ -208,7 +208,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             var baseline = FluxParticleBuildPipeline.Build(_authoring);
             var baselineShader = baseline.RendererSource;
-            Assert.IsFalse(baseline.Program.Program.Operations.Any(operation => operation.Id == "render.rotation-start"));
+            Assert.IsFalse(baseline.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start"));
             StringAssert.DoesNotContain("sincos(angle, s, c)", baselineShader);
 
             var serialized = new SerializedObject(_authoring);
@@ -216,11 +216,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             var rotated = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, rotated.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(baseline.Program.Passes.Count, rotated.Program.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, rotated.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, rotated.Shaders.Passes.Count);
             Assert.AreEqual(new Vector4(0, 0, 45, 0), rotated.InitialValues["rotation.start"]);
-            Assert.IsFalse(rotated.Program.Program.StateLayout.TryGetBinding("render.rotation", out _));
-            var operation = rotated.Program.Program.Operations.Single(value => value.Id == "render.rotation-start");
+            Assert.IsFalse(rotated.Shaders.Compilation.StateLayout.TryGetBinding("render.rotation", out _));
+            var operation = rotated.Shaders.Compilation.Operations.Single(value => value.Id == "render.rotation-start");
             Assert.AreEqual(FluxParticlePhase.Render, operation.Phase);
             CollectionAssert.Contains(operation.Parameters.ToArray(), "rotation.start");
             StringAssert.EndsWith("/AuthoringStartRotation.hlsl", operation.HlslPath);
@@ -263,7 +263,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             SetShape(FluxParticleShapeType.Sphere, 2.5f);
-            var generated = FluxParticleBuildPipeline.Build(_authoring).Program;
+            var generated = FluxParticleBuildPipeline.Build(_authoring).Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("Step" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("Clear" + index, source)).ToArray();
 
@@ -318,7 +318,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             velocity.FindPropertyRelative("max").floatValue = 3f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var generated = FluxParticleBuildPipeline.Build(_authoring).Program;
+            var generated = FluxParticleBuildPipeline.Build(_authoring).Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("DirectionStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("DirectionClear" + index, source)).ToArray();
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
@@ -378,7 +378,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static Vector3 ReadVelocity(FluxParticleProgramGpuSession session, FluxParticleShaderProgram generated, int particle)
         {
-            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("particle.velocity", out var binding));
+            Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding("particle.velocity", out var binding));
             var source = session.CurrentPages[binding.PageId];
             var active = RenderTexture.active;
             var texture = new Texture2D(source.width, source.height, TextureFormat.RGBAFloat, false, true);
@@ -402,7 +402,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             RequireVisualGpu();
             SetRandomVisualModes(true, true);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            var generated = compiled.Program;
+            var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("VisualStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("VisualClear" + index, source)).ToArray();
             var renderShader = Import("VisualRender", RenderEvaluationShader(generated));
@@ -448,10 +448,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             var baseline = FluxParticleBuildPipeline.Build(_authoring);
             SetRandomVisualModes(true, true);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.AreEqual(baseline.Program.Program.StateLayout.Pages.Count, compiled.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(baseline.Program.Passes.Count, compiled.Program.Passes.Count);
-            Assert.IsTrue(compiled.Program.Program.StateLayout.TryGetBinding("particle.spawn-key", out _));
-            Assert.IsFalse(compiled.Program.Program.StateLayout.TryGetBinding("render.size-range", out _));
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.IsTrue(compiled.Shaders.Compilation.StateLayout.TryGetBinding("particle.spawn-key", out _));
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("render.size-range", out _));
             var shader = compiled.RendererSource;
             StringAssert.Contains("FluxFXRandom01", shader);
             StringAssert.Contains("FluxFXRandom01", shader);
@@ -464,7 +464,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             RequireVisualGpu();
             SetRandomVisualModes(false, true);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            var generated = compiled.Program;
+            var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("SizeStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("SizeClear" + index, source)).ToArray();
             var billboard = Import("SizeBillboard", compiled.RendererSource);
@@ -669,7 +669,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static Vector3 ReadPosition(FluxParticleProgramGpuSession session, FluxParticleShaderProgram generated, int particle)
         {
-            Assert.IsTrue(generated.Program.StateLayout.TryGetBinding("particle.position", out var binding));
+            Assert.IsTrue(generated.Compilation.StateLayout.TryGetBinding("particle.position", out var binding));
             var source = session.CurrentPages[binding.PageId];
             var active = RenderTexture.active;
             var texture = new Texture2D(source.width, source.height, TextureFormat.RGBAFloat, false, true);

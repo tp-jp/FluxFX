@@ -190,7 +190,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             ThrowIfDisposed();
             if (spawnMask != null) ValidateInputTexture(spawnMask);
-            foreach (var parameter in program.Parameters)
+            foreach (var parameter in program.Compilation.Parameters.Values)
             {
                 if (!assigned.Contains("p:" + parameter.Id)) throw new InvalidOperationException($"Parameter is not assigned: {parameter.Id}");
             }
@@ -241,7 +241,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             ThrowIfDisposed();
             if (material == null) throw new ArgumentNullException(nameof(material));
             foreach (var binding in bindings.Values) binding(material);
-            foreach (var page in program.Program.StateLayout.Pages)
+            foreach (var page in program.Compilation.StateLayout.Pages)
             {
                 material.SetTexture(FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated), current[page.Id]);
             }
@@ -269,8 +269,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         FluxParticleParameterDefinition RequireParameter(string id, FluxParticleValueType? expectedType = null)
         {
             ThrowIfDisposed();
-            var parameter = program.Parameters.FirstOrDefault(p => p.Id == id);
-            if (parameter == null) throw new ArgumentException($"Unknown Parameter: {id}");
+            if (!program.Compilation.Parameters.TryGetValue(id, out var parameter)) throw new ArgumentException($"Unknown Parameter: {id}");
             if (expectedType.HasValue && parameter.Type != expectedType.Value) throw new ArgumentException($"Parameter type mismatch: {id}");
             if (started && parameter.Policy == FluxParticleParameterPolicy.Static) throw new InvalidOperationException($"Static Parameter is locked: {id}");
             return parameter;
@@ -280,7 +279,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             ThrowIfDisposed();
             if (!program.ExternalProviders.Any(p => p.ValueId == id && p.Kind == kind)) throw new ArgumentException($"Unknown Provider: {id}");
-            var type = program.Values.Single(v => v.Id == id).Type;
+            var type = program.Compilation.Values[id].Type;
             if (expectedType.HasValue && type != expectedType.Value) throw new ArgumentException($"Provider type mismatch: {id}");
             return type;
         }

@@ -47,8 +47,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             var generator = new FluxParticleProgramShaderGenerator();
-            var firstShader = generator.Generate(ordered, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
-            var secondShader = generator.Generate(reversed, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
+            var firstShader = generator.Generate(first, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
+            var secondShader = generator.Generate(second, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
             Assert.AreEqual(firstShader.RenderSource, secondShader.RenderSource);
         }
 

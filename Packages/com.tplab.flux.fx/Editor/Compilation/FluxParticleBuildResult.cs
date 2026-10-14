@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// GPU PassとState Layoutを含む生成結果です。
         /// </summary>
-        public FluxParticleShaderProgram Program { get; }
+        public FluxParticleShaderProgram Shaders { get; }
 
         /// <summary>
         /// Parameter IDごとの初期値です。
@@ -23,11 +23,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// </summary>
         public string RendererSource { get; }
 
-        public FluxParticleBuildResult(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues)
+        public FluxParticleBuildResult(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues, string rendererSource)
         {
-            Program = program;
+            Shaders = program;
             InitialValues = initialValues;
-            RendererSource = FluxParticleBillboardShaderGenerator.Generate(program, initialValues);
+            RendererSource = rendererSource;
         }
 
     }

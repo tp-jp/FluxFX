@@ -15,34 +15,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleProgramShaderGenerator
     {
         /// <summary>
-        /// 検証とLogical Compilationを実行してShaderを生成します。
+        /// コンパイル済みの定義と実行計画からShaderを生成します。
         /// </summary>
-        /// <param name="definitions">CoreとModuleが登録した定義。</param>
+        /// <param name="program">検証済みのコンパイル結果。</param>
         /// <param name="shaderName">生成Shader名の接頭辞。</param>
         /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします。</param>
         /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果。</returns>
-        public FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions, string shaderName,
+        public FluxParticleShaderProgram Generate(FluxParticleCompiledProgram program, string shaderName,
             FluxParticleShaderLifecycle lifecycle = null)
         {
-            if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+            if (program == null) throw new ArgumentNullException(nameof(program));
             if (string.IsNullOrWhiteSpace(shaderName) || shaderName.Any(c => c == '"' || c == '\\' || char.IsControl(c)))
             {
                 throw new ArgumentException("A safe Shader name is required.", nameof(shaderName));
             }
-            var program = new FluxParticleProgramCompiler().Compile(definitions);
-            var emitter = new Emitter(definitions, program, lifecycle);
+            var emitter = new Emitter(program, lifecycle);
             emitter.Validate();
             var passes = program.ExecutionPlan.Passes.Select(pass => emitter.GeneratePass(pass, shaderName)).ToArray();
             var clear = program.StateLayout.Pages.Select(page => emitter.GenerateClear(page, shaderName)).ToArray();
             return new FluxParticleShaderProgram(program, passes, clear, emitter.GenerateRender(),
-                definitions.Values.Values.OrderBy(v => v.Id, StringComparer.Ordinal),
-                definitions.Parameters.Values.OrderBy(p => p.Id, StringComparer.Ordinal),
-                definitions.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal));
+                program.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal));
         }
 
         sealed class Emitter
         {
-            readonly FluxParticleDefinitionBuilder definitions;
             readonly FluxParticleCompiledProgram program;
             readonly FluxParticleShaderLifecycle lifecycle;
             readonly Dictionary<string, FluxParticleOperationDefinition> originals;
@@ -51,9 +47,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             HashSet<string> usedProviders;
             StringBuilder body;
 
-            internal Emitter(FluxParticleDefinitionBuilder definitions, FluxParticleCompiledProgram program, FluxParticleShaderLifecycle lifecycle)
+            internal Emitter(FluxParticleCompiledProgram program, FluxParticleShaderLifecycle lifecycle)
             {
-                this.definitions = definitions;
                 this.program = program;
                 this.lifecycle = lifecycle;
                 originals = program.Operations.ToDictionary(op => op.Id, StringComparer.Ordinal);
@@ -67,13 +62,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Context type name collision: {collision.Key} ({string.Join(", ", collision.Select(op => op.Id))})");
                 }
-                var valueCollision = definitions.Values.Keys.GroupBy(FluxParticleHlslNames.Value, StringComparer.Ordinal)
+                var valueCollision = program.Values.Keys.GroupBy(FluxParticleHlslNames.Value, StringComparer.Ordinal)
                     .FirstOrDefault(group => group.Count() > 1);
                 if (valueCollision != null)
                 {
                     throw new InvalidOperationException($"Value field name collision: {valueCollision.Key} ({string.Join(", ", valueCollision)})");
                 }
-                var parameterCollision = definitions.Parameters.Keys.GroupBy(FluxParticleHlslNames.Parameter, StringComparer.Ordinal)
+                var parameterCollision = program.Parameters.Keys.GroupBy(FluxParticleHlslNames.Parameter, StringComparer.Ordinal)
                     .FirstOrDefault(group => group.Count() > 1);
                 if (parameterCollision != null)
                 {
@@ -94,7 +89,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                         }
                     }
                 }
-                foreach (var provider in definitions.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived))
+                foreach (var provider in program.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived))
                 {
                     ValidateImplementation(provider.HlslPath, provider.EntryPoint);
                 }
@@ -112,9 +107,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     }
                 }
                 if (lifecycle == null) return;
-                if (!definitions.Values.TryGetValue(lifecycle.AgeValueId, out var age) || age.Type != FluxParticleValueType.Float ||
+                if (!program.Values.TryGetValue(lifecycle.AgeValueId, out var age) || age.Type != FluxParticleValueType.Float ||
                     !program.StateLayout.TryGetBinding(age.Id, out _) ||
-                    !definitions.Values.TryGetValue(lifecycle.LifetimeValueId, out var lifetime) || lifetime.Type != FluxParticleValueType.Float)
+                    !program.Values.TryGetValue(lifecycle.LifetimeValueId, out var lifetime) || lifetime.Type != FluxParticleValueType.Float)
                 {
                     throw new InvalidOperationException("Lifecycle requires persistent Float Age and Float Lifetime.");
                 }
@@ -124,13 +119,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             void ValidateLifecycleProvider(string id, HashSet<string> visited)
             {
                 if (!visited.Add(id)) return;
-                if (!definitions.Providers.TryGetValue(id, out var provider))
+                if (!program.Providers.TryGetValue(id, out var provider))
                 {
                     if (!program.StateLayout.TryGetBinding(id, out _)) throw new InvalidOperationException($"Unbound Lifecycle Value: {id}");
                     return;
                 }
                 if (provider.Kind != FluxParticleProviderKind.Derived ||
-                    provider.Parameters.Any(p => definitions.Parameters[p].Policy != FluxParticleParameterPolicy.Static))
+                    provider.Parameters.Any(p => program.Parameters[p].Policy != FluxParticleParameterPolicy.Static))
                 {
                     throw new InvalidOperationException($"Recomputed Lifecycle requires Derived Providers with Static Parameters: {id}");
                 }
@@ -290,7 +285,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
             string SuppliedOrState(string id, bool render = false)
             {
-                if (!definitions.Providers.TryGetValue(id, out var provider))
+                if (!program.Providers.TryGetValue(id, out var provider))
                 {
                     return State(id, render ? FluxParticlePageVersion.Updated : FluxParticlePageVersion.StepPrevious);
                 }
@@ -299,7 +294,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 if (provider.Kind == FluxParticleProviderKind.Uniform) return property;
                 if (provider.Kind == FluxParticleProviderKind.SpawnInput)
                 {
-                    var value = definitions.Values[id];
+                    var value = program.Values[id];
                     return $"({Type(id)})tex2D({property}, uv).{"rgba".Substring(0, value.ComponentCount)}";
                 }
                 var arguments = provider.Inputs.Select(input => SuppliedOrState(input, render))
@@ -327,11 +322,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     result.AppendLine($"sampler2D {Page(read.PageId, read.Version)};");
                 }
-                foreach (var p in definitions.Parameters.Values.OrderBy(p => p.Id, StringComparer.Ordinal))
+                foreach (var p in program.Parameters.Values.OrderBy(p => p.Id, StringComparer.Ordinal))
                 {
                     result.AppendLine($"{HlslType(p.Type)} {FluxParticleHlslNames.ParameterProperty(p.Id)};");
                 }
-                foreach (var p in definitions.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal))
+                foreach (var p in program.Providers.Values.Where(p => p.Kind != FluxParticleProviderKind.Derived).OrderBy(p => p.ValueId, StringComparer.Ordinal))
                 {
                     result.AppendLine($"{(p.Kind == FluxParticleProviderKind.SpawnInput ? "sampler2D" : Type(p.ValueId))} {FluxParticleHlslNames.ProviderProperty(p.ValueId)};");
                 }
@@ -343,13 +338,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     foreach (var id in ids) result.AppendLine($"    {Type(id)} {Field(id)};");
                     foreach (var id in op.Parameters.Distinct().OrderBy(id => id, StringComparer.Ordinal))
                     {
-                        result.AppendLine($"    {HlslType(definitions.Parameters[id].Type)} {FluxParticleHlslNames.Parameter(id)};");
+                        result.AppendLine($"    {HlslType(program.Parameters[id].Type)} {FluxParticleHlslNames.Parameter(id)};");
                     }
                     if (op.Reads.Count == 0 && op.Writes.Count == 0 && op.Parameters.Count == 0) result.AppendLine("    float unused;");
                     result.AppendLine("};");
                 }
                 // Provider implementations are plain functions. Context types precede Operation includes.
-                foreach (var path in definitions.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived && usedProviders.Contains(p.ValueId)).Select(p => p.HlslPath)
+                foreach (var path in program.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived && usedProviders.Contains(p.ValueId)).Select(p => p.HlslPath)
                     .Concat(unique.Select(op => op.HlslPath)).Distinct().OrderBy(p => p, StringComparer.Ordinal))
                 {
                     result.AppendLine($"#include \"{path.Replace('\\', '/')}\"");
@@ -357,7 +352,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 return result.ToString();
             }
 
-            string Type(string id) => HlslType(definitions.Values[id].Type);
+            string Type(string id) => HlslType(program.Values[id].Type);
             static string Field(string id) => FluxParticleHlslNames.Value(id);
             static string Local(string id) => FluxParticleHlslNames.OperationLocal(id);
             static string Page(int id, FluxParticlePageVersion version) => FluxParticleHlslNames.PageProperty(id, version);

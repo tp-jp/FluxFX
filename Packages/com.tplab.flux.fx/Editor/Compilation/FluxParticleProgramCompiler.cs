@@ -26,7 +26,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var layout = CreateLayout(plans, definitions.Values);
             var passes = SchedulePasses(plans, layout, operations, definitions);
 
-            return new FluxParticleCompiledProgram(layout, new FluxParticleExecutionPlan(passes), operations);
+            return new FluxParticleCompiledProgram(layout, new FluxParticleExecutionPlan(passes), operations, definitions);
         }
 
         static void ValidateProviders(FluxParticleDefinitionBuilder definitions)

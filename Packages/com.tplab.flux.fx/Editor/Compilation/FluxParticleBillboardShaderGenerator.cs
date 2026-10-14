@@ -18,7 +18,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <returns>ShaderLabソース。</returns>
         public static string Generate(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues)
         {
-            if (!program.Program.StateLayout.TryGetBinding("particle.position", out var position))
+            if (!program.Compilation.StateLayout.TryGetBinding("particle.position", out var position))
             {
                 throw new InvalidOperationException("Position State is required for Billboard rendering.");
             }
@@ -26,14 +26,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var channels = "rgba".Substring(position.ChannelOffset, position.ComponentCount);
             var declaration = "sampler2D " + sampler + ";";
             var extra = program.RenderSource.Contains(declaration) ? "" : declaration + "\n";
-            var pageProperties = string.Join("\n", program.Program.StateLayout.Pages.Select(page =>
+            var pageProperties = string.Join("\n", program.Compilation.StateLayout.Pages.Select(page =>
                 $"[HideInInspector] {FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)} (\"State Page {page.Id}\", 2D) = \"black\" {{}}"));
             var randomSize = initialValues.ContainsKey("render.size-range");
             var sizeExpression = FluxParticleHlslNames.ParameterProperty("render.size");
             var renderCode = extra + program.RenderSource;
             if (randomSize)
             {
-                if (!program.Program.StateLayout.TryGetBinding("particle.spawn-key", out var spawnKey))
+                if (!program.Compilation.StateLayout.TryGetBinding("particle.spawn-key", out var spawnKey))
                 {
                     throw new InvalidOperationException("Random start size requires particle.spawn-key State.");
                 }
@@ -45,7 +45,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 var spawnKeyExpression = $"(uint)tex2Dlod({keySampler}, float4(stateUV, 0.0, 0.0)).{"rgba"[spawnKey.ChannelOffset]}";
                 sizeExpression = $"lerp({range}.x, {range}.y, FluxFXRandom01({spawnKeyExpression} * 59u + 43u))";
             }
-            var rotationCode = program.Program.Operations.Any(operation => operation.Id == "render.rotation-start")
+            var rotationCode = program.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start")
                 ? "float angle = radians(render." + FluxParticleHlslNames.Value("render.rotation") + ".z);\n" +
                   "float s;\n" +
                   "float c;\n" +

@@ -74,7 +74,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             EditorUtility.SetDirty(runtime);
             EditorUtility.SetDirty(system);
             AssetDatabase.SaveAssets();
-            Logger.Log($"Program Backend assigned: {authoring.name} ({compiled.Program.Passes.Count} Passes)", authoring);
+            Logger.Log($"Program Backend assigned: {authoring.name} ({compiled.Shaders.Passes.Count} Passes)", authoring);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
             }
-            var program = compiled.Program;
+            var program = compiled.Shaders;
             var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
             var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
             if (pagePrefab == null || stepPrefab == null)
@@ -103,7 +103,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var pageRoot = CreateGroup(generated, "Pages");
             var steps = program.Passes.Select((pass, index) =>
                 CreateStep(stepRoot, stepPrefab, index, SaveShader(pass.Source, outputRoot))).ToArray();
-            var pageInstances = program.Program.StateLayout.Pages.Select((page, index) =>
+            var pageInstances = program.Compilation.StateLayout.Pages.Select((page, index) =>
                 CreatePage(pageRoot, pagePrefab, index, SaveShader(program.ClearSources[index], outputRoot), bufferCapacity)).ToArray();
             var clears = pageInstances.Select(page => page.Clear).ToArray();
             var buffersA = pageInstances.Select(page => page.A).ToArray();
@@ -183,12 +183,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             runtime.SetProgramVariable("readPages", pages.ToArray());
             runtime.SetProgramVariable("readUpdated", versions.ToArray());
             runtime.SetProgramVariable("readProperties", properties.ToArray());
-            runtime.SetProgramVariable("renderPageProperties", program.Program.StateLayout.Pages.Select(page => FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)).ToArray());
-            runtime.SetProgramVariable("parameterIds", program.Parameters.Select(parameter => parameter.Id).ToArray());
-            runtime.SetProgramVariable("parameterProperties", program.Parameters.Select(parameter => FluxParticleHlslNames.ParameterProperty(parameter.Id)).ToArray());
-            runtime.SetProgramVariable("parameterTypes", program.Parameters.Select(parameter => (int)parameter.Type).ToArray());
-            runtime.SetProgramVariable("staticParameters", program.Parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static).ToArray());
-            runtime.SetProgramVariable("parameterValues", program.Parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray());
+            runtime.SetProgramVariable("renderPageProperties", program.Compilation.StateLayout.Pages.Select(page => FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)).ToArray());
+            var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
+            runtime.SetProgramVariable("parameterIds", parameters.Select(parameter => parameter.Id).ToArray());
+            runtime.SetProgramVariable("parameterProperties", parameters.Select(parameter => FluxParticleHlslNames.ParameterProperty(parameter.Id)).ToArray());
+            runtime.SetProgramVariable("parameterTypes", parameters.Select(parameter => (int)parameter.Type).ToArray());
+            runtime.SetProgramVariable("staticParameters", parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static).ToArray());
+            runtime.SetProgramVariable("parameterValues", parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray());
             runtime.SetProgramVariable("deltaTimeProperty", FluxParticleHlslNames.ProviderProperty("step.delta-time"));
             runtime.SetProgramVariable("spawnKeyProperty", FluxParticleHlslNames.ProviderProperty("spawn.key"));
         }

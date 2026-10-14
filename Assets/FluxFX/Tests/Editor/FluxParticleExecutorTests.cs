@@ -70,11 +70,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void AuthoringUsesTwoPagesAndMapsInitialValues()
         {
             var program = FluxParticleBuildPipeline.Build(authoring);
-            Assert.AreEqual(2, program.Program.Program.StateLayout.Pages.Count);
-            Assert.AreEqual(2, program.Program.Passes.Count);
+            Assert.AreEqual(2, program.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(2, program.Shaders.Passes.Count);
             Assert.AreEqual(1, program.InitialValues["spawn.speed"].x);
             Assert.IsFalse(program.InitialValues.ContainsKey("gravity.enabled"));
-            Assert.IsFalse(program.Program.Program.Operations.Any(op => op.Id == "render.color"));
+            Assert.IsFalse(program.Shaders.Compilation.Operations.Any(op => op.Id == "render.color"));
         }
 
         [TestCase("simulationSpace", 1)]
@@ -104,11 +104,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             RequireGraphics();
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
-            CollectionAssert.AreEqual(compiled.Program.Passes.Select(p => p.Plan.OutputPageId), (int[])runtime.GetProgramVariable("outputPages"));
-            CollectionAssert.AreEqual(compiled.Program.Passes.SelectMany(p => p.Reads).Select(r => FluxParticleHlslNames.PageProperty(r.PageId, r.Version)),
+            CollectionAssert.AreEqual(compiled.Shaders.Passes.Select(p => p.Plan.OutputPageId), (int[])runtime.GetProgramVariable("outputPages"));
+            CollectionAssert.AreEqual(compiled.Shaders.Passes.SelectMany(p => p.Reads).Select(r => FluxParticleHlslNames.PageProperty(r.PageId, r.Version)),
                 (string[])runtime.GetProgramVariable("readProperties"));
             var kernels = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
-            Assert.AreEqual(compiled.Program.Passes.Count, kernels.Length);
+            Assert.AreEqual(compiled.Shaders.Passes.Count, kernels.Length);
             foreach (var kernel in kernels)
             {
                 Assert.IsFalse(ShaderUtil.ShaderHasError(kernel.Shader));
@@ -117,7 +117,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var renderer = (Material)runtime.GetProgramVariable("renderMaterial");
             Assert.IsFalse(ShaderUtil.ShaderHasError(renderer.shader));
             Assert.IsTrue(renderer.shader.isSupported);
-            foreach (var page in compiled.Program.Program.StateLayout.Pages)
+            foreach (var page in compiled.Shaders.Compilation.StateLayout.Pages)
             {
                 var property = FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated);
                 Assert.IsTrue(renderer.HasProperty(property), $"Render Shader is missing Page property: {property}");
@@ -398,7 +398,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         static Vector4 ReadValue(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, string id, int slot)
         {
-            Assert.IsTrue(compiled.Program.Program.StateLayout.TryGetBinding(id, out var binding));
+            Assert.IsTrue(compiled.Shaders.Compilation.StateLayout.TryGetBinding(id, out var binding));
             var texture = runtime.GetCurrentPage(binding.PageId);
             var previous = RenderTexture.active;
             var readback = new Texture2D(texture.width, texture.height, TextureFormat.RGBAFloat, false, true);

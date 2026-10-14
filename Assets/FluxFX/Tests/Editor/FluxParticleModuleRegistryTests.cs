@@ -37,7 +37,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(program.StateLayout.TryGetBinding("render.test-tint", out _));
             Assert.IsTrue(program.Operations.Any(value => value.Id == "test.render-tint"));
 
-            var shader = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Tests/Module", FluxParticleCoreDefinitions.CreateLifecycle());
+            var shader = new FluxParticleProgramShaderGenerator().Generate(program, "Hidden/FluxFX/Tests/Module", FluxParticleCoreDefinitions.CreateLifecycle());
             StringAssert.Contains("Assets/FluxFX/Tests/Editor/Hlsl/TestRenderTint.hlsl", shader.RenderSource);
             StringAssert.Contains("FluxFX_TestRenderTint", shader.RenderSource);
         }

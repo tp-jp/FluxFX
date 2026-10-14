@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {
@@ -248,6 +250,21 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public FluxParticleStateLayout StateLayout { get; }
 
         /// <summary>
+        /// コンパイル時点で確定したValue定義です。
+        /// </summary>
+        public IReadOnlyDictionary<string, FluxParticleValueDefinition> Values { get; }
+
+        /// <summary>
+        /// コンパイル時点で確定したProvider定義です。
+        /// </summary>
+        public IReadOnlyDictionary<string, FluxParticleValueProvider> Providers { get; }
+
+        /// <summary>
+        /// コンパイル時点で確定したParameter定義です。
+        /// </summary>
+        public IReadOnlyDictionary<string, FluxParticleParameterDefinition> Parameters { get; }
+
+        /// <summary>
         /// GPU Passとその入力・出力の実行計画です。
         /// </summary>
         public FluxParticleExecutionPlan ExecutionPlan { get; }
@@ -260,8 +277,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
         internal FluxParticleCompiledProgram(
             FluxParticleStateLayout stateLayout,
             FluxParticleExecutionPlan executionPlan,
-            IEnumerable<FluxParticleOperationDefinition> operations)
+            IEnumerable<FluxParticleOperationDefinition> operations,
+            FluxParticleDefinitionBuilder definitions)
         {
+            Values = new ReadOnlyDictionary<string, FluxParticleValueDefinition>(
+                definitions.Values.Values.ToDictionary(value => value.Id, StringComparer.Ordinal));
+            Providers = new ReadOnlyDictionary<string, FluxParticleValueProvider>(
+                definitions.Providers.Values.ToDictionary(provider => provider.ValueId, StringComparer.Ordinal));
+            Parameters = new ReadOnlyDictionary<string, FluxParticleParameterDefinition>(
+                definitions.Parameters.Values.ToDictionary(parameter => parameter.Id, StringComparer.Ordinal));
             StateLayout = stateLayout;
             ExecutionPlan = executionPlan;
             Operations = new List<FluxParticleOperationDefinition>(operations).AsReadOnly();

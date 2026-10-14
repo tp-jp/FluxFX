@@ -175,7 +175,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 検証済みの論理ProgramとState Layoutです。
         /// </summary>
-        public FluxParticleCompiledProgram Program { get; }
+        public FluxParticleCompiledProgram Compilation { get; }
         /// <summary>
         /// 実行順に並べた1Pass Shaderです。
         /// </summary>
@@ -189,28 +189,18 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// </summary>
         public string RenderSource { get; }
         /// <summary>
-        /// 生成時点のValue型定義です。外部ProviderのBinding型を検証します。
-        /// </summary>
-        public IReadOnlyList<FluxParticleValueDefinition> Values { get; }
-        /// <summary>
-        /// Material Property名と変更契約を生成したParameter定義です。
-        /// </summary>
-        public IReadOnlyList<FluxParticleParameterDefinition> Parameters { get; }
-        /// <summary>
         /// 外部から値またはTextureを供給するProviderです。
         /// </summary>
         public IReadOnlyList<FluxParticleValueProvider> ExternalProviders { get; }
 
         internal FluxParticleShaderProgram(FluxParticleCompiledProgram program, IEnumerable<FluxParticleGeneratedPass> passes,
-            IEnumerable<string> clearSources, string renderSource, IEnumerable<FluxParticleValueDefinition> values, IEnumerable<FluxParticleParameterDefinition> parameters,
+            IEnumerable<string> clearSources, string renderSource,
             IEnumerable<FluxParticleValueProvider> externalProviders)
         {
-            Program = program;
+            Compilation = program;
             Passes = new List<FluxParticleGeneratedPass>(passes).AsReadOnly();
             ClearSources = new List<string>(clearSources).AsReadOnly();
             RenderSource = renderSource;
-            Values = new List<FluxParticleValueDefinition>(values).AsReadOnly();
-            Parameters = new List<FluxParticleParameterDefinition>(parameters).AsReadOnly();
             ExternalProviders = new List<FluxParticleValueProvider>(externalProviders).AsReadOnly();
         }
     }
