@@ -172,7 +172,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(7, standardCount);
+            Assert.AreEqual(8, standardCount);
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(velocity, typeof(FluxParticleDragModule)));
             Assert.IsFalse(Contains(velocity, typeof(FluxParticleNoiseModule)));
             Assert.IsFalse(Contains(velocity, typeof(FluxParticleVortexModule)));
-            Assert.IsFalse(Contains(velocity, typeof(FluxParticleLimitVelocityModule)));
+            Assert.IsTrue(Contains(velocity, typeof(FluxParticleLimitVelocityModule)));
 
             Assert.IsTrue(Contains(position, typeof(FluxParticleVelocityOverLifetimeModule)));
 

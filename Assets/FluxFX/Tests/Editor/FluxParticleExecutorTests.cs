@@ -941,6 +941,111 @@ namespace TpLab.Flux.FX.Tests.Editor
             typeof(FluxParticleForceModule).GetField("force", flags).SetValue(module, new Vector3(float.NaN, 0, 0));
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
         }
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(7)]
+        public void LimitVelocityFollowsAllPresentVelocityWriters(int presence)
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var modules = new List<FluxParticleModule> { new FluxParticleLimitVelocityModule() };
+            var expected = new List<string>();
+            if ((presence & 4) != 0)
+            {
+                modules.Add(new FluxParticleDragModule());
+            }
+            if ((presence & 2) != 0)
+            {
+                modules.Add(new FluxParticleForceModule());
+            }
+            if ((presence & 1) != 0)
+            {
+                modules.Add(new FluxParticleGravityModule());
+                expected.Add("gravity");
+            }
+            if ((presence & 2) != 0)
+            {
+                expected.Add("force");
+            }
+            if ((presence & 4) != 0)
+            {
+                expected.Add("drag");
+            }
+            expected.Add("limit-velocity");
+            SetModules(modules.ToArray());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            var operations = compiled.Shaders.Compilation.Operations;
+            CollectionAssert.AreEqual(expected, operations.Where(operation => operation.Phase == FluxParticlePhase.Update &&
+                operation.Writes.Any(write => write.ValueId == "particle.velocity")).Select(operation => operation.Id));
+            var motion = operations.Single(operation => operation.Id == "motion");
+            Assert.AreEqual("limit-velocity", motion.Reads.Single(read => read.ValueId == "particle.velocity").ProducerOperationId);
+        }
+
+        [TestCase(0f)]
+        [TestCase(0.5f)]
+        [TestCase(10f)]
+        public void LimitVelocityClampsSpeedAndPreservesDirection(float maximum)
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleLimitVelocityModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 2));
+            Assert.IsTrue(runtime.SetFloat("limit-velocity.max-speed", maximum));
+            runtime.Step(0, 0, 1, 1);
+            var initial = ReadValue(runtime, compiled, "particle.velocity", 0);
+            runtime.Step(0.25f, 0, 0, 2);
+            var expected = initial.normalized * Mathf.Min(2, maximum);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(expected * 0.25f, ReadValue(runtime, compiled, "particle.position", 0));
+        }
+
+        [Test]
+        public void LimitVelocityAppliesAfterDragAndSupportsLiveChanges()
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleLimitVelocityModule(), new FluxParticleDragModule(),
+                new FluxParticleForceModule(), new FluxParticleGravityModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("gravity", new Vector4(0, -8, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("force", new Vector4(6, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetFloat("drag", 0.5f));
+            Assert.IsTrue(runtime.SetFloat("limit-velocity.max-speed", 2));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(1, 0, 0, 2);
+            AssertVector(new Vector4(1.2f, -1.6f, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(new Vector4(1.2f, -1.6f, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.IsTrue(runtime.SetFloat("limit-velocity.max-speed", 1));
+            runtime.Step(1, 0, 0, 3);
+            var previous = new Vector4(0.6f, -0.8f, 0, 0);
+            AssertVector(previous, ReadValue(runtime, compiled, "particle.velocity", 0));
+            Assert.IsTrue(runtime.SetFloat("limit-velocity.enabled", 0));
+            runtime.Step(0.5f, 0, 0, 4);
+            AssertVector((previous + new Vector4(3, -4, 0, 0)) * Mathf.Exp(-0.25f),
+                ReadValue(runtime, compiled, "particle.velocity", 0));
+        }
+
+        [TestCase(-1f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void LimitVelocityRejectsInvalidAuthoringMaximum(float maximum)
+        {
+            var module = new FluxParticleLimitVelocityModule();
+            typeof(FluxParticleLimitVelocityModule).GetField("maxSpeed", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(module, maximum);
+            SetModules(module);
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
         static string GetAssetIdentity(Object asset)
         {
             Assert.IsNotNull(asset);
