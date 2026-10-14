@@ -61,6 +61,88 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
+        /// Operationの依存関係から指定ValueのWriterの全順序を解決します。
+        /// 複数の候補が同時に実行可能な場合は曖昧な順序として拒否します。
+        /// </summary>
+        public static string Resolve(FluxParticleDefinitionBuilder definitions, string valueId)
+        {
+            if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+            if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
+
+            var writers = definitions.Operations.Values.Where(operation => operation.Phase == FluxParticlePhase.Update &&
+                operation.Writes.Any(write => write.ValueId == valueId)).ToDictionary(operation => operation.Id);
+            if (writers.Count == 0) return null;
+
+            var edges = writers.Keys.ToDictionary(id => id, id => new HashSet<string>());
+            foreach (var writer in writers.Values)
+            {
+                foreach (var dependency in writer.Dependencies)
+                {
+                    if (!definitions.Operations.TryGetValue(dependency, out var producer))
+                    {
+                        throw new InvalidOperationException($"Unknown dependency: {writer.Id} -> {dependency}.");
+                    }
+                    if (producer.Phase != writer.Phase)
+                    {
+                        throw new InvalidOperationException($"Cross-phase dependency: {writer.Id} -> {dependency}.");
+                    }
+                    if (writers.ContainsKey(dependency)) edges[dependency].Add(writer.Id);
+                }
+                foreach (var read in writer.Reads.Where(read => read.Version == FluxParticleReadVersion.AfterOperation))
+                {
+                    if (!definitions.Operations.TryGetValue(read.ProducerOperationId, out var producer))
+                    {
+                        throw new InvalidOperationException($"Unknown producer: {writer.Id} -> {read.ProducerOperationId}.");
+                    }
+                    if (producer.Phase != writer.Phase)
+                    {
+                        throw new InvalidOperationException($"Cross-phase producer: {writer.Id} -> {read.ProducerOperationId}.");
+                    }
+                    if (writers.ContainsKey(producer.Id)) edges[producer.Id].Add(writer.Id);
+                }
+            }
+
+            var indegree = writers.Keys.ToDictionary(id => id, id => 0);
+            foreach (var successors in edges.Values)
+            {
+                foreach (var successor in successors) indegree[successor]++;
+            }
+            var sorted = new List<FluxParticleOperationDefinition>();
+            while (sorted.Count < writers.Count)
+            {
+                var ready = indegree.Where(pair => pair.Value == 0).Select(pair => pair.Key).ToArray();
+                if (ready.Length == 0)
+                {
+                    throw new InvalidOperationException($"Cyclic writer dependencies for {valueId}.");
+                }
+                if (ready.Length > 1)
+                {
+                    throw new InvalidOperationException($"Ambiguous writer dependencies for {valueId}: {string.Join(", ", ready)}.");
+                }
+                var id = ready[0];
+                sorted.Add(writers[id]);
+                indegree.Remove(id);
+                foreach (var successor in edges[id]) indegree[successor]--;
+            }
+
+            string previous = null;
+            foreach (var writer in sorted)
+            {
+                var reads = writer.Reads.Select(read => read.ValueId == valueId
+                    ? new FluxParticleValueRead(valueId, previous == null ? FluxParticleReadVersion.StepPrevious :
+                        FluxParticleReadVersion.AfterOperation, previous)
+                    : read).ToArray();
+                var dependencies = writer.Dependencies.ToList();
+                if (previous != null && !dependencies.Contains(previous)) dependencies.Add(previous);
+                definitions.ReplaceOperation(new FluxParticleOperationDefinition(writer.Id, writer.OwnerId,
+                    writer.Phase, reads, writer.Writes, dependencies, writer.HlslPath, writer.EntryPoint,
+                    writer.Parameters, writer.EnabledParameterId, writer.VelocityOrder));
+                previous = writer.Id;
+            }
+            return previous;
+        }
+
+        /// <summary>
         /// Update Consumerの対象Value読み取りを最終Writerに接続します。
         /// </summary>
         public static FluxParticleOperationDefinition Connect(FluxParticleOperationDefinition consumer,
