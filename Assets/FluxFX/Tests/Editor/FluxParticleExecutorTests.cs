@@ -907,8 +907,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             first.Step(0, 0, 1, 1);
             first.Step(2, 0, 0, 2);
             Assert.AreSame(texture, first.RenderMaterial.GetTexture(property));
-            AssertCustomRender(first, compiled, new Color(0, 0, 180 * curve.Evaluate(0.2f), 1), true);
-            AssertCustomRender(first, compiled, new Color(curve.Evaluate(0.2f), 0, 0, 1), size: true);
+            AssertCustomRender(first, compiled, new Color(0, 0, 180 * curve.Evaluate(0.2f), 1), inactiveSlot: 1, rotation: true);
+            AssertCustomRender(first, compiled, new Color(curve.Evaluate(0.2f), 0, 0, 1), inactiveSlot: 1, size: true);
         }
         [TestCase(false)]
         [TestCase(true)]
@@ -951,9 +951,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(runtime.SetFloat(TestStateDefinition.Strength, 4));
             runtime.Step(0.25f, 1, 1, 9);
             AssertVector(new Vector4(4, 5, 6, 7), ReadValue(runtime, compiled, TestStateDefinition.State, 0));
-            AssertVector(new Vector4(1, 2, 3, 4), ReadValue(runtime, compiled, TestStateDefinition.State, 1));
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, TestStateDefinition.State, 1));
+            AssertVector(new Vector4(1, 2, 3, 4), ReadValue(runtime, compiled, TestStateDefinition.State, 2));
             Assert.AreEqual(0.5f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
-            AssertCustomRender(runtime, compiled, new Color(0.4f, 0.5f, 0.6f, 0.7f));
+            AssertCustomRender(runtime, compiled, new Color(0.4f, 0.5f, 0.6f, 0.7f), inactiveSlot: 1);
             runtime.Clear();
             AssertVector(Vector4.zero, ReadValue(runtime, compiled, TestStateDefinition.State, 0));
         }
@@ -972,7 +973,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(compiled.InitialValues.ContainsKey(TestStateDefinition.Strength));
         }
 
-        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, bool rotation = false, bool size = false)
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, int inactiveSlot, bool rotation = false, bool size = false)
         {
             var source = string.Join(Environment.NewLine, new[]
             {
@@ -1035,7 +1036,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 target.Create();
                 Graphics.Blit(null, target, material);
                 AssertVector(expected, ReadTexture(target, 0), rotation ? 0.05f : size ? 0.002f : 0.0001f);
-                AssertVector(Vector4.zero, ReadTexture(target, 2));
+                AssertVector(Vector4.zero, ReadTexture(target, inactiveSlot));
             }
             finally
             {

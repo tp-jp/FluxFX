@@ -425,7 +425,7 @@ float4 FluxFX_Availability(float2 inputUV)
         /// <returns>FloatまたはVectorのProperty宣言</returns>
         public static string GenerateParameterProperties(FluxParticleCompiledProgram program)
         {
-            return string.Join(Environment.NewLine, program.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal)
+            return string.Join("\n", program.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal)
                 .Select(parameter =>
                 {
                     var property = FluxParticleHlslNames.ParameterProperty(parameter.Id);
