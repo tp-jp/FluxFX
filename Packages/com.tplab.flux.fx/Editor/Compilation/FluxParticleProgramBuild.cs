@@ -41,7 +41,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new InvalidOperationException("Program Backend requires the existing Renderer and Emitter.");
             }
-            var compiled = FluxParticleBuildResult.Create(authoring);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = authoring.GetComponentInChildren<FluxParticleExecutor>(true);
             if (runtime == null)
             {

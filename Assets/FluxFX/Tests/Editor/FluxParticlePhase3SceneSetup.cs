@@ -76,7 +76,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
                 try
                 {
-                    var program = FluxParticleBuildResult.Create(authoring);
+                    var program = FluxParticleBuildPipeline.Build(authoring);
                     Debug.Log($"[FluxFX] {system.name}: {program.Program.Program.StateLayout.Pages.Count} Pages / {program.Program.Passes.Count} Passes", system);
                 }
                 catch (Exception exception)
