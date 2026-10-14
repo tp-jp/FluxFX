@@ -385,3 +385,9 @@ msgstr "初期回転の最小値"
 
 msgid "Start Rotation Max"
 msgstr "初期回転の最大値"
+
+msgid "Culling Bounds"
+msgstr "カリング範囲"
+
+msgid "Renderer-local bounds used for culling. Include the full particle travel range, including in World simulation."
+msgstr "Rendererのローカル座標で指定するカリング範囲。Worldシミュレーションでも、Particleの移動範囲全体を含めてください。"

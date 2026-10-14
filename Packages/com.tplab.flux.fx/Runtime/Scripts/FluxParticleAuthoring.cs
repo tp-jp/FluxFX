@@ -226,6 +226,9 @@ namespace TpLab.Flux.FX.Scripts
         FluxParticleBlendMode blendMode;
 
         [SerializeField]
+        Bounds cullingBounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+
+        [SerializeField]
         Color startColor = Color.white;
 
         [SerializeField]
@@ -268,6 +271,7 @@ namespace TpLab.Flux.FX.Scripts
         public Mesh Mesh => mesh;
         public Material Material => material;
         public FluxParticleBlendMode BlendMode => blendMode;
+        public Bounds CullingBounds => cullingBounds;
         public Color StartColor => startColor;
         public FluxParticleStartColorMode StartColorMode => startColorMode;
         public Color StartColorMin => startColorMin;

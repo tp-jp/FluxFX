@@ -22,6 +22,9 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         Mesh sourceMesh;
 
+        [SerializeField]
+        Bounds cullingBounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+
         Mesh _programMesh;
 
         /// <summary>
@@ -91,7 +94,7 @@ namespace TpLab.Flux.FX.Udon
             mesh.uv = uv;
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
-            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+            mesh.bounds = cullingBounds;
 
             return mesh;
         }
@@ -181,7 +184,7 @@ namespace TpLab.Flux.FX.Udon
 
             mesh.uv2 = uv2;
             mesh.triangles = triangles;
-            mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+            mesh.bounds = cullingBounds;
 
             return mesh;
         }

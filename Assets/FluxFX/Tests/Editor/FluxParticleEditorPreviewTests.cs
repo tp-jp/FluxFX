@@ -19,6 +19,85 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleEditorPreviewTests
     {
+        [TestCase(FluxParticleRenderMode.Billboard, FluxParticleSimulationSpace.Local)]
+        [TestCase(FluxParticleRenderMode.Billboard, FluxParticleSimulationSpace.World)]
+        [TestCase(FluxParticleRenderMode.Mesh, FluxParticleSimulationSpace.Local)]
+        [TestCase(FluxParticleRenderMode.Mesh, FluxParticleSimulationSpace.World)]
+        public void PreviewAndRuntimeMeshesUseAuthoredCullingBounds(FluxParticleRenderMode mode, FluxParticleSimulationSpace space)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var root = new GameObject("Culling Bounds Test");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var runtimeRoot = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            var source = new Mesh();
+            Mesh runtimeMesh = null;
+            try
+            {
+                source.vertices = new[] { Vector3.zero, Vector3.right, Vector3.up };
+                source.triangles = new[] { 0, 1, 2 };
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var bounds = new Bounds(new Vector3(3, -2, 5), new Vector3(12, 8, 20));
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("simulationSpace").intValue = (int)space;
+                serialized.FindProperty("render.mode").intValue = (int)mode;
+                serialized.FindProperty("render.mesh").objectReferenceValue = source;
+                serialized.FindProperty("render.cullingBounds").boundsValue = bounds;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                var compiled = FluxParticleBuildPipeline.Build(authoring);
+                using (var preview = new FluxParticleEditorPreview(compiled, authoring, 4))
+                {
+                    var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                    var previewMesh = (Mesh)typeof(FluxParticleEditorPreview).GetField("mesh", flags).GetValue(preview);
+                    Assert.AreEqual(bounds, previewMesh.bounds);
+                    var renderer = runtimeRoot.GetComponentInChildren<FluxParticleRenderer>(true);
+                    typeof(FluxParticleRenderer).GetField("cullingBounds", flags).SetValue(renderer, bounds);
+                    var signature = mode == FluxParticleRenderMode.Mesh ? new[] { typeof(Mesh), typeof(int) } : new[] { typeof(int) };
+                    var arguments = mode == FluxParticleRenderMode.Mesh ? new object[] { source, 4 } : new object[] { 4 };
+                    runtimeMesh = (Mesh)typeof(FluxParticleRenderer).GetMethod("CreateParticleMesh", flags, null, signature, null)
+                        .Invoke(renderer, arguments);
+                    Assert.AreEqual(previewMesh.bounds, runtimeMesh.bounds);
+                }
+            }
+            finally
+            {
+                if (runtimeMesh != null) Object.DestroyImmediate(runtimeMesh);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(runtimeRoot);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [TestCase(0f, false)]
+        [TestCase(-1f, false)]
+        [TestCase(float.NaN, false)]
+        [TestCase(float.PositiveInfinity, false)]
+        [TestCase(float.NaN, true)]
+        [TestCase(float.NegativeInfinity, true)]
+        public void InvalidCullingBoundsAreRejected(float value, bool changeCenter)
+        {
+            var root = new GameObject("Invalid Bounds Test");
+            try
+            {
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("render.cullingBounds").boundsValue = changeCenter
+                    ? new Bounds(new Vector3(value, 0, 0), Vector3.one)
+                    : new Bounds(Vector3.zero, new Vector3(1, value, 1));
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                StringAssert.Contains("culling bounds", Assert.Throws<InvalidOperationException>(() =>
+                    FluxParticleBuildPipeline.Build(authoring)).Message);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [Test]
         public void InspectorReenableRecreatesPreviewWithUnchangedAuthoring()
         {

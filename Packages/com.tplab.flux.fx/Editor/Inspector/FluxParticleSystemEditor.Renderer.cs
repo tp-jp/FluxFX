@@ -39,6 +39,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawEnum(
                 _render.FindPropertyRelative("blendMode"),
                 "Blend Mode");
+
+            EditorGUILayout.PropertyField(_render.FindPropertyRelative("cullingBounds"),
+                new GUIContent(L10n.Tr("Culling Bounds"), L10n.Tr("Renderer-local bounds used for culling. Include the full particle travel range, including in World simulation.")));
         }
 
         void DrawStartSize()

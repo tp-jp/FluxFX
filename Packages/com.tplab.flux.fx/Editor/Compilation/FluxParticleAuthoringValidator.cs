@@ -91,6 +91,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ValidateStartRotation(authoring.Render.StartRotationMin, authoring.Render.Mode);
                 ValidateStartRotation(authoring.Render.StartRotationMax, authoring.Render.Mode);
             }
+            var bounds = authoring.Render.CullingBounds;
+            var center = bounds.center;
+            var boundsSize = bounds.size;
+            Require(Finite(center.x) && Finite(center.y) && Finite(center.z) &&
+                Finite(boundsSize.x) && Finite(boundsSize.y) && Finite(boundsSize.z) &&
+                boundsSize.x > 0 && boundsSize.y > 0 && boundsSize.z > 0, "Finite culling bounds with positive size");
             Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleMaterial", "FluxFX/ParticleMaterial material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay),
                 "Finite playback and emission settings");
@@ -112,6 +118,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 Require(rotation.x == 0 && rotation.y == 0, "Billboard start rotation around Z only");
             }
         }
+
+        static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
         static bool FiniteNonNegative(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= 0;
 

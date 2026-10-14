@@ -332,7 +332,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             result.uv = uv;
             result.uv2 = indices;
             result.triangles = triangles;
-            result.bounds = new Bounds(Vector3.zero, Vector3.one * 10000);
+            result.bounds = authoring.Render.CullingBounds;
             return result;
         }
 
@@ -371,7 +371,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             result.uv = uv;
             result.uv2 = indices;
             result.triangles = triangles;
-            result.bounds = new Bounds(Vector3.zero, Vector3.one * 10000);
+            result.bounds = authoring.Render.CullingBounds;
             return result;
         }
         T Own<T>(T value) where T : Object
