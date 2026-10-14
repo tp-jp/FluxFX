@@ -394,3 +394,12 @@ msgstr "Rendererのローカル座標で指定するカリング範囲。World�
 
 msgid "Maximum Particle Count (Current GPU)"
 msgstr "最大Particle数（現在のGPU）"
+
+msgid "Spawn Allocation Textures"
+msgstr "Spawn割り当てTexture数"
+
+msgid "Estimated Spawn Allocation Memory"
+msgstr "Spawn割り当て推定メモリ"
+
+msgid "Spawn Allocation Passes (When Emitting)"
+msgstr "生成時のSpawn割り当てPass数"

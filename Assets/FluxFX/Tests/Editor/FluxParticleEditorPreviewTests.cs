@@ -263,6 +263,46 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void PreviewReusesExpiredSlotsWhenCursorPointsToLivingParticle()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var root = new GameObject("Preview Free Slot Test");
+            try
+            {
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("lifetime.lifetime").floatValue = 0.5f;
+                serialized.FindProperty("emission.rate").floatValue = 8;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                var build = FluxParticleBuildPipeline.Build(authoring);
+                using (var preview = new FluxParticleEditorPreview(build, authoring, 4))
+                {
+                    var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
+                        .GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                    preview.Step(0.375f);
+                    preview.Step(0.125f);
+                    preview.Step(0.375f);
+                    Assert.AreEqual(-1, ReadValue(session, build, "particle.age", 0).x, 0.0001f);
+                    Assert.AreEqual(0.375f, ReadValue(session, build, "particle.age", 3).x, 0.0001f);
+                    preview.Step(0.125f);
+                    Assert.AreEqual(0, ReadValue(session, build, "particle.age", 0).x, 0.0001f);
+                    Assert.AreEqual(7, ReadValue(session, build, "particle.spawn-key", 0).x, 0.0001f);
+                    Assert.AreEqual(-1, ReadValue(session, build, "particle.age", 1).x, 0.0001f);
+                    Assert.AreEqual(-1, ReadValue(session, build, "particle.age", 3).x, 0.0001f);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void PreviewAtCapacityKeepsLivingParticleAndReusesSlotAfterExpiration()
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||

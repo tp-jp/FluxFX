@@ -559,6 +559,84 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(0.1f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
         }
 
+        [TestCase(5, 5, 0)]
+        [TestCase(65, 65, 0)]
+        [TestCase(65, 5, 7)]
+        [TestCase(1024, 1024, 0)]
+        [TestCase(1048576, 1048576, 0, Explicit = true)]
+        public void SpawnAllocationUsesEveryAvailableSlotDespiteOccupiedCursor(int capacity, int requests, int start)
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled, capacity);
+            Assert.IsTrue(runtime.Initialize(capacity));
+            Assert.IsTrue(runtime.SetVector("lifetime.range", new Vector4(10, 10, 0, 0)));
+            var ageBinding = compiled.Shaders.Compilation.StateLayout.Pages.SelectMany(page => page.Bindings)
+                .Single(binding => binding.ValueId == "particle.age");
+            var keyBinding = compiled.Shaders.Compilation.StateLayout.Pages.SelectMany(page => page.Bindings)
+                .Single(binding => binding.ValueId == "particle.spawn-key");
+            var free = Enumerable.Range(0, capacity).Where(slot => slot % 3 == 1 || slot == capacity - 1).ToArray();
+            foreach (var page in compiled.Shaders.Compilation.StateLayout.Pages)
+            {
+                var target = runtime.GetCurrentPage(page.Id);
+                var input = new Texture2D(target.width, target.height, TextureFormat.RGBAFloat, false, true);
+                try
+                {
+                    var data = new Color[target.width * target.height];
+                    for (var slot = 0; slot < data.Length; slot++)
+                    {
+                        if (page.Id == ageBinding.PageId) data[slot][ageBinding.ChannelOffset] = slot >= capacity || (slot % 3 == 1 || slot == capacity - 1) ? -1 : 0;
+                        if (page.Id == keyBinding.PageId) data[slot][keyBinding.ChannelOffset] = 10000 + slot;
+                    }
+                    input.SetPixels(data);
+                    input.Apply();
+                    Graphics.Blit(input, target);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(input);
+                }
+            }
+            runtime.Step(0, start, requests, 1048574);
+            var mask = (FluxBuffer)runtime.GetProgramVariable("spawnMaskBuffer");
+            var active = RenderTexture.active;
+            var output = new Texture2D(mask.Texture.width, mask.Texture.height, TextureFormat.RGBAFloat, false, true);
+            try
+            {
+                RenderTexture.active = mask.Texture;
+                output.ReadPixels(new Rect(0, 0, output.width, output.height), 0, 0);
+                output.Apply();
+                var pixels = output.GetPixels();
+                Assert.AreEqual(Math.Min(requests, free.Length), pixels.Count(pixel => pixel.r > 0.5f));
+                for (var slot = 0; slot < capacity; slot++)
+                {
+                    var rank = Array.BinarySearch(free, slot);
+                    var offset = rank < 0 ? -1 : (rank + free.Length - start % free.Length) % free.Length;
+                    var selected = offset >= 0 && offset < requests;
+                    Assert.AreEqual(selected ? 1 : 0, pixels[slot].r, 0.0001f, "Mask slot " + slot);
+                    if (selected) Assert.AreEqual(offset, pixels[slot].g, 0.0001f, "Rank slot " + slot);
+                }
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                Object.DestroyImmediate(output);
+            }
+            foreach (var slot in new[] { 0, free[0], free[free.Length - 1] })
+            {
+                var rank = Array.BinarySearch(free, slot);
+                var offset = rank < 0 ? -1 : (rank + free.Length - start % free.Length) % free.Length;
+                Assert.AreEqual(offset < 0 || offset >= requests ? 10000 + slot : (1048574 + offset) % 1048576,
+                    ReadValue(runtime, compiled, "particle.spawn-key", slot).x, 0.0001f);
+            }
+            runtime.Step(0, 0, capacity, 200);
+            runtime.Step(0, 0, capacity, 300);
+            for (var slot = 0; slot < Math.Min(5, capacity); slot++)
+            {
+                Assert.AreEqual(0, ReadTexture(mask.Texture, slot).r, 0.0001f);
+            }
+        }
+
         [Test]
         public void FullCapacityRejectsSpawnWithoutResettingLiveParticlesAndReusesExpiredSlots()
         {

@@ -61,6 +61,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.LabelField(L10n.Tr("State Pages"), pages.Count.ToString());
             EditorGUILayout.LabelField(L10n.Tr("State RenderTextures"), (pages.Count * 2).ToString());
             EditorGUILayout.LabelField(L10n.Tr("Estimated State Memory"), (stateBytes / (1024 * 1024)).ToString("F2") + " MiB");
+            var allocationLevels = FluxParticleSpawnAllocator.GetLevelCount(count);
+            long allocationBytes = 0;
+            var levelCount = count;
+            for (var level = 0; level < allocationLevels; level++)
+            {
+                var levelWidth = FluxParticleCapacity.GetTextureWidth(levelCount);
+                allocationBytes += (long)levelWidth * levelWidth * 16;
+                levelCount = (levelCount + 3) / 4;
+            }
+            EditorGUILayout.LabelField(L10n.Tr("Spawn Allocation Textures"), allocationLevels.ToString());
+            EditorGUILayout.LabelField(L10n.Tr("Estimated Spawn Allocation Memory"), (allocationBytes / (1024d * 1024d)).ToString("F2") + " MiB");
+            EditorGUILayout.LabelField(L10n.Tr("Spawn Allocation Passes (When Emitting)"), (allocationLevels + 2).ToString());
             EditorGUILayout.LabelField(L10n.Tr("Simulation Passes"), shaders.Passes.Count.ToString());
             EditorGUILayout.LabelField(L10n.Tr("Clear Passes"), shaders.ClearSources.Count.ToString());
             EditorGUILayout.LabelField(L10n.Tr("Lookup Tables"), lookups.Length.ToString());

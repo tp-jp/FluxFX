@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var passes = program.ExecutionPlan.Passes.Select(pass => emitter.GeneratePass(pass, shaderName)).ToArray();
             var clear = program.StateLayout.Pages.Select(page => emitter.GenerateClear(page, shaderName)).ToArray();
             return new FluxParticleShaderProgram(program, passes, clear, emitter.GenerateRender(),
-                program.Providers.Values.Where(p => (p.Kind == FluxParticleProviderKind.Uniform || p.Kind == FluxParticleProviderKind.SpawnInput)).OrderBy(p => p.ValueId, StringComparer.Ordinal));
+                program.Providers.Values.Where(p => (p.Kind == FluxParticleProviderKind.Uniform || p.Kind == FluxParticleProviderKind.SpawnInput)).OrderBy(p => p.ValueId, StringComparer.Ordinal), emitter.GenerateAvailability(shaderName));
         }
 
         sealed class Emitter
@@ -188,6 +188,29 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     if (age != null) channels[age.ChannelOffset] = "-1.0";
                 }
                 return Wrap(name + "/Clear" + page.Id, "", "float4(" + string.Join(", ", channels) + ")");
+            }
+
+            internal string GenerateAvailability(string name)
+            {
+                Start();
+                var age = lifecycle == null ? "-1.0" : State(lifecycle.AgeValueId, FluxParticlePageVersion.Updated);
+                var lifetime = lifecycle == null ? "0.0" : SuppliedOrState(lifecycle.LifetimeValueId, true);
+                var code = Declarations(Array.Empty<FluxParticleOperationDefinition>()) + @"
+float4 _FluxStateSize;
+float4 _FluxAllocationSize;
+float4 FluxFX_Availability(float2 inputUV)
+{
+    uint2 pixel = (uint2)floor(inputUV * _FluxAllocationSize.xy);
+    uint index = pixel.y * (uint)_FluxAllocationSize.x + pixel.x;
+    if (index >= (uint)_FluxStateSize.z) return 0;
+    float2 uv = (float2(index % (uint)_FluxStateSize.x, index / (uint)_FluxStateSize.x) + 0.5) / _FluxStateSize.xy;
+    float age = " + age + @";
+    [branch] if (age < 0.0) return float4(1, 0, 0, 0);
+    return age < " + lifetime + @" ? 0 : float4(1, 0, 0, 0);
+}
+";
+                return Wrap(name + "/Availability", code, "FluxFX_Availability(i.uv)")
+                    .Replace("    SubShader", "    Properties {\n" + GenerateParameterProperties(program) + "\n    }\n    SubShader");
             }
 
             internal string GenerateRender()

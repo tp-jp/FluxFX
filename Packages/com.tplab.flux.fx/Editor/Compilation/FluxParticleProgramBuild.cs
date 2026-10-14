@@ -106,21 +106,25 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new InvalidOperationException("Program Backend Spawn GameObject is missing from the fixed Prefab.");
             }
-            var maskKernel = RequireComponent<FluxKernel>(spawn, "MaskKernel");
-            var keyKernel = RequireComponent<FluxKernel>(spawn, "KeyKernel");
             var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
             var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
-            var maskShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader");
-            var keyShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader");
-            if (maskShader == null || keyShader == null || ShaderUtil.ShaderHasError(maskShader) || ShaderUtil.ShaderHasError(keyShader))
-            {
-                throw new InvalidOperationException("SpawnInput generation Shaders were not imported correctly.");
-            }
             var stepShaders = program.Passes.Select(pass => SaveShader(pass.Source, outputRoot)).ToArray();
             var clearShaders = program.ClearSources.Select(source => SaveShader(source, outputRoot)).ToArray();
             var renderShader = SaveShader(compiled.RendererSource, outputRoot);
             var render = SaveRenderMaterial(runtime, compiled, authoring, renderShader, outputRoot);
 
+            var allocationShaders = new[] { SaveShader(program.AvailabilitySource, outputRoot),
+                AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"),
+                AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"),
+                AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader") };
+            if (allocationShaders.Any(shader => shader == null || ShaderUtil.ShaderHasError(shader)))
+            {
+                throw new InvalidOperationException("Spawn allocation Shaders were not imported correctly.");
+            }
+            runtime.SetProgramVariable("allocationMaterials", SaveAllocationMaterials(runtime, allocationShaders, outputRoot));
+            runtime.SetProgramVariable("allocationLookupProperties", program.Compilation.Providers.Values
+                .Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable)
+                .Select(provider => FluxParticleHlslNames.ProviderProperty(provider.ValueId)).ToArray());
             var generated = CreateGeneratedRoot(runtime);
             var stepRoot = CreateGroup(generated, "Steps");
             var pageRoot = CreateGroup(generated, "Pages");
@@ -130,14 +134,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var clears = pageInstances.Select(page => page.Clear).ToArray();
             var buffersA = pageInstances.Select(page => page.A).ToArray();
             var buffersB = pageInstances.Select(page => page.B).ToArray();
-            maskKernel.SetProgramVariable("shader", maskShader);
-            keyKernel.SetProgramVariable("shader", keyShader);
             maskBuffer.SetProgramVariable("initialCount", bufferCapacity);
             keyBuffer.SetProgramVariable("initialCount", bufferCapacity);
             runtime.SetProgramVariable("stepKernels", steps);
             runtime.SetProgramVariable("clearKernels", clears);
-            runtime.SetProgramVariable("spawnMaskKernel", maskKernel);
-            runtime.SetProgramVariable("spawnKeyKernel", keyKernel);
             runtime.SetProgramVariable("pageBuffersA", buffersA);
             runtime.SetProgramVariable("pageBuffersB", buffersB);
             runtime.SetProgramVariable("spawnMaskBuffer", maskBuffer);
@@ -173,6 +173,29 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["emission"] = new JObject { ["rate"] = authoring.Emission.Rate, ["bursts"] = bursts }
             };
             return json.ToString(Formatting.None);
+        }
+
+        static Material[] SaveAllocationMaterials(FluxParticleExecutor runtime, Shader[] shaders, string outputRoot)
+        {
+            var globalId = GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject);
+            var identity = (int)globalId.identifierType == 0 ? "Transient:" + runtime.GetInstanceID() : globalId.ToString();
+            var materials = new Material[shaders.Length];
+            for (var index = 0; index < shaders.Length; index++)
+            {
+                var shader = shaders[index];
+                var shaderId = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(shader));
+                var path = outputRoot + "/SpawnAllocation-" + Hash128.Compute(identity + "|" + index + "|" + shaderId) + ".mat";
+                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (material == null)
+                {
+                    material = new Material(shader);
+                    AssetDatabase.CreateAsset(material, path);
+                }
+                material.shader = shader;
+                EditorUtility.SetDirty(material);
+                materials[index] = material;
+            }
+            return materials;
         }
 
         static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,

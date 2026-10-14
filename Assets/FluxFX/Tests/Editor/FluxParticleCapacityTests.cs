@@ -1,11 +1,26 @@
+using System;
+using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
+using UdonSharp;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleCapacityTests
     {
+        [TestCase(typeof(FluxParticleRenderer), "get_MaximumParticleCount")]
+        [TestCase(typeof(FluxParticleEmitter), "get_HasCompleted")]
+        public void CrossBehaviourGettersAreExportedByCompiledUdonProgram(Type behaviourType, string entryPoint)
+        {
+            var asset = UdonSharpProgramAsset.GetAllUdonSharpPrograms()
+                .SingleOrDefault(candidate => candidate.sourceCsScript != null && candidate.sourceCsScript.GetClass() == behaviourType);
+            Assert.IsNotNull(asset, "UdonSharp Program Asset is required for " + behaviourType.Name);
+            var program = asset.SerializedProgramAsset.RetrieveProgram();
+            Assert.IsNotNull(program, "Compile UdonSharp programs before running this test.");
+            CollectionAssert.Contains(program.EntryPoints.GetExportedSymbols().ToArray(), entryPoint);
+        }
+
         [Test]
         public void RuntimeCapacityUsesNumericPrecisionAndMeshArrayDimensions()
         {
@@ -19,8 +34,19 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             finally
             {
-                Object.DestroyImmediate(mesh);
+                UnityEngine.Object.DestroyImmediate(mesh);
             }
+        }
+
+        [TestCase(1, 1)]
+        [TestCase(4, 2)]
+        [TestCase(5, 3)]
+        [TestCase(65, 5)]
+        [TestCase(1048576, 11)]
+        [TestCase(16777216, 13)]
+        public void FreeSlotHierarchyFitsSamplerBudget(int count, int expectedLevels)
+        {
+            Assert.AreEqual(expectedLevels, FluxParticleSpawnAllocator.GetLevelCount(count));
         }
 
         [TestCase(0, 0)]

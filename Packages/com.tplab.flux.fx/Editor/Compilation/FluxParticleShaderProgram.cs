@@ -192,6 +192,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// </summary>
         /// <remarks>確定PageのSamplerとFluxFX_EvaluateRenderを宣言します。</remarks>
         public string RenderSource { get; }
+
+        /// <summary>
+        /// Step開始時の空きSlotを判定するShader
+        /// </summary>
+        public string AvailabilitySource { get; }
         /// <summary>
         /// 外部から値またはTextureを供給するProvider
         /// </summary>
@@ -199,12 +204,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
         internal FluxParticleShaderProgram(FluxParticleCompiledProgram program, IEnumerable<FluxParticleGeneratedPass> passes,
             IEnumerable<string> clearSources, string renderSource,
-            IEnumerable<FluxParticleValueProvider> externalProviders)
+            IEnumerable<FluxParticleValueProvider> externalProviders, string availabilitySource)
         {
             Compilation = program;
             Passes = new List<FluxParticleGeneratedPass>(passes).AsReadOnly();
             ClearSources = new List<string>(clearSources).AsReadOnly();
             RenderSource = renderSource;
+            AvailabilitySource = availabilitySource;
             ExternalProviders = new List<FluxParticleValueProvider>(externalProviders).AsReadOnly();
         }
     }

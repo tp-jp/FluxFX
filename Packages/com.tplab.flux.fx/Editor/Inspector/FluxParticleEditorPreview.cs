@@ -20,13 +20,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
         readonly FluxParticleAuthoring authoring;
         readonly FluxParticleProgramGpuSession session;
         readonly Material material;
-        readonly Material maskMaterial;
-        readonly Material keyMaterial;
+        readonly Material[] allocationMaterials;
+        readonly RenderTexture[] allocationLevels;
         readonly RenderTexture mask;
         readonly RenderTexture keys;
         readonly Mesh mesh;
-        readonly Material countMaterial;
-        readonly RenderTexture countTexture;
         int countGeneration;
         bool countPending;
         double lastCountTime;
@@ -98,37 +96,23 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 material.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);
                 material.SetFloat("_ZWrite", blend == FluxParticleBlendMode.Opaque ? 1 : 0);
                 material.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
-                maskMaterial = Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>(
-                    "Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader")));
-                keyMaterial = Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>(
-                    "Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader")));
+                allocationMaterials = new[]
+                {
+                    Own(new Material(CreateShader(shaders.AvailabilitySource))),
+                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"))),
+                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"))),
+                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader")))
+                };
+                allocationLevels = FluxParticleSpawnAllocator.CreateTextures(count);
+                if (allocationLevels == null) throw new InvalidOperationException("Spawn allocation RenderTexture allocation failed.");
+                foreach (var texture in allocationLevels) Own(texture);
                 mask = CreateTexture(width);
                 keys = CreateTexture(width);
+                FluxParticleSpawnAllocator.Configure(allocationMaterials, allocationLevels, mask, count);
                 var dimensions = new Vector4(width, width, count, 0);
-                maskMaterial.SetVector("_FluxStateSize", dimensions);
-                keyMaterial.SetVector("_FluxStateSize", dimensions);
                 material.SetVector("_FluxStateSize", dimensions);
                 session.SetSpawnInput("spawn.key", keys);
                 mesh = CreateMesh(count);
-                if (SystemInfo.supportsAsyncGPUReadback)
-                {
-                    var countSource = string.Join(Environment.NewLine, new[]
-                    {
-                        @"Shader ""Hidden/FluxFX/Preview/AliveCount"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
-                        "HLSLPROGRAM",
-                        "#pragma target 3.5",
-                        "#pragma vertex vert_img",
-                        "#pragma fragment frag",
-                        @"#include ""UnityCG.cginc""",
-                        shaders.RenderSource,
-                        "float4 frag(v2f_img input) : SV_Target { bool alive; FluxFX_EvaluateRender(input.uv, alive);",
-                        "return float4(alive ? 1 : 0, 0, 0, 0); }",
-                        "ENDHLSL",
-                        "} } Fallback Off }"
-                    });
-                    countMaterial = Own(new Material(CreateShader(countSource)));
-                    countTexture = CreateTexture(width);
-                }
                 Restart();
             }
             catch
@@ -186,7 +170,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             countGeneration++;
             countPending = false;
             lastCountTime = double.NegativeInfinity;
-            AliveCount = countMaterial == null ? -1 : 0;
+            AliveCount = SystemInfo.supportsAsyncGPUReadback ? 0 : -1;
             FluxParticleEmissionScheduler.Reset(emissionState, authoring.Playback.StartDelay);
             cursor = 0;
             seed = 0;
@@ -202,19 +186,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var visible = Math.Min(Count, spawnCount);
             var skipped = spawnCount - visible;
             var first = (int)((cursor + skipped) % Count);
-            maskMaterial.SetFloat("_FluxSpawnFirst", first);
-            maskMaterial.SetFloat("_FluxSpawnCount", visible);
-            keyMaterial.SetFloat("_FluxSpawnFirst", first);
-            keyMaterial.SetFloat("_FluxSpawnCount", visible);
-            keyMaterial.SetFloat("_FluxSpawnSeedBase", (seed + skipped) % 1048576);
             var active = RenderTexture.active;
             try
             {
-                if (visible > 0)
-                {
-                    Graphics.Blit(null, mask, maskMaterial);
-                    Graphics.Blit(null, keys, keyMaterial);
-                }
                 if (authoring.SimulationSpace == FluxParticleSimulationSpace.World)
                 {
                     var matrix = authoring.transform.localToWorldMatrix;
@@ -227,6 +201,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 if (usesSimulationTime)
                 {
                     session.SetUniformFloat("step.time", (float)PlaybackTime);
+                }
+                if (visible > 0)
+                {
+                    session.BindRender(allocationMaterials[0]);
+                    FluxParticleSpawnAllocator.Execute(allocationMaterials, allocationLevels, mask, keys, Count,
+                        first, (int)visible, (int)((seed + skipped) % 1048576));
                 }
                 session.Step(visible > 0 ? mask : null);
             }
@@ -256,13 +236,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
         /// </summary>
         public void RequestAliveCount()
         {
-            if (disposed || countMaterial == null || countPending ||
+            if (disposed || !SystemInfo.supportsAsyncGPUReadback || countPending ||
                 EditorApplication.timeSinceStartup - lastCountTime < 0.2) return;
-            session.BindRender(countMaterial);
+            session.BindRender(allocationMaterials[0]);
             var active = RenderTexture.active;
             try
             {
-                Graphics.Blit(null, countTexture, countMaterial);
+                FluxParticleSpawnAllocator.BuildCounts(allocationMaterials, allocationLevels, Count);
             }
             finally
             {
@@ -271,7 +251,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             lastCountTime = EditorApplication.timeSinceStartup;
             countPending = true;
             var generation = countGeneration;
-            AsyncGPUReadback.Request(countTexture, 0, TextureFormat.RGBAFloat, request =>
+            AsyncGPUReadback.Request(allocationLevels[allocationLevels.Length - 1], 0, TextureFormat.RGBAFloat, request =>
             {
                 if (disposed || generation != countGeneration) return;
                 countPending = false;
@@ -281,12 +261,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     return;
                 }
                 var data = request.GetData<Color>();
-                var alive = 0;
-                for (var i = 0; i < Count; i++)
-                {
-                    if (data[i].r > 0.5f) alive++;
-                }
-                AliveCount = alive;
+                AliveCount = Count - Mathf.RoundToInt(data[0].r);
                 SceneView.RepaintAll();
             });
         }
