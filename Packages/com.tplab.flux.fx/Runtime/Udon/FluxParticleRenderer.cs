@@ -6,7 +6,6 @@ namespace TpLab.Flux.FX.Udon
 {
     /// <summary>
     /// コンパイル済みParticle Programの描画用Meshを生成して設定します。
-    /// 描画MaterialはFluxParticleExecutorが管理します。
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleRenderer : UdonSharpBehaviour
@@ -30,8 +29,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 粒子ごとの描画用Meshを作成し、コンパイル済みの描画Materialを設定します。
         /// </summary>
-        /// <param name="capacity">Particle数。</param>
-        /// <param name="material">このParticle System専用の描画Material。</param>
+        /// <param name="capacity">Particle数</param>
+        /// <param name="material">このParticle System専用の描画Material</param>
         internal void InitializeProgram(int capacity, Material material)
         {
             _programMesh = sourceMesh == null ? CreateParticleMesh(capacity) : CreateParticleMesh(sourceMesh, capacity);

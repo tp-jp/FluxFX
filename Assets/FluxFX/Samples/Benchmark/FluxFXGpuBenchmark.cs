@@ -189,8 +189,6 @@ namespace TpLab.Flux.FX.Samples
                 samples.AppendLine(row);
             }
 
-            // File.WriteAllText(summaryPath, summary.ToString());
-            // File.WriteAllText(samplesPath, samples.ToString());
 
             Debug.Log(
                 $"[FluxFX Benchmark] {caseId} completed.\n" +

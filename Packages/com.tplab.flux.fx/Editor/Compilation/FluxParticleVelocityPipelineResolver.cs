@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 登録済みVelocity更新Operationを直列化し、Motionを最終値へ接続します。
         /// </summary>
-        /// <param name="definitions">Moduleを登録済みの定義。</param>
+        /// <param name="definitions">Moduleを登録済みの定義</param>
         public static void Resolve(FluxParticleDefinitionBuilder definitions)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));

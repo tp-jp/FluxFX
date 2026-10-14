@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// 新CompilerのState LayoutとOperation宣言だけからShaderとBindingを生成します。
+    /// State LayoutとOperation宣言からShaderとBindingを生成します。
     /// Operationは専用Contextを更新し、Derived Providerは宣言順の入力・Parameterを引数として値を返します。
     /// </summary>
     public sealed class FluxParticleProgramShaderGenerator
@@ -17,10 +17,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// コンパイル済みの定義と実行計画からShaderを生成します。
         /// </summary>
-        /// <param name="program">検証済みのコンパイル結果。</param>
-        /// <param name="shaderName">生成Shader名の接頭辞。</param>
-        /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします。</param>
-        /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果。</returns>
+        /// <param name="program">検証済みのコンパイル結果</param>
+        /// <param name="shaderName">生成Shader名の接頭辞</param>
+        /// <param name="lifecycle">生存判定の契約。nullなら全非Spawn粒子をUpdateします</param>
+        /// <returns>Shaderソース、Page入力、Parameter契約を含む生成結果</returns>
         public FluxParticleShaderProgram Generate(FluxParticleCompiledProgram program, string shaderName,
             FluxParticleShaderLifecycle lifecycle = null)
         {
@@ -362,7 +362,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     if (op.Reads.Count == 0 && op.Writes.Count == 0 && op.Parameters.Count == 0) result.AppendLine("    float unused;");
                     result.AppendLine("};");
                 }
-                // Provider implementations are plain functions. Context types precede Operation includes.
+                // OperationのHLSLがContext型を参照するため、型定義を先に出力する。
                 foreach (var path in program.Providers.Values.Where(p => p.Kind == FluxParticleProviderKind.Derived && usedProviders.Contains(p.ValueId)).Select(p => p.HlslPath)
                     .Concat(unique.Select(op => op.HlslPath)).Distinct().OrderBy(p => p, StringComparer.Ordinal))
                 {
@@ -418,12 +418,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var assetPath = "Packages/com.tplab.flux.fx/" + relativePath;
             var package = PackageInfo.FindForAssetPath(assetPath);
             if (package == null) throw new InvalidOperationException($"Shader template package not found: {assetPath}");
-            // Resolve the physical path for embedded, local, Git and registry packages alike.
             var path = Path.Combine(package.resolvedPath, relativePath);
             var source = File.ReadAllText(path).Replace("\r\n", "\n");
             var used = new HashSet<string>(StringComparer.Ordinal);
             // A standalone token inherits its line's indentation. Inline tokens remain expressions.
-            // Process only the original template so inserted HLSL is never interpreted as a token.
+            // 挿入したHLSLを再展開しないよう、元のTemplateだけを走査する。
             const string tokens = @"(?m)^(?<indent>[ \t]*)\{\{(?<block>[A-Za-z]+)\}\}[ \t]*(?:\n|\z)|\{\{(?<inline>[A-Za-z]+)\}\}";
             var expanded = Regex.Replace(source, tokens, match =>
             {

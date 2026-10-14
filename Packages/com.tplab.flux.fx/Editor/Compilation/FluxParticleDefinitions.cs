@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// コンパイル時に扱う論理値の型です。UIntは物理Textureへの格納形式を意味しません。
+    /// コンパイル時に扱う論理値の型を表します。
     /// </summary>
     public enum FluxParticleValueType
     {
@@ -29,7 +29,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         Float4 = 4,
 
         /// <summary>
-        /// 符号なし整数です。RTへの格納形式とは独立します。
+        /// 符号なし整数です。
         /// </summary>
         UInt = 5
     }
@@ -170,7 +170,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         Derived,
 
         /// <summary>
-        /// Render Phaseで固定LUTを線形補間して取得します。
+        /// 固定LUTから補間方式に応じた値を取得します。
         /// </summary>
         LookupTable
     }
@@ -181,43 +181,45 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleValueDefinition
     {
         /// <summary>
-        /// 論理ValueのIDです。物理RTやChannelには依存しません。
+        /// 論理ValueのID
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        /// RT形式と独立したValueの論理型です。
+        /// RT形式と独立したValueの論理型
         /// </summary>
         public FluxParticleValueType Type { get; }
 
         /// <summary>
-        /// Valueへの書き込みを許可する対象の制約です。
+        /// Valueへの書き込みを許可する対象の制約
         /// </summary>
         public FluxParticleWritePolicy WritePolicy { get; }
 
         /// <summary>
-        /// Valueを所有するCoreまたはModuleのIDです。
+        /// Valueを所有するCoreまたはModuleのID
         /// </summary>
         public string OwnerId { get; }
 
         /// <summary>
-        /// UIntの保証された最大値です。float Channelの整数精度の検証に使用します。
+        /// UIntの保証された最大値
         /// </summary>
+        /// <remarks>float Channelの整数精度の検証に使用します。</remarks>
         public uint? MaximumUIntValue { get; }
 
         /// <summary>
-        /// 必要なChannel成分数です。UIntは1成分として扱います。
+        /// 必要なChannel成分数
         /// </summary>
+        /// <remarks>UIntは1成分として扱います。</remarks>
         public int ComponentCount => Type == FluxParticleValueType.UInt ? 1 : (int)Type;
 
         /// <summary>
         /// 論理Valueの型・所有者・書き込み契約を設定します。
         /// </summary>
-        /// <param name="id">識別子。</param>
-        /// <param name="type">論理型。</param>
-        /// <param name="writePolicy">書き込み権限。</param>
-        /// <param name="ownerId">定義の所有者ID。</param>
-        /// <param name="maximumUIntValue">UIntの最大値。</param>
+        /// <param name="id">識別子</param>
+        /// <param name="type">論理型</param>
+        /// <param name="writePolicy">書き込み権限</param>
+        /// <param name="ownerId">定義の所有者ID</param>
+        /// <param name="maximumUIntValue">UIntの最大値</param>
         public FluxParticleValueDefinition(
             string id,
             FluxParticleValueType type,
@@ -248,26 +250,26 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleParameterDefinition
     {
         /// <summary>
-        /// Parameterの一意なIDです。
+        /// Parameterの一意なID
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        /// Parameterの論理型です。
+        /// Parameterの論理型
         /// </summary>
         public FluxParticleValueType Type { get; }
 
         /// <summary>
-        /// 実行中の値変更とSpawn時固定の契約です。
+        /// 実行中の値変更とSpawn時固定の契約
         /// </summary>
         public FluxParticleParameterPolicy Policy { get; }
 
         /// <summary>
         /// Shader Parameterとその変更契約を設定します。
         /// </summary>
-        /// <param name="id">識別子。</param>
-        /// <param name="type">論理型。</param>
-        /// <param name="policy">Parameter変更契約。</param>
+        /// <param name="id">識別子</param>
+        /// <param name="type">論理型</param>
+        /// <param name="policy">Parameter変更契約</param>
         public FluxParticleParameterDefinition(string id, FluxParticleValueType type, FluxParticleParameterPolicy policy)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Parameter ID is required.", nameof(id));
@@ -281,13 +283,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// 論理ValueをRT以外から取得するための宣言です。
-    /// HLSL実装を持つ場合はここだけに記録します。
+    /// 非永続Valueの供給方法と評価実装を宣言します。
     /// </summary>
     public sealed class FluxParticleValueProvider
     {
         /// <summary>
-        /// このProviderが供給する論理ValueのIDです。
+        /// このProviderが供給する論理ValueのID
         /// </summary>
         public string ValueId { get; }
 
@@ -302,17 +303,17 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public IReadOnlyList<string> Inputs { get; }
 
         /// <summary>
-        /// 評価に使うShader ParameterのID一覧です。
+        /// 評価に使うShader ParameterのID一覧
         /// </summary>
         public IReadOnlyList<string> Parameters { get; }
 
         /// <summary>
-        /// Derived評価に使うHLSLファイルのパスです。
+        /// Derived評価に使うHLSLファイルのパス
         /// </summary>
         public string HlslPath { get; }
 
         /// <summary>
-        /// Derived評価に使うHLSL関数名です。
+        /// Derived評価に使うHLSL関数名
         /// </summary>
         public string EntryPoint { get; }
 
@@ -327,8 +328,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public IReadOnlyList<UnityEngine.Vector4> LookupVectorSamples { get; }
 
         /// <summary>
-        /// 階段状LUTの区間終端。先頭は時刻0の値、以降は各終端を含む区間の値。空の場合は等間隔の線形補間
+        /// 階段状LUTの区間終端
         /// </summary>
+        /// <remarks>先頭は時刻0の値、以降は各終端を含む区間の値。空の場合は等間隔の線形補間</remarks>
         public IReadOnlyList<float> LookupPositions { get; }
 
         /// <summary>
@@ -432,26 +434,26 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleValueRead
     {
         /// <summary>
-        /// 読み取り対象の論理Value IDです。
+        /// 読み取り対象の論理Value ID
         /// </summary>
         public string ValueId { get; }
 
         /// <summary>
-        /// 必要なValueの参照時点または供給方法です。
+        /// 必要なValueの参照時点または供給方法
         /// </summary>
         public FluxParticleReadVersion Version { get; }
 
         /// <summary>
-        /// AfterOperationの場合の参照元Operation IDです。
+        /// AfterOperationの場合の参照元Operation ID
         /// </summary>
         public string ProducerOperationId { get; }
 
         /// <summary>
         /// Operationが参照するValueとバージョンを設定します。
         /// </summary>
-        /// <param name="valueId">論理ValueのID。</param>
-        /// <param name="version">参照バージョン。</param>
-        /// <param name="producerOperationId">参照元OperationのID。</param>
+        /// <param name="valueId">論理ValueのID</param>
+        /// <param name="version">参照バージョン</param>
+        /// <param name="producerOperationId">参照元OperationのID</param>
         public FluxParticleValueRead(string valueId, FluxParticleReadVersion version, string producerOperationId = null)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
@@ -477,20 +479,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleValueWrite
     {
         /// <summary>
-        /// 書き込み対象のValue IDです。
+        /// 書き込み対象のValue ID
         /// </summary>
         public string ValueId { get; }
 
         /// <summary>
-        /// 初期化・置換・更新の方式です。
+        /// 初期化・置換・更新の方式
         /// </summary>
         public FluxParticleWriteKind Kind { get; }
 
         /// <summary>
         /// Operationの書き込みValueと方式を設定します。
         /// </summary>
-        /// <param name="valueId">論理ValueのID。</param>
-        /// <param name="kind">供給方式または書き込み方式。</param>
+        /// <param name="valueId">論理ValueのID</param>
+        /// <param name="kind">供給方式または書き込み方式</param>
         public FluxParticleValueWrite(string valueId, FluxParticleWriteKind kind)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
@@ -501,74 +503,74 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// Operation単位の宣言です。物理RTとGPU Passは指定しません。
+    /// Operationの入出力・依存関係・HLSL実装を宣言します。
     /// </summary>
     public sealed class FluxParticleOperationDefinition
     {
         /// <summary>
-        /// Operationの一意なIDです。
+        /// Operationの一意なID
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        /// Operationを提供するCoreまたはModuleのIDです。
+        /// Operationを提供するCoreまたはModuleのID
         /// </summary>
         public string OwnerId { get; }
 
         /// <summary>
-        /// Spawn・Update・Renderの実行区分です。
+        /// Spawn・Update・Renderの実行区分
         /// </summary>
         public FluxParticlePhase Phase { get; }
 
         /// <summary>
-        /// 参照するValueとその時点の契約です。
+        /// 参照するValueとその時点の契約
         /// </summary>
         public IReadOnlyList<FluxParticleValueRead> Reads { get; }
 
         /// <summary>
-        /// 更新するValueと書き込み種別の一覧です。
+        /// 更新するValueと書き込み種別の一覧
         /// </summary>
         public IReadOnlyList<FluxParticleValueWrite> Writes { get; }
 
         /// <summary>
-        /// 同じPhaseで先行する必要があるOperation IDの一覧です。
+        /// 同じPhaseで先行する必要があるOperation IDの一覧
         /// </summary>
         public IReadOnlyList<string> Dependencies { get; }
 
         /// <summary>
-        /// OperationのHLSL実装ファイルのパスです。
+        /// OperationのHLSL実装ファイルのパス
         /// </summary>
         public string HlslPath { get; }
 
         /// <summary>
-        /// HLSLの呼び出し対象関数名です。
+        /// HLSLの呼び出し対象関数名
         /// </summary>
         public string EntryPoint { get; }
 
         /// <summary>
-        /// OperationのContextへ供給するParameter IDです。HLSLから直接Uniformを参照する必要はありません。
+        /// OperationのContextへ供給するParameter ID
         /// </summary>
         public IReadOnlyList<string> Parameters { get; }
 
         /// <summary>
-        /// 0なら実行を省略するFloat Parameter IDです。nullなら常に実行します。
-        /// 無効時は明示的に読み取った更新前の値を引き継ぎます。
+        /// 0なら実行を省略するFloat Parameter ID
         /// </summary>
+        /// <remarks>nullなら常に実行します。無効時は明示的に読み取った更新前の値を引き継ぎます。</remarks>
         public string EnabledParameterId { get; }
 
         /// <summary>
         /// Operationの入出力・依存関係・HLSL実装を設定します。
         /// </summary>
-        /// <param name="id">識別子。</param>
-        /// <param name="ownerId">定義の所有者ID。</param>
-        /// <param name="phase">Operation実行Phase。</param>
-        /// <param name="reads">Read契約。</param>
-        /// <param name="writes">Write契約。</param>
-        /// <param name="dependencies">先行OperationのID一覧。</param>
-        /// <param name="hlslPath">HLSLファイルのパス。</param>
-        /// <param name="entryPoint">HLSL関数名。</param>
-        /// <param name="parameters">Contextに供給するParameter ID一覧。</param>
-        /// <param name="enabledParameterId">実行条件となるFloat Parameter ID。</param>
+        /// <param name="id">識別子</param>
+        /// <param name="ownerId">定義の所有者ID</param>
+        /// <param name="phase">Operation実行Phase</param>
+        /// <param name="reads">Read契約</param>
+        /// <param name="writes">Write契約</param>
+        /// <param name="dependencies">先行OperationのID一覧</param>
+        /// <param name="hlslPath">HLSLファイルのパス</param>
+        /// <param name="entryPoint">HLSL関数名</param>
+        /// <param name="parameters">Contextに供給するParameter ID一覧</param>
+        /// <param name="enabledParameterId">実行条件となるFloat Parameter ID</param>
         public FluxParticleOperationDefinition(
             string id,
             string ownerId,

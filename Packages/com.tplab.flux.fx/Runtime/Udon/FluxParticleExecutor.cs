@@ -73,7 +73,7 @@ namespace TpLab.Flux.FX.Udon
         float _simulationTime;
 
         /// <summary>
-        /// このParticle System専用の描画Materialを取得します。
+        /// Particle System専用の描画Material
         /// </summary>
         public Material RenderMaterial => renderMaterial;
 
@@ -85,8 +85,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// FluxBufferを初期化し、確定済みManifestのGPU実行環境を構築します。
         /// </summary>
-        /// <param name="count">有効Particle数。</param>
-        /// <returns>初期化に成功した場合はtrue。</returns>
+        /// <param name="count">有効Particle数</param>
+        /// <returns>初期化に成功した場合はtrue</returns>
         public bool Initialize(int count)
         {
             if (_initialized) return true;
@@ -173,10 +173,10 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// Spawn入力をGPUで生成し、空きSlotの初期化と生存Particleの更新を実行します。
         /// </summary>
-        /// <param name="deltaTime">Simulationの経過時間。</param>
-        /// <param name="spawnStart">生成範囲の先頭Slot。</param>
-        /// <param name="spawnCount">生成要求数。候補Slotが生存中なら生成を省略します。容量超過時は各Slotの最後の要求を採用します。</param>
-        /// <param name="seedStart">20bit SpawnKeyの先頭。</param>
+        /// <param name="deltaTime">Simulationの経過時間</param>
+        /// <param name="spawnStart">生成範囲の先頭Slot</param>
+        /// <param name="spawnCount">生成要求数。候補Slotが生存中なら生成を省略します。容量超過時は各Slotの最後の要求を採用します</param>
+        /// <param name="seedStart">20bit SpawnKeyの先頭</param>
         public void Step(float deltaTime, int spawnStart, int spawnCount, int seedStart)
         {
             if (!_initialized) return;
@@ -236,9 +236,9 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 論理IDでFloat Parameterを変更します。
         /// </summary>
-        /// <param name="id">Parameter ID。</param>
-        /// <param name="value">設定値。</param>
-        /// <returns>型とStatic制約を満たして設定できた場合はtrue。</returns>
+        /// <param name="id">Parameter ID</param>
+        /// <param name="value">設定値</param>
+        /// <returns>型とStatic制約を満たして設定できた場合はtrue</returns>
         public bool SetFloat(string id, float value)
         {
             var index = FindParameter(id);
@@ -250,9 +250,9 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 論理IDでFloat2/3/4 Parameterを変更します。
         /// </summary>
-        /// <param name="id">Parameter ID。</param>
-        /// <param name="value">設定するVector。</param>
-        /// <returns>型とStatic制約を満たして設定できた場合はtrue。</returns>
+        /// <param name="id">Parameter ID</param>
+        /// <param name="value">設定するVector</param>
+        /// <returns>型とStatic制約を満たして設定できた場合はtrue</returns>
         public bool SetVector(string id, Vector4 value)
         {
             var index = FindParameter(id);
@@ -264,8 +264,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 確定済みPageのRenderTextureを取得します。Stepをまたいで参照を保持しないでください。
         /// </summary>
-        /// <param name="page">Compilerが確定したPage ID。</param>
-        /// <returns>該当PageのTexture。範囲外ならnull。</returns>
+        /// <param name="page">Compilerが確定したPage ID</param>
+        /// <returns>該当PageのTexture。範囲外ならnull</returns>
         public RenderTexture GetCurrentPage(int page)
         {
             if (!_initialized || page < 0 || page >= _current.Length) return null;

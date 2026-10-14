@@ -9,7 +9,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
     /// Editor内の標準・外部Module Definitionを発見し、対応するModule設定へ結び付けます。
-    /// GPUとRenderingのDefinitionを分離しません。
     /// </summary>
     public sealed class FluxParticleModuleRegistry
     {
@@ -36,9 +35,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// テストや明示的な依存注入に使用するDefinition集合で初期化します。
+        /// 指定したModule DefinitionでRegistryを初期化します。
         /// </summary>
-        /// <param name="definitions">Module Definition一覧。</param>
+        /// <param name="definitions">Module Definition一覧</param>
         public FluxParticleModuleRegistry(IEnumerable<IFluxParticleModuleDefinition> definitions)
         {
             if (definitions == null)
@@ -79,8 +78,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// 登録済みModuleからContributionを収集します。未登録・重複したModule設定は拒否します。
         /// 無効なModuleも登録の存在は検証し、Definitionの実行のみ省略します。
         /// </summary>
-        /// <param name="modules">AuthoringのModule設定一覧。</param>
-        /// <param name="context">Coreと共有する論理Program Context。</param>
+        /// <param name="modules">AuthoringのModule設定一覧</param>
+        /// <param name="context">Coreと共有する論理Program Context</param>
         public void Contribute(IEnumerable<FluxParticleModule> modules, FluxParticleProgramContribution context)
         {
             if (modules == null)

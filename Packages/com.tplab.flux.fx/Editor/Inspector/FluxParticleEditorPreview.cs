@@ -49,8 +49,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
         public double PlaybackTime { get; private set; }
 
         /// <summary>
-        /// 最新のGPU生存判定で得た粒子数。取得できない場合は-1
+        /// 最新のGPU生存判定で得た粒子数
         /// </summary>
+        /// <remarks>取得できない場合は-1</remarks>
         public int AliveCount { get; private set; }
 
         /// <summary>

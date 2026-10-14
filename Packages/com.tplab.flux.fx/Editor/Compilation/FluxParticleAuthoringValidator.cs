@@ -13,7 +13,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// サポート対象外の設定を検出します。
         /// </summary>
-        /// <param name="authoring">検証対象。</param>
+        /// <param name="authoring">検証対象</param>
         public static void Validate(FluxParticleAuthoring authoring)
         {
             if (authoring == null)

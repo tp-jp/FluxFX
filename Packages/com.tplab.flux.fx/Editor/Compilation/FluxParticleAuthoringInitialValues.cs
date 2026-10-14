@@ -14,10 +14,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Parameter初期値を構築し、値の妥当性を検証します。
         /// </summary>
-        /// <param name="authoring">Particleの設定。</param>
-        /// <param name="moduleValues">Moduleが登録した初期値。</param>
-        /// <param name="hasRotation">Rotationの初期値を使用するか。</param>
-        /// <returns>論理Parameter IDに対応する初期値。</returns>
+        /// <param name="authoring">Particleの設定</param>
+        /// <param name="moduleValues">Moduleが登録した初期値</param>
+        /// <param name="hasRotation">Rotationの初期値を使用するか</param>
+        /// <returns>論理Parameter IDに対応する初期値</returns>
         public static Dictionary<string, Vector4> Create(FluxParticleAuthoring authoring,
             IReadOnlyDictionary<string, Vector4> moduleValues, bool hasRotation)
         {

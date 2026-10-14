@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// 固定LUTの宣言から線形補間用Textureを生成します。
+    /// 固定LUTの宣言から補間方式に応じたTextureを生成します。
     /// </summary>
     public static class FluxParticleLookupTexture
     {

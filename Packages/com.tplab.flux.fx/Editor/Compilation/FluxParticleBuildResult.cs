@@ -9,17 +9,17 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleBuildResult
     {
         /// <summary>
-        /// GPU PassとState Layoutを含む生成結果です。
+        /// GPU PassとState Layoutを含む生成結果
         /// </summary>
         public FluxParticleShaderProgram Shaders { get; }
 
         /// <summary>
-        /// Parameter IDごとの初期値です。
+        /// Parameter IDごとの初期値
         /// </summary>
         public IReadOnlyDictionary<string, Vector4> InitialValues { get; }
 
         /// <summary>
-        /// Billboard描画に使用するShaderLabソースです。
+        /// Particle描画用のShaderLabソース
         /// </summary>
         public string RendererSource { get; }
 

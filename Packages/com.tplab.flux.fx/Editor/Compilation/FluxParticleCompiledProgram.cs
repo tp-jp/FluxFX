@@ -6,7 +6,7 @@ using System.Linq;
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// 初期Backendで対応するState Pageの保存形式です。
+    /// State Pageの保存形式を表します。
     /// </summary>
     public enum FluxParticleStatePageFormat
     {
@@ -17,22 +17,22 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// RT上の論理的な1ページです。RTインスタンス数はExecutionPlanが管理します。
+    /// Persistent Valueを格納する論理State Pageです。
     /// </summary>
     public sealed class FluxParticleStatePage
     {
         /// <summary>
-        /// 論理State Pageの識別番号です。物理RTの番号ではありません。
+        /// 論理State Pageの識別番号
         /// </summary>
         public int Id { get; }
 
         /// <summary>
-        /// PageのRT保存形式です。
+        /// PageのRT保存形式
         /// </summary>
         public FluxParticleStatePageFormat Format { get; }
 
         /// <summary>
-        /// このPageに配置されたPersistent ValueとRGBA Channelの対応一覧です。
+        /// このPageに配置されたPersistent ValueとRGBA Channelの対応一覧
         /// </summary>
         public IReadOnlyList<FluxParticleStateBinding> Bindings { get; }
 
@@ -50,22 +50,22 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleStateBinding
     {
         /// <summary>
-        /// 配置された論理ValueのIDです。
+        /// 配置された論理ValueのID
         /// </summary>
         public string ValueId { get; }
 
         /// <summary>
-        /// 格納先の論理Page IDです。
+        /// 格納先の論理Page ID
         /// </summary>
         public int PageId { get; }
 
         /// <summary>
-        /// 格納を開始するRGBA ChannelのOffsetです（R=0、G=1、B=2、A=3）。
+        /// 格納開始ChannelのOffset（R=0、G=1、B=2、A=3）
         /// </summary>
         public int ChannelOffset { get; }
 
         /// <summary>
-        /// 連続して使用するChannel数です。
+        /// 連続して使用するChannel数
         /// </summary>
         public int ComponentCount { get; }
 
@@ -86,7 +86,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         readonly Dictionary<string, FluxParticleStateBinding> _bindings;
 
         /// <summary>
-        /// Persistent Stateを保持する論理Pageの一覧です。
+        /// Persistent Stateを保持する論理Pageの一覧
         /// </summary>
         public IReadOnlyList<FluxParticleStatePage> Pages { get; }
 
@@ -107,9 +107,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 指定したValueがPersistent Stateとして配置されているか調べます。
         /// </summary>
-        /// <param name="valueId">検索対象の論理Value ID。</param>
-        /// <param name="binding">見つかったState Binding。存在しない場合はnull。</param>
-        /// <returns>Persistent Stateとして配置されていればtrue。</returns>
+        /// <param name="valueId">検索対象の論理Value ID</param>
+        /// <param name="binding">State Binding（未配置の場合はnull）</param>
+        /// <returns>Persistent Stateとして配置されていればtrue</returns>
         public bool TryGetBinding(string valueId, out FluxParticleStateBinding binding)
         {
             return _bindings.TryGetValue(valueId, out binding);
@@ -154,12 +154,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticlePageRead
     {
         /// <summary>
-        /// 入力となる論理PageのIDです。
+        /// 入力となる論理PageのID
         /// </summary>
         public int PageId { get; }
 
         /// <summary>
-        /// 読み取り対象となるPageのバージョンです。
+        /// 読み取り対象となるPageのバージョン
         /// </summary>
         public FluxParticlePageVersion Version { get; }
 
@@ -176,32 +176,32 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleGpuPass
     {
         /// <summary>
-        /// ExecutionPlan内のPass実行順序です。
+        /// ExecutionPlan内のPass実行順序
         /// </summary>
         public int Index { get; }
 
         /// <summary>
-        /// このPassの書き込み先Page IDです。
+        /// このPassの書き込み先Page ID
         /// </summary>
         public int OutputPageId { get; }
 
         /// <summary>
-        /// Passの実行条件です。
+        /// Passの実行条件
         /// </summary>
         public FluxParticlePassCondition Condition { get; }
 
         /// <summary>
-        /// Spawn対象のParticleに適用するOperationです。
+        /// Spawn対象のParticleに適用するOperation
         /// </summary>
         public IReadOnlyList<FluxParticleOperationDefinition> SpawnOperations { get; }
 
         /// <summary>
-        /// 既存の生存Particleに適用するOperationです。
+        /// 既存の生存Particleに適用するOperation
         /// </summary>
         public IReadOnlyList<FluxParticleOperationDefinition> UpdateOperations { get; }
 
         /// <summary>
-        /// 入力として参照するPageとバージョンの一覧です。
+        /// 入力として参照するPageとバージョンの一覧
         /// </summary>
         public IReadOnlyList<FluxParticlePageRead> Reads { get; }
 
@@ -228,7 +228,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleExecutionPlan
     {
         /// <summary>
-        /// 依存関係を解決したGPU Passを実行順に保持します。
+        /// 依存関係を解決したGPU Pass（実行順）
         /// </summary>
         public IReadOnlyList<FluxParticleGpuPass> Passes { get; }
 
@@ -239,38 +239,37 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// Logical Compilationと初期Physical Planningの検証済み結果です。
-    /// Shader生成・Runtime適用はまだこの型には含めません。
+    /// 論理定義から確定したState LayoutとGPU Pass計画を保持します。
     /// </summary>
     public sealed class FluxParticleCompiledProgram
     {
         /// <summary>
-        /// Persistent Stateの物理配置を表します。
+        /// Persistent Stateの配置結果
         /// </summary>
         public FluxParticleStateLayout StateLayout { get; }
 
         /// <summary>
-        /// コンパイル時点で確定したValue定義です。
+        /// コンパイル時点で確定したValue定義
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueDefinition> Values { get; }
 
         /// <summary>
-        /// コンパイル時点で確定したProvider定義です。
+        /// コンパイル時点で確定したProvider定義
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueProvider> Providers { get; }
 
         /// <summary>
-        /// コンパイル時点で確定したParameter定義です。
+        /// コンパイル時点で確定したParameter定義
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleParameterDefinition> Parameters { get; }
 
         /// <summary>
-        /// GPU Passとその入力・出力の実行計画です。
+        /// GPU Passとその入力・出力の実行計画
         /// </summary>
         public FluxParticleExecutionPlan ExecutionPlan { get; }
 
         /// <summary>
-        /// 依存関係の解決を終えたOperation定義の一覧です。
+        /// 依存関係の解決を終えたOperation定義の一覧
         /// </summary>
         public IReadOnlyList<FluxParticleOperationDefinition> Operations { get; }
 

@@ -10,8 +10,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Authoring設定を検証し、GPU Passと描画Shaderを生成します。
         /// </summary>
-        /// <param name="authoring">Particleの設定。</param>
-        /// <returns>ビルド結果。</returns>
+        /// <param name="authoring">Particleの設定</param>
+        /// <returns>ビルド結果</returns>
         public static FluxParticleBuildResult Build(FluxParticleAuthoring authoring)
         {
             FluxParticleAuthoringValidator.Validate(authoring);

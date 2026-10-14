@@ -16,9 +16,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// CoreとModuleの論理定義およびParameter初期値を構築します。
         /// </summary>
-        /// <param name="authoring">Particleの設定。</param>
-        /// <param name="initialValues">Parameter IDに対応する初期値。</param>
-        /// <returns>構築した論理定義。</returns>
+        /// <param name="authoring">Particleの設定</param>
+        /// <param name="initialValues">Parameter IDに対応する初期値</param>
+        /// <returns>構築した論理定義</returns>
         public static FluxParticleDefinitionBuilder Create(FluxParticleAuthoring authoring,
             out IReadOnlyDictionary<string, Vector4> initialValues)
         {
@@ -55,9 +55,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Authoring設定に応じたCore Providerを登録します。
         /// </summary>
-        /// <param name="authoring">Particleの設定。</param>
-        /// <param name="source">Coreの基本定義。</param>
-        /// <param name="definitions">Providerの登録先。</param>
+        /// <param name="authoring">Particleの設定</param>
+        /// <param name="source">Coreの基本定義</param>
+        /// <param name="definitions">Providerの登録先</param>
         static void AddProviders(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
             FluxParticleDefinitionBuilder definitions)
         {
@@ -83,10 +83,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Authoring設定に応じたParameterとOperationを登録します。
         /// </summary>
-        /// <param name="authoring">Particleの設定。</param>
-        /// <param name="source">Coreの基本定義。</param>
-        /// <param name="definitions">定義の登録先。</param>
-        /// <param name="hasRotation">Rotationを使用するか。</param>
+        /// <param name="authoring">Particleの設定</param>
+        /// <param name="source">Coreの基本定義</param>
+        /// <param name="definitions">定義の登録先</param>
+        /// <param name="hasRotation">Rotationを使用するか</param>
         static void AddOperationsAndParameters(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
             FluxParticleDefinitionBuilder definitions, bool hasRotation)
         {

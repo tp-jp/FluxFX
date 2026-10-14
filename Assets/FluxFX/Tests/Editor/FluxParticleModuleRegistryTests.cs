@@ -10,7 +10,7 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Tests.Editor
 {
     /// <summary>
-    /// 新Program BackendのModule登録とContributionの統合を検証します。
+    /// Module登録とContributionの統合を検証します。
     /// </summary>
     public sealed class FluxParticleModuleRegistryTests
     {

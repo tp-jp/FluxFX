@@ -17,39 +17,39 @@ namespace TpLab.Flux.FX.Editor.Compilation
         readonly List<FluxParticleOptionalOperationDependency> _optionalDependencies = new List<FluxParticleOptionalOperationDependency>();
 
         /// <summary>
-        /// 登録したValue定義をIDから参照する辞書です。
+        /// 登録したValue定義をIDから参照する辞書
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueDefinition> Values => _values;
 
         /// <summary>
-        /// Valueの非永続ProviderをIDから参照する辞書です。
+        /// Valueの非永続ProviderをIDから参照する辞書
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueProvider> Providers => _providers;
 
         /// <summary>
-        /// Shader Parameterと変更契約の定義一覧です。
+        /// Shader Parameterと変更契約の定義一覧
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleParameterDefinition> Parameters => _parameters;
 
         /// <summary>
-        /// Operation定義をIDから参照する辞書です。
+        /// Operation定義をIDから参照する辞書
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleOperationDefinition> Operations => _operations;
 
         /// <summary>
-        /// Operationの登録順です。ModuleのVelocity更新順序にも使用します。
+        /// Operationの登録順
         /// </summary>
         public IReadOnlyList<string> OperationOrder => _operationOrder;
 
         /// <summary>
-        /// 対象Operationが存在する場合だけ適用する順序制約です。
+        /// 対象Operationが存在する場合だけ適用する順序制約
         /// </summary>
         public IReadOnlyList<FluxParticleOptionalOperationDependency> OptionalDependencies => _optionalDependencies;
 
         /// <summary>
         /// 論理Valueを登録します。重複するIDは同一定義であっても禁止します。
         /// </summary>
-        /// <param name="value">登録するvalue定義。</param>
+        /// <param name="value">登録するValue定義</param>
         public void AddValue(FluxParticleValueDefinition value)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
@@ -58,9 +58,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// Valueの供給方法を登録します。初期実装では各Valueに1つの非永続Providerのみ登録可能です。
+        /// Valueの供給方法を登録します。各Valueに登録できるProviderは1つです。
         /// </summary>
-        /// <param name="provider">登録するprovider定義。</param>
+        /// <param name="provider">登録するProvider定義</param>
         public void AddProvider(FluxParticleValueProvider provider)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
@@ -71,7 +71,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Runtime変更契約を持つShader Parameterを登録します。
         /// </summary>
-        /// <param name="parameter">登録するparameter定義。</param>
+        /// <param name="parameter">登録するParameter定義</param>
         public void AddParameter(FluxParticleParameterDefinition parameter)
         {
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
@@ -82,7 +82,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 実装情報を含むOperationを登録します。
         /// </summary>
-        /// <param name="operation">登録するoperation定義。</param>
+        /// <param name="operation">登録するOperation定義</param>
         public void AddOperation(FluxParticleOperationDefinition operation)
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));
@@ -103,7 +103,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 依存解決済みのOperation定義に置き換えます。新しいIDは登録できません。
         /// </summary>
-        /// <param name="operation">同じIDを持つ解決済みOperation。</param>
+        /// <param name="operation">同じIDを持つ解決済みOperation</param>
         public void ReplaceOperation(FluxParticleOperationDefinition operation)
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));

@@ -12,8 +12,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 論理IDをHLSL識別子へ変換します。記号とunderscoreをUTF-16コードで区切ります。
         /// </summary>
-        /// <param name="id">空でない論理ID。</param>
-        /// <returns>決定的で一意な識別子。</returns>
+        /// <param name="id">空でない論理ID</param>
+        /// <returns>決定的で一意な識別子</returns>
         public static string Encode(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("ID is required.", nameof(id));
@@ -33,11 +33,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// Operation IDの単語をPascalCaseへ変換したContext型名です。
+        /// Operation IDからContext型名を生成します。
         /// 区切りや大文字小文字による型名の衝突はShader生成時に検出します。
         /// </summary>
-        /// <param name="id">Operation ID。</param>
-        /// <returns>生成するstruct名。</returns>
+        /// <param name="id">Operation ID</param>
+        /// <returns>生成するstruct名</returns>
         public static string Context(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("ID is required.", nameof(id));
@@ -64,24 +64,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// Context内の論理Valueフィールド名です。
+        /// Context内のValueフィールド名を生成します。
         /// </summary>
-        /// <param name="id">Value ID。</param>
-        /// <returns>生成するフィールド名。</returns>
+        /// <param name="id">Value ID</param>
+        /// <returns>生成するフィールド名</returns>
         public static string Value(string id) => "value" + ReadableName(id);
 
         /// <summary>
-        /// Context内のParameterフィールド名です。
+        /// Context内のParameterフィールド名を生成します。
         /// </summary>
-        /// <param name="id">Parameter ID。</param>
-        /// <returns>生成するフィールド名。</returns>
+        /// <param name="id">Parameter ID</param>
+        /// <returns>生成するフィールド名</returns>
         public static string Parameter(string id) => "parameter" + ReadableName(id);
 
         /// <summary>
-        /// Operationの生成HLSLローカル変数名です。
+        /// OperationのHLSLローカル変数名を生成します。
         /// </summary>
-        /// <param name="id">Operation ID。</param>
-        /// <returns>camelCase形式のローカル変数名。</returns>
+        /// <param name="id">Operation ID</param>
+        /// <returns>camelCase形式のローカル変数名</returns>
         public static string OperationLocal(string id) => "operation" + ReadableName(id);
 
         static string ReadableName(string id)
@@ -91,25 +91,25 @@ namespace TpLab.Flux.FX.Editor.Compilation
         }
 
         /// <summary>
-        /// ParameterのMaterial Property名です。
+        /// ParameterのMaterial Property名を生成します。
         /// </summary>
-        /// <param name="id">Parameter ID。</param>
-        /// <returns>生成するUniform名。</returns>
+        /// <param name="id">Parameter ID</param>
+        /// <returns>生成するUniform名</returns>
         public static string ParameterProperty(string id) => "_FluxParameter_" + Encode(id);
 
         /// <summary>
-        /// UniformまたはSpawnInput ProviderのMaterial Property名です。
+        /// ProviderのMaterial Property名を生成します。
         /// </summary>
-        /// <param name="id">ProviderのValue ID。</param>
-        /// <returns>Uniform名またはTexture名。</returns>
+        /// <param name="id">ProviderのValue ID</param>
+        /// <returns>Uniform名またはTexture名</returns>
         public static string ProviderProperty(string id) => "_FluxProvider_" + Encode(id);
 
         /// <summary>
-        /// Page Snapshotに対応するTexture Property名です。
+        /// Page SnapshotのTexture Property名を生成します。
         /// </summary>
-        /// <param name="pageId">論理Page ID。</param>
-        /// <param name="version">StepPreviousまたはUpdated。</param>
-        /// <returns>Sampler名。</returns>
+        /// <param name="pageId">論理Page ID</param>
+        /// <param name="version">StepPreviousまたはUpdated</param>
+        /// <returns>Sampler名</returns>
         public static string PageProperty(int pageId, FluxParticlePageVersion version) => "_FluxPage" + pageId + "_" + version;
     }
 
@@ -119,19 +119,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleShaderLifecycle
     {
         /// <summary>
-        /// Persistent Floatで保持するAgeのValue IDです。
+        /// Persistent Floatで保持するAgeのValue ID
         /// </summary>
         public string AgeValueId { get; }
         /// <summary>
-        /// FloatのLifetime Value IDです。Persistent StateまたはProviderで供給します。
+        /// FloatのLifetime Value ID
         /// </summary>
+        /// <remarks>Persistent StateまたはProviderで供給します。</remarks>
         public string LifetimeValueId { get; }
 
         /// <summary>
         /// 各Pass共通のLifecycle判定を設定します。
         /// </summary>
-        /// <param name="ageValueId">AgeのValue ID。</param>
-        /// <param name="lifetimeValueId">LifetimeのValue ID。</param>
+        /// <param name="ageValueId">AgeのValue ID</param>
+        /// <param name="lifetimeValueId">LifetimeのValue ID</param>
         public FluxParticleShaderLifecycle(string ageValueId, string lifetimeValueId)
         {
             if (string.IsNullOrWhiteSpace(ageValueId)) throw new ArgumentException("Age ID is required.", nameof(ageValueId));
@@ -142,21 +143,22 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// 1回のBlit用Shaderと確定した入力Snapshotです。
+    /// 1回のBlit用Shaderと入力Snapshotを保持します。
     /// </summary>
     public sealed class FluxParticleGeneratedPass
     {
         /// <summary>
-        /// 論理Operationと出力Pageの実行計画です。
+        /// 論理Operationと出力Pageの実行計画
         /// </summary>
         public FluxParticleGpuPass Plan { get; }
         /// <summary>
-        /// UnityへImportする完全なShaderLabソースです。
+        /// UnityへImportする完全なShaderLabソース
         /// </summary>
         public string Source { get; }
         /// <summary>
-        /// Lifecycle評価を含めた入力Pageです。Plan.Readsより増える場合があります。
+        /// Lifecycle評価を含めた入力Page
         /// </summary>
+        /// <remarks>Plan.Readsより増える場合があります。</remarks>
         public IReadOnlyList<FluxParticlePageRead> Reads { get; }
 
         internal FluxParticleGeneratedPass(FluxParticleGpuPass plan, string source, IEnumerable<FluxParticlePageRead> reads)
@@ -168,28 +170,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
     }
 
     /// <summary>
-    /// Shader生成の結果です。Runtimeはこの確定済みの計画を実行します。
+    /// 生成Shaderと実行計画を保持します。
     /// </summary>
     public sealed class FluxParticleShaderProgram
     {
         /// <summary>
-        /// 検証済みの論理ProgramとState Layoutです。
+        /// 検証済みの論理ProgramとState Layout
         /// </summary>
         public FluxParticleCompiledProgram Compilation { get; }
         /// <summary>
-        /// 実行順に並べた1Pass Shaderです。
+        /// 実行順に並べた1Pass Shader
         /// </summary>
         public IReadOnlyList<FluxParticleGeneratedPass> Passes { get; }
         /// <summary>
-        /// Ageを-1に設定するPage初期化Shaderです。Layout.Pagesと同じ順です。
+        /// PageごとのState初期化Shader
         /// </summary>
+        /// <remarks>Compilation.StateLayout.Pagesと同じ順です。</remarks>
         public IReadOnlyList<string> ClearSources { get; }
         /// <summary>
-        /// 描画側へ組み込むHLSLです。確定PageのSamplerとFluxFX_EvaluateRenderを宣言します。
+        /// 描画側へ組み込むHLSL
         /// </summary>
+        /// <remarks>確定PageのSamplerとFluxFX_EvaluateRenderを宣言します。</remarks>
         public string RenderSource { get; }
         /// <summary>
-        /// 外部から値またはTextureを供給するProviderです。
+        /// 外部から値またはTextureを供給するProvider
         /// </summary>
         public IReadOnlyList<FluxParticleValueProvider> ExternalProviders { get; }
 

@@ -8,7 +8,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
     /// CoreとModuleが論理Programの定義とParameter初期値を登録するためのContextです。
-    /// State LayoutとGPU Passはここでは指定しません。
     /// </summary>
     public sealed class FluxParticleProgramContribution
     {
@@ -23,27 +22,27 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public FluxParticleRenderMode RenderMode { get; }
 
         /// <summary>
-        /// 登録済みValue定義の読み取り専用一覧です。
+        /// 登録済みValue定義の読み取り専用一覧
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueDefinition> Values => _definitions.Values;
 
         /// <summary>
-        /// 登録済みProvider定義の読み取り専用一覧です。
+        /// 登録済みProvider定義の読み取り専用一覧
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleValueProvider> Providers => _definitions.Providers;
 
         /// <summary>
-        /// 登録済みParameter定義の読み取り専用一覧です。
+        /// 登録済みParameter定義の読み取り専用一覧
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleParameterDefinition> Parameters => _definitions.Parameters;
 
         /// <summary>
-        /// 登録済みOperation定義の読み取り専用一覧です。
+        /// 登録済みOperation定義の読み取り専用一覧
         /// </summary>
         public IReadOnlyDictionary<string, FluxParticleOperationDefinition> Operations => _definitions.Operations;
 
         /// <summary>
-        /// Parameter IDに対応する初期値です。
+        /// Parameter IDに対応する初期値
         /// </summary>
         public IReadOnlyDictionary<string, Vector4> InitialValues => _readOnlyInitialValues;
 
@@ -123,8 +122,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// Core定義のParameterに初期値を設定します。Parameter定義は後から追加される場合があります。
         /// </summary>
-        /// <param name="id">登録済みParameterのID。</param>
-        /// <param name="value">初期値。</param>
+        /// <param name="id">登録済みParameterのID</param>
+        /// <param name="value">初期値</param>
         public void SetInitialValue(string id, Vector4 value)
         {
             if (_initialValues.ContainsKey(id)) throw new InvalidOperationException($"Duplicate Parameter initial value: {id}");

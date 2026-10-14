@@ -6,8 +6,7 @@ using TpLab.Flux.FX.Editor.Compilation;
 namespace TpLab.Flux.FX.Tests.Editor
 {
     /// <summary>
-    /// 新しいLogical Compilation、Persistent State導出、初期Page/Pass構成を検証します。
-    /// Shader生成とUnity実機でのGPU実行はこのテストの対象外です。
+    /// 論理定義のコンパイル、Persistent Stateの導出、PageとPassの構成を検証します。
     /// </summary>
     public class FluxParticleProgramCompilerTests
     {

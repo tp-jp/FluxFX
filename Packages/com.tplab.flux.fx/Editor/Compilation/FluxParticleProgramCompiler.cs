@@ -6,15 +6,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
     /// ValueとOperationの宣言から、最小限のState LayoutとGPU Pass計画を生成します。
-    /// この段階ではShader/Material生成と物理RT Allocationは行いません。
     /// </summary>
     public sealed class FluxParticleProgramCompiler
     {
         /// <summary>
         /// 登録済みのValue・Provider・Operationから検証済みProgramを生成します。
         /// </summary>
-        /// <param name="definitions">CoreとModuleから収集した定義。</param>
-        /// <returns>State LayoutとExecutionPlanを含む検証済みProgram。</returns>
+        /// <param name="definitions">CoreとModuleから収集した定義</param>
+        /// <returns>State LayoutとExecutionPlanを含む検証済みProgram</returns>
         public FluxParticleCompiledProgram Compile(FluxParticleDefinitionBuilder definitions)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
@@ -264,7 +263,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             if (!visited.Add(valueId)) return;
             if (!definitions.Providers.TryGetValue(valueId, out var provider))
             {
-                // A Derived Provider may depend on a Persistent Value.
+                // Derived Providerの入力に含まれるPersistent ValueもStateへ配置する。
                 if (!definitions.Operations.Values.Any(op => op.Writes.Any(write => write.ValueId == valueId)))
                 {
                     throw new InvalidOperationException($"Unresolved provider input: {valueId}");
@@ -345,7 +344,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             IReadOnlyList<FluxParticleValueDefinition> persistent,
             IReadOnlyList<FluxParticleOperationDefinition> operations)
         {
-            // ARGBFloat represents all integers exactly up to 2^24. Unbounded UInt must not be packed silently.
+            // ARGBFloatで正確に保存できる整数は2^24まで。UIntの上限を検証して配置する。
             foreach (var value in persistent.Where(value => value.Type == FluxParticleValueType.UInt))
             {
                 if (!value.MaximumUIntValue.HasValue || value.MaximumUIntValue.Value > 16777216u)
@@ -356,8 +355,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var types = persistent.ToDictionary(value => value.Id, value => value, StringComparer.Ordinal);
             var pages = new List<PagePlan>();
 
-            // Each Update writer chain must remain on one Page in this first backend.
-            // Different chains remain separate so their cross-Page dependencies can form GPU passes.
+            // 同じUpdate Writer列を1つのPageに配置する。
+            // Writer列を分離し、Page間の依存関係からGPU Passを構成する。
             foreach (var op in operations.Where(op => op.Phase == FluxParticlePhase.Update))
             {
                 var writes = op.Writes.Select(write => write.ValueId).Distinct(StringComparer.Ordinal).ToArray();
@@ -373,7 +372,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 pages.Add(result);
             }
 
-            // Spawn-only State can occupy unused channels in an Update Page without an extra GPU pass.
+            // Spawn専用StateをUpdate Pageの空きChannelへ配置し、追加Passを避ける。
             foreach (var value in persistent.Where(value => pages.All(page => !page.Values.Contains(value.Id)))
                          .OrderByDescending(value => value.ComponentCount).ThenBy(value => value.Id, StringComparer.Ordinal))
             {
@@ -437,9 +436,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 foreach (var binding in page.Bindings) writingPage.Add(binding.ValueId, page.Id);
             }
-            // Update writers must target a single Page in this initial backend.
-            // Spawn initialization is different: a single logical initializer may populate
-            // several Pages, so its writes are projected into each Page's Spawn branch.
+            // Update Operationの書き込み先は1つのPageに制限する。
+            // Spawn Operationは書き込み先Pageごとに投影し、複数Pageを初期化できる。
             foreach (var operation in operations.Where(op => op.Phase == FluxParticlePhase.Update && op.Writes.Count > 0))
             {
                 var targets = operation.Writes.Select(write => writingPage[write.ValueId]).Distinct().ToArray();
@@ -467,8 +465,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 }
             }
 
-            // Cross-Page Spawn dependencies require explicit intermediate versions,
-            // which Phase 1 does not provide. Reject rather than silently reorder.
+            // PageをまたぐSpawn依存は中間Snapshotを保持できないため拒否する。
             foreach (var operation in operations.Where(op => op.Phase == FluxParticlePhase.Spawn))
             {
                 foreach (var dependency in operation.Dependencies)
@@ -497,7 +494,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     op.Writes.Count > 0 && groupByOperation[op.Id] == pageId).ToArray();
                 if (spawn.Length == 0 && update.Length == 0) continue;
 
-                // A Blit must read its old Page from a different physical RT to carry forward unchanged channels/indices.
+                // 未更新のChannelとSlotを保持するため、書き込み先と異なるRTからStepPreviousを読む。
                 var reads = new Dictionary<string, FluxParticlePageRead>(StringComparer.Ordinal);
                 AddRead(reads, pageId, FluxParticlePageVersion.StepPrevious);
                 foreach (var operation in spawn.Concat(update))

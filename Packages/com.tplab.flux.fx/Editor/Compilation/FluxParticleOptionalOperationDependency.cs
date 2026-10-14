@@ -10,12 +10,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public sealed class FluxParticleOptionalOperationDependency
     {
         /// <summary>
-        /// 後続OperationのIDです。
+        /// 後続OperationのID
         /// </summary>
         public string OperationId { get; }
 
         /// <summary>
-        /// 存在する場合に先行するOperationのIDです。
+        /// 存在する場合に先行するOperationのID
         /// </summary>
         public string AfterOperationId { get; }
 

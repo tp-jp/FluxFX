@@ -8,7 +8,6 @@ namespace TpLab.Flux.FX.Udon
 {
     /// <summary>
     /// コンパイル済みParticle Programの再生とEmissionを制御します。
-    /// GPU実行とState Page管理はFluxParticleExecutorへ委譲します。
     /// </summary>
     [PublicAPI]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -40,19 +39,19 @@ namespace TpLab.Flux.FX.Udon
         object _emission;
 
         /// <summary>
-        /// GPU Programの実行と論理Parameterを管理するExecutorです。
+        /// GPU ProgramのExecutor
         /// </summary>
         [PublicAPI]
         public FluxParticleExecutor Executor => particleExecutor;
 
         /// <summary>
-        /// 使用するParticle Slotの数です。
+        /// Particle Slot数
         /// </summary>
         [PublicAPI]
         public int ParticleCount => particleCount;
 
         /// <summary>
-        /// Emission RateをRuntimeから操作するためのParameterです。
+        /// Emission RateのRuntime Parameter
         /// </summary>
         [PublicAPI]
         public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
