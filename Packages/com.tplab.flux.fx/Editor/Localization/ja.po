@@ -275,3 +275,92 @@ msgstr "アルファ"
 
 msgid "Additive"
 msgstr "加算"
+msgid "Program Backend Preview"
+msgstr "Program Backend プレビュー"
+
+msgid "Refresh Preview"
+msgstr "プレビューを更新"
+
+msgid "State Pages"
+msgstr "State Page数"
+
+msgid "State RenderTextures"
+msgstr "State RenderTexture数"
+
+msgid "Estimated State Memory"
+msgstr "State推定メモリ"
+
+msgid "Simulation Passes"
+msgstr "Simulation Pass数"
+
+msgid "Clear Passes"
+msgstr "Clear Pass数"
+
+msgid "Lookup Tables"
+msgstr "LUT数"
+
+msgid "Compilation preview. Shader import and GPU execution are verified when building and testing."
+msgstr "コンパイル結果のプレビューです。ShaderのImportとGPU動作はビルド・テストで確認します。"
+
+msgid "Page Inputs"
+msgstr "入力Page"
+
+msgid "Spawn Operations"
+msgstr "Spawn処理"
+
+msgid "Update Operations"
+msgstr "Update処理"
+
+msgid "Render Operations"
+msgstr "Render処理"
+
+msgid "samples"
+msgstr "サンプル"
+
+msgid "PREVIEW"
+msgstr "PREVIEW"
+
+msgid "Backend Details"
+msgstr "Backend詳細"
+
+msgid "Pause"
+msgstr "一時停止"
+
+msgid "Play"
+msgstr "再生"
+
+msgid "Restart"
+msgstr "最初から再生"
+
+msgid "particles"
+msgstr "粒子"
+
+msgid "Drag to orbit. Scroll to zoom. Preview is limited to 4096 particles."
+msgstr "ドラッグで視点を回転、ホイールでズーム。プレビューは最大4096粒子です。"
+
+msgid "SceneView preview is available in Edit Mode. Play Mode uses the runtime renderer."
+msgstr "SceneViewプレビューはEdit Modeで利用できます。Play ModeではRuntimeが描画します。"
+
+msgid "Show in SceneView"
+msgstr "SceneViewで表示"
+
+msgid "Particles are previewed in SceneView. Preview is limited to 4096 particles."
+msgstr "粒子はSceneViewに表示されます。プレビューは最大4096粒子です。"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Alive particles"
+msgstr "生存粒子数"
+
+msgid "Paused while Unity is unfocused"
+msgstr "Unityが非アクティブのため一時停止中"
+
+msgid "Preparing preview"
+msgstr "プレビューを準備中"
+
+msgid "BACKEND"
+msgstr "BACKEND"
+
+msgid "Playback Time"
+msgstr "再生時間"

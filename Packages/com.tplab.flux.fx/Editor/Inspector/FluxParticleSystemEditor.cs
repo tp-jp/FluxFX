@@ -84,6 +84,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _modules = _authoringObject.FindProperty("modules");
 
             InitializeBurstList();
+            InitializeBackendPreview();
 
         }
 
@@ -101,7 +102,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _authoringObject.Update();
 
             DrawLanguage();
-            DrawPreview();
             DrawMain();
             DrawEmission();
             DrawShape();
@@ -110,6 +110,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             _authoringObject.ApplyModifiedProperties();
             serializedObject.ApplyModifiedProperties();
+            DrawBackendInfo();
         }
 
         void OnSceneGUI()
@@ -171,11 +172,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             L10n.Language = (Localization.Language)selectedIndex;
             Repaint();
-        }
-
-        void DrawPreview()
-        {
-            EditorGUILayout.HelpBox("Program Backend: use Play Mode to verify the generated runtime. Inspector Preview is not connected yet.", MessageType.Info);
         }
 
         void LoadExpandedStates()
