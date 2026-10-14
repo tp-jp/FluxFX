@@ -18,7 +18,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             definitions.AddOperation(Writer("first"));
             definitions.AddOperation(Writer("middle", "first"));
 
-            var finalWriter = FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value");
+            var finalWriter = FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value", Array.Empty<FluxParticleOptionalOperationDependency>());
 
             Assert.AreEqual("last", finalWriter);
             Assert.AreEqual(FluxParticleReadVersion.StepPrevious, definitions.Operations["first"].Reads.Single().Version);
@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             definitions.AddOperation(Writer("second"));
 
             var error = Assert.Throws<InvalidOperationException>(() =>
-                FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value"));
+                FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value", Array.Empty<FluxParticleOptionalOperationDependency>()));
             StringAssert.Contains("Ambiguous", error.Message);
         }
 
@@ -46,14 +46,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             definitions.AddOperation(Writer("second", "first"));
 
             var error = Assert.Throws<InvalidOperationException>(() =>
-                FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value"));
+                FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value", Array.Empty<FluxParticleOptionalOperationDependency>()));
             StringAssert.Contains("Cyclic", error.Message);
         }
 
         [Test]
         public void NoWritersReturnsNull()
         {
-            Assert.IsNull(FluxParticleValuePipelineResolver.Resolve(new FluxParticleDefinitionBuilder(), "custom.value"));
+            Assert.IsNull(FluxParticleValuePipelineResolver.Resolve(new FluxParticleDefinitionBuilder(), "custom.value", Array.Empty<FluxParticleOptionalOperationDependency>()));
         }
 
         static FluxParticleOperationDefinition Writer(string id, params string[] dependencies)

@@ -475,11 +475,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public string EnabledParameterId { get; }
 
         /// <summary>
-        /// 同じValueを更新するOperation間で明示する順序です。未指定は競合時にエラーになります。
-        /// </summary>
-        public int? VelocityOrder { get; }
-
-        /// <summary>
         /// Operationの入出力・依存関係・HLSL実装を設定します。
         /// </summary>
         /// <param name="id">識別子。</param>
@@ -492,7 +487,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="entryPoint">HLSL関数名。</param>
         /// <param name="parameters">Contextに供給するParameter ID一覧。</param>
         /// <param name="enabledParameterId">実行条件となるFloat Parameter ID。</param>
-        /// <param name="velocityOrder">Velocity更新Pipelineにおける明示的な順序。</param>
         public FluxParticleOperationDefinition(
             string id,
             string ownerId,
@@ -503,8 +497,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             string hlslPath,
             string entryPoint,
             IEnumerable<string> parameters = null,
-            string enabledParameterId = null,
-            int? velocityOrder = null)
+            string enabledParameterId = null)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Operation ID is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(ownerId)) throw new ArgumentException("Owner ID is required.", nameof(ownerId));
@@ -522,7 +515,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
             EntryPoint = entryPoint;
             Parameters = new List<string>(parameters ?? Array.Empty<string>()).AsReadOnly();
             EnabledParameterId = enabledParameterId;
-            VelocityOrder = velocityOrder;
         }
     }
 }

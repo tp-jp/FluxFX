@@ -11,14 +11,14 @@ namespace TpLab.Flux.FX.Tests.Editor
     public sealed class FluxParticleValuePipelineResolverTests
     {
         [Test]
-        public void ArbitraryValueWritersUseExplicitOrder()
+        public void ArbitraryValueWritersUseExplicitDependencies()
         {
             var definitions = new FluxParticleDefinitionBuilder();
             definitions.AddOperation(Write("custom.second"));
             definitions.AddOperation(Write("custom.first"));
 
             var last = FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value",
-                operation => operation.Id == "custom.first" ? 100 : 200);
+                new[] { new FluxParticleOptionalOperationDependency("custom.second", "custom.first") });
 
             Assert.AreEqual("custom.second", last);
             var firstRead = definitions.Operations["custom.first"].Reads.Single();
@@ -30,22 +30,21 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void MissingOrDuplicateOrderIsRejected()
+        public void AmbiguousWritersAreRejected()
         {
             var definitions = new FluxParticleDefinitionBuilder();
             definitions.AddOperation(Write("custom.first"));
             definitions.AddOperation(Write("custom.second"));
             Assert.Throws<InvalidOperationException>(() => FluxParticleValuePipelineResolver.Resolve(definitions,
-                "custom.value", operation => null));
-            Assert.Throws<InvalidOperationException>(() => FluxParticleValuePipelineResolver.Resolve(definitions,
-                "custom.value", operation => 100));
+                "custom.value", Array.Empty<FluxParticleOptionalOperationDependency>()));
         }
 
         [Test]
         public void NoWriterLeavesValueUnchanged()
         {
             var definitions = new FluxParticleDefinitionBuilder();
-            Assert.IsNull(FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value", operation => 100));
+            Assert.IsNull(FluxParticleValuePipelineResolver.Resolve(definitions, "custom.value",
+                Array.Empty<FluxParticleOptionalOperationDependency>()));
         }
 
         [Test]
