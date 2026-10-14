@@ -134,7 +134,7 @@ namespace TpLab.Flux.FX.Samples
             var cpuText = validCpu ? Format(cpuMs) : "";
 
             _sampleRows.Add(
-                $"{_gpuSamples.Count},{Format(gpuMs)},{cpuText}");
+                $"{_gpuSamples.Count},{Format(_elapsedTime)},{Format(gpuMs)},{cpuText}");
         }
 
         void Finish()
@@ -173,22 +173,25 @@ namespace TpLab.Flux.FX.Samples
             var summary = new StringBuilder();
 
             summary.AppendLine(
-                "Case,GPUCount,CPUCount,InvalidGPU,GPUAvgMs,GPUMedianMs,GPUP95Ms,CPUAvgMs,CPUMedianMs,CPUP95Ms");
+                "Case,GPUCount,CPUCount,InvalidGPU,Duplicate,GPUAvgMs,GPUMedianMs,GPUP95Ms,CPUAvgMs,CPUMedianMs,CPUP95Ms");
 
             summary.AppendLine(
-                $"{caseId},{_gpuSamples.Count},{_cpuSamples.Count},{_invalidGpuSamples}," +
+                $"{caseId},{_gpuSamples.Count},{_cpuSamples.Count},{_invalidGpuSamples},{_duplicateSamples}," +
                 $"{Format(gpuAverage)},{Format(gpuMedian)},{Format(gpuP95)}," +
                 $"{Format(cpuAverage)},{Format(cpuMedian)},{Format(cpuP95)}");
 
             var samples = new StringBuilder();
 
-            samples.AppendLine("Sample,GPUms,CPUms");
+            samples.AppendLine("Sample,MeasureTimeSeconds,GPUms,CPUms");
 
             foreach (var row in _sampleRows)
             {
                 samples.AppendLine(row);
             }
 
+
+            File.WriteAllText(summaryPath, summary.ToString());
+            File.WriteAllText(samplesPath, samples.ToString());
 
             Debug.Log(
                 $"[FluxFX Benchmark] {caseId} completed.\n" +
