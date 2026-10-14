@@ -11,12 +11,64 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleEditorPreviewTests
     {
+        [Test]
+        public void InspectorReenableRecreatesPreviewWithUnchangedAuthoring()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            try
+            {
+                var system = root.GetComponent<FluxParticleSystem>();
+                if (system.GetComponent<FluxParticleAuthoring>() == null)
+                {
+                    system.gameObject.AddComponent<FluxParticleAuthoring>();
+                }
+                editor = UnityEditor.Editor.CreateEditor(system, typeof(FluxParticleSystemEditor));
+                var type = typeof(FluxParticleSystemEditor);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var ensure = type.GetMethod("EnsureParticlePreview", flags);
+                var previewField = type.GetField("_particlePreview", flags);
+                ensure.Invoke(editor, null);
+                var first = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.IsNotNull(first, (string)type.GetField("_backendPreviewError", flags).GetValue(editor));
+                first.Step(0.25f);
+                ensure.Invoke(editor, null);
+                Assert.AreSame(first, previewField.GetValue(editor));
+                type.GetField("_previewPlaying", flags).SetValue(editor, false);
+                type.GetMethod("OnDisable", flags).Invoke(editor, null);
+                type.GetMethod("OnEnable", flags).Invoke(editor, null);
+                ensure.Invoke(editor, null);
+                var second = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.IsNotNull(second, (string)type.GetField("_backendPreviewError", flags).GetValue(editor));
+                Assert.AreNotSame(first, second);
+                Assert.IsFalse((bool)type.GetField("_previewPlaying", flags).GetValue(editor));
+                second.Step(0.25f);
+                second.Restart();
+                second.Step(0.25f);
+                Assert.AreEqual(0.25, second.PlaybackTime, 0.0001);
+            }
+            finally
+            {
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [TestCase(FluxParticleSimulationSpace.Local)]
         [TestCase(FluxParticleSimulationSpace.World)]
         public void PreviewSimulatesRestartsAndReleasesGpuResources(FluxParticleSimulationSpace space)

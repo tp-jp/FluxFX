@@ -133,6 +133,48 @@ namespace TpLab.Flux.FX.Editor.Inspector
         }
 
         /// <summary>
+        /// GPUリソースを再生成し、有効なStateと再生位置を引き継ぎます。
+        /// </summary>
+        /// <param name="build">Particleのビルド結果</param>
+        /// <returns>再生成したPreview</returns>
+        public FluxParticleEditorPreview Recreate(FluxParticleBuildResult build)
+        {
+            var replacement = new FluxParticleEditorPreview(build, authoring, Count);
+            try
+            {
+                var pages = session.CurrentPages;
+                var destinations = replacement.session.CurrentPages;
+                if (pages.Any(page => page == null || !page.IsCreated())) return replacement;
+                var active = RenderTexture.active;
+                try
+                {
+                    for (var i = 0; i < pages.Count; i++)
+                    {
+                        Graphics.Blit(pages[i], destinations[i]);
+                    }
+                }
+                finally
+                {
+                    RenderTexture.active = active;
+                }
+                replacement.PlaybackTime = PlaybackTime;
+                replacement.fraction = fraction;
+                replacement.delay = delay;
+                replacement.cycleTime = cycleTime;
+                replacement.burstIndex = burstIndex;
+                replacement.cursor = cursor;
+                replacement.seed = seed;
+                replacement.completed = completed;
+                replacement.AliveCount = AliveCount;
+                return replacement;
+            }
+            catch
+            {
+                replacement.Dispose();
+                throw;
+            }
+        }
+        /// <summary>
         /// GPU状態とEmissionの再生位置を初期化します。
         /// </summary>
         public void Restart()
