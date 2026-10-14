@@ -15,8 +15,7 @@ using Object = UnityEngine.Object;
 namespace TpLab.Flux.FX.Editor.Compilation
 {
     /// <summary>
-    /// 新Programの生成Assetと配列形式Manifestを構築し、Udon Runtimeへ設定します。
-    /// 固定Stage Registryを介さず、生成結果のPageとPass順を保持します。
+    /// 生成AssetとPrefabを構成し、実行計画をUdon Runtimeへ設定します。
     /// </summary>
     public static class FluxParticleProgramBuild
     {
@@ -25,10 +24,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
 
         /// <summary>
-        /// SceneFlowのBuild/Play前処理から新Backendを構成します。
+        /// SceneFlowのBuild/Play前処理でParticleの実行環境を構成します。
         /// </summary>
-        /// <param name="authoring">既存のAuthoring設定。</param>
-        /// <param name="system">接続先のParticle System。</param>
+        /// <param name="authoring">ParticleのAuthoring設定</param>
+        /// <param name="system">接続先のParticle System</param>
         public static void Apply(FluxParticleAuthoring authoring, FluxParticleSystem system)
         {
             if (system.ParticleCount < 1 || system.ParticleCount > 1048576)
@@ -47,10 +46,100 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new InvalidOperationException($"FluxParticleExecutor is missing in prefab '{authoring.name}'. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
+            var playbackParameters = BuildPlaybackParameters(authoring);
             Configure(runtime, compiled, authoring, Root, system.ParticleCount);
             system.SetProgramVariable("particleExecutor", runtime);
             system.SetProgramVariable("particleRenderer", renderer);
             system.SetProgramVariable("particleEmitter", emitter);
+            system.SetProgramVariable("compiledParameters", playbackParameters);
+            EditorUtility.SetDirty(runtime);
+            EditorUtility.SetDirty(system);
+            AssetDatabase.SaveAssets();
+            Logger.Log($"Program Backend assigned: {authoring.name} ({compiled.Shaders.Passes.Count} Passes)", authoring);
+        }
+
+        /// <summary>
+        /// 生成ShaderとPrefabを構成し、実行計画をRuntimeへ設定します。
+        /// </summary>
+        /// <param name="runtime">Initialize前の設定対象</param>
+        /// <param name="compiled">Particleのビルド結果</param>
+        /// <param name="authoring">描画MaterialとBlend設定</param>
+        /// <param name="outputRoot">Assets配下の生成Asset保存先</param>
+        /// <param name="bufferCapacity">Bufferの初期容量</param>
+        public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
+        {
+            if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
+            {
+                throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
+            }
+            if (bufferCapacity < 1 || bufferCapacity > 1048576)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bufferCapacity), "Buffer capacity must be in [1, 1048576].");
+            }
+            var program = compiled.Shaders;
+            var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
+            var parameterValues = parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray();
+            var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
+            var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
+            if (pagePrefab == null || stepPrefab == null)
+            {
+                throw new InvalidOperationException("Program Backend template Prefabs are missing. Run Tools/FluxFX/Setup Program Backend Prefabs.");
+            }
+            if (stepPrefab.GetComponent<FluxKernel>() == null)
+            {
+                throw new InvalidOperationException("Step prefab must contain FluxKernel on its root.");
+            }
+            RequireComponent<FluxBuffer>(pagePrefab.transform, "BufferA");
+            RequireComponent<FluxBuffer>(pagePrefab.transform, "BufferB");
+            RequireComponent<FluxKernel>(pagePrefab.transform, "ClearKernel");
+            var spawn = runtime.transform.Find("Spawn");
+            if (spawn == null)
+            {
+                throw new InvalidOperationException("Program Backend Spawn GameObject is missing from the fixed Prefab.");
+            }
+            var maskKernel = RequireComponent<FluxKernel>(spawn, "MaskKernel");
+            var keyKernel = RequireComponent<FluxKernel>(spawn, "KeyKernel");
+            var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
+            var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
+            var maskShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader");
+            var keyShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader");
+            if (maskShader == null || keyShader == null || ShaderUtil.ShaderHasError(maskShader) || ShaderUtil.ShaderHasError(keyShader))
+            {
+                throw new InvalidOperationException("SpawnInput generation Shaders were not imported correctly.");
+            }
+            var stepShaders = program.Passes.Select(pass => SaveShader(pass.Source, outputRoot)).ToArray();
+            var clearShaders = program.ClearSources.Select(source => SaveShader(source, outputRoot)).ToArray();
+            var renderShader = SaveShader(compiled.RendererSource, outputRoot);
+            var render = SaveRenderMaterial(runtime, compiled, authoring, renderShader, outputRoot);
+
+            var generated = CreateGeneratedRoot(runtime);
+            var stepRoot = CreateGroup(generated, "Steps");
+            var pageRoot = CreateGroup(generated, "Pages");
+            var steps = stepShaders.Select((shader, index) => CreateStep(stepRoot, stepPrefab, index, shader)).ToArray();
+            var pageInstances = program.Compilation.StateLayout.Pages.Select((page, index) =>
+                CreatePage(pageRoot, pagePrefab, index, clearShaders[index], bufferCapacity)).ToArray();
+            var clears = pageInstances.Select(page => page.Clear).ToArray();
+            var buffersA = pageInstances.Select(page => page.A).ToArray();
+            var buffersB = pageInstances.Select(page => page.B).ToArray();
+            maskKernel.SetProgramVariable("shader", maskShader);
+            keyKernel.SetProgramVariable("shader", keyShader);
+            maskBuffer.SetProgramVariable("initialCount", bufferCapacity);
+            keyBuffer.SetProgramVariable("initialCount", bufferCapacity);
+            runtime.SetProgramVariable("stepKernels", steps);
+            runtime.SetProgramVariable("clearKernels", clears);
+            runtime.SetProgramVariable("spawnMaskKernel", maskKernel);
+            runtime.SetProgramVariable("spawnKeyKernel", keyKernel);
+            runtime.SetProgramVariable("pageBuffersA", buffersA);
+            runtime.SetProgramVariable("pageBuffersB", buffersB);
+            runtime.SetProgramVariable("spawnMaskBuffer", maskBuffer);
+            runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
+            runtime.SetProgramVariable("renderMaterial", render);
+            ConfigureManifest(runtime, program, parameters, parameterValues);
+            EditorUtility.SetDirty(runtime);
+        }
+
+        static string BuildPlaybackParameters(FluxParticleAuthoring authoring)
+        {
             var bursts = new JArray();
             foreach (var burst in authoring.Emission.Bursts.OrderBy(burst => burst.Time))
             {
@@ -70,66 +159,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 },
                 ["emission"] = new JObject { ["rate"] = authoring.Emission.Rate, ["bursts"] = bursts }
             };
-            system.SetProgramVariable("compiledParameters", json.ToString(Formatting.None));
-            EditorUtility.SetDirty(runtime);
-            EditorUtility.SetDirty(system);
-            AssetDatabase.SaveAssets();
-            Logger.Log($"Program Backend assigned: {authoring.name} ({compiled.Shaders.Passes.Count} Passes)", authoring);
+            return json.ToString(Formatting.None);
         }
 
-        /// <summary>
-        /// Compiler出力をUdonで扱える一次元配列へ変換し、Runtimeへ設定します。
-        /// </summary>
-        /// <param name="runtime">設定対象。Initialize前に呼び出します。</param>
-        /// <param name="compiled">検証済みAuthoring Program。</param>
-        /// <param name="authoring">描画MaterialとBlend設定。</param>
-        /// <param name="outputRoot">生成Assetの保存先。Assets配下を指定します。</param>
-        public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
+        static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,
+            FluxParticleAuthoring authoring, Shader shader, string outputRoot)
         {
-            if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
-            {
-                throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
-            }
-            var program = compiled.Shaders;
-            var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
-            var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
-            if (pagePrefab == null || stepPrefab == null)
-            {
-                throw new InvalidOperationException("Program Backend template Prefabs are missing. Run Tools/FluxFX/Setup Program Backend Prefabs.");
-            }
-
-            var generated = CreateGeneratedRoot(runtime);
-            var stepRoot = CreateGroup(generated, "Steps");
-            var pageRoot = CreateGroup(generated, "Pages");
-            var steps = program.Passes.Select((pass, index) =>
-                CreateStep(stepRoot, stepPrefab, index, SaveShader(pass.Source, outputRoot))).ToArray();
-            var pageInstances = program.Compilation.StateLayout.Pages.Select((page, index) =>
-                CreatePage(pageRoot, pagePrefab, index, SaveShader(program.ClearSources[index], outputRoot), bufferCapacity)).ToArray();
-            var clears = pageInstances.Select(page => page.Clear).ToArray();
-            var buffersA = pageInstances.Select(page => page.A).ToArray();
-            var buffersB = pageInstances.Select(page => page.B).ToArray();
-
-            var spawn = runtime.transform.Find("Spawn");
-            if (spawn == null)
-            {
-                throw new InvalidOperationException("Program Backend Spawn GameObject is missing from the fixed Prefab.");
-            }
-            var maskKernel = RequireComponent<FluxKernel>(spawn, "MaskKernel");
-            var keyKernel = RequireComponent<FluxKernel>(spawn, "KeyKernel");
-            var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
-            var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
-            var maskShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnMask.shader");
-            var keyShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleSpawnKey.shader");
-            if (maskShader == null || keyShader == null || ShaderUtil.ShaderHasError(maskShader) || ShaderUtil.ShaderHasError(keyShader))
-            {
-                throw new InvalidOperationException("SpawnInput generation Shaders were not imported correctly.");
-            }
-            maskKernel.SetProgramVariable("shader", maskShader);
-            keyKernel.SetProgramVariable("shader", keyShader);
-            maskBuffer.SetProgramVariable("initialCount", bufferCapacity);
-            keyBuffer.SetProgramVariable("initialCount", bufferCapacity);
             var renderCode = compiled.RendererSource;
-            var shader = SaveShader(renderCode, outputRoot);
             var renderSource = authoring.Render.Material;
             var texture = renderSource == null ? null : renderSource.mainTexture;
             var scale = renderSource == null ? Vector2.one : renderSource.mainTextureScale;
@@ -144,16 +180,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
             if (render == null)
             {
                 render = new Material(shader);
-                render.mainTexture = texture;
-                render.mainTextureScale = scale;
-                render.mainTextureOffset = offset;
-                var blend = authoring.Render.BlendMode;
-                render.SetFloat("_SrcBlend", blend == FluxParticleBlendMode.Opaque ? 1 : 5);
-                render.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);
-                render.SetFloat("_ZWrite", blend == FluxParticleBlendMode.Opaque ? 1 : 0);
-                render.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
                 AssetDatabase.CreateAsset(render, rendererPath);
             }
+            render.shader = shader;
+            render.mainTexture = texture;
+            render.mainTextureScale = scale;
+            render.mainTextureOffset = offset;
+            var blend = authoring.Render.BlendMode;
+            render.SetFloat("_SrcBlend", blend == FluxParticleBlendMode.Opaque ? 1 : 5);
+            render.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);
+            render.SetFloat("_ZWrite", blend == FluxParticleBlendMode.Opaque ? 1 : 0);
+            render.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
+            EditorUtility.SetDirty(render);
+            return render;
+        }
+
+        static void ConfigureManifest(FluxParticleExecutor runtime, FluxParticleShaderProgram program,
+            IReadOnlyList<FluxParticleParameterDefinition> parameters, Vector4[] parameterValues)
+        {
             var offsets = new List<int> { 0 };
             var pages = new List<int>();
             var versions = new List<bool>();
@@ -168,15 +212,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 }
                 offsets.Add(pages.Count);
             }
-            runtime.SetProgramVariable("stepKernels", steps);
-            runtime.SetProgramVariable("clearKernels", clears);
-            runtime.SetProgramVariable("spawnMaskKernel", maskKernel);
-            runtime.SetProgramVariable("spawnKeyKernel", keyKernel);
-            runtime.SetProgramVariable("pageBuffersA", buffersA);
-            runtime.SetProgramVariable("pageBuffersB", buffersB);
-            runtime.SetProgramVariable("spawnMaskBuffer", maskBuffer);
-            runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
-            runtime.SetProgramVariable("renderMaterial", render);
             runtime.SetProgramVariable("outputPages", program.Passes.Select(pass => pass.Plan.OutputPageId).ToArray());
             runtime.SetProgramVariable("spawnOnly", program.Passes.Select(pass => pass.Plan.Condition == FluxParticlePassCondition.HasSpawn).ToArray());
             runtime.SetProgramVariable("readOffsets", offsets.ToArray());
@@ -184,12 +219,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
             runtime.SetProgramVariable("readUpdated", versions.ToArray());
             runtime.SetProgramVariable("readProperties", properties.ToArray());
             runtime.SetProgramVariable("renderPageProperties", program.Compilation.StateLayout.Pages.Select(page => FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)).ToArray());
-            var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
             runtime.SetProgramVariable("parameterIds", parameters.Select(parameter => parameter.Id).ToArray());
             runtime.SetProgramVariable("parameterProperties", parameters.Select(parameter => FluxParticleHlslNames.ParameterProperty(parameter.Id)).ToArray());
             runtime.SetProgramVariable("parameterTypes", parameters.Select(parameter => (int)parameter.Type).ToArray());
             runtime.SetProgramVariable("staticParameters", parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static).ToArray());
-            runtime.SetProgramVariable("parameterValues", parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray());
+            runtime.SetProgramVariable("parameterValues", parameterValues);
             runtime.SetProgramVariable("deltaTimeProperty", FluxParticleHlslNames.ProviderProperty("step.delta-time"));
             runtime.SetProgramVariable("spawnKeyProperty", FluxParticleHlslNames.ProviderProperty("spawn.key"));
         }

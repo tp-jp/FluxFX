@@ -107,6 +107,27 @@ namespace TpLab.Flux.FX.Tests.Editor
             CollectionAssert.AreEqual(compiled.Shaders.Passes.Select(p => p.Plan.OutputPageId), (int[])runtime.GetProgramVariable("outputPages"));
             CollectionAssert.AreEqual(compiled.Shaders.Passes.SelectMany(p => p.Reads).Select(r => FluxParticleHlslNames.PageProperty(r.PageId, r.Version)),
                 (string[])runtime.GetProgramVariable("readProperties"));
+            var reads = compiled.Shaders.Passes.SelectMany(pass => pass.Reads).ToArray();
+            var offsets = new List<int> { 0 };
+            foreach (var pass in compiled.Shaders.Passes)
+            {
+                offsets.Add(offsets.Last() + pass.Reads.Count);
+            }
+            CollectionAssert.AreEqual(offsets, (int[])runtime.GetProgramVariable("readOffsets"));
+            CollectionAssert.AreEqual(reads.Select(read => read.PageId), (int[])runtime.GetProgramVariable("readPages"));
+            CollectionAssert.AreEqual(reads.Select(read => read.Version == FluxParticlePageVersion.Updated),
+                (bool[])runtime.GetProgramVariable("readUpdated"));
+            CollectionAssert.AreEqual(compiled.Shaders.Passes.Select(pass => pass.Plan.Condition == FluxParticlePassCondition.HasSpawn),
+                (bool[])runtime.GetProgramVariable("spawnOnly"));
+            var parameters = compiled.Shaders.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
+            CollectionAssert.AreEqual(parameters.Select(parameter => parameter.Id), (string[])runtime.GetProgramVariable("parameterIds"));
+            CollectionAssert.AreEqual(parameters.Select(parameter => FluxParticleHlslNames.ParameterProperty(parameter.Id)),
+                (string[])runtime.GetProgramVariable("parameterProperties"));
+            CollectionAssert.AreEqual(parameters.Select(parameter => (int)parameter.Type), (int[])runtime.GetProgramVariable("parameterTypes"));
+            CollectionAssert.AreEqual(parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static),
+                (bool[])runtime.GetProgramVariable("staticParameters"));
+            CollectionAssert.AreEqual(parameters.Select(parameter => compiled.InitialValues[parameter.Id]),
+                (Vector4[])runtime.GetProgramVariable("parameterValues"));
             var kernels = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             Assert.AreEqual(compiled.Shaders.Passes.Count, kernels.Length);
             foreach (var kernel in kernels)
@@ -124,6 +145,109 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [Test]
+        public void ReconfigureReplacesGeneratedHierarchyAndReusesShaderAssets()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var previous = runtime.transform.Find("__FluxFXGenerated").gameObject;
+            var previousSteps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
+            var stepShaders = previousSteps.Select(kernel => kernel.Shader).ToArray();
+            var render = (Material)runtime.GetProgramVariable("renderMaterial");
+            var assets = AssetDatabase.FindAssets("", new[] { folder });
+
+            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, 9);
+
+            Assert.IsTrue(previous == null);
+            Assert.AreEqual(1, runtime.transform.Cast<Transform>().Count(child => child.name == "__FluxFXGenerated"));
+            var steps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
+            CollectionAssert.AreEqual(stepShaders, steps.Select(kernel => kernel.Shader));
+            Assert.IsTrue(previousSteps.All(kernel => kernel == null));
+            Assert.AreSame(render, runtime.GetProgramVariable("renderMaterial"));
+            CollectionAssert.AreEquivalent(assets, AssetDatabase.FindAssets("", new[] { folder }));
+            foreach (var buffer in ((FluxBuffer[])runtime.GetProgramVariable("pageBuffersA"))
+                .Concat((FluxBuffer[])runtime.GetProgramVariable("pageBuffersB"))
+                .Concat(new[] { (FluxBuffer)runtime.GetProgramVariable("spawnMaskBuffer"),
+                    (FluxBuffer)runtime.GetProgramVariable("spawnKeyBuffer") }))
+            {
+                Assert.AreEqual(9, (int)buffer.GetProgramVariable("initialCount"));
+            }
+        }
+
+        [Test]
+        public void ReconfigureRestoresCachedRenderMaterialSettings()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var render = (Material)runtime.GetProgramVariable("renderMaterial");
+            var shader = render.shader;
+            var texture = render.mainTexture;
+            var scale = render.mainTextureScale;
+            var offset = render.mainTextureOffset;
+            var sourceBlend = render.GetFloat("_SrcBlend");
+            var destinationBlend = render.GetFloat("_DstBlend");
+            var zWrite = render.GetFloat("_ZWrite");
+            var queue = render.renderQueue;
+            render.mainTexture = Texture2D.whiteTexture;
+            render.mainTextureScale = new Vector2(3, 4);
+            render.mainTextureOffset = new Vector2(0.2f, 0.3f);
+            render.SetFloat("_SrcBlend", 99);
+            render.SetFloat("_DstBlend", 99);
+            render.SetFloat("_ZWrite", 99);
+            render.renderQueue = 1234;
+
+            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder);
+
+            Assert.AreSame(render, runtime.GetProgramVariable("renderMaterial"));
+            Assert.AreSame(shader, render.shader);
+            Assert.AreSame(texture, render.mainTexture);
+            Assert.AreEqual(scale, render.mainTextureScale);
+            Assert.AreEqual(offset, render.mainTextureOffset);
+            Assert.AreEqual(sourceBlend, render.GetFloat("_SrcBlend"));
+            Assert.AreEqual(destinationBlend, render.GetFloat("_DstBlend"));
+            Assert.AreEqual(zWrite, render.GetFloat("_ZWrite"));
+            Assert.AreEqual(queue, render.renderQueue);
+        }
+
+        [Test]
+        public void MissingSpawnConfigurationPreservesExistingGeneratedHierarchy()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var generated = runtime.transform.Find("__FluxFXGenerated");
+            var steps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
+            var spawn = runtime.transform.Find("Spawn");
+            spawn.SetParent(root.transform, false);
+            try
+            {
+                StringAssert.Contains("Spawn GameObject is missing",
+                    Assert.Throws<InvalidOperationException>(() =>
+                        FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder)).Message);
+                Assert.AreSame(generated, runtime.transform.Find("__FluxFXGenerated"));
+                CollectionAssert.AreEqual(steps, (FluxKernel[])runtime.GetProgramVariable("stepKernels"));
+                Assert.IsTrue(steps.All(kernel => kernel != null));
+            }
+            finally
+            {
+                spawn.SetParent(runtime.transform, false);
+            }
+        }
+
+        [TestCase(0)]
+        [TestCase(1048577)]
+        public void InvalidBufferCapacityPreservesExistingGeneratedHierarchy(int capacity)
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var generated = runtime.transform.Find("__FluxFXGenerated");
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, capacity));
+            Assert.AreSame(generated, runtime.transform.Find("__FluxFXGenerated"));
+        }
         [Test]
         public void SpawnThenGravityUpdatesVelocityPositionAndAge()
         {
