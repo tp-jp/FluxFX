@@ -555,6 +555,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             session.SetVector("gravity", new Vector4(0, -2, 0, 0));
             session.SetFloat("gravity.enabled", 1);
             session.SetFloat("drag", 0.4f);
+            session.SetFloat("drag.enabled", 1);
             session.SetVector("lifetime.range", new Vector4(lifetime, lifetime, 0, 0));
             session.SetVector("color.start", Vector4.one);
             session.SetVector("color.end", Vector4.zero);
