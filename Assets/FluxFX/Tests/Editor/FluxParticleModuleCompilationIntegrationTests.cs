@@ -15,7 +15,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void CustomModuleCompilationIsIndependentOfCoreRegistrationOrder()
         {
-            var standard = FluxParticleBasicProgram.CreateDefinitions();
+            var standard = FluxParticleCoreDefinitions.Create();
             var ordered = CreateWithTint(standard, false);
             var reversed = CreateWithTint(standard, true);
 
@@ -47,8 +47,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             var generator = new FluxParticleProgramShaderGenerator();
-            var firstShader = generator.Generate(ordered, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleBasicProgram.CreateLifecycle());
-            var secondShader = generator.Generate(reversed, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleBasicProgram.CreateLifecycle());
+            var firstShader = generator.Generate(ordered, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
+            var secondShader = generator.Generate(reversed, "Hidden/FluxFX/Tests/ModuleOrder", FluxParticleCoreDefinitions.CreateLifecycle());
             Assert.AreEqual(firstShader.RenderSource, secondShader.RenderSource);
         }
 
@@ -67,6 +67,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 new FluxParticleModuleRegistryTests.TestTintDefinition()
             });
             registry.Contribute(new FluxParticleModule[] { new FluxParticleModuleRegistryTests.TestTintModule() }, context);
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
             return definitions;
         }
     }

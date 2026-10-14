@@ -13,7 +13,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void ReadOnlyValueAndRenderOperationDoNotIncreasePagesOrPasses()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = FluxParticleCoreDefinitions.Create();
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var compiler = new FluxParticleProgramCompiler();
             var baseline = compiler.Compile(definitions);
 

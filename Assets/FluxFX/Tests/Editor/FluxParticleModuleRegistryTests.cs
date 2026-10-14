@@ -17,7 +17,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void CustomModuleContributesWithoutChangesToCoreDefinitions()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = FluxParticleCoreDefinitions.Create();
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var pageCount = new FluxParticleProgramCompiler().Compile(definitions).StateLayout.Pages.Count;
             var context = new FluxParticleProgramContribution(definitions);
             var registry = new FluxParticleModuleRegistry(new IFluxParticleModuleDefinition[] { new TestTintDefinition() });
@@ -36,7 +37,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(program.StateLayout.TryGetBinding("render.test-tint", out _));
             Assert.IsTrue(program.Operations.Any(value => value.Id == "test.render-tint"));
 
-            var shader = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Tests/Module", FluxParticleBasicProgram.CreateLifecycle());
+            var shader = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Tests/Module", FluxParticleCoreDefinitions.CreateLifecycle());
             StringAssert.Contains("Assets/FluxFX/Tests/Editor/Hlsl/TestRenderTint.hlsl", shader.RenderSource);
             StringAssert.Contains("FluxFX_TestRenderTint", shader.RenderSource);
         }
@@ -66,7 +67,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RejectsDuplicateOrUnknownAuthoringModules()
         {
             var registry = new FluxParticleModuleRegistry(new IFluxParticleModuleDefinition[] { new TestTintDefinition() });
-            var context = new FluxParticleProgramContribution(FluxParticleBasicProgram.CreateDefinitions());
+            var context = new FluxParticleProgramContribution(FluxParticleCoreDefinitions.Create());
             Assert.Throws<InvalidOperationException>(() => registry.Contribute(new FluxParticleModule[]
             {
                 new TestTintModule(), new TestTintModule()
@@ -74,7 +75,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.Throws<InvalidOperationException>(() => registry.Contribute(new FluxParticleModule[]
             {
                 new TestUnknownModule()
-            }, new FluxParticleProgramContribution(FluxParticleBasicProgram.CreateDefinitions())));
+            }, new FluxParticleProgramContribution(FluxParticleCoreDefinitions.Create())));
         }
 
         [Test]
