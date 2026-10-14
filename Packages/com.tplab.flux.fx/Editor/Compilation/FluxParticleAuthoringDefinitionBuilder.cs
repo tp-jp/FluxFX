@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Scripts;
@@ -12,28 +14,30 @@ namespace TpLab.Flux.FX.Editor.Compilation
     public static class FluxParticleAuthoringDefinitionBuilder
     {
         /// <summary>
-        /// Core ValueとModule Definitionを登録します。
+        /// CoreとModuleの論理定義およびParameter初期値を構築します。
         /// </summary>
         /// <param name="authoring">Particleの設定。</param>
-        /// <param name="source">Coreの基本定義。</param>
-        /// <param name="moduleContext">Moduleが登録した定義と初期値。</param>
-        /// <param name="hasRotation">Rotationを使用するか。</param>
+        /// <param name="initialValues">Parameter IDに対応する初期値。</param>
         /// <returns>構築した論理定義。</returns>
         public static FluxParticleDefinitionBuilder Create(FluxParticleAuthoring authoring,
-            out FluxParticleDefinitionBuilder source, out FluxParticleProgramContribution moduleContext, out bool hasRotation)
+            out IReadOnlyDictionary<string, Vector4> initialValues)
         {
-            source = FluxParticleCoreDefinitions.Create();
+            var source = FluxParticleCoreDefinitions.Create();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
-            moduleContext = new FluxParticleProgramContribution(definitions);
+            var moduleContext = new FluxParticleProgramContribution(definitions);
             new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
-            hasRotation = authoring.Render.StartRotation.z != 0 || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
+            var hasRotation = authoring.Render.StartRotation.z != 0 || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
                 write.ValueId == "render.rotation"));
             if (hasRotation)
             {
                 definitions.AddValue(new FluxParticleValueDefinition("render.rotation", FluxParticleValueType.Float3,
                     FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
             }
+            AddProviders(authoring, source, definitions);
+            AddOperationsAndParameters(authoring, source, definitions, hasRotation);
+            initialValues = new ReadOnlyDictionary<string, Vector4>(
+                FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation));
             return definitions;
         }
 
@@ -43,7 +47,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="authoring">Particleの設定。</param>
         /// <param name="source">Coreの基本定義。</param>
         /// <param name="definitions">Providerの登録先。</param>
-        public static void AddProviders(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
+        static void AddProviders(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
             FluxParticleDefinitionBuilder definitions)
         {
             foreach (var provider in source.Providers.Values)
@@ -72,7 +76,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="source">Coreの基本定義。</param>
         /// <param name="definitions">定義の登録先。</param>
         /// <param name="hasRotation">Rotationを使用するか。</param>
-        public static void AddOperationsAndParameters(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
+        static void AddOperationsAndParameters(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
             FluxParticleDefinitionBuilder definitions, bool hasRotation)
         {
             var randomColor = authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants;

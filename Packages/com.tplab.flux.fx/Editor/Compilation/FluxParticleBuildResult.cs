@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using TpLab.Flux.FX.Scripts;
 using UnityEngine;
 
@@ -41,13 +40,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public static FluxParticleBuildResult Create(FluxParticleAuthoring authoring)
         {
             FluxParticleAuthoringValidator.Validate(authoring);
-            var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var source, out var moduleContext, out var hasRotation);
-            FluxParticleAuthoringDefinitionBuilder.AddProviders(authoring, source, definitions);
-            FluxParticleAuthoringDefinitionBuilder.AddOperationsAndParameters(authoring, source, definitions, hasRotation);
-            var initialValues = FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation);
+            var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initialValues);
             FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var program = new FluxParticleProgramShaderGenerator().Generate(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
-            return new FluxParticleBuildResult(program, new ReadOnlyDictionary<string, Vector4>(initialValues));
+            return new FluxParticleBuildResult(program, initialValues);
         }
     }
 }
