@@ -176,6 +176,55 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(root);
             }
         }
+        [Test]
+        public void PreviewRecreationPreservesEmissionTimelineAndFraction()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var root = new GameObject("Preview Emission Snapshot Test");
+            try
+            {
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("playback.startDelay").floatValue = 0.25f;
+                serialized.FindProperty("playback.duration").floatValue = 0.5f;
+                serialized.FindProperty("emission.rate").floatValue = 3;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                var build = FluxParticleBuildPipeline.Build(authoring);
+                using (var first = new FluxParticleEditorPreview(build, authoring, 4))
+                {
+                    first.Step(0.375f);
+                    var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                    var type = typeof(FluxParticleEditorPreview);
+                    var stateField = type.GetField("emissionState", flags);
+                    using (var second = first.Recreate(build))
+                    {
+                        Assert.AreNotSame(stateField.GetValue(first), stateField.GetValue(second));
+                        CollectionAssert.AreEqual((double[])stateField.GetValue(first), (double[])stateField.GetValue(second));
+                        foreach (var delta in new[] { 0.125f, 0.25f, 0.125f, 0.125f })
+                        {
+                            first.Step(delta);
+                            second.Step(delta);
+                            Assert.AreEqual(first.PlaybackTime, second.PlaybackTime);
+                            CollectionAssert.AreEqual((double[])stateField.GetValue(first), (double[])stateField.GetValue(second));
+                            Assert.AreEqual(type.GetField("cursor", flags).GetValue(first), type.GetField("cursor", flags).GetValue(second));
+                            Assert.AreEqual(type.GetField("seed", flags).GetValue(first), type.GetField("seed", flags).GetValue(second));
+                        }
+                        second.Restart();
+                        Assert.AreEqual(0, second.PlaybackTime);
+                        Assert.Greater(first.PlaybackTime, 0);
+                    }
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
         [UnityTest]
         public IEnumerator AliveCountTracksGpuStateAndResetsOnRestart()
         {

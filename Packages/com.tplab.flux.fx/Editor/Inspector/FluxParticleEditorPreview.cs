@@ -30,15 +30,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
         int countGeneration;
         bool countPending;
         double lastCountTime;
-        readonly BurstSettings[] bursts;
+        readonly float[] burstTimes;
+        readonly int[] burstCounts;
+        double[] emissionState;
         readonly bool usesSimulationTime;
-        double fraction;
-        float delay;
-        float cycleTime;
-        int burstIndex;
         int cursor;
         int seed;
-        bool completed;
         bool disposed;
 
         /// <summary>
@@ -67,7 +64,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (count < 1 || count > 4096) throw new ArgumentOutOfRangeException(nameof(count));
             this.authoring = authoring;
             Count = count;
-            bursts = authoring.Emission.Bursts.OrderBy(burst => burst.Time).ToArray();
+            var bursts = authoring.Emission.Bursts.OrderBy(burst => burst.Time).ToArray();
+            burstTimes = bursts.Select(burst => burst.Time).ToArray();
+            burstCounts = bursts.Select(burst => burst.Count).ToArray();
+            emissionState = FluxParticleEmissionScheduler.Create(authoring.Playback.StartDelay);
             try
             {
                 var width = Mathf.CeilToInt(Mathf.Sqrt(count));
@@ -158,13 +158,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     RenderTexture.active = active;
                 }
                 replacement.PlaybackTime = PlaybackTime;
-                replacement.fraction = fraction;
-                replacement.delay = delay;
-                replacement.cycleTime = cycleTime;
-                replacement.burstIndex = burstIndex;
+                replacement.emissionState = (double[])emissionState.Clone();
                 replacement.cursor = cursor;
                 replacement.seed = seed;
-                replacement.completed = completed;
                 replacement.AliveCount = AliveCount;
                 return replacement;
             }
@@ -185,22 +181,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
             countPending = false;
             lastCountTime = double.NegativeInfinity;
             AliveCount = countMaterial == null ? -1 : 0;
-            fraction = 0;
-            delay = authoring.Playback.StartDelay;
-            cycleTime = 0;
-            burstIndex = 0;
+            FluxParticleEmissionScheduler.Reset(emissionState, authoring.Playback.StartDelay);
             cursor = 0;
             seed = 0;
-            completed = false;
         }
-
         /// <summary>
         /// EmissionとGPU Simulationを進めます。
         /// </summary>
         /// <param name="deltaTime">経過秒数</param>
         public void Step(float deltaTime)
         {
-            var spawnCount = Emit(deltaTime);
+            var spawnCount = FluxParticleEmissionScheduler.Emit(emissionState, deltaTime, authoring.Emission.Rate,
+                authoring.Playback.Duration, authoring.Playback.Loop, burstTimes, burstCounts);
             var visible = Math.Min(Count, spawnCount);
             var skipped = spawnCount - visible;
             var first = (int)((cursor + skipped) % Count);
@@ -292,41 +284,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 SceneView.RepaintAll();
             });
         }
-        long Emit(float deltaTime)
-        {
-            if (completed) return 0;
-            var remaining = deltaTime;
-            var delayStep = Mathf.Min(delay, remaining);
-            delay -= delayStep;
-            remaining -= delayStep;
-            long count = 0;
-            while (remaining > 0)
-            {
-                var step = Mathf.Min(remaining, authoring.Playback.Duration - cycleTime);
-                var previous = cycleTime;
-                cycleTime += step;
-                remaining -= step;
-                fraction += step * (double)authoring.Emission.Rate;
-                var rateCount = (long)Math.Min(int.MaxValue, Math.Floor(fraction));
-                fraction -= rateCount;
-                count += rateCount;
-                while (burstIndex < bursts.Length && bursts[burstIndex].Time <= cycleTime)
-                {
-                    var burst = bursts[burstIndex++];
-                    if (burst.Time >= previous) count += burst.Count;
-                }
-                if (cycleTime < authoring.Playback.Duration) break;
-                if (!authoring.Playback.Loop)
-                {
-                    completed = true;
-                    break;
-                }
-                cycleTime = 0;
-                burstIndex = 0;
-            }
-            return count;
-        }
-
         Shader CreateShader(string source)
         {
             var shader = Own(ShaderUtil.CreateShaderAsset(source, true));
