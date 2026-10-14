@@ -272,10 +272,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
                 session.SetFloat("shape.radius", 2.5f);
-                session.SetVector("gravity", Vector4.zero);
-                session.SetFloat("gravity.enabled", 0);
-                session.SetFloat("drag", 0);
-                session.SetFloat("drag.enabled", 0);
                 session.SetVector("lifetime.range", new Vector4(3, 3, 0, 0));
                 session.SetVector("color.start", Vector4.one);
                 session.SetVector("color.end", Vector4.one);
@@ -332,10 +328,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 else session.SetVector("spawn.speed-range", new Vector4(1, 3, 0, 0));
                 if (shape != FluxParticleShapeType.Point) session.SetFloat("shape.radius", 2.5f);
                 if (shape == FluxParticleShapeType.Cone) session.SetFloat("shape.angle", 30f);
-                session.SetVector("gravity", Vector4.zero);
-                session.SetFloat("gravity.enabled", 0);
-                session.SetFloat("drag", 0);
-                session.SetFloat("drag.enabled", 0);
                 session.SetVector("lifetime.range", new Vector4(3, 3, 0, 0));
                 session.SetVector("color.start", Vector4.one);
                 session.SetVector("color.end", Vector4.one);
@@ -418,10 +410,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
-                session.SetVector("gravity", Vector4.zero);
-                session.SetFloat("gravity.enabled", 0);
-                session.SetFloat("drag", 0);
-                session.SetFloat("drag.enabled", 0);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
                 session.SetVector("color.start-min", new Vector4(0, 0, 0, 0));
                 session.SetVector("color.start-max", new Vector4(1, 1, 1, 1));
@@ -484,10 +472,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
-                session.SetVector("gravity", Vector4.zero);
-                session.SetFloat("gravity.enabled", 0);
-                session.SetFloat("drag", 0);
-                session.SetFloat("drag.enabled", 0);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
                 session.SetVector("color.start", Vector4.one);
                 session.SetVector("color.end", Vector4.one);

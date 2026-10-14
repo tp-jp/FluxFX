@@ -15,8 +15,10 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var gravity = (FluxParticleGravityModule)module;
-            context.SetInitialValue("gravity", gravity.Gravity);
-            context.SetInitialValue("gravity.enabled", new Vector4(1, 0, 0, 0));
+            context.AddParameter(new FluxParticleParameterDefinition("gravity", FluxParticleValueType.Float3,
+                FluxParticleParameterPolicy.Live), gravity.Gravity);
+            context.AddParameter(new FluxParticleParameterDefinition("gravity.enabled", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("gravity", ModuleId, FluxParticlePhase.Update,
                 new[]
                 {

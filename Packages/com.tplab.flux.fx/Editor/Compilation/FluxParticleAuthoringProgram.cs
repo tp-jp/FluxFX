@@ -106,8 +106,13 @@ namespace TpLab.Flux.FX.Editor.Compilation
             }
             var randomColor = authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants;
             var randomSize = authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants;
+            var velocityTemplateParameters = new System.Collections.Generic.HashSet<string>(source.Operations.Values.Where(operation =>
+                operation.Phase == FluxParticlePhase.Update && operation.Writes.Any(write => write.ValueId == "particle.velocity"))
+                .SelectMany(operation => operation.Parameters.Concat(operation.EnabledParameterId == null
+                    ? Array.Empty<string>() : new[] { operation.EnabledParameterId })), StringComparer.Ordinal);
             foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity" &&
-                !(randomColor && parameter.Id == "color.start"))) definitions.AddParameter(parameter);
+                !(randomColor && parameter.Id == "color.start") &&
+                !velocityTemplateParameters.Contains(parameter.Id))) definitions.AddParameter(parameter);
             if (randomColor)
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("color.start-min", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
@@ -150,7 +155,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("shape.size", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
             }
-            definitions.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
             definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
                 randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
             if (hasRotation)
@@ -217,10 +221,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
             {
                 ["spawn.position"] = Vector4.zero,
-                ["gravity"] = Vector4.zero,
-                ["gravity.enabled"] = Vector4.zero,
-                ["drag"] = Vector4.zero,
-                ["drag.enabled"] = Vector4.zero,
                 ["lifetime.range"] = new Vector4(min, max, 0, 0),
                 ["color.end"] = authoring.Render.StartColor
             };

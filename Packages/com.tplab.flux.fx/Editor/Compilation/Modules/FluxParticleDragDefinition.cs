@@ -15,8 +15,10 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var drag = (FluxParticleDragModule)module;
-            context.SetInitialValue("drag", new Vector4(drag.Drag, 0, 0, 0));
-            context.SetInitialValue("drag.enabled", new Vector4(1, 0, 0, 0));
+            context.AddParameter(new FluxParticleParameterDefinition("drag", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new Vector4(drag.Drag, 0, 0, 0));
+            context.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("drag", ModuleId, FluxParticlePhase.Update,
                 new[]
                 {

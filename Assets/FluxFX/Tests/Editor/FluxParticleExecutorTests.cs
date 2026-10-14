@@ -73,7 +73,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(2, program.Program.Program.StateLayout.Pages.Count);
             Assert.AreEqual(2, program.Program.Passes.Count);
             Assert.AreEqual(1, program.InitialValues["spawn.speed"].x);
-            Assert.AreEqual(0, program.InitialValues["gravity.enabled"].x);
+            Assert.IsFalse(program.InitialValues.ContainsKey("gravity.enabled"));
             Assert.IsFalse(program.Program.Program.Operations.Any(op => op.Id == "render.color"));
         }
 
@@ -180,7 +180,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             first.Step(0.1f, 0, 1, 1);
             first.Clear();
             Assert.IsFalse(first.SetVector("color.start", Vector4.one));
-            Assert.IsTrue(first.SetFloat("gravity.enabled", 1));
+            Assert.IsFalse(first.SetFloat("gravity.enabled", 1));
             Assert.IsFalse(first.SetFloat("color.start", 1));
             Assert.IsFalse(first.SetFloat("unknown", 1));
             Assert.AreEqual(-1, ReadValue(first, compiled, "particle.age", 0).x, 0.0001f);
