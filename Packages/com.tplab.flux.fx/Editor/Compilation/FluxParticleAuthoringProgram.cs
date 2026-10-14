@@ -159,8 +159,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
             }
             foreach (var operation in source.Operations.Values)
             {
-                if (operation.Id == "gravity" || operation.Id == "drag" || operation.Id == "render.color" ||
-                    operation.Id == "motion")
+                // CoreのBasic Programに含まれるVelocity更新テンプレートはModule側のOperationで置き換えます。
+                if ((operation.Phase == FluxParticlePhase.Update &&
+                    operation.Writes.Any(write => write.ValueId == "particle.velocity")) ||
+                    operation.Id == "render.color" || operation.Id == "motion")
                 {
                     continue;
                 }
