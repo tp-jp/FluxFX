@@ -45,11 +45,28 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 Require(FiniteNonNegative(authoring.InitialVelocity.Min) && FiniteNonNegative(authoring.InitialVelocity.Max),
                     "Finite non-negative start speed range");
             }
+            if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.Constant)
+            {
+                Require(FiniteNonNegative(authoring.InitialVelocity.Speed), "Finite non-negative start speed");
+            }
+            Require(authoring.Lifetime.Mode == FluxParticleStartLifetimeMode.Constant ||
+                authoring.Lifetime.Mode == FluxParticleStartLifetimeMode.RandomBetweenTwoConstants, "Supported start lifetime mode");
+            Require(authoring.Lifetime.Mode == FluxParticleStartLifetimeMode.Constant
+                ? FiniteNonNegative(authoring.Lifetime.Lifetime)
+                : FiniteNonNegative(authoring.Lifetime.Min) && FiniteNonNegative(authoring.Lifetime.Max),
+                "Finite non-negative lifetime");
             Require(authoring.Render.Mode == FluxParticleRenderMode.Billboard, "Billboard rendering");
+            Require(authoring.Render.BlendMode == FluxParticleBlendMode.Opaque ||
+                authoring.Render.BlendMode == FluxParticleBlendMode.Alpha ||
+                authoring.Render.BlendMode == FluxParticleBlendMode.Additive, "Supported blend mode");
             Require(authoring.Render.StartColorMode == FluxParticleStartColorMode.Constant ||
                 authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants, "Supported start color mode");
             Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant ||
                 authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants, "Supported start size mode");
+            Require(authoring.Render.StartSizeMode == FluxParticleStartSizeMode.Constant
+                ? FiniteNonNegative(authoring.Render.StartSize)
+                : FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax),
+                "Finite non-negative start size");
             var startRotation = authoring.Render.StartRotation;
             Require(startRotation.x == 0 && startRotation.y == 0 && !float.IsNaN(startRotation.z) &&
                 !float.IsInfinity(startRotation.z), "Billboard start rotation around Z only");

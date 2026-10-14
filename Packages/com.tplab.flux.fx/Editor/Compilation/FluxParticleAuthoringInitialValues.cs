@@ -91,15 +91,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     }
                 }
             }
-            if (min < 0 || (randomSize
-                ? !FiniteNonNegative(authoring.Render.StartSizeMin) || !FiniteNonNegative(authoring.Render.StartSizeMax)
-                : !FiniteNonNegative(authoring.Render.StartSize)))
-            {
-                throw new InvalidOperationException("Program Backend currently requires: Non-negative lifetime and size.");
-            }
             return values;
         }
 
-        static bool FiniteNonNegative(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value >= 0;
     }
 }

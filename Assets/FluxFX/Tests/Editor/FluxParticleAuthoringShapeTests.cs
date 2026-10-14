@@ -40,6 +40,66 @@ namespace TpLab.Flux.FX.Tests.Editor
             if (_root != null) Object.DestroyImmediate(_root);
         }
 
+        [TestCase("initialVelocity.speed")]
+        [TestCase("initialVelocity.min")]
+        [TestCase("initialVelocity.max")]
+        [TestCase("lifetime.lifetime")]
+        [TestCase("lifetime.min")]
+        [TestCase("lifetime.max")]
+        [TestCase("render.startSize")]
+        [TestCase("render.startSizeMin")]
+        [TestCase("render.startSizeMax")]
+        public void InvalidActiveNumericSettingsAreRejectedBeforeCompilation(string path)
+        {
+            var serialized = new SerializedObject(_authoring);
+            if (path == "initialVelocity.min" || path == "initialVelocity.max")
+            {
+                serialized.FindProperty("initialVelocity.mode").intValue = (int)FluxParticleStartSpeedMode.RandomBetweenTwoConstants;
+            }
+            if (path == "lifetime.min" || path == "lifetime.max")
+            {
+                serialized.FindProperty("lifetime.mode").intValue = (int)FluxParticleStartLifetimeMode.RandomBetweenTwoConstants;
+            }
+            if (path == "render.startSizeMin" || path == "render.startSizeMax")
+            {
+                serialized.FindProperty("render.startSizeMode").intValue = (int)FluxParticleStartSizeMode.RandomBetweenTwoConstants;
+            }
+            foreach (var value in new[] { -1f, float.NaN, float.PositiveInfinity, float.NegativeInfinity })
+            {
+                serialized.FindProperty(path).floatValue = value;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                Assert.Throws<InvalidOperationException>(() => FluxParticleAuthoringValidator.Validate(_authoring), path);
+                Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(_authoring), path);
+                serialized.Update();
+            }
+            serialized.FindProperty(path).floatValue = 0;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.DoesNotThrow(() => FluxParticleBuildPipeline.Build(_authoring), path);
+        }
+
+        [TestCase("lifetime.mode")]
+        [TestCase("render.blendMode")]
+        public void UnknownLifetimeAndBlendModesAreRejected(string path)
+        {
+            var serialized = new SerializedObject(_authoring);
+            serialized.FindProperty(path).intValue = 99;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(_authoring));
+        }
+
+        [Test]
+        public void InactiveNumericSettingsDoNotPreventBuild()
+        {
+            var serialized = new SerializedObject(_authoring);
+            foreach (var path in new[] { "initialVelocity.min", "initialVelocity.max", "lifetime.min", "lifetime.max",
+                "render.startSizeMin", "render.startSizeMax" })
+            {
+                serialized.FindProperty(path).floatValue = float.NaN;
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.DoesNotThrow(() => FluxParticleBuildPipeline.Build(_authoring));
+        }
+
         [Test]
         public void SphereUsesSpawnKeyWithoutAdditionalStatePages()
         {
