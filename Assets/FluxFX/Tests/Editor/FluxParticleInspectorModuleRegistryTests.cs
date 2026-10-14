@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Modules;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Inspector;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -21,7 +25,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleGravityModule), out _));
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleVelocityOverLifetimeModule), out _));
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleColorOverLifetimeModule), out _));
-            Assert.IsTrue(_registry.TryGet(typeof(FluxParticleTextureSheetAnimationModule), out _));
+            Assert.IsFalse(_registry.TryGet(typeof(FluxParticleTextureSheetAnimationModule), out _));
         }
 
         [Test]
@@ -30,8 +34,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var modules = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
 
             Assert.IsTrue(Contains(modules, typeof(FluxParticleGravityModule)));
-            Assert.IsTrue(Contains(modules, typeof(FluxParticleForceModule)));
-            Assert.IsTrue(Contains(modules, typeof(FluxParticleNoiseModule)));
+            Assert.IsFalse(Contains(modules, typeof(FluxParticleForceModule)));
+            Assert.IsFalse(Contains(modules, typeof(FluxParticleNoiseModule)));
             Assert.IsFalse(Contains(modules, typeof(FluxParticleVelocityOverLifetimeModule)));
         }
 
@@ -52,20 +56,20 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(modules, typeof(FluxParticleColorOverLifetimeModule)));
             Assert.IsTrue(Contains(modules, typeof(FluxParticleSizeOverLifetimeModule)));
             Assert.IsTrue(Contains(modules, typeof(FluxParticleRotationOverLifetimeModule)));
-            Assert.IsTrue(Contains(modules, typeof(FluxParticleTextureSheetAnimationModule)));
+            Assert.IsFalse(Contains(modules, typeof(FluxParticleTextureSheetAnimationModule)));
         }
 
         [Test]
-        public void CustomGpuModuleIsAutomaticallyRegistered()
+        public void CurrentCustomModuleIsAutomaticallyRegistered()
         {
-            Assert.IsTrue(_registry.TryGet(typeof(TestGpuModule), out var metadata));
+            Assert.IsTrue(_registry.TryGet(typeof(FluxParticleModuleRegistryTests.TestTintModule), out var metadata));
 
             Assert.IsTrue(metadata.IsCustom);
-            Assert.AreEqual(FluxParticleExecutionStage.VelocityUpdate, metadata.Stage);
+            Assert.AreEqual(FluxParticleExecutionStage.Rendering, metadata.Stage);
 
-            var modules = _registry.GetModules(FluxParticleExecutionStage.VelocityUpdate);
+            var modules = _registry.GetModules(FluxParticleExecutionStage.Rendering);
 
-            Assert.IsTrue(Contains(modules, typeof(TestGpuModule)));
+            Assert.IsTrue(Contains(modules, typeof(FluxParticleModuleRegistryTests.TestTintModule)));
         }
 
         [Test]
@@ -128,12 +132,12 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void CustomModuleMetadataHasStableIdentity()
         {
-            Assert.IsTrue(_registry.TryGet(typeof(TestGpuModule), out var first));
-            Assert.IsTrue(_registry.TryGet(typeof(TestGpuModule), out var second));
+            Assert.IsTrue(_registry.TryGet(typeof(FluxParticleModuleRegistryTests.TestTintModule), out var first));
+            Assert.IsTrue(_registry.TryGet(typeof(FluxParticleModuleRegistryTests.TestTintModule), out var second));
 
             Assert.AreSame(first, second);
             Assert.IsTrue(first.IsCustom);
-            Assert.AreEqual(FluxParticleExecutionStage.VelocityUpdate, first.Stage);
+            Assert.AreEqual(FluxParticleExecutionStage.Rendering, first.Stage);
             Assert.IsFalse(string.IsNullOrWhiteSpace(first.DisplayName));
             Assert.IsFalse(string.IsNullOrWhiteSpace(first.ExpandedKey));
         }
@@ -168,7 +172,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(11, standardCount);
+            Assert.AreEqual(6, standardCount);
         }
 
         [Test]
@@ -179,20 +183,58 @@ namespace TpLab.Flux.FX.Tests.Editor
             var rendering = _registry.GetModules(FluxParticleExecutionStage.Rendering);
 
             Assert.IsTrue(Contains(velocity, typeof(FluxParticleGravityModule)));
-            Assert.IsTrue(Contains(velocity, typeof(FluxParticleForceModule)));
+            Assert.IsFalse(Contains(velocity, typeof(FluxParticleForceModule)));
             Assert.IsTrue(Contains(velocity, typeof(FluxParticleDragModule)));
-            Assert.IsTrue(Contains(velocity, typeof(FluxParticleNoiseModule)));
-            Assert.IsTrue(Contains(velocity, typeof(FluxParticleVortexModule)));
-            Assert.IsTrue(Contains(velocity, typeof(FluxParticleLimitVelocityModule)));
+            Assert.IsFalse(Contains(velocity, typeof(FluxParticleNoiseModule)));
+            Assert.IsFalse(Contains(velocity, typeof(FluxParticleVortexModule)));
+            Assert.IsFalse(Contains(velocity, typeof(FluxParticleLimitVelocityModule)));
 
             Assert.IsTrue(Contains(position, typeof(FluxParticleVelocityOverLifetimeModule)));
 
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleColorOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleSizeOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleRotationOverLifetimeModule)));
-            Assert.IsTrue(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
+            Assert.IsFalse(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
         }
 
+        [Test]
+        public void EmptyCurrentRegistryExposesNoAddableModules()
+        {
+            var registry = new FluxParticleInspectorModuleRegistry(
+                new FluxParticleModuleRegistry(Array.Empty<IFluxParticleModuleDefinition>()));
+            Assert.AreEqual(0, registry.Count);
+            Assert.IsEmpty(registry.GetAll());
+        }
+
+        [Test]
+        public void InspectorExposesCurrentSerializableConstructibleModules()
+        {
+            var compilation = new FluxParticleModuleRegistry();
+            CollectionAssert.AreEquivalent(compilation.GetAll().Where(definition =>
+                    definition.ModuleType.IsSerializable && definition.ModuleType.GetConstructor(Type.EmptyTypes) != null).Select(definition => definition.ModuleType),
+                _registry.GetAll().Select(metadata => metadata.ModuleType));
+        }
+
+        [Test]
+        public void InjectedRenderDefinitionIsAvailableWithoutLegacyGpuDefinition()
+        {
+            var compilation = new FluxParticleModuleRegistry(new IFluxParticleModuleDefinition[]
+            {
+                new FluxParticleModuleRegistryTests.TestTintDefinition()
+            });
+            var inspector = new FluxParticleInspectorModuleRegistry(compilation);
+            Assert.AreEqual(1, inspector.Count);
+            Assert.IsTrue(inspector.TryGet(typeof(FluxParticleModuleRegistryTests.TestTintModule), out var metadata));
+            Assert.AreEqual(FluxParticleExecutionStage.Rendering, metadata.Stage);
+            Assert.IsTrue(metadata.IsCustom);
+        }
+
+        [Test]
+        public void LegacyGpuDefinitionsDoNotExposeModules()
+        {
+            Assert.IsFalse(_registry.TryGet(typeof(TestGpuModule), out _));
+            Assert.IsFalse(_registry.TryGet(typeof(TestPositionGpuModule), out _));
+        }
         static bool Contains(
             IReadOnlyList<FluxParticleInspectorModuleMetadata> modules,
             System.Type type)

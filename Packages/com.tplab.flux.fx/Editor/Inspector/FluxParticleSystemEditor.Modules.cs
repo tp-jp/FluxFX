@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
@@ -15,11 +16,54 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             EditorGUILayout.Space(2);
 
+            DrawUnsupportedModules();
+            DrawModuleStage(FluxParticleExecutionStage.Spawn, "Spawn", SessionStatePrefix + "SpawnModulesExpanded");
+            DrawModuleStage(FluxParticleExecutionStage.SpawnAttributes, "Spawn Attributes", SessionStatePrefix + "SpawnAttributeModulesExpanded");
             DrawModuleStage(FluxParticleExecutionStage.VelocityUpdate, "Velocity Update", VelocityUpdateExpandedKey);
             DrawModuleStage(FluxParticleExecutionStage.PositionUpdate, "Position Update", PositionUpdateExpandedKey);
             DrawModuleStage(FluxParticleExecutionStage.Rendering, "Rendering", RenderingModulesExpandedKey);
+            foreach (var stage in _moduleRegistry.GetAll().Select(metadata => metadata.Stage).Distinct())
+            {
+                if (stage == FluxParticleExecutionStage.Spawn || stage == FluxParticleExecutionStage.SpawnAttributes ||
+                    stage == FluxParticleExecutionStage.VelocityUpdate || stage == FluxParticleExecutionStage.PositionUpdate ||
+                    stage == FluxParticleExecutionStage.Rendering) continue;
+                DrawModuleStage(stage, stage.ToString(), SessionStatePrefix + "ModuleStage." + stage);
+            }
         }
 
+        void DrawUnsupportedModules()
+        {
+            for (var i = 0; i < _modules.arraySize; i++)
+            {
+                var property = _modules.GetArrayElementAtIndex(i);
+                var value = property.managedReferenceValue;
+                if (value != null && _moduleRegistry.TryGet(value.GetType(), out _)) continue;
+
+                var index = i;
+                var label = value == null ? L10n.Tr("Missing Module") : ObjectNames.NicifyVariableName(value.GetType().Name);
+                EditorGUILayout.HelpBox(label + ": " + L10n.Tr("This module is not supported by the current backend. Disabling it does not allow building. Remove it or provide a current Module Definition."),
+                    MessageType.Warning);
+                if (value != null)
+                {
+                    DrawModule(label, property, SessionState.GetBool(SessionStatePrefix + "Unsupported." + index, false),
+                        SessionStatePrefix + "Unsupported." + index, () => RemoveModuleAt(index));
+                }
+                else if (GUILayout.Button(L10n.Tr("Remove Module")))
+                {
+                    RemoveModuleAt(index);
+                    GUIUtility.ExitGUI();
+                }
+            }
+        }
+
+        void RemoveModuleAt(int index)
+        {
+            _authoringObject.Update();
+            if (index < 0 || index >= _modules.arraySize) return;
+            _modules.DeleteArrayElementAtIndex(index);
+            _authoringObject.ApplyModifiedProperties();
+            Repaint();
+        }
         void DrawModuleStage(FluxParticleExecutionStage stage, string label, string expandedKey)
         {
             var definitions = _moduleRegistry.GetModules(stage);

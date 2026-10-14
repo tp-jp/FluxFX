@@ -93,6 +93,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }, context));
         }
 
+        [Serializable]
         public sealed class TestTintModule : FluxParticleModule
         {
             public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.Rendering;

@@ -30,6 +30,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Module Definition requires a public parameterless constructor: {type.FullName}");
                 }
+
                 Register((IFluxParticleModuleDefinition)Activator.CreateInstance(type));
             }
         }
@@ -44,10 +45,20 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentNullException(nameof(definitions));
             }
+
             foreach (var definition in definitions)
             {
                 Register(definition);
             }
+        }
+
+        /// <summary>
+        /// 登録済みDefinitionをModule ID順で取得します。
+        /// </summary>
+        /// <returns>Definition一覧の読み取り専用スナップショット</returns>
+        public IReadOnlyList<IFluxParticleModuleDefinition> GetAll()
+        {
+            return Array.AsReadOnly(_definitions.Values.OrderBy(definition => definition.ModuleId, StringComparer.Ordinal).ToArray());
         }
 
         /// <summary>
@@ -60,6 +71,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 definition = null;
                 return false;
             }
+
             return _definitions.TryGetValue(moduleType, out definition);
         }
 
@@ -75,10 +87,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentNullException(nameof(modules));
             }
+
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
+
             var seen = new HashSet<Type>();
             foreach (var module in modules)
             {
@@ -86,19 +100,23 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException("Missing Particle Module definition.");
                 }
+
                 var type = module.GetType();
                 if (!seen.Add(type))
                 {
                     throw new InvalidOperationException($"Duplicate Particle Module: {type.FullName}");
                 }
+
                 if (!TryGet(type, out var definition))
                 {
                     throw new InvalidOperationException($"Unregistered Particle Module: {type.FullName}");
                 }
+
                 if (!module.Enabled)
                 {
                     continue;
                 }
+
                 definition.Contribute(module, context.ForModule(definition.ModuleId));
             }
         }
@@ -112,23 +130,28 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentNullException(nameof(definition));
             }
+
             var type = definition.ModuleType;
             if (type == null || type.IsAbstract || !typeof(FluxParticleModule).IsAssignableFrom(type))
             {
                 throw new InvalidOperationException($"Invalid Module type: {type?.FullName ?? "null"}");
             }
+
             if (string.IsNullOrWhiteSpace(definition.ModuleId))
             {
                 throw new InvalidOperationException($"Module ID is required: {type.FullName}");
             }
+
             if (_definitions.ContainsKey(type))
             {
                 throw new InvalidOperationException($"Duplicate Module type: {type.FullName}");
             }
+
             if (!_moduleIds.Add(definition.ModuleId))
             {
                 throw new InvalidOperationException($"Duplicate Module ID: {definition.ModuleId}");
             }
+
             _definitions.Add(type, definition);
         }
     }

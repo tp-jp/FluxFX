@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using TpLab.Flux.FX.Editor.GpuModules;
+using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 
@@ -22,9 +23,19 @@ namespace TpLab.Flux.FX.Editor.Inspector
         public int Count => _metadata.Count;
 
         public FluxParticleInspectorModuleRegistry()
+            : this(new FluxParticleModuleRegistry())
         {
+        }
+
+        public FluxParticleInspectorModuleRegistry(FluxParticleModuleRegistry registry)
+        {
+            if (registry == null) throw new ArgumentNullException(nameof(registry));
             RegisterStandardModules();
-            RegisterCustomModules(new FluxParticleGpuModuleRegistry());
+            foreach (var type in _metadata.Keys.Where(type => !registry.TryGet(type, out _)).ToArray())
+            {
+                _metadata.Remove(type);
+            }
+            RegisterCustomModules(registry);
 
             var all = new List<FluxParticleInspectorModuleMetadata>(_metadata.Values);
             all.Sort(CompareMetadata);
@@ -76,18 +87,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void RegisterStandardModules()
         {
             RegisterStandard<FluxParticleGravityModule>("Gravity", 100, "GravityExpanded");
-            RegisterStandard<FluxParticleForceModule>("Force", 200, "ForceExpanded");
-            RegisterStandard<FluxParticleNoiseModule>("Noise", 300, "NoiseExpanded");
-            RegisterStandard<FluxParticleVortexModule>("Vortex", 400, "VortexExpanded");
             RegisterStandard<FluxParticleDragModule>("Drag", 500, "DragExpanded");
-            RegisterStandard<FluxParticleLimitVelocityModule>("Limit Velocity", 600, "LimitVelocityExpanded");
 
             RegisterStandard<FluxParticleVelocityOverLifetimeModule>("Velocity over Lifetime", 100, "VelocityOverLifetimeExpanded");
 
             RegisterStandard<FluxParticleColorOverLifetimeModule>("Color over Lifetime", 100, "ColorOverLifetimeExpanded");
             RegisterStandard<FluxParticleSizeOverLifetimeModule>("Size over Lifetime", 200, "SizeOverLifetimeExpanded");
             RegisterStandard<FluxParticleRotationOverLifetimeModule>("Rotation over Lifetime", 300, "RotationOverLifetimeExpanded");
-            RegisterStandard<FluxParticleTextureSheetAnimationModule>("Texture Sheet Animation", 400, "TextureSheetAnimationExpanded");
         }
 
         void RegisterStandard<T>(string displayName, int displayOrder, string expandedSuffix)
@@ -100,25 +106,23 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 SessionStatePrefix + expandedSuffix));
         }
 
-        void RegisterCustomModules(FluxParticleGpuModuleRegistry registry)
+        void RegisterCustomModules(FluxParticleModuleRegistry registry)
         {
             foreach (var definition in registry.GetAll())
             {
                 var type = definition.ModuleType;
 
                 if (_metadata.ContainsKey(type)) continue;
-                if (type.IsAbstract || type.ContainsGenericParameters) continue;
+                if (type.IsAbstract || type.ContainsGenericParameters || !type.IsSerializable) continue;
                 if (type.GetConstructor(Type.EmptyTypes) == null) continue;
 
                 var metadata = new FluxParticleInspectorModuleMetadata(
                     type,
                     ObjectNames.NicifyVariableName(type.Name),
-                    1000 + definition.Order,
+                    1000,
                     SessionStatePrefix + "CustomModule." + type.FullName,
                     true);
 
-                // 現在Custom GPU Moduleを実行できるのはVelocityUpdateのみ。
-                if (metadata.Stage != FluxParticleExecutionStage.VelocityUpdate) continue;
 
                 Register(metadata);
             }
