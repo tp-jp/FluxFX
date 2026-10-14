@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Modules;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
@@ -477,6 +478,176 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CustomStateModuleRunsThroughAuthoringAndRuntime(bool reverse)
+        {
+            RequireGraphics();
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var custom = new TestStateModule();
+            if (reverse)
+            {
+                SetModules(new FluxParticleDragModule(), custom, new FluxParticleGravityModule());
+            }
+            else
+            {
+                SetModules(new FluxParticleGravityModule(), custom, new FluxParticleDragModule());
+            }
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var program = compiled.Shaders.Compilation;
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count + 1, program.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count + 1, compiled.Shaders.Passes.Count);
+            Assert.IsTrue(program.StateLayout.TryGetBinding(TestStateDefinition.State, out var binding));
+            Assert.AreEqual(4, binding.ComponentCount);
+            Assert.IsFalse(program.StateLayout.TryGetBinding(TestStateDefinition.Rate, out _));
+            Assert.IsFalse(program.StateLayout.TryGetBinding(TestStateDefinition.Strength, out _));
+            var pass = compiled.Shaders.Passes.Single(value => value.Plan.OutputPageId == binding.PageId);
+            Assert.IsTrue(pass.Plan.SpawnOperations.Any(operation => operation.Id == "test.state-spawn"));
+            Assert.IsTrue(pass.Plan.UpdateOperations.Any(operation => operation.Id == "test.state-update"));
+            StringAssert.Contains("FluxFX_TestStateRate", pass.Source);
+            StringAssert.Contains("FluxFX_TestStateRender", compiled.Shaders.RenderSource);
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), compiled.InitialValues[TestStateDefinition.Strength]);
+
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0.25f, 0, 1, 7);
+            AssertVector(new Vector4(1, 2, 3, 4), ReadValue(runtime, compiled, TestStateDefinition.State, 0));
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, TestStateDefinition.State, 1));
+            runtime.Step(0.25f, 1, 0, 8);
+            AssertVector(new Vector4(2, 3, 4, 5), ReadValue(runtime, compiled, TestStateDefinition.State, 0));
+
+            Assert.IsTrue(runtime.SetFloat(TestStateDefinition.Strength, 4));
+            runtime.Step(0.25f, 1, 1, 9);
+            AssertVector(new Vector4(4, 5, 6, 7), ReadValue(runtime, compiled, TestStateDefinition.State, 0));
+            AssertVector(new Vector4(1, 2, 3, 4), ReadValue(runtime, compiled, TestStateDefinition.State, 1));
+            Assert.AreEqual(0.5f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            AssertCustomRender(runtime, compiled, new Color(0.4f, 0.5f, 0.6f, 0.7f));
+            runtime.Clear();
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, TestStateDefinition.State, 0));
+        }
+
+        [Test]
+        public void DisabledCustomStateModuleAddsNoStateOrPass()
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            var module = new TestStateModule();
+            typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
+            SetModules(module);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding(TestStateDefinition.State, out _));
+            Assert.IsFalse(compiled.InitialValues.ContainsKey(TestStateDefinition.Strength));
+        }
+
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected)
+        {
+            var source = string.Join(Environment.NewLine, new[]
+            {
+                @"Shader ""Hidden/FluxFX/Tests/CustomStateRender"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
+                "HLSLPROGRAM",
+                "#pragma target 3.5",
+                "#pragma vertex vert_img",
+                "#pragma fragment frag",
+                @"#include ""UnityCG.cginc""",
+                compiled.Shaders.RenderSource,
+                "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
+                "return alive ? value.valueRenderColor : float4(0, 0, 0, 0); }",
+                "ENDHLSL",
+                "} } Fallback Off }"
+            });
+            var path = folder + "/CustomStateRender.shader";
+            System.IO.File.WriteAllText(path, source);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
+            Assert.IsNotNull(shader);
+            Assert.IsFalse(ShaderUtil.ShaderHasError(shader),
+                string.Join(Environment.NewLine, ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
+            Assert.IsTrue(shader.isSupported);
+            var material = new Material(shader);
+            var page = runtime.GetCurrentPage(0);
+            var target = new RenderTexture(page.width, page.height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var active = RenderTexture.active;
+            try
+            {
+                foreach (var parameter in compiled.Shaders.Compilation.Parameters.Values)
+                {
+                    material.SetVector(FluxParticleHlslNames.ParameterProperty(parameter.Id), compiled.InitialValues[parameter.Id]);
+                }
+                foreach (var statePage in compiled.Shaders.Compilation.StateLayout.Pages)
+                {
+                    material.SetTexture(FluxParticleHlslNames.PageProperty(statePage.Id, FluxParticlePageVersion.Updated),
+                        runtime.GetCurrentPage(statePage.Id));
+                }
+                target.Create();
+                Graphics.Blit(null, target, material);
+                AssertVector(expected, ReadTexture(target, 0));
+                AssertVector(Vector4.zero, ReadTexture(target, 2));
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                target.Release();
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(material);
+            }
+        }
+        static void AssertVector(Vector4 expected, Vector4 actual)
+        {
+            for (var component = 0; component < 4; component++)
+            {
+                Assert.AreEqual(expected[component], actual[component], 0.0001f, $"Component {component}");
+            }
+        }
+
+        [Serializable]
+        public sealed class TestStateModule : FluxParticleModule
+        {
+            public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.VelocityUpdate;
+            public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.None;
+            public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.None;
+        }
+
+        public sealed class TestStateDefinition : IFluxParticleModuleDefinition
+        {
+            public const string State = "test.state";
+            public const string Rate = "test.rate";
+            public const string Strength = "test.strength";
+            const string Id = "fluxfx.tests.state";
+            const string Hlsl = "Assets/FluxFX/Tests/Editor/Hlsl/";
+
+            public Type ModuleType => typeof(TestStateModule);
+            public string ModuleId => Id;
+
+            public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+            {
+                context.AddValue(new FluxParticleValueDefinition(State, FluxParticleValueType.Float4,
+                    FluxParticleWritePolicy.OwnerManaged, Id));
+                context.AddValue(new FluxParticleValueDefinition(Rate, FluxParticleValueType.Float,
+                    FluxParticleWritePolicy.ReadOnly, Id));
+                context.AddParameter(new FluxParticleParameterDefinition(Strength, FluxParticleValueType.Float,
+                    FluxParticleParameterPolicy.Live), new Vector4(2, 0, 0, 0));
+                context.AddProvider(new FluxParticleValueProvider(Rate, FluxParticleProviderKind.Derived,
+                    parameters: new[] { Strength }, hlslPath: Hlsl + "TestStateRate.hlsl", entryPoint: "FluxFX_TestStateRate"));
+                context.AddOperation(new FluxParticleOperationDefinition("test.state-spawn", Id, FluxParticlePhase.Spawn,
+                    Array.Empty<FluxParticleValueRead>(),
+                    new[] { new FluxParticleValueWrite(State, FluxParticleWriteKind.Initialize) }, null,
+                    Hlsl + "TestStateSpawn.hlsl", "FluxFX_TestStateSpawn"));
+                context.AddOperation(new FluxParticleOperationDefinition("test.state-update", Id, FluxParticlePhase.Update,
+                    new[]
+                    {
+                        new FluxParticleValueRead(State, FluxParticleReadVersion.StepPrevious),
+                        new FluxParticleValueRead(Rate, FluxParticleReadVersion.Provided),
+                        new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
+                    },
+                    new[] { new FluxParticleValueWrite(State, FluxParticleWriteKind.Modify) }, null,
+                    Hlsl + "TestStateUpdate.hlsl", "FluxFX_TestStateUpdate"));
+                context.AddOperation(new FluxParticleOperationDefinition("test.state-render", Id, FluxParticlePhase.Render,
+                    new[] { new FluxParticleValueRead(State, FluxParticleReadVersion.Committed) },
+                    new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Replace) },
+                    new[] { "render.start" }, Hlsl + "TestStateRender.hlsl", "FluxFX_TestStateRender"));
+            }
+        }
         FluxParticleExecutor CreateRuntime(FluxParticleBuildResult compiled, int capacity = 4)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
