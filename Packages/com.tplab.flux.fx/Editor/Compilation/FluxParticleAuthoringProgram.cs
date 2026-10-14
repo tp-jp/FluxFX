@@ -31,20 +31,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public FluxParticleAuthoringProgram(FluxParticleAuthoring authoring)
         {
             FluxParticleAuthoringValidator.Validate(authoring);
-            var startRotation = authoring.Render.StartRotation;
-            var hasStartRotation = startRotation.z != 0;
-            var source = FluxParticleCoreDefinitions.Create();
-            var definitions = new FluxParticleDefinitionBuilder();
-            foreach (var value in source.Values.Values) definitions.AddValue(value);
-            var moduleContext = new FluxParticleProgramContribution(definitions);
-            new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
-            var hasRotation = hasStartRotation || definitions.Operations.Values.Any(operation => operation.Writes.Any(write =>
-                write.ValueId == "render.rotation"));
-            if (hasRotation)
-            {
-                definitions.AddValue(new FluxParticleValueDefinition("render.rotation", FluxParticleValueType.Float3,
-                    FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
-            }
+            var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var source, out var moduleContext, out var hasRotation);
             foreach (var provider in source.Providers.Values)
             {
                 if (provider.ValueId == "particle.start-color" &&
