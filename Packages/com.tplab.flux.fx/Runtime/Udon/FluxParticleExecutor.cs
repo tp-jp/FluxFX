@@ -166,11 +166,11 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// Spawn入力をGPUで生成し、Compilerが確定した順序でGPU Passを実行します。
+        /// Spawn入力をGPUで生成し、空きSlotの初期化と生存Particleの更新を実行します。
         /// </summary>
         /// <param name="deltaTime">Simulationの経過時間。</param>
         /// <param name="spawnStart">生成範囲の先頭Slot。</param>
-        /// <param name="spawnCount">生成数。容量超過時は各Slotの最後の生成を採用します。</param>
+        /// <param name="spawnCount">生成要求数。候補Slotが生存中なら生成を省略します。容量超過時は各Slotの最後の要求を採用します。</param>
         /// <param name="seedStart">20bit SpawnKeyの先頭。</param>
         public void Step(float deltaTime, int spawnStart, int spawnCount, int seedStart)
         {

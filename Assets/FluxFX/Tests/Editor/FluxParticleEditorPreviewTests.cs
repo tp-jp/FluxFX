@@ -132,6 +132,50 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [Test]
+        public void PreviewAtCapacityKeepsLivingParticleAndReusesSlotAfterExpiration()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var root = new GameObject("Preview Capacity Test");
+            try
+            {
+                var authoring = root.AddComponent<FluxParticleAuthoring>();
+                var serialized = new SerializedObject(authoring);
+                serialized.FindProperty("lifetime.lifetime").floatValue = 0.5f;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                var build = FluxParticleBuildPipeline.Build(authoring);
+                using (var preview = new FluxParticleEditorPreview(build, authoring, 1))
+                {
+                    var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
+                        .GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                    preview.Step(0.25f);
+                    var key = ReadValue(session, build, "particle.spawn-key").x;
+                    var velocity = ReadValue(session, build, "particle.velocity");
+                    preview.Step(0.25f);
+                    Assert.AreEqual(key, ReadValue(session, build, "particle.spawn-key").x, 0.0001f);
+                    Assert.AreEqual(0.25f, ReadValue(session, build, "particle.age").x, 0.0001f);
+                    var position = ReadValue(session, build, "particle.position");
+                    for (var component = 0; component < 3; component++)
+                    {
+                        Assert.AreEqual(velocity[component] * 0.25f, position[component], 0.0001f);
+                    }
+                    preview.Step(0.25f);
+                    Assert.AreEqual(-1, ReadValue(session, build, "particle.age").x, 0.0001f);
+                    preview.Step(0.25f);
+                    Assert.AreEqual(0, ReadValue(session, build, "particle.age").x, 0.0001f);
+                    Assert.AreNotEqual(key, ReadValue(session, build, "particle.spawn-key").x);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
         [UnityTest]
         public IEnumerator AliveCountTracksGpuStateAndResetsOnRestart()
         {

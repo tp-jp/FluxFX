@@ -175,6 +175,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         [TestCase(FluxParticleShapeType.Sphere)]
         [TestCase(FluxParticleShapeType.Hemisphere)]
+        [TestCase(FluxParticleShapeType.Circle)]
         public void RadialShapeSharesDerivedSpawnDirectionWithoutAdditionalPages(FluxParticleShapeType shape)
         {
             var point = FluxParticleBuildPipeline.Build(_authoring);
@@ -354,6 +355,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
         }
 
+        [TestCase(FluxParticleShapeType.Circle, FluxParticleStartSpeedMode.Constant)]
+        [TestCase(FluxParticleShapeType.Circle, FluxParticleStartSpeedMode.RandomBetweenTwoConstants)]
         [TestCase(FluxParticleShapeType.Sphere, FluxParticleStartSpeedMode.Constant)]
         [TestCase(FluxParticleShapeType.Hemisphere, FluxParticleStartSpeedMode.Constant)]
         [TestCase(FluxParticleShapeType.Cone, FluxParticleStartSpeedMode.Constant)]
@@ -383,7 +386,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var clears = generated.ClearSources.Select((source, index) => Import("DirectionClear" + index, source)).ToArray();
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
-                session.SetVector("spawn.position", Vector4.zero);
+                session.SetVector("spawn.position", shape == FluxParticleShapeType.Circle ? new Vector4(3, 2, -1, 0) : Vector4.zero);
                 if (speedMode == FluxParticleStartSpeedMode.Constant) session.SetFloat("spawn.speed", 2f);
                 else session.SetVector("spawn.speed-range", new Vector4(1, 3, 0, 0));
                 if (shape != FluxParticleShapeType.Point) session.SetFloat("shape.radius", 2.5f);
@@ -416,6 +419,17 @@ namespace TpLab.Flux.FX.Tests.Editor
                         if (positions[i].sqrMagnitude > 0.000001f)
                             Assert.Greater(Vector3.Dot(positions[i].normalized, velocities[i].normalized), 0.999f);
                     }
+                    if (shape == FluxParticleShapeType.Circle)
+                    {
+                        var radial = positions[i] - new Vector3(3, 2, -1);
+                        Assert.AreEqual(0, radial.y, 0.0001f);
+                        Assert.AreEqual(0, velocities[i].y, 0.0001f);
+                        Assert.LessOrEqual(radial.magnitude, 2.501f);
+                        if (radial.sqrMagnitude > 0.000001f)
+                        {
+                            Assert.Greater(Vector3.Dot(radial.normalized, velocities[i].normalized), 0.999f);
+                        }
+                    }
                     if (shape == FluxParticleShapeType.Cone)
                     {
                         Assert.AreEqual(0f, positions[i].y, 0.0001f);
@@ -424,6 +438,18 @@ namespace TpLab.Flux.FX.Tests.Editor
                         Assert.GreaterOrEqual(Vector3.Dot(velocities[i].normalized, Vector3.up),
                             Mathf.Cos(30f * Mathf.Deg2Rad) - 0.001f);
                         Assert.GreaterOrEqual(positions[i].x * velocities[i].x + positions[i].z * velocities[i].z, -0.0001f);
+                    }
+                }
+                if (shape == FluxParticleShapeType.Circle)
+                {
+                    session.SetUniformFloat("step.delta-time", 0.25f);
+                    session.Step();
+                    for (var i = 0; i < 2; i++)
+                    {
+                        var expected = positions[i] + velocities[i] * 0.25f;
+                        Assert.Less((expected - ReadPosition(session, generated, i)).sqrMagnitude, 0.000001f);
+                        Assert.Greater((ReadPosition(session, generated, i) - new Vector3(3, 2, -1)).magnitude,
+                            (positions[i] - new Vector3(3, 2, -1)).magnitude);
                     }
                 }
                 session.Clear();

@@ -100,7 +100,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 definitions.AddParameter(new FluxParticleParameterDefinition("color.start-max", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
             }
             var radialShape = authoring.Shape.Type == FluxParticleShapeType.Sphere ||
-                authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Cone;
+                authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Circle ||
+                authoring.Shape.Type == FluxParticleShapeType.Cone;
             if (radialShape)
             {
                 definitions.AddValue(new FluxParticleValueDefinition("spawn.direction", FluxParticleValueType.Float3,
@@ -108,7 +109,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 var shapeDirectionHlsl = authoring.Shape.Type == FluxParticleShapeType.Sphere
                     ? "AuthoringSphereSpawnDirection.hlsl" :
                     authoring.Shape.Type == FluxParticleShapeType.Hemisphere
-                        ? "AuthoringHemisphereSpawnDirection.hlsl" : "AuthoringConeSpawnDirection.hlsl";
+                        ? "AuthoringHemisphereSpawnDirection.hlsl" :
+                    authoring.Shape.Type == FluxParticleShapeType.Circle
+                        ? "AuthoringCircleSpawnDirection.hlsl" : "AuthoringConeSpawnDirection.hlsl";
                 definitions.AddProvider(new FluxParticleValueProvider("spawn.direction", FluxParticleProviderKind.Derived,
                     new[] { "spawn.key" },
                     authoring.Shape.Type == FluxParticleShapeType.Cone ? new[] { "shape.angle" } : Array.Empty<string>(),

@@ -192,7 +192,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// 確定したPassを順に実行し、書き込んだPageだけをCommitします。
         /// </summary>
-        /// <param name="spawnMask">Rが0.5より大きいTexelをSpawnします。nullならSpawnなし。</param>
+        /// <param name="spawnMask">Rが0.5より大きいTexelへの生成要求（Lifecycle使用時は空きTexelのみ、nullなら生成なし）</param>
         public void Step(Texture spawnMask = null)
         {
             ThrowIfDisposed();

@@ -438,8 +438,49 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.AreEqual(expected[slot], ReadValue(runtime, compiled, "particle.spawn-key", slot).x, 0.0001f);
             }
             runtime.Step(0.1f, 1, 1, 50);
-            Assert.AreEqual(0, ReadValue(runtime, compiled, "particle.age", 1).x, 0.0001f);
+            Assert.AreEqual(0.1f, ReadValue(runtime, compiled, "particle.age", 1).x, 0.0001f);
+            Assert.AreEqual(0, ReadValue(runtime, compiled, "particle.spawn-key", 1).x, 0.0001f);
             Assert.AreEqual(0.1f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+        }
+
+        [Test]
+        public void FullCapacityRejectsSpawnWithoutResettingLiveParticlesAndReusesExpiredSlots()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetVector("lifetime.range", new Vector4(1, 1, 0, 0)));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(1, 2, 3, 0)));
+            runtime.Step(0, 0, 2, 10);
+            runtime.Step(0.5f, 2, 2, 20);
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(100, 200, 300, 0)));
+            runtime.Step(0.25f, 0, 4, 100);
+            for (var slot = 0; slot < 4; slot++)
+            {
+                Assert.AreEqual(slot < 2 ? 10 + slot : 20 + slot - 2,
+                    ReadValue(runtime, compiled, "particle.spawn-key", slot).x, 0.0001f);
+                Assert.AreEqual(slot < 2 ? 0.75f : 0.25f, ReadValue(runtime, compiled, "particle.age", slot).x, 0.0001f);
+                AssertVector(new Vector4(1, 2, 3, 0), ReadValue(runtime, compiled, "particle.position", slot));
+            }
+            runtime.Step(0.25f, 0, 4, 200);
+            Assert.AreEqual(-1, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+            Assert.AreEqual(0.5f, ReadValue(runtime, compiled, "particle.age", 2).x, 0.0001f);
+            runtime.Step(0, 0, 4, 300);
+            for (var slot = 0; slot < 4; slot++)
+            {
+                Assert.AreEqual(slot < 2 ? 300 + slot : 20 + slot - 2,
+                    ReadValue(runtime, compiled, "particle.spawn-key", slot).x, 0.0001f);
+                AssertVector(slot < 2 ? new Vector4(100, 200, 300, 0) : new Vector4(1, 2, 3, 0),
+                    ReadValue(runtime, compiled, "particle.position", slot));
+            }
+            runtime.Clear();
+            runtime.Step(0, 0, 4, 500);
+            for (var slot = 0; slot < 4; slot++)
+            {
+                Assert.AreEqual(500 + slot, ReadValue(runtime, compiled, "particle.spawn-key", slot).x, 0.0001f);
+            }
         }
 
         [Test]

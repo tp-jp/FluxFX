@@ -1,3 +1,4 @@
 float age = {{Age}};
 float lifetime = {{Lifetime}};
 bool alive = age >= 0.0 && age < lifetime;
+spawn = spawn && !alive;

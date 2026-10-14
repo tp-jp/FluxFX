@@ -391,6 +391,27 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void GpuSpawnRequestCannotReplaceLiveParticleAcrossStatePages()
+        {
+            RequireGpu();
+            var generated = Generate(CreateMultiPage());
+            using (var session = CreateSession(generated))
+            {
+                Configure(session);
+                var mask = Texture(Color.white, Color.clear);
+                session.Step(mask);
+                session.SetSpawnInput("spawn.key", Texture(new Color(999, 0, 0, 0), Color.clear));
+                session.SetVector("spawn.position", new Vector4(100, 200, 300, 0));
+                session.SetVector("spawn.velocity", new Vector4(100, 200, 300, 0));
+                session.Step(mask);
+                AssertValue(session, generated, "particle.spawn-key", 0, new Vector4(123, 0, 0, 0));
+                AssertValue(session, generated, "particle.age", 0, new Vector4(0.25f, 0, 0, 0));
+                AssertValue(session, generated, "custom.mode", 0, new Vector4(7, 0, 0, 0));
+                Assert.Less(ReadValue(session, generated, "particle.position", 0).x, 100);
+                Assert.Less(ReadValue(session, generated, "particle.velocity", 0).x, 100);
+            }
+        }
+        [Test]
         public void GpuExpirationRespawnAndClearPreserveLifecycleContract()
         {
             RequireGpu();
