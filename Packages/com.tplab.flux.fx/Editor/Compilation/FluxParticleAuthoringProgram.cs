@@ -75,7 +75,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 Require(burst != null && FiniteNonNegative(burst.Time) && burst.Count > 0, "Valid emission bursts");
             }
-            var source = FluxParticleBasicProgram.CreateDefinitions();
+            var source = FluxParticleCoreDefinitions.Create();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
             var moduleContext = new FluxParticleProgramContribution(definitions);
@@ -284,7 +284,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             Require(min >= 0 && (randomSize
                 ? FiniteNonNegative(authoring.Render.StartSizeMin) && FiniteNonNegative(authoring.Render.StartSizeMax)
                 : FiniteNonNegative(authoring.Render.StartSize)), "Non-negative lifetime and size");
-            Program = new FluxParticleProgramComposer().Compose(definitions, "Hidden/FluxFX/Program", FluxParticleBasicProgram.CreateLifecycle());
+            Program = new FluxParticleProgramComposer().Compose(definitions, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
             InitialValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, Vector4>(values);
         }
 
