@@ -1,4 +1,5 @@
 using System.Linq;
+using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Scripts;
 
 namespace TpLab.Flux.FX.Editor.Compilation
@@ -32,6 +33,34 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
             }
             return definitions;
+        }
+
+        /// <summary>
+        /// Authoring設定に応じたCore Providerを登録します。
+        /// </summary>
+        /// <param name="authoring">Particleの設定。</param>
+        /// <param name="source">Coreの基本定義。</param>
+        /// <param name="definitions">Providerの登録先。</param>
+        public static void AddProviders(FluxParticleAuthoring authoring, FluxParticleDefinitionBuilder source,
+            FluxParticleDefinitionBuilder definitions)
+        {
+            foreach (var provider in source.Providers.Values)
+            {
+                if (provider.ValueId == "particle.start-color" &&
+                    authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
+                {
+                    definitions.AddProvider(new FluxParticleValueProvider(provider.ValueId, FluxParticleProviderKind.Derived,
+                        new[] { "particle.spawn-key" }, new[] { "color.start-min", "color.start-max" },
+                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomStartColor.hlsl", "FluxFX_StartColor"));
+                }
+                else
+                {
+                    definitions.AddProvider(provider.ValueId == "particle.lifetime"
+                        ? new FluxParticleValueProvider(provider.ValueId, provider.Kind, provider.Inputs, provider.Parameters,
+                            "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringLifetime.hlsl", provider.EntryPoint)
+                        : provider);
+                }
+            }
         }
     }
 }

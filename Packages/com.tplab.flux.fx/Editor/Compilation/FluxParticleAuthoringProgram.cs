@@ -32,23 +32,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         {
             FluxParticleAuthoringValidator.Validate(authoring);
             var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var source, out var moduleContext, out var hasRotation);
-            foreach (var provider in source.Providers.Values)
-            {
-                if (provider.ValueId == "particle.start-color" &&
-                    authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants)
-                {
-                    definitions.AddProvider(new FluxParticleValueProvider(provider.ValueId, FluxParticleProviderKind.Derived,
-                        new[] { "particle.spawn-key" }, new[] { "color.start-min", "color.start-max" },
-                        "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringRandomStartColor.hlsl", "FluxFX_StartColor"));
-                }
-                else
-                {
-                    definitions.AddProvider(provider.ValueId == "particle.lifetime"
-                        ? new FluxParticleValueProvider(provider.ValueId, provider.Kind, provider.Inputs, provider.Parameters,
-                            "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/AuthoringLifetime.hlsl", provider.EntryPoint)
-                        : provider);
-                }
-            }
+            FluxParticleAuthoringDefinitionBuilder.AddProviders(authoring, source, definitions);
             var randomColor = authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants;
             var randomSize = authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants;
             var velocityTemplateParameters = new System.Collections.Generic.HashSet<string>(source.Operations.Values.Where(operation =>
