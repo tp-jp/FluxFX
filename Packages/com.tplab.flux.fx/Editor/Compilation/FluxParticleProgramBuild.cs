@@ -298,7 +298,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
         static Texture2D SaveLookupTexture(FluxParticleValueProvider provider, string outputRoot)
         {
-            var signature = string.Join(",", provider.LookupSamples.Select(sample =>
+            var samples = provider.LookupVectorSamples.Count != 0 ? provider.LookupVectorSamples.SelectMany(sample => new[] { sample.x, sample.y, sample.z, sample.w }) : provider.LookupSamples;
+            var signature = (provider.LookupVectorSamples.Count != 0 ? "rgba:" : "r:") + string.Join(",", samples.Select(sample =>
                 sample.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
             var path = outputRoot + "/Lookup-" + Hash128.Compute(signature) + ".asset";
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);

@@ -294,8 +294,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 if (provider.Kind == FluxParticleProviderKind.LookupTable)
                 {
                     var input = SuppliedOrState(provider.Inputs[0], render);
-                    var count = provider.LookupSamples.Count;
-                    return $"tex2Dlod({property}, float4((saturate({input}) * {count - 1}.0 + 0.5) / {count}.0, 0.5, 0.0, 0.0)).r";
+                    var count = provider.LookupSampleCount;
+                    return $"tex2Dlod({property}, float4((saturate({input}) * {count - 1}.0 + 0.5) / {count}.0, 0.5, 0.0, 0.0)).{(provider.LookupVectorSamples.Count != 0 ? "rgba" : "r")}";
                 }
                 if (provider.Kind == FluxParticleProviderKind.Uniform) return property;
                 if (provider.Kind == FluxParticleProviderKind.SpawnInput)

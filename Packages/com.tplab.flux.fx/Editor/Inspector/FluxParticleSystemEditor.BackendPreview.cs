@@ -110,7 +110,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawBackendOperations(L10n.Tr("Render Operations"), compilation.Operations.Where(operation => operation.Phase == FluxParticlePhase.Render));
             foreach (var provider in lookups)
             {
-                EditorGUILayout.LabelField(provider.ValueId, provider.LookupSamples.Count + " " + L10n.Tr("samples"));
+                EditorGUILayout.LabelField(provider.ValueId, provider.LookupSampleCount + " " + L10n.Tr("samples"));
             }
             EditorGUILayout.EndVertical();
         }

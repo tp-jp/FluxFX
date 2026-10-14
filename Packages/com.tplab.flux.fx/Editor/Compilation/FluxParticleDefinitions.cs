@@ -322,6 +322,16 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public IReadOnlyList<float> LookupSamples { get; }
 
         /// <summary>
+        /// RGBA固定LUTのサンプル
+        /// </summary>
+        public IReadOnlyList<UnityEngine.Vector4> LookupVectorSamples { get; }
+
+        /// <summary>
+        /// LUTのサンプル数
+        /// </summary>
+        public int LookupSampleCount => LookupVectorSamples.Count != 0 ? LookupVectorSamples.Count : LookupSamples.Count;
+
+        /// <summary>
         /// Valueの供給方法と評価実装を設定します。
         /// </summary>
         /// <param name="valueId">論理ValueのID</param>
@@ -331,6 +341,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <param name="hlslPath">HLSLファイルのパス</param>
         /// <param name="entryPoint">HLSL関数名</param>
         /// <param name="lookupSamples">0から1の区間に等間隔で配置した固定LUTのサンプル</param>
+        /// <param name="lookupVectorSamples">RGBA固定LUTのサンプル</param>
         public FluxParticleValueProvider(
             string valueId,
             FluxParticleProviderKind kind,
@@ -338,7 +349,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             IEnumerable<string> parameters = null,
             string hlslPath = null,
             string entryPoint = null,
-            IEnumerable<float> lookupSamples = null)
+            IEnumerable<float> lookupSamples = null, IEnumerable<UnityEngine.Vector4> lookupVectorSamples = null)
         {
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
             if (!Enum.IsDefined(typeof(FluxParticleProviderKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
@@ -354,9 +365,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
             HlslPath = hlslPath;
             EntryPoint = entryPoint;
             LookupSamples = new List<float>(lookupSamples ?? Array.Empty<float>()).AsReadOnly();
+            LookupVectorSamples = new List<UnityEngine.Vector4>(lookupVectorSamples ?? Array.Empty<UnityEngine.Vector4>()).AsReadOnly();
+            if (LookupSamples.Count != 0 && LookupVectorSamples.Count != 0)
+            {
+                throw new ArgumentException("Lookup providers require either scalar or vector samples.");
+            }
+            foreach (var vector in LookupVectorSamples)
+            {
+                for (var channel = 0; channel < 4; channel++)
+                {
+                    if (float.IsNaN(vector[channel]) || float.IsInfinity(vector[channel]))
+                    {
+                        throw new ArgumentException("Lookup samples must be finite.");
+                    }
+                }
+            }
             if (kind == FluxParticleProviderKind.LookupTable)
             {
-                if (Inputs.Count != 1 || Parameters.Count != 0 || LookupSamples.Count < 2 || LookupSamples.Count > 4096)
+                if (Inputs.Count != 1 || Parameters.Count != 0 || LookupSampleCount < 2 || LookupSampleCount > 4096)
                 {
                     throw new ArgumentException("Lookup providers require one Float input and 2 to 4096 samples.");
                 }
@@ -368,7 +394,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                     }
                 }
             }
-            else if (LookupSamples.Count != 0)
+            else if (LookupSampleCount != 0)
             {
                 throw new ArgumentException("Only LookupTable providers may declare lookup samples.");
             }

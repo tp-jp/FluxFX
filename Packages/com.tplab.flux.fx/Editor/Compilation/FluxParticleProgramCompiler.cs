@@ -39,11 +39,12 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 {
                     throw new InvalidOperationException($"Provider has undefined Value: {provider.ValueId}");
                 }
+                var lookupType = provider.LookupVectorSamples.Count != 0 ? FluxParticleValueType.Float4 : FluxParticleValueType.Float;
                 if (provider.Kind == FluxParticleProviderKind.LookupTable &&
-                    (definitions.Values[provider.ValueId].Type != FluxParticleValueType.Float ||
+                    (definitions.Values[provider.ValueId].Type != lookupType ||
                         !definitions.Values.TryGetValue(provider.Inputs[0], out var input) || input.Type != FluxParticleValueType.Float))
                 {
-                    throw new InvalidOperationException($"Lookup provider requires Float output and input: {provider.ValueId}");
+                    throw new InvalidOperationException($"Lookup provider requires matching sample output type and Float input: {provider.ValueId}");
                 }
                 foreach (var parameterId in provider.Parameters)
                 {
