@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 
@@ -11,7 +10,6 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
     public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/";
-        const int CurveSamples = 128;
 
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
@@ -41,13 +39,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
             var hlsl = "AuthoringRotationOverLifetimeLinear.hlsl";
             if (rotation.Mode == FluxParticleRotationOverLifetimeMode.Curve)
             {
-                var curve = rotation.Curve;
-                if (curve == null || curve.length == 0 || curve.keys.Any(key =>
-                    float.IsNaN(key.time) || float.IsInfinity(key.time) || float.IsNaN(key.value) || float.IsInfinity(key.value)))
-                {
-                    throw new InvalidOperationException("Rotation curve requires finite keys.");
-                }
-                var samples = Enumerable.Range(0, CurveSamples).Select(index => curve.Evaluate(index / (float)(CurveSamples - 1))).ToArray();
+                var samples = FluxParticleCurveBaker.Bake(rotation.Curve);
                 context.AddValue(new FluxParticleValueDefinition("rotation.normalized-age", FluxParticleValueType.Float,
                     FluxParticleWritePolicy.ReadOnly, ModuleId));
                 context.AddValue(new FluxParticleValueDefinition("rotation.curve", FluxParticleValueType.Float,

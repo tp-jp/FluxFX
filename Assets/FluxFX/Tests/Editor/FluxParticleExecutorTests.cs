@@ -139,6 +139,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             var renderer = (Material)runtime.GetProgramVariable("renderMaterial");
             Assert.IsFalse(ShaderUtil.ShaderHasError(renderer.shader));
             Assert.IsTrue(renderer.shader.isSupported);
+            foreach (var parameter in parameters)
+            {
+                var property = FluxParticleHlslNames.ParameterProperty(parameter.Id);
+                Assert.IsTrue(renderer.HasProperty(property), $"Render Shader is missing Parameter property: {property}");
+                var index = renderer.shader.FindPropertyIndex(property);
+                Assert.AreEqual(parameter.Type == FluxParticleValueType.Float ? ShaderPropertyType.Float : ShaderPropertyType.Vector,
+                    renderer.shader.GetPropertyType(index), property);
+            }
             foreach (var page in compiled.Shaders.Compilation.StateLayout.Pages)
             {
                 var property = FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated);
@@ -156,6 +164,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var previousSteps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             var stepShaders = previousSteps.Select(kernel => kernel.Shader).ToArray();
             var render = (Material)runtime.GetProgramVariable("renderMaterial");
+            var renderIdentity = GetAssetIdentity(render);
             var assets = AssetDatabase.FindAssets("", new[] { folder });
 
             FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, 9);
@@ -165,7 +174,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var steps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             CollectionAssert.AreEqual(stepShaders, steps.Select(kernel => kernel.Shader));
             Assert.IsTrue(previousSteps.All(kernel => kernel == null));
-            Assert.AreSame(render, runtime.GetProgramVariable("renderMaterial"));
+            var rebuiltRender = (Material)runtime.GetProgramVariable("renderMaterial");
+            Assert.AreEqual(renderIdentity, GetAssetIdentity(rebuiltRender));
             CollectionAssert.AreEquivalent(assets, AssetDatabase.FindAssets("", new[] { folder }));
             foreach (var buffer in ((FluxBuffer[])runtime.GetProgramVariable("pageBuffersA"))
                 .Concat((FluxBuffer[])runtime.GetProgramVariable("pageBuffersB"))
@@ -183,7 +193,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             var render = (Material)runtime.GetProgramVariable("renderMaterial");
-            var shader = render.shader;
+            var renderIdentity = GetAssetIdentity(render);
+            var shaderIdentity = GetAssetIdentity(render.shader);
             var texture = render.mainTexture;
             var scale = render.mainTextureScale;
             var offset = render.mainTextureOffset;
@@ -201,15 +212,16 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder);
 
-            Assert.AreSame(render, runtime.GetProgramVariable("renderMaterial"));
-            Assert.AreSame(shader, render.shader);
-            Assert.AreSame(texture, render.mainTexture);
-            Assert.AreEqual(scale, render.mainTextureScale);
-            Assert.AreEqual(offset, render.mainTextureOffset);
-            Assert.AreEqual(sourceBlend, render.GetFloat("_SrcBlend"));
-            Assert.AreEqual(destinationBlend, render.GetFloat("_DstBlend"));
-            Assert.AreEqual(zWrite, render.GetFloat("_ZWrite"));
-            Assert.AreEqual(queue, render.renderQueue);
+            var rebuiltRender = (Material)runtime.GetProgramVariable("renderMaterial");
+            Assert.AreEqual(renderIdentity, GetAssetIdentity(rebuiltRender));
+            Assert.AreEqual(shaderIdentity, GetAssetIdentity(rebuiltRender.shader));
+            Assert.AreEqual(texture, rebuiltRender.mainTexture);
+            Assert.AreEqual(scale, rebuiltRender.mainTextureScale);
+            Assert.AreEqual(offset, rebuiltRender.mainTextureOffset);
+            Assert.AreEqual(sourceBlend, rebuiltRender.GetFloat("_SrcBlend"));
+            Assert.AreEqual(destinationBlend, rebuiltRender.GetFloat("_DstBlend"));
+            Assert.AreEqual(zWrite, rebuiltRender.GetFloat("_ZWrite"));
+            Assert.AreEqual(queue, rebuiltRender.renderQueue);
         }
 
         [Test]
@@ -221,9 +233,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             var generated = runtime.transform.Find("__FluxFXGenerated");
             var steps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             var spawn = runtime.transform.Find("Spawn");
-            spawn.SetParent(root.transform, false);
+            var originalName = spawn.name;
+            spawn.name = "MissingSpawn";
             try
             {
+                Assert.IsNull(runtime.transform.Find("Spawn"));
                 StringAssert.Contains("Spawn GameObject is missing",
                     Assert.Throws<InvalidOperationException>(() =>
                         FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder)).Message);
@@ -233,7 +247,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             finally
             {
-                spawn.SetParent(runtime.transform, false);
+                spawn.name = originalName;
             }
         }
 
@@ -486,13 +500,16 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 Assert.Ignore("RGBAFloat texture support is required.");
             }
-            SetModules(new FluxParticleRotationOverLifetimeModule());
+            SetModules(new FluxParticleRotationOverLifetimeModule(), new FluxParticleSizeOverLifetimeModule());
             var curve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(0.5f, 1), new Keyframe(1, 0));
             var serialized = new SerializedObject(authoring);
             var module = serialized.FindProperty("modules").GetArrayElementAtIndex(0);
             module.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleRotationOverLifetimeMode.Curve;
             module.FindPropertyRelative("endRotation").vector3Value = new Vector3(0, 0, 180);
             module.FindPropertyRelative("curve").animationCurveValue = curve;
+            var sizeModule = serialized.FindProperty("modules").GetArrayElementAtIndex(1);
+            sizeModule.FindPropertyRelative("mode").intValue = (int)FluxParticleSizeOverLifetimeMode.Curve;
+            sizeModule.FindPropertyRelative("curve").animationCurveValue = curve;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var first = CreateRuntime(compiled);
@@ -507,6 +524,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(FilterMode.Bilinear, texture.filterMode);
             Assert.AreEqual(TextureWrapMode.Clamp, texture.wrapMode);
             Assert.AreSame(texture, secondRender.GetTexture(property));
+            Assert.AreSame(texture, firstRender.GetTexture(FluxParticleHlslNames.ProviderProperty("size.curve")));
             Assert.IsTrue(AssetDatabase.Contains(texture));
             Assert.AreNotSame(firstRender, secondRender);
             Assert.IsTrue(first.Initialize(4));
@@ -515,6 +533,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             first.Step(2, 0, 0, 2);
             Assert.AreSame(texture, first.RenderMaterial.GetTexture(property));
             AssertCustomRender(first, compiled, new Color(0, 0, 180 * curve.Evaluate(0.2f), 1), true);
+            AssertCustomRender(first, compiled, new Color(curve.Evaluate(0.2f), 0, 0, 1), size: true);
         }
         [TestCase(false)]
         [TestCase(true)]
@@ -578,11 +597,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(compiled.InitialValues.ContainsKey(TestStateDefinition.Strength));
         }
 
-        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, bool rotation = false)
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, bool rotation = false, bool size = false)
         {
             var source = string.Join(Environment.NewLine, new[]
             {
-                @"Shader ""Hidden/FluxFX/Tests/CustomStateRender"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
+                @"Shader ""Hidden/FluxFX/Tests/CustomStateRender"" { Properties {",
+                FluxParticleProgramShaderGenerator.GenerateParameterProperties(compiled.Shaders.Compilation),
+                "} SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
                 "HLSLPROGRAM",
                 "#pragma target 3.5",
                 "#pragma vertex vert_img",
@@ -590,6 +611,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 @"#include ""UnityCG.cginc""",
                 compiled.Shaders.RenderSource,
                 "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
+                size ? "return alive ? float4(value.valueRenderSize, 0, 0, 1) : float4(0, 0, 0, 0); }" :
                 rotation
                     ? "return alive ? float4(value.valueRenderRotation, 1) : float4(0, 0, 0, 0); }"
                     : "return alive ? value.valueRenderColor : float4(0, 0, 0, 0); }",
@@ -597,6 +619,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 "} } Fallback Off }"
             });
             var path = folder + "/CustomStateRender.shader";
+            source = source.Replace("\r\n", "\n").Replace("\r", "\n");
             System.IO.File.WriteAllText(path, source);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
@@ -610,10 +633,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             var active = RenderTexture.active;
             try
             {
-                foreach (var parameter in compiled.Shaders.Compilation.Parameters.Values)
-                {
-                    material.SetVector(FluxParticleHlslNames.ParameterProperty(parameter.Id), compiled.InitialValues[parameter.Id]);
-                }
                 foreach (var statePage in compiled.Shaders.Compilation.StateLayout.Pages)
                 {
                     material.SetTexture(FluxParticleHlslNames.PageProperty(statePage.Id, FluxParticlePageVersion.Updated),
@@ -640,7 +659,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 }
                 target.Create();
                 Graphics.Blit(null, target, material);
-                AssertVector(expected, ReadTexture(target, 0), rotation ? 0.05f : 0.0001f);
+                AssertVector(expected, ReadTexture(target, 0), rotation ? 0.05f : size ? 0.002f : 0.0001f);
                 AssertVector(Vector4.zero, ReadTexture(target, 2));
             }
             finally
@@ -706,6 +725,12 @@ namespace TpLab.Flux.FX.Tests.Editor
                     new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Replace) },
                     new[] { "render.start" }, Hlsl + "TestStateRender.hlsl", "FluxFX_TestStateRender"));
             }
+        }
+        static string GetAssetIdentity(Object asset)
+        {
+            Assert.IsNotNull(asset);
+            Assert.IsTrue(AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out var guid, out long localId));
+            return guid + ":" + localId;
         }
         FluxParticleExecutor CreateRuntime(FluxParticleBuildResult compiled, int capacity = 4)
         {

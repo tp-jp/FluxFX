@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {
@@ -13,10 +12,9 @@ namespace TpLab.Flux.FX.Editor.Compilation
         /// <summary>
         /// コンパイル済みの描画定義からShaderLabソースを生成します。
         /// </summary>
-        /// <param name="program">コンパイル済みのParticle Shader Program。</param>
-        /// <param name="initialValues">Parameterの初期値。</param>
-        /// <returns>ShaderLabソース。</returns>
-        public static string Generate(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues)
+        /// <param name="program">ParticleのShader生成結果</param>
+        /// <returns>ShaderLabソース</returns>
+        public static string Generate(FluxParticleShaderProgram program)
         {
             if (!program.Compilation.StateLayout.TryGetBinding("particle.position", out var position))
             {
@@ -34,23 +32,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 pageProperties += Environment.NewLine + "[HideInInspector] " + FluxParticleHlslNames.ProviderProperty(provider.ValueId) +
                     @" (""Lookup Table"", 2D) = ""white"" {}";
             }
-            var randomSize = initialValues.ContainsKey("render.size-range");
-            var sizeExpression = FluxParticleHlslNames.ParameterProperty("render.size");
             var renderCode = extra + program.RenderSource;
-            if (randomSize)
-            {
-                if (!program.Compilation.StateLayout.TryGetBinding("particle.spawn-key", out var spawnKey))
-                {
-                    throw new InvalidOperationException("Random start size requires particle.spawn-key State.");
-                }
-                var keySampler = FluxParticleHlslNames.PageProperty(spawnKey.PageId, FluxParticlePageVersion.Updated);
-                var keyDeclaration = "sampler2D " + keySampler + ";";
-                if (!renderCode.Contains(keyDeclaration)) renderCode = keyDeclaration + "\n" + renderCode;
-                renderCode = "#include \"Packages/com.tplab.flux.fx/Runtime/Shaders/Includes/ParticleCommon.hlsl\"\n" + renderCode;
-                var range = FluxParticleHlslNames.ParameterProperty("render.size-range");
-                var spawnKeyExpression = $"(uint)tex2Dlod({keySampler}, float4(stateUV, 0.0, 0.0)).{"rgba"[spawnKey.ChannelOffset]}";
-                sizeExpression = $"lerp({range}.x, {range}.y, FluxFXRandom01({spawnKeyExpression} * 59u + 43u))";
-            }
             var rotationCode = program.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start")
                 ? "float angle = radians(render." + FluxParticleHlslNames.Value("render.rotation") + ".z);\n" +
                   "float s;\n" +
@@ -61,10 +43,11 @@ namespace TpLab.Flux.FX.Editor.Compilation
             return FluxParticleProgramShaderGenerator.ExpandTemplate("Billboard", new Dictionary<string, string>
             {
                 ["PageProperties"] = pageProperties,
+                ["ParameterProperties"] = FluxParticleProgramShaderGenerator.GenerateParameterProperties(program.Compilation),
                 ["RenderCode"] = renderCode,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
-                ["Size"] = sizeExpression,
+                ["Size"] = "render." + FluxParticleHlslNames.Value("render.size"),
                 ["RotationCode"] = rotationCode
             });
         }

@@ -7,6 +7,7 @@ Shader "Hidden/FluxFX/Program/Billboard"
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
         {{PageProperties}}
+        {{ParameterProperties}}
     }
     SubShader
     {

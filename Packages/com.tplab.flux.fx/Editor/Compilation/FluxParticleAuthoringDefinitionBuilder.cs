@@ -125,6 +125,15 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 definitions.AddParameter(new FluxParticleParameterDefinition("shape.size", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
             }
+            definitions.AddProvider(new FluxParticleValueProvider("particle.start-size", FluxParticleProviderKind.Derived,
+                randomSize ? new[] { "particle.spawn-key" } : Array.Empty<string>(),
+                new[] { randomSize ? "render.size-range" : "render.size" },
+                "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/" + (randomSize ? "RandomStartSize.hlsl" : "StartSize.hlsl"),
+                "FluxFX_StartSize"));
+            definitions.AddOperation(new FluxParticleOperationDefinition("render.size-start", "fluxfx.core", FluxParticlePhase.Render,
+                new[] { new FluxParticleValueRead("particle.start-size", FluxParticleReadVersion.Provided) },
+                new[] { new FluxParticleValueWrite("render.size", FluxParticleWriteKind.Replace) }, null,
+                "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/RenderStartSize.hlsl", "FluxFX_RenderStartSize"));
             definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
                 randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
             if (hasRotation)

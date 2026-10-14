@@ -22,6 +22,8 @@ namespace TpLab.Flux.FX.Editor.Compilation
             AddValue(builder, "particle.spawn-key", FluxParticleValueType.UInt, FluxParticleWritePolicy.SystemManaged);
             AddValue(builder, "particle.lifetime", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
             AddValue(builder, "particle.start-color", FluxParticleValueType.Float4, FluxParticleWritePolicy.ReadOnly);
+            AddValue(builder, "particle.start-size", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
+            AddValue(builder, "render.size", FluxParticleValueType.Float, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "render.color", FluxParticleValueType.Float4, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "step.delta-time", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
             AddValue(builder, "spawn.key", FluxParticleValueType.UInt, FluxParticleWritePolicy.ReadOnly);

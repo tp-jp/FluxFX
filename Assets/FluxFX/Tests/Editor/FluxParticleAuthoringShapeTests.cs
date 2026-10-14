@@ -198,7 +198,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             if (sizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants)
             {
                 Assert.AreEqual(new Vector4(0.5f, 2f, 0, 0), compiled.InitialValues["render.size-range"]);
-                StringAssert.Contains("FluxFXRandom01", shader);
+                StringAssert.Contains("RandomStartSize.hlsl", shader);
                 Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("render.size-range", out _));
             }
         }
@@ -453,9 +453,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(compiled.Shaders.Compilation.StateLayout.TryGetBinding("particle.spawn-key", out _));
             Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("render.size-range", out _));
             var shader = compiled.RendererSource;
-            StringAssert.Contains("FluxFXRandom01", shader);
-            StringAssert.Contains("FluxFXRandom01", shader);
-            StringAssert.Contains("59u + 43u", shader);
+            StringAssert.Contains("RandomStartSize.hlsl", shader);
+            var provider = compiled.Shaders.Compilation.Providers["particle.start-size"];
+            CollectionAssert.Contains(provider.Inputs, "particle.spawn-key");
+            StringAssert.Contains("59u + 43u", File.ReadAllText(provider.HlslPath));
         }
 
         [Test]

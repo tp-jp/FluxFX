@@ -388,6 +388,23 @@ namespace TpLab.Flux.FX.Editor.Compilation
 
         }
 
+        /// <summary>
+        /// Parameterの型に対応するShaderLab Property宣言を生成します。
+        /// </summary>
+        /// <param name="program">Particleのコンパイル結果</param>
+        /// <returns>FloatまたはVectorのProperty宣言</returns>
+        public static string GenerateParameterProperties(FluxParticleCompiledProgram program)
+        {
+            return string.Join(Environment.NewLine, program.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal)
+                .Select(parameter =>
+                {
+                    var property = FluxParticleHlslNames.ParameterProperty(parameter.Id);
+                    var scalar = parameter.Type == FluxParticleValueType.Float;
+                    var type = scalar ? "Float" : "Vector";
+                    var initial = scalar ? "0" : "(0, 0, 0, 0)";
+                    return $@"[HideInInspector] {property} (""{property}"", {type}) = {initial}";
+                }));
+        }
         internal static string ExpandTemplate(string name, IReadOnlyDictionary<string, string> bindings)
         {
             var extension = (name == "Shader" || name == "Billboard") ? ".shader.template" : ".hlsl.template";
