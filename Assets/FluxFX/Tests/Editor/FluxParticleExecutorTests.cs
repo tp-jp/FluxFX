@@ -726,6 +726,128 @@ namespace TpLab.Flux.FX.Tests.Editor
                     new[] { "render.start" }, Hlsl + "TestStateRender.hlsl", "FluxFX_TestStateRender"));
             }
         }
+        [Test]
+        public void VelocityOverLifetimeUsesMotionPageWithoutAdditionalStateOrPass()
+        {
+            var baseline = FluxParticleBuildPipeline.Build(authoring);
+            SetModules(CreateVelocityModule(new Vector3(2, 0, 0), new Vector3(6, 0, 0)));
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
+            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
+            var pass = compiled.Shaders.Passes.Single(value => value.Plan.UpdateOperations.Any(operation => operation.Id == "motion"));
+            CollectionAssert.AreEqual(new[] { "motion", "velocity-over-lifetime" }, pass.Plan.UpdateOperations.Select(operation => operation.Id));
+            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding("velocity-over-lifetime.center-offset", out _));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void VelocityOverLifetimeCombinesWithGravityAndDrag(bool reverse)
+        {
+            RequireGraphics();
+            var velocity = CreateVelocityModule(new Vector3(2, 0, 0), new Vector3(2, 0, 0));
+            if (reverse) SetModules(new FluxParticleDragModule(), velocity, new FluxParticleGravityModule());
+            else SetModules(new FluxParticleGravityModule(), velocity, new FluxParticleDragModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetVector("gravity", new Vector4(0, -2, 0, 0)));
+            Assert.IsTrue(runtime.SetFloat("drag", 0.4f));
+            runtime.Step(0.5f, 0, 1, 1);
+            var initialVelocity = ReadValue(runtime, compiled, "particle.velocity", 0);
+            runtime.Step(0.5f, 0, 0, 2);
+            var expectedVelocity = (initialVelocity + new Vector4(0, -1, 0, 0)) * Mathf.Exp(-0.2f);
+            AssertVector(expectedVelocity, ReadValue(runtime, compiled, "particle.velocity", 0));
+            AssertVector(expectedVelocity * 0.5f + new Vector4(1, 0, 0, 0),
+                ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.AreEqual(0.5f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+        }
+
+        [Test]
+        public void VelocityOverLifetimeEvaluatesTimeOrbitalRadialAndLiveChanges()
+        {
+            RequireGraphics();
+            var start = new Vector3(2, 0, 0);
+            var end = new Vector3(6, 0, 0);
+            var orbital = new Vector3(0, 0, 1);
+            var offset = new Vector3(1, 0, 0);
+            SetModules(CreateVelocityModule(start, end, orbital, offset, 3));
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            Assert.IsTrue(runtime.SetVector("spawn.position", new Vector4(2, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("lifetime.range", new Vector4(10, 10, 0, 0)));
+            runtime.Step(0, 0, 1, 1);
+            AssertVector(new Vector4(2, 0, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            runtime.Step(1, 0, 0, 2);
+            AssertVector(new Vector4(7, 1, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            var centerOffset = new Vector3(7, 1, 0) - offset;
+            var extra = Vector3.Lerp(start, end, 0.1f) + Vector3.Cross(orbital, centerOffset) + centerOffset.normalized * 3;
+            runtime.Step(1, 0, 0, 3);
+            var expected = new Vector3(7, 1, 0) + extra;
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.position", 0));
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, "particle.velocity", 0));
+            Assert.IsTrue(runtime.SetFloat("velocity-over-lifetime.enabled", 0));
+            runtime.Step(1, 0, 0, 4);
+            AssertVector(expected, ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.AreEqual(3, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+
+            Assert.IsTrue(runtime.SetVector("velocity-over-lifetime.start", new Vector4(10, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("velocity-over-lifetime.end", new Vector4(10, 0, 0, 0)));
+            Assert.IsTrue(runtime.SetVector("velocity-over-lifetime.orbital", Vector4.zero));
+            Assert.IsTrue(runtime.SetFloat("velocity-over-lifetime.radial", 0));
+            Assert.IsTrue(runtime.SetFloat("velocity-over-lifetime.enabled", 1));
+            runtime.Step(1, 0, 0, 5);
+            AssertVector(expected + new Vector3(10, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            runtime.Clear();
+            runtime.Step(0, 0, 1, 1);
+            AssertVector(new Vector4(2, 0, 0, 0), ReadValue(runtime, compiled, "particle.position", 0));
+        }
+
+        [Test]
+        public void VelocityOverLifetimeAtRadialCenterRemainsFinite()
+        {
+            RequireGraphics();
+            SetModules(CreateVelocityModule(Vector3.zero, Vector3.zero, new Vector3(0, 0, 1), radial: 4));
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(runtime.SetFloat("spawn.speed", 0));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(1, 0, 0, 2);
+            AssertVector(Vector4.zero, ReadValue(runtime, compiled, "particle.position", 0));
+        }
+
+        [Test]
+        public void DisabledVelocityOverLifetimeAddsNoOperationOrParameters()
+        {
+            var module = CreateVelocityModule(Vector3.one, Vector3.one);
+            typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
+            SetModules(module);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "velocity-over-lifetime"));
+            Assert.IsFalse(compiled.InitialValues.ContainsKey("velocity-over-lifetime.start"));
+        }
+        [Test]
+        public void VelocityOverLifetimeRejectsNonFiniteParameters()
+        {
+            SetModules(CreateVelocityModule(new Vector3(float.NaN, 0, 0), Vector3.zero));
+            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
+
+        static FluxParticleVelocityOverLifetimeModule CreateVelocityModule(Vector3 start, Vector3 end,
+            Vector3 orbital = default, Vector3 offset = default, float radial = 0)
+        {
+            var module = new FluxParticleVelocityOverLifetimeModule();
+            var type = typeof(FluxParticleVelocityOverLifetimeModule);
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            type.GetField("start", flags).SetValue(module, start);
+            type.GetField("end", flags).SetValue(module, end);
+            type.GetField("orbital", flags).SetValue(module, orbital);
+            type.GetField("offset", flags).SetValue(module, offset);
+            type.GetField("radial", flags).SetValue(module, radial);
+            return module;
+        }
         static string GetAssetIdentity(Object asset)
         {
             Assert.IsNotNull(asset);

@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
         public static FluxParticleDefinitionBuilder Create()
         {
             var builder = new FluxParticleDefinitionBuilder();
-            AddValue(builder, "particle.position", FluxParticleValueType.Float3, FluxParticleWritePolicy.SystemManaged);
+            AddValue(builder, "particle.position", FluxParticleValueType.Float3, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "particle.age", FluxParticleValueType.Float, FluxParticleWritePolicy.SystemManaged);
             AddValue(builder, "particle.velocity", FluxParticleValueType.Float3, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "particle.spawn-key", FluxParticleValueType.UInt, FluxParticleWritePolicy.SystemManaged);
