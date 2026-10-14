@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -96,7 +97,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectValueFieldNameCollision()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             definitions.AddValue(new FluxParticleValueDefinition("custom.force", FluxParticleValueType.Float,
                 FluxParticleWritePolicy.ReadOnly, "test"));
             definitions.AddValue(new FluxParticleValueDefinition("custom-force", FluxParticleValueType.Float,
@@ -108,7 +109,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectParameterFieldNameCollision()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             definitions.AddParameter(new FluxParticleParameterDefinition("custom.force", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live));
             definitions.AddParameter(new FluxParticleParameterDefinition("custom-force", FluxParticleValueType.Float,
@@ -133,7 +134,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase("gravity", "Gravity")]
         public void RejectContextTypeNameCollisions(string first, string second)
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             foreach (var id in new[] { first, second })
             {
                 if (definitions.Operations.ContainsKey(id)) continue;
@@ -183,7 +184,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectUnknownOperationParameter()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var source = definitions.Operations["gravity"];
             var changed = Copy(definitions, "gravity");
             changed.AddOperation(new FluxParticleOperationDefinition(source.Id, source.OwnerId, source.Phase,
@@ -194,7 +195,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectLiveRecomputedLifetime()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = new FluxParticleDefinitionBuilder();
             foreach (var value in definitions.Values.Values) changed.AddValue(value);
             foreach (var provider in definitions.Providers.Values) changed.AddProvider(provider);
@@ -210,7 +211,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectCrossPageReadOfOverwrittenIntermediateVersion()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = Copy(definitions, "motion");
             var motion = definitions.Operations["motion"];
             var reads = motion.Reads.Select(read => read.ValueId == "particle.velocity"
@@ -224,7 +225,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void SamePageIntermediateVersionIsPreservedInOperationLocalContext()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = Copy(definitions, "motion");
             var gravity = definitions.Operations["gravity"];
             changed.AddOperation(new FluxParticleOperationDefinition("restore", gravity.OwnerId, FluxParticlePhase.Update,
@@ -243,7 +244,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RejectUnsafeIncludeAndEntryPoint()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = Copy(definitions, "gravity");
             var op = definitions.Operations["gravity"];
             changed.AddOperation(new FluxParticleOperationDefinition(op.Id, op.OwnerId, op.Phase, op.Reads,
@@ -280,7 +281,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void UndeclaredOperationContextAccessFailsShaderCompilation()
         {
             RequireGpu();
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = Copy(definitions, "gravity");
             var op = definitions.Operations["gravity"];
             var path = WriteInclude("Invalid", "void Invalid(inout FluxGravityContext ctx) { ctx.undeclared = 1.0; }");
@@ -450,7 +451,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         FluxParticleDefinitionBuilder CreateMultiPage()
         {
-            var definitions = FluxParticleBasicProgram.CreateDefinitions();
+            var definitions = CreateDefinitions();
             var changed = Copy(definitions, "spawn.velocity");
             changed.AddValue(new FluxParticleValueDefinition("custom.mode", FluxParticleValueType.Float,
                 FluxParticleWritePolicy.SharedMutable, "fluxfx.core"));
@@ -473,11 +474,26 @@ namespace TpLab.Flux.FX.Tests.Editor
             foreach (var op in source.Operations.Values.Where(op => op.Id != exclude)) result.AddOperation(op);
             return result;
         }
+        static FluxParticleDefinitionBuilder CreateDefinitions()
+        {
+            var definitions = FluxParticleCoreDefinitions.Create();
+            var registry = new FluxParticleModuleRegistry();
+            var modules = new FluxParticleModule[]
+            {
+                new FluxParticleGravityModule(),
+                new FluxParticleDragModule(),
+                new FluxParticleColorOverLifetimeModule()
+            };
+            registry.Contribute(modules, new FluxParticleProgramContribution(definitions));
+            FluxParticleVelocityPipelineResolver.Resolve(definitions);
+            return definitions;
+        }
+
 
         static FluxParticleShaderProgram Generate(FluxParticleDefinitionBuilder definitions = null)
         {
-            return new FluxParticleProgramShaderGenerator().Generate(definitions ?? FluxParticleBasicProgram.CreateDefinitions(),
-                "Hidden/FluxFX/Phase2Tests", FluxParticleBasicProgram.CreateLifecycle());
+            return new FluxParticleProgramShaderGenerator().Generate(definitions ?? CreateDefinitions(),
+                "Hidden/FluxFX/Phase2Tests", FluxParticleCoreDefinitions.CreateLifecycle());
         }
 
         FluxParticleProgramGpuSession CreateSession(FluxParticleShaderProgram generated)
