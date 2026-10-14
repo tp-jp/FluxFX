@@ -24,6 +24,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             AddValue(builder, "particle.start-color", FluxParticleValueType.Float4, FluxParticleWritePolicy.ReadOnly);
             AddValue(builder, "particle.start-size", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
             AddValue(builder, "render.size", FluxParticleValueType.Float, FluxParticleWritePolicy.SharedMutable);
+            AddValue(builder, "render.uv-transform", FluxParticleValueType.Float4, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "render.color", FluxParticleValueType.Float4, FluxParticleWritePolicy.SharedMutable);
             AddValue(builder, "step.time", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
             AddValue(builder, "step.delta-time", FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly);
@@ -53,6 +54,10 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 new[] { Read("particle.start-color", FluxParticleReadVersion.Provided) },
                 new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Replace) }, null,
                 Hlsl + "RenderStart.hlsl", "FluxFX_RenderStart"));
+            builder.AddOperation(new FluxParticleOperationDefinition("render.uv-start", Core, FluxParticlePhase.Render,
+                Array.Empty<FluxParticleValueRead>(),
+                new[] { new FluxParticleValueWrite("render.uv-transform", FluxParticleWriteKind.Replace) }, null,
+                Hlsl + "RenderUvStart.hlsl", "FluxFX_RenderUvStart"));
             return builder;
         }
 

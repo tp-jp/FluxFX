@@ -48,6 +48,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
                 ["Size"] = "render." + FluxParticleHlslNames.Value("render.size"),
+                ["UvTransform"] = "render." + FluxParticleHlslNames.Value("render.uv-transform"),
                 ["RotationCode"] = rotationCode
             });
         }

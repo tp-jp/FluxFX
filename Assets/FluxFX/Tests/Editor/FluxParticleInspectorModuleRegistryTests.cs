@@ -25,7 +25,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleGravityModule), out _));
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleVelocityOverLifetimeModule), out _));
             Assert.IsTrue(_registry.TryGet(typeof(FluxParticleColorOverLifetimeModule), out _));
-            Assert.IsFalse(_registry.TryGet(typeof(FluxParticleTextureSheetAnimationModule), out _));
+            Assert.IsTrue(_registry.TryGet(typeof(FluxParticleTextureSheetAnimationModule), out _));
         }
 
         [Test]
@@ -56,7 +56,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(modules, typeof(FluxParticleColorOverLifetimeModule)));
             Assert.IsTrue(Contains(modules, typeof(FluxParticleSizeOverLifetimeModule)));
             Assert.IsTrue(Contains(modules, typeof(FluxParticleRotationOverLifetimeModule)));
-            Assert.IsFalse(Contains(modules, typeof(FluxParticleTextureSheetAnimationModule)));
+            Assert.IsTrue(Contains(modules, typeof(FluxParticleTextureSheetAnimationModule)));
         }
 
         [Test]
@@ -172,7 +172,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(10, standardCount);
+            Assert.AreEqual(11, standardCount);
         }
 
         [Test]
@@ -194,7 +194,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleColorOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleSizeOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleRotationOverLifetimeModule)));
-            Assert.IsFalse(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
         }
 
         [Test]

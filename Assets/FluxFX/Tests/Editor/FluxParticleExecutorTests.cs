@@ -93,7 +93,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void UnsupportedAndDuplicateModulesAreRejected()
         {
-            SetModules(new FluxParticleTextureSheetAnimationModule());
+            SetModules(new UnregisteredGpuModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
             SetModules(new FluxParticleGravityModule(), new FluxParticleGravityModule());
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
