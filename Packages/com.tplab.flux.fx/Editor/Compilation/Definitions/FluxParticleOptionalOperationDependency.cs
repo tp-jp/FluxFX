@@ -38,13 +38,13 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         /// 指定ValueのWriterの順序を返します。入力のOperation定義は変更しません。
         /// </summary>
         public static IReadOnlyList<string> OrderWriters(FluxParticleDefinitionBuilder definitions, string valueId,
-            IEnumerable<FluxParticleOptionalOperationDependency> optionalDependencies)
+            IEnumerable<FluxParticleOptionalOperationDependency> optionalDependencies, FluxParticlePhase phase = FluxParticlePhase.Update)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
             if (string.IsNullOrWhiteSpace(valueId)) throw new ArgumentException("Value ID is required.", nameof(valueId));
             if (optionalDependencies == null) throw new ArgumentNullException(nameof(optionalDependencies));
 
-            var writers = definitions.Operations.Values.Where(operation => operation.Phase == FluxParticlePhase.Update &&
+            var writers = definitions.Operations.Values.Where(operation => operation.Phase == phase &&
                 operation.Writes.Any(write => write.ValueId == valueId)).ToDictionary(operation => operation.Id, StringComparer.Ordinal);
             var successors = writers.Keys.ToDictionary(id => id, id => new HashSet<string>(StringComparer.Ordinal), StringComparer.Ordinal);
             foreach (var operation in writers.Values)

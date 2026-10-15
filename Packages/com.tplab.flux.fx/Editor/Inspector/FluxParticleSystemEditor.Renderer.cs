@@ -36,6 +36,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 }
             }
 
+            EditorGUILayout.PropertyField(_render.FindPropertyRelative("intensity"), new GUIContent(L10n.Tr("Intensity")));
+
             EditorGUILayout.PropertyField(
                 _render.FindPropertyRelative("texture"),
                 new GUIContent(L10n.Tr("Texture")));

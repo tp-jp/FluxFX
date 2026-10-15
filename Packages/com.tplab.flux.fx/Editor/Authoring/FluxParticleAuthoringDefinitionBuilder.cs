@@ -59,6 +59,17 @@ namespace TpLab.Flux.FX.Editor.Authoring
             }
             AddProviders(authoring, source, definitions);
             AddOperationsAndParameters(authoring, source, definitions, hasRotation);
+            if (float.IsNaN(authoring.Render.Intensity) || float.IsInfinity(authoring.Render.Intensity) || authoring.Render.Intensity < 0)
+            {
+                throw new InvalidOperationException("Renderer intensity must be finite and non-negative.");
+            }
+            definitions.AddParameter(new FluxParticleParameterDefinition("render.intensity", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+            var colorOperations = definitions.Operations.Values.Where(operation => operation.Phase == FluxParticlePhase.Render &&
+                operation.Writes.Any(write => write.ValueId == "render.color")).Select(operation => operation.Id).ToArray();
+            definitions.AddOperation(new FluxParticleOperationDefinition("render.intensity", "fluxfx.core", FluxParticlePhase.Render,
+                new[] { new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start") },
+                new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) }, colorOperations,
+                "Packages/com.tplab.flux.fx/Editor/Core/Hlsl/RenderIntensity.hlsl", "FluxFX_RenderIntensity", new[] { "render.intensity" }));
             initialValues = new ReadOnlyDictionary<string, Vector4>(
                 FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation));
             moduleBindings = Array.AsReadOnly(moduleContext.ModuleBindings.Values.ToArray());

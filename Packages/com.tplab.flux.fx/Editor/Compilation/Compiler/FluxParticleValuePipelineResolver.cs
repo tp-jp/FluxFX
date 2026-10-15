@@ -6,7 +6,7 @@ using TpLab.Flux.FX.Editor.Compilation.Definitions;
 namespace TpLab.Flux.FX.Editor.Compilation.Compiler
 {
     /// <summary>
-    /// Update Phaseで同じValueを更新するOperationを登録順に依存せず接続します。
+    /// 同じPhaseでValueを更新するOperationを登録順に依存せず接続します。
     /// 明示的な順序がない複数Writerは曖昧として拒否します。
     /// </summary>
     public static class FluxParticleValuePipelineResolver
@@ -15,15 +15,15 @@ namespace TpLab.Flux.FX.Editor.Compilation.Compiler
         /// Optional Dependencyを考慮したWriterの順序を確定し、入力と先行Operationを接続します。
         /// </summary>
         public static string Resolve(FluxParticleDefinitionBuilder definitions, string valueId,
-            IReadOnlyList<FluxParticleOptionalOperationDependency> optionalDependencies)
+            IReadOnlyList<FluxParticleOptionalOperationDependency> optionalDependencies, FluxParticlePhase phase = FluxParticlePhase.Update)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
-            var order = FluxParticleOptionalDependencyResolver.OrderWriters(definitions, valueId, optionalDependencies);
+            var order = FluxParticleOptionalDependencyResolver.OrderWriters(definitions, valueId, optionalDependencies, phase);
             string previous = null;
             foreach (var id in order)
             {
                 var writer = definitions.Operations[id];
-                var reads = writer.Reads.Select(read => read.ValueId == valueId
+                var reads = writer.Reads.Select(read => read.ValueId == valueId && (previous != null || phase == FluxParticlePhase.Update)
                     ? new FluxParticleValueRead(valueId, previous == null ? FluxParticleReadVersion.StepPrevious :
                         FluxParticleReadVersion.AfterOperation, previous)
                     : read).ToArray();

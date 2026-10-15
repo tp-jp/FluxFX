@@ -232,6 +232,10 @@ namespace TpLab.Flux.FX.Scripts
         FluxParticleBlendMode blendMode;
 
         [SerializeField]
+        [Min(0)]
+        float intensity = 1;
+
+        [SerializeField]
         Bounds cullingBounds = new Bounds(Vector3.zero, Vector3.one * 1000);
 
         [SerializeField]
@@ -279,6 +283,7 @@ namespace TpLab.Flux.FX.Scripts
         public Vector2 Tiling => tiling;
         public Vector2 Offset => offset;
         public FluxParticleBlendMode BlendMode => blendMode;
+        public float Intensity => intensity;
         public Bounds CullingBounds => cullingBounds;
         public Color StartColor => startColor;
         public FluxParticleStartColorMode StartColorMode => startColorMode;

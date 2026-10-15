@@ -29,6 +29,7 @@ namespace TpLab.Flux.FX.Editor.Authoring
             var max = life.Mode == FluxParticleStartLifetimeMode.Constant ? life.Lifetime : Mathf.Max(life.Min, life.Max);
             var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
             {
+                ["render.intensity"] = new Vector4(authoring.Render.Intensity, 0, 0, 0),
                 ["spawn.position"] = Vector4.zero,
                 ["lifetime.range"] = new Vector4(min, max, 0, 0)
             };

@@ -520,6 +520,10 @@ namespace TpLab.Flux.FX.Udon
 
         void BindRender()
         {
+            if (!string.IsNullOrEmpty(simulationTimeProperty))
+            {
+                renderMaterial.SetFloat(simulationTimeProperty, _simulationTime);
+            }
             for (var page = 0; page < _current.Length; page++)
             {
                 renderMaterial.SetTexture(renderPageProperties[page], _current[page].Texture);

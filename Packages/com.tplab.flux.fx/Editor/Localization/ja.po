@@ -409,3 +409,42 @@ msgstr "テクスチャ"
 
 msgid "Tiling"
 msgstr "タイリング"
+
+msgid "Blink"
+msgstr "点滅"
+
+msgid "Intensity"
+msgstr "強度"
+
+msgid "Frequency"
+msgstr "周波数"
+
+msgid "Duty"
+msgstr "点灯割合"
+
+msgid "Minimum"
+msgstr "最小倍率"
+
+msgid "Smoothness"
+msgstr "滑らかさ"
+
+msgid "Random Phase"
+msgstr "位相のランダム化"
+
+msgid "Time Mode"
+msgstr "時間の基準"
+
+msgid "System Time"
+msgstr "システム時間"
+
+msgid "Particle Age"
+msgstr "粒子の経過時間"
+
+msgid "Target"
+msgstr "補正対象"
+
+msgid "Rgb"
+msgstr "RGB"
+
+msgid "Both"
+msgstr "RGBとAlpha"

@@ -181,6 +181,84 @@ namespace TpLab.Flux.FX.Tests.Editor
             runtime.Step(0.5f, 0, 0, 2);
             AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
         }
+        [TestCase(FluxParticleBlinkTimeMode.SystemTime, 0f, 0f)]
+        [TestCase(FluxParticleBlinkTimeMode.ParticleAge, 0f, 1f)]
+        [TestCase(FluxParticleBlinkTimeMode.ParticleAge, 1f, 0f)]
+        public void BlinkUsesSimulationClockAndDeterministicSpawnPhase(FluxParticleBlinkTimeMode timeMode, float randomPhase, float alpha)
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleBlinkModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var blink = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Blink;
+            Assert.IsTrue(blink.SetFrequency(1));
+            Assert.IsTrue(blink.SetTimeMode(timeMode));
+            Assert.IsTrue(blink.SetRandomPhase(randomPhase));
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0.75f, 0, 0, 0);
+            runtime.Step(0, 0, 1, 1);
+            AssertCustomRender(runtime, compiled, new Color(1, 1, 1, alpha), 1);
+        }
+
+        [TestCase(FluxParticleBlinkTarget.Rgb)]
+        [TestCase(FluxParticleBlinkTarget.Alpha)]
+        [TestCase(FluxParticleBlinkTarget.Both)]
+        public void BlinkAndIntensityUpdateGpuRendering(FluxParticleBlinkTarget target)
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleBlinkModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            var blink = system.Modules.Blink;
+            Assert.IsNotNull(blink);
+            Assert.IsTrue(system.SetRenderIntensity(2));
+            Assert.IsFalse(system.SetRenderIntensity(float.PositiveInfinity));
+            Assert.AreEqual(2, system.GetRenderIntensity());
+            Assert.IsTrue(blink.SetTarget(target));
+            Assert.IsTrue(blink.SetFrequency(1));
+            Assert.IsTrue(blink.SetMinimum(0.25f));
+            Assert.IsFalse(blink.SetDuty(2));
+            PrepareCustomRenderShader(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0, 0, 1, 1);
+            AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
+            runtime.Step(0.75f, 0, 0, 2);
+            Assert.AreEqual(0.75f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f, "Particle must remain alive after stepping.");
+            Assert.AreEqual(0.25f, blink.GetMinimum());
+            Assert.AreEqual(2f, system.GetRenderIntensity());
+            var rgb = target == FluxParticleBlinkTarget.Alpha ? 2 : 0.5f;
+            var alpha = target == FluxParticleBlinkTarget.Rgb ? 1 : 0.25f;
+            AssertCustomRender(runtime, compiled, new Color(rgb, rgb, rgb, alpha), 1);
+            Assert.IsTrue(blink.SetEnabled(false));
+            AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
+            Assert.IsTrue(blink.SetEnabled(true));
+            Assert.IsTrue(blink.SetFrequency(0));
+            Assert.IsTrue(blink.SetDuty(0));
+            AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
+            Assert.IsTrue(blink.SetFrequency(1));
+            AssertCustomRender(runtime, compiled, new Color(rgb, rgb, rgb, alpha), 1);
+            Assert.IsTrue(blink.SetDuty(1));
+            AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
+            Assert.IsTrue(blink.SetDuty(0.5f));
+            runtime.Clear();
+            runtime.Step(0, 0, 1, 1);
+            AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void BlinkComposesWithColorAndIntensityRegardlessOfModuleOrder(bool reverse)
+        {
+            var modules = new FluxParticleModule[] { new FluxParticleBlinkModule(), new FluxParticleColorOverLifetimeModule() };
+            SetModules(reverse ? modules.Reverse().ToArray() : modules);
+            var build = FluxParticleBuildPipeline.Build(authoring);
+            var operations = build.Shaders.Compilation.Operations.Select(operation => operation.Id).ToList();
+            Assert.Less(operations.IndexOf("render.color"), operations.IndexOf("render.blink"));
+            Assert.Less(operations.IndexOf("render.blink"), operations.IndexOf("render.intensity"));
+            Assert.AreEqual(2, build.Shaders.Compilation.StateLayout.Pages.Count);
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void RendererTransfersTextureSettingsToGeneratedMaterial(bool useTexture)
@@ -1055,7 +1133,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 () => FluxParticleBuildPipeline.Build(authoring)).Message);
         }
 
-        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, int inactiveSlot, bool rotation = false, bool size = false, bool corrections = false, bool uv = false)
+        Shader PrepareCustomRenderShader(FluxParticleBuildResult compiled, bool rotation = false, bool size = false, bool corrections = false, bool uv = false)
         {
             var source = string.Join(Environment.NewLine, new[]
             {
@@ -1080,13 +1158,22 @@ namespace TpLab.Flux.FX.Tests.Editor
             });
             var path = folder + "/CustomStateRender.shader";
             source = source.Replace("\r\n", "\n").Replace("\r", "\n");
-            System.IO.File.WriteAllText(path, source);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            if (!System.IO.File.Exists(path) || System.IO.File.ReadAllText(path) != source)
+            {
+                System.IO.File.WriteAllText(path, source);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            }
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             Assert.IsNotNull(shader);
             Assert.IsFalse(ShaderUtil.ShaderHasError(shader),
                 string.Join(Environment.NewLine, ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
             Assert.IsTrue(shader.isSupported);
+            return shader;
+        }
+
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, int inactiveSlot, bool rotation = false, bool size = false, bool corrections = false, bool uv = false)
+        {
+            var shader = PrepareCustomRenderShader(compiled, rotation, size, corrections, uv);
             var material = new Material(shader);
             var page = runtime.GetCurrentPage(0);
             var target = new RenderTexture(page.width, page.height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
@@ -1116,6 +1203,11 @@ namespace TpLab.Flux.FX.Tests.Editor
                     {
                         material.SetVector(property, runtime.RenderMaterial.GetVector(property));
                     }
+                }
+                if (compiled.Shaders.Compilation.Providers.ContainsKey("step.time"))
+                {
+                    var timeProperty = FluxParticleHlslNames.ProviderProperty("step.time");
+                    material.SetFloat(timeProperty, runtime.RenderMaterial.GetFloat(timeProperty));
                 }
                 target.Create();
                 Graphics.Blit(null, target, material);
@@ -2289,6 +2381,67 @@ namespace TpLab.Flux.FX.Tests.Editor
                     Assert.AreEqual(false, probe.GetProgramVariable("alivePending"), "Readback timed out at stage " + stage);
                     Assert.AreEqual(expected[stage], probe.GetProgramVariable("aliveResult"), "Alive count at stage " + stage);
                 }
+            }
+            finally
+            {
+                foreach (var buffer in root.GetComponentsInChildren<FluxBuffer>(true))
+                {
+                    var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(buffer);
+                    var texture = backing.GetProgramVariable("_texture") as RenderTexture;
+                    if (texture == null) continue;
+                    texture.Release();
+                    Object.DestroyImmediate(texture);
+                }
+                if (managerObject != null) Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [UnityTest, Explicit, Category("UdonRuntime")]
+        public IEnumerator BlinkHandlesExecuteOnUdonVm()
+        {
+            RequireGraphics();
+            Object.DestroyImmediate(root);
+            yield return new EnterPlayMode();
+            root = new GameObject("Module Handle Udon VM Test");
+            authoring = root.AddComponent<FluxParticleAuthoring>();
+            folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            generationSession = FluxParticleGenerationSession.Begin("Test", folder);
+            SetModules(new FluxParticleBlinkModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            SetModules();
+            var empty = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var probePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/FluxFX/Tests/ModuleHandleProbe.prefab");
+            Assert.IsNotNull(probePrefab);
+            var probeObject = (GameObject)PrefabUtility.InstantiatePrefab(probePrefab);
+            probeObject.transform.SetParent(root.transform, false);
+            var probeProxy = probeObject.GetComponent<UdonSharp.UdonSharpBehaviour>();
+            probeProxy.SetProgramVariable("target", runtime.GetComponentInParent<FluxParticleSystem>());
+            probeProxy.SetProgramVariable("empty", empty.GetComponentInParent<FluxParticleSystem>());
+            var binding = compiled.Shaders.Compilation.StateLayout.Pages.SelectMany(page => page.Bindings)
+                .Single(value => value.ValueId == "particle.velocity");
+            probeProxy.SetProgramVariable("resultPage", binding.PageId);
+            GameObject managerObject = null;
+            try
+            {
+                if (!VRC.Udon.UdonManager.HasInstance)
+                {
+                    managerObject = new GameObject("Module Handle Test Udon Manager");
+                    managerObject.AddComponent<VRC.Udon.UdonManager>().Awake();
+                }
+                foreach (var backing in root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true))
+                {
+                    backing.InitializeUdonContent();
+                }
+                foreach (var proxy in root.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true))
+                {
+                    UdonSharpEditorUtility.CopyProxyToUdon(proxy);
+                }
+                var probe = UdonSharpEditorUtility.GetBackingUdonBehaviour(probeProxy);
+                Assert.AreEqual(UdonSharpEditorUtility.GetBackingUdonBehaviour(runtime.GetComponentInParent<FluxParticleSystem>()), probe.GetProgramVariable("target"));
+                probe.SendCustomEvent("VerifyBlink");
+                Assert.AreEqual(true, probe.GetProgramVariable("passed"), "Compiled Udon probe must complete all handle checks.");
+
             }
             finally
             {

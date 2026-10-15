@@ -35,6 +35,11 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
             var extra = program.RenderSource.Contains(declaration) ? "" : declaration + "\n";
             var pageProperties = string.Join("\n", program.Compilation.StateLayout.Pages.Select(page =>
                 $"[HideInInspector] {FluxParticleHlslNames.PageProperty(page.Id, FluxParticlePageVersion.Updated)} (\"State Page {page.Id}\", 2D) = \"black\" {{}}"));
+            if (program.Compilation.Providers.ContainsKey("step.time"))
+            {
+                pageProperties += "\n[HideInInspector] " + FluxParticleHlslNames.ProviderProperty("step.time") +
+                    " (\"Simulation Time\", Float) = 0";
+            }
             foreach (var provider in program.Compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable)
                 .OrderBy(provider => provider.ValueId, StringComparer.Ordinal))
             {

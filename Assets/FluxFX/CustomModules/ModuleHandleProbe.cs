@@ -22,6 +22,31 @@ namespace TpLab.Flux.FX.CustomModules
         public bool alivePending;
         public bool aliveRequestAccepted;
 
+        public void VerifyBlink()
+        {
+            passed = false;
+            target.Pause();
+            var blink = target.Modules.Blink;
+            if (blink == null || blink != target.Modules.Blink || empty.Modules.Blink != null) return;
+            if (!target.SetRenderIntensity(3) || target.GetRenderIntensity() != 3) return;
+            if (target.SetRenderIntensity(float.NaN) || target.SetRenderIntensity(-1)) return;
+            if (!blink.SetFrequency(4) || blink.GetFrequency() != 4) return;
+            if (!blink.SetDuty(0.25f) || blink.GetDuty() != 0.25f) return;
+            if (!blink.SetMinimum(0.1f) || blink.GetMinimum() != 0.1f) return;
+            if (!blink.SetSmoothness(0.5f) || blink.GetSmoothness() != 0.5f) return;
+            if (!blink.SetRandomPhase(1) || blink.GetRandomPhase() != 1) return;
+            if (!blink.SetTimeMode(FluxParticleBlinkTimeMode.ParticleAge) || blink.GetTimeMode() != FluxParticleBlinkTimeMode.ParticleAge) return;
+            if (!blink.SetTarget(FluxParticleBlinkTarget.Both) || blink.GetTarget() != FluxParticleBlinkTarget.Both) return;
+            if (blink.SetDuty(2) || blink.SetFrequency(float.PositiveInfinity)) return;
+            if (!target.Executor.Initialize(4)) return;
+            if (!blink.SetEnabled(false) || blink.GetEnabled()) return;
+            if (!blink.SetEnabled(true) || !blink.GetEnabled()) return;
+            target.Executor.Step(0, 0, 1, 1);
+            target.Executor.Step(0.25f, 0, 0, 2);
+            if (!target.SetRenderIntensity(2) || !blink.SetFrequency(1)) return;
+            passed = true;
+        }
+
         public void VerifyAliveCount()
         {
             target.Pause();

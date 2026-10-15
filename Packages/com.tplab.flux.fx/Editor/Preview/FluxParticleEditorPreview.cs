@@ -245,6 +245,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <param name="layer">描画対象のLayer</param>
         public void Draw(Camera camera, Matrix4x4 matrix, int layer)
         {
+            if (usesSimulationTime) session.SetUniformFloat("step.time", (float)PlaybackTime);
             session.BindRender(material);
             Graphics.DrawMesh(mesh, matrix, material, layer, camera, 0, null, ShadowCastingMode.Off, false, null, LightProbeUsage.Off);
         }

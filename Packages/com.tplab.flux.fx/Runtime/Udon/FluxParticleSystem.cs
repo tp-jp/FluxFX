@@ -64,6 +64,24 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleRenderMode RenderMode => renderMode;
 
         /// <summary>
+        /// RendererのRGB強度を取得します。
+        /// </summary>
+        public float GetRenderIntensity()
+        {
+            if (particleExecutor == null) return 1;
+            var slot = particleExecutor.ResolveParameter("render.intensity", (int)FluxParticleValueType.Float);
+            return slot < 0 ? 1 : particleExecutor.GetParameterValue(slot).x;
+        }
+
+        /// <summary>
+        /// RendererのRGB強度を変更します。
+        /// </summary>
+        public bool SetRenderIntensity(float value)
+        {
+            return value >= 0 && particleExecutor != null && particleExecutor.SetFloat("render.intensity", value);
+        }
+
+        /// <summary>
         /// Mainの操作ハンドル
         /// </summary>
         public FluxParticleMainHandle Main

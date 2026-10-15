@@ -20,6 +20,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         SizeOverLifetime,
         RotationOverLifetime,
         TextureSheetAnimation,
+        Blink,
         Count
     }
 
@@ -86,7 +87,15 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         Cycles = 58,
         TilesX = 59,
         TilesY = 60,
-        Count = 61
+        BlinkFrequency = 61,
+        BlinkDuty = 62,
+        BlinkMinimum = 63,
+        BlinkSmoothness = 64,
+        BlinkRandomPhase = 65,
+        BlinkTimeMode = 66,
+        BlinkTarget = 67,
+        Intensity = 68,
+        Count = 69
     }
 
     /// <summary>
@@ -178,6 +187,9 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             {
                 values[i].text = controls[i].value.ToString(controls[i].wholeNumbers ? "F0" : "F2");
             }
+            values[(int)SampleControl.BlinkTimeMode].text = Value(SampleControl.BlinkTimeMode) < 0.5f ? "System" : "Age";
+            var blinkTarget = Value(SampleControl.BlinkTarget);
+            values[(int)SampleControl.BlinkTarget].text = blinkTarget < 0.5f ? "RGB" : blinkTarget < 1.5f ? "Alpha" : "Both";
             if (!_ready) return;
             ApplyLiveValues();
             message.text = "Live values applied. Initial values need Apply & Restart.";
@@ -211,6 +223,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
                 case SampleModule.SizeOverLifetime: return modules.SizeOverLifetime;
                 case SampleModule.RotationOverLifetime: return modules.RotationOverLifetime;
                 case SampleModule.TextureSheetAnimation: return modules.TextureSheetAnimation;
+                case SampleModule.Blink: return modules.Blink;
                 default: return null;
             }
         }
@@ -218,6 +231,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
 
         void ApplyLiveValues()
         {
+            _target.SetRenderIntensity(Value(SampleControl.Intensity));
             _target.Main.SetStartSpeed(Value(SampleControl.Speed));
             _target.Main.SetDuration(Value(SampleControl.Duration));
             _target.Main.SetStartDelay(Value(SampleControl.Delay));
@@ -304,6 +318,19 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             {
                 modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
                 modules.TextureSheetAnimation.SetEnabled(moduleToggles[(int)SampleModule.TextureSheetAnimation].isOn);
+            }
+            if (modules.Blink != null)
+            {
+                var blink = modules.Blink;
+                blink.SetFrequency(Value(SampleControl.BlinkFrequency));
+                blink.SetDuty(Value(SampleControl.BlinkDuty));
+                blink.SetMinimum(Value(SampleControl.BlinkMinimum));
+                blink.SetSmoothness(Value(SampleControl.BlinkSmoothness));
+                blink.SetRandomPhase(Value(SampleControl.BlinkRandomPhase));
+                blink.SetTimeMode(Value(SampleControl.BlinkTimeMode) < 0.5f ? FluxParticleBlinkTimeMode.SystemTime : FluxParticleBlinkTimeMode.ParticleAge);
+                var target = Value(SampleControl.BlinkTarget);
+                blink.SetTarget(target < 0.5f ? FluxParticleBlinkTarget.Rgb : target < 1.5f ? FluxParticleBlinkTarget.Alpha : FluxParticleBlinkTarget.Both);
+                blink.SetEnabled(moduleToggles[(int)SampleModule.Blink].isOn);
             }
         }
 

@@ -128,6 +128,14 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             new ControlSpec(4, SampleControl.Cycles, "Texture sheet / cycles", 0f, 8f, 1f, false),
             new ControlSpec(4, SampleControl.TilesX, "Texture sheet / columns [initial]", 1f, 4f, 2f, true),
             new ControlSpec(4, SampleControl.TilesY, "Texture sheet / rows [initial]", 1f, 4f, 2f, true),
+            new ControlSpec(4, SampleControl.Intensity, "Renderer / intensity", 0f, 10f, 1f, false),
+            new ControlSpec(4, SampleControl.BlinkFrequency, "Frequency (Hz)", 0f, 10f, 2f, false),
+            new ControlSpec(4, SampleControl.BlinkDuty, "Duty", 0f, 1f, 0.5f, false),
+            new ControlSpec(4, SampleControl.BlinkMinimum, "Minimum", 0f, 1f, 0f, false),
+            new ControlSpec(4, SampleControl.BlinkSmoothness, "Smoothness", 0f, 1f, 0f, false),
+            new ControlSpec(4, SampleControl.BlinkRandomPhase, "Random phase", 0f, 1f, 0f, false),
+            new ControlSpec(4, SampleControl.BlinkTimeMode, "Time / System or Particle age", 0f, 1f, 0f, true),
+            new ControlSpec(4, SampleControl.BlinkTarget, "Target / RGB, Alpha or Both", 0f, 2f, 1f, true),
         };
 
         [MenuItem("Tools/FluxFX/Samples/Open Runtime API Playground")]
@@ -255,7 +263,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 new FluxParticleNoiseModule(), new FluxParticleVortexModule(), new FluxParticleLimitVelocityModule(),
                 new FluxParticleVelocityOverLifetimeModule(), new FluxParticleColorOverLifetimeModule(),
                 new FluxParticleSizeOverLifetimeModule(), new FluxParticleRotationOverLifetimeModule(),
-                new FluxParticleTextureSheetAnimationModule()
+                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule()
             };
             var modules = serialized.FindProperty("modules");
             modules.arraySize = definitions.Length;
@@ -363,40 +371,18 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
         static readonly string[] ModuleNames =
         {
             "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit Velocity", "Velocity over Lifetime",
-            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation"
+            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink"
         };
 
         static readonly SampleControl[] ModuleStarts =
         {
             SampleControl.GravityX, SampleControl.Drag, SampleControl.ForceX, SampleControl.NoiseStrength,
             SampleControl.VortexStrength, SampleControl.MaxSpeed, SampleControl.VelocityStartX,
-            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.Count
+            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.Intensity
         };
 
-        static float BuildModulePage(ScrollRect scroll, int page, Slider[] controls, Text[] values,
-            Toggle[] toggles, CanvasGroup[] groups, UdonBehaviour target)
+        static void BuildSlider(Transform body, ControlSpec spec, float offset, Slider[] controls, Text[] values, UdonBehaviour target)
         {
-            var y = 12f;
-            var first = page == MotionPage ? 0 : (int)SampleModule.ColorOverLifetime;
-            var end = page == MotionPage ? (int)SampleModule.ColorOverLifetime : ModuleNames.Length;
-            for (var module = first; module < end; module++)
-            {
-                var specs = Specs.Where(spec => spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
-                var height = 48 + specs.Length * 72;
-                var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
-                var header = Rect("Header", section, 0, 0, 438, 36);
-                header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
-                toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
-                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime, target);
-                Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
-                toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
-                var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
-                groups[module] = body.gameObject.AddComponent<CanvasGroup>();
-                groups[module].interactable = toggles[module].isOn;
-                groups[module].alpha = toggles[module].isOn ? 1f : 0.35f;
-                var offset = 0f;
-                foreach (var spec in specs)
-                {
                     Label(body, spec.Label, 16, offset, 330, 26, 16);
                     var value = Label(body, spec.Default.ToString(spec.Integer ? "F0" : "F2"), 356, offset, 65, 26, 16);
                     value.color = Accent;
@@ -412,6 +398,38 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                     UnityEventTools.AddStringPersistentListener(slider.onValueChanged, target.SendCustomEvent, nameof(FluxRuntimeApiSample.OnControlsChanged));
                     controls[(int)spec.Id] = slider;
                     values[(int)spec.Id] = value;
+        }
+
+        static float BuildModulePage(ScrollRect scroll, int page, Slider[] controls, Text[] values,
+            Toggle[] toggles, CanvasGroup[] groups, UdonBehaviour target)
+        {
+            var y = 12f;
+            if (page == RenderPage)
+            {
+                BuildSlider(scroll.content, Specs.Single(spec => spec.Id == SampleControl.Intensity), y, controls, values, target);
+                y += 88;
+            }
+            var first = page == MotionPage ? 0 : (int)SampleModule.ColorOverLifetime;
+            var end = page == MotionPage ? (int)SampleModule.ColorOverLifetime : ModuleNames.Length;
+            for (var module = first; module < end; module++)
+            {
+                var specs = Specs.Where(spec => spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
+                var height = 48 + specs.Length * 72;
+                var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
+                var header = Rect("Header", section, 0, 0, 438, 36);
+                header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
+                toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
+                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink, target);
+                Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
+                toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
+                var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
+                groups[module] = body.gameObject.AddComponent<CanvasGroup>();
+                groups[module].interactable = toggles[module].isOn;
+                groups[module].alpha = toggles[module].isOn ? 1f : 0.35f;
+                var offset = 0f;
+                foreach (var spec in specs)
+                {
+                    BuildSlider(body, spec, offset, controls, values, target);
                     offset += 72;
                 }
                 y += height + 16;
@@ -436,6 +454,11 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             for (var i = 0; i < controls.Length; i++)
             {
                 var oldIndex = oldControls.Length == LegacyControlCount && i >= (int)SampleControl.EndR ? i + RemovedCustomControlCount : i;
+                if (oldIndex >= oldControls.Length)
+                {
+                    savedValues[i] = Specs.Single(spec => (int)spec.Id == i).Default;
+                    continue;
+                }
                 controls[i] = oldControls[oldIndex];
                 values[i] = oldValues[oldIndex];
                 savedValues[i] = controls[i].value;
@@ -443,7 +466,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var enabled = new bool[(int)SampleModule.Count];
             for (var i = 0; i < enabled.Length; i++)
             {
-                enabled[i] = i >= oldToggles.Length || oldToggles[i].isOn;
+                enabled[i] = i < oldToggles.Length ? oldToggles[i].isOn : i != (int)SampleModule.Blink;
             }
             var toggles = new Toggle[enabled.Length];
             var groups = new CanvasGroup[enabled.Length];
@@ -472,7 +495,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             controller.SetProgramVariable("values", values);
             controller.SetProgramVariable("moduleToggles", toggles);
             controller.SetProgramVariable("moduleParameterGroups", groups);
-            controller.RefreshModuleControls();
+            controller.OnControlsChanged();
             ConfigureSelectionControls(pages[MotionPage].GetComponentInParent<Canvas>(true));
             EditorUtility.SetDirty(controller);
             UdonSharpEditorUtility.CopyProxyToUdon(controller);

@@ -21,6 +21,8 @@ namespace TpLab.Flux.FX.Editor.Build
             FluxParticleAuthoringValidator.Validate(authoring);
             var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initialValues, out var moduleBindings);
             FluxParticleVelocityPipelineResolver.Resolve(definitions);
+            FluxParticleValuePipelineResolver.Resolve(definitions, "render.color", definitions.OptionalDependencies,
+                TpLab.Flux.FX.Editor.Compilation.Definitions.FluxParticlePhase.Render);
             var compilation = new FluxParticleProgramCompiler().Compile(definitions);
             var shaders = new FluxParticleProgramShaderGenerator().Generate(compilation, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
             var rendererSource = FluxParticleRenderShaderGenerator.Generate(shaders, authoring.Render.Mode, authoring.SimulationSpace == TpLab.Flux.FX.Udon.FluxParticleSimulationSpace.World);
