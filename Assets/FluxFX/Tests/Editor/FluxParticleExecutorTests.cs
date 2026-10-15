@@ -31,6 +31,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         readonly List<FluxParticleExecutor> runtimes = new List<FluxParticleExecutor>();
         readonly List<Material> kernelMaterials = new List<Material>();
         string folder;
+        FluxParticleGenerationSession generationSession;
 
         [SetUp]
         public void SetUp()
@@ -38,6 +39,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             root = new GameObject("Particle Executor Test");
             authoring = root.AddComponent<FluxParticleAuthoring>();
             folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            generationSession = FluxParticleGenerationSession.Begin("Test", folder);
         }
 
         [UnityTearDown]
@@ -66,6 +68,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             kernelMaterials.Clear();
             Object.DestroyImmediate(root);
+            generationSession.Dispose();
             if (AssetDatabase.IsValidFolder(folder))
             {
                 AssetDatabase.DeleteAsset(folder);
@@ -302,6 +305,38 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void GenerationSessionsShareShadersAndKeepSeparateRenderMaterials()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var firstSession = generationSession;
+            var first = CreateRuntime(compiled);
+            var firstShader = AssetDatabase.GetAssetPath(first.RenderMaterial.shader);
+            StringAssert.StartsWith(firstSession.ShaderRoot + "/", firstShader);
+            StringAssert.StartsWith(firstSession.MaterialRoot + "/", AssetDatabase.GetAssetPath(first.RenderMaterial));
+            var cacheAssets = AssetDatabase.FindAssets("", new[] { firstSession.ShaderRoot });
+            var secondSession = FluxParticleGenerationSession.Begin("Test", folder);
+            try
+            {
+                generationSession = secondSession;
+                var second = CreateRuntime(compiled);
+                Assert.AreEqual(firstShader, AssetDatabase.GetAssetPath(second.RenderMaterial.shader));
+                Assert.AreNotSame(first.RenderMaterial, second.RenderMaterial);
+                StringAssert.StartsWith(secondSession.MaterialRoot + "/", AssetDatabase.GetAssetPath(second.RenderMaterial));
+                CollectionAssert.AreEquivalent(cacheAssets, AssetDatabase.FindAssets("", new[] { secondSession.ShaderRoot }));
+                firstSession.Dispose();
+                Assert.IsNotNull(first.RenderMaterial);
+                Assert.IsNotNull(second.RenderMaterial);
+                Assert.AreEqual("Running", FluxParticleGenerationSession.Load(secondSession.Id).State);
+            }
+            finally
+            {
+                generationSession = firstSession;
+                secondSession.Dispose();
+            }
+        }
+
+        [Test]
         public void ReconfigureReplacesGeneratedHierarchyAndReusesShaderAssets()
         {
             RequireGraphics();
@@ -314,7 +349,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var renderIdentity = GetAssetIdentity(render);
             var assets = AssetDatabase.FindAssets("", new[] { folder });
 
-            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, 9);
+            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession, 9);
 
             Assert.IsTrue(previous == null);
             Assert.AreEqual(1, runtime.transform.Cast<Transform>().Count(child => child.name == "__FluxFXGenerated"));
@@ -357,7 +392,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             render.SetFloat("_ZWrite", 99);
             render.renderQueue = 1234;
 
-            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder);
+            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession);
 
             var rebuiltRender = (Material)runtime.GetProgramVariable("renderMaterial");
             Assert.AreEqual(renderIdentity, GetAssetIdentity(rebuiltRender));
@@ -387,7 +422,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.IsNull(runtime.transform.Find("Spawn"));
                 StringAssert.Contains("Spawn GameObject is missing",
                     Assert.Throws<InvalidOperationException>(() =>
-                        FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder)).Message);
+                        FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession)).Message);
                 Assert.AreSame(generated, runtime.transform.Find("__FluxFXGenerated"));
                 CollectionAssert.AreEqual(steps, (FluxKernel[])runtime.GetProgramVariable("stepKernels"));
                 Assert.IsTrue(steps.All(kernel => kernel != null));
@@ -442,7 +477,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var runtime = CreateRuntime(compiled);
             var generated = runtime.transform.Find("__FluxFXGenerated");
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, capacity));
+                FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession, capacity));
             Assert.AreSame(generated, runtime.transform.Find("__FluxFXGenerated"));
         }
         [Test]
@@ -2181,6 +2216,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             root = new GameObject("Module Handle Udon VM Test");
             authoring = root.AddComponent<FluxParticleAuthoring>();
             folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            generationSession = FluxParticleGenerationSession.Begin("Test", folder);
             var definition = new FluxParticleModuleRegistry().GetAll().Single(value => value.ModuleId == "custom.fluxfx.lift");
             SetModules(CreateStandardModules().Concat(new[] { (FluxParticleModule)Activator.CreateInstance(definition.ModuleType) }).ToArray());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
@@ -2246,7 +2282,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var runtime = go.GetComponentInChildren<FluxParticleExecutor>(true);
             Assert.IsNotNull(runtime, "Run Tools/FluxFX/Setup Program Backend Prefabs before executing these tests.");
             runtimes.Add(runtime);
-            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, capacity);
+            FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession, capacity);
             go.GetComponent<FluxParticleSystem>().SetProgramVariable("particleExecutor", runtime);
             foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))
             {

@@ -3,7 +3,8 @@ using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
-using Object = UnityEngine.Object;
+using System;
+using System.Linq;
 
 namespace TpLab.Flux.FX.Editor.Build
 {
@@ -19,15 +20,38 @@ namespace TpLab.Flux.FX.Editor.Build
 
         public override void Execute(SceneFlowContext context)
         {
-            var authorings = Object.FindObjectsOfType<FluxParticleAuthoring>(true);
+            var authorings = context.Scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<FluxParticleAuthoring>(true)).ToArray();
+            if (authorings.Length == 0) return;
             var assignedCount = 0;
 
-            foreach (var authoring in authorings)
+            var session = FluxParticleGenerationLifecycle.Current;
+            var ownsSession = session == null;
+            if (ownsSession)
             {
-                var particleSystem = authoring.GetComponent<FluxParticleSystem>();
-                if (particleSystem == null) continue;
-                FluxParticleProgramBuild.Apply(authoring, particleSystem);
-                assignedCount++;
+                session = FluxParticleGenerationSession.Begin("Manual");
+            }
+            try
+            {
+                foreach (var authoring in authorings)
+                {
+                    var particleSystem = authoring.GetComponent<FluxParticleSystem>();
+                    if (particleSystem == null) continue;
+                    FluxParticleProgramBuild.Apply(authoring, particleSystem, session);
+                    assignedCount++;
+                }
+            }
+            catch (Exception error)
+            {
+                session.RecordFailure(error.Message);
+                throw;
+            }
+            finally
+            {
+                if (ownsSession)
+                {
+                    session.Dispose();
+                }
             }
 
             Logger.Log($"Particle compilation completed. Systems: {assignedCount}");

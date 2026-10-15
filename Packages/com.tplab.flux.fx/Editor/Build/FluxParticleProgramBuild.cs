@@ -22,7 +22,6 @@ namespace TpLab.Flux.FX.Editor.Build
     /// </summary>
     public static class FluxParticleProgramBuild
     {
-        const string Root = "Assets/FluxFX/Generated/Programs";
         const string PagePrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticlePage.prefab";
         const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
 
@@ -31,7 +30,8 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         /// <param name="authoring">ParticleのAuthoring設定</param>
         /// <param name="system">接続先のParticle System</param>
-        public static void Apply(FluxParticleAuthoring authoring, FluxParticleSystem system)
+        /// <param name="session">PlayまたはBuildの生成セッション</param>
+        public static void Apply(FluxParticleAuthoring authoring, FluxParticleSystem system, FluxParticleGenerationSession session)
         {
             var renderer = authoring.GetComponentInChildren<FluxParticleRenderer>(true);
             var emitter = authoring.GetComponentInChildren<FluxParticleEmitter>(true);
@@ -45,7 +45,7 @@ namespace TpLab.Flux.FX.Editor.Build
             {
                 throw new InvalidOperationException($"FluxParticleExecutor is missing in prefab '{authoring.name}'. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
-            Configure(runtime, compiled, authoring, Root, system.ParticleCount);
+            Configure(runtime, compiled, authoring, session, system.ParticleCount);
             system.SetProgramVariable("particleExecutor", runtime);
             renderer.SetProgramVariable("sourceMesh", authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null);
             renderer.SetProgramVariable("cullingBounds", authoring.Render.CullingBounds);
@@ -64,10 +64,28 @@ namespace TpLab.Flux.FX.Editor.Build
         /// <param name="runtime">Initialize前の設定対象</param>
         /// <param name="compiled">Particleのビルド結果</param>
         /// <param name="authoring">描画MaterialとBlend設定</param>
-        /// <param name="outputRoot">Assets配下の生成Asset保存先</param>
+        /// <param name="session">生成Assetの保存先と寿命を管理するセッション</param>
         /// <param name="bufferCapacity">Bufferの初期容量</param>
-        public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring, string outputRoot = Root, int bufferCapacity = 4)
+        public static void Configure(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring,
+            FluxParticleGenerationSession session, int bufferCapacity = 4)
         {
+            if (session == null) throw new ArgumentNullException(nameof(session));
+            session.RequireRunning();
+            try
+            {
+                ConfigureCore(runtime, compiled, authoring, session, bufferCapacity);
+            }
+            catch (Exception error)
+            {
+                session.RecordFailure(error.Message);
+                throw;
+            }
+        }
+
+        static void ConfigureCore(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring,
+            FluxParticleGenerationSession session, int bufferCapacity)
+        {
+            var owner = runtime.gameObject.scene.path + "|" + GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject) + ":" + runtime.GetInstanceID();
             if (authoring.Render.Mode == FluxParticleRenderMode.Mesh)
             {
                 var mesh = authoring.Render.Mesh;
@@ -75,10 +93,6 @@ namespace TpLab.Flux.FX.Editor.Build
                 {
                     throw new InvalidOperationException("Render Mesh must be assigned and readable.");
                 }
-            }
-            if (!outputRoot.StartsWith("Assets/", StringComparison.Ordinal) || outputRoot.Contains(".."))
-            {
-                throw new ArgumentException("Output must be under Assets.", nameof(outputRoot));
             }
             var sourceMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
             var maximum = FluxParticleCapacityValidator.GetMaximumCount(sourceMesh);
@@ -134,12 +148,12 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
             var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
-            var stepShaders = program.Passes.Select(pass => SaveShader(pass.Source, outputRoot)).ToArray();
-            var clearShaders = program.ClearSources.Select(source => SaveShader(source, outputRoot)).ToArray();
-            var renderShader = SaveShader(compiled.RendererSource, outputRoot);
-            var render = SaveRenderMaterial(runtime, compiled, authoring, renderShader, outputRoot);
+            var stepShaders = program.Passes.Select(pass => SaveShader(pass.Source, session, owner)).ToArray();
+            var clearShaders = program.ClearSources.Select(source => SaveShader(source, session, owner)).ToArray();
+            var renderShader = SaveShader(compiled.RendererSource, session, owner);
+            var render = SaveRenderMaterial(runtime, compiled, authoring, renderShader, session, owner);
 
-            var allocationShaders = new[] { SaveShader(program.AvailabilitySource, outputRoot),
+            var allocationShaders = new[] { SaveShader(program.AvailabilitySource, session, owner),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader") };
@@ -202,25 +216,25 @@ namespace TpLab.Flux.FX.Editor.Build
         }
 
         static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,
-            FluxParticleAuthoring authoring, Shader shader, string outputRoot)
+            FluxParticleAuthoring authoring, Shader shader, FluxParticleGenerationSession session, string owner)
         {
-            var renderCode = compiled.RendererSource;
             var renderSource = authoring.Render.Material;
             var texture = renderSource == null ? null : renderSource.mainTexture;
             var scale = renderSource == null ? Vector2.one : renderSource.mainTextureScale;
             var offset = renderSource == null ? Vector2.zero : renderSource.mainTextureOffset;
-            var signature = EditorJsonUtility.ToJson(authoring) + (renderSource == null ? "" : EditorJsonUtility.ToJson(renderSource));
             // A runtime instance must not share a mutable render Material with another Particle System.
             // GlobalObjectId is stable for saved scene/prefab objects; temporary test objects use InstanceID.
             var globalId = GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject);
             var identity = (int)globalId.identifierType == 0 ? "Transient:" + runtime.GetInstanceID() : globalId.ToString();
-            var rendererPath = outputRoot + "/Render-" + Hash128.Compute(renderCode + signature + identity) + ".mat";
+            var rendererPath = session.MaterialRoot + "/Render-" + Hash128.Compute(identity) + ".mat";
+            FluxParticleGenerationSession.EnsureFolder(session.MaterialRoot);
             var render = AssetDatabase.LoadAssetAtPath<Material>(rendererPath);
             if (render == null)
             {
                 render = new Material(shader);
                 AssetDatabase.CreateAsset(render, rendererPath);
             }
+            session.Record(rendererPath, "Material", owner);
             render.shader = shader;
             render.mainTexture = texture;
             render.mainTextureScale = scale;
@@ -232,7 +246,7 @@ namespace TpLab.Flux.FX.Editor.Build
             render.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
             foreach (var provider in compiled.Shaders.Compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable))
             {
-                render.SetTexture(FluxParticleHlslNames.ProviderProperty(provider.ValueId), SaveLookupTexture(provider, outputRoot));
+                render.SetTexture(FluxParticleHlslNames.ProviderProperty(provider.ValueId), SaveLookupTexture(provider, session, owner));
             }
             EditorUtility.SetDirty(render);
             return render;
@@ -335,27 +349,29 @@ namespace TpLab.Flux.FX.Editor.Build
             return (bufferA, bufferB, clear);
         }
 
-        static Texture2D SaveLookupTexture(FluxParticleValueProvider provider, string outputRoot)
+        static Texture2D SaveLookupTexture(FluxParticleValueProvider provider, FluxParticleGenerationSession session, string owner)
         {
             var samples = provider.LookupVectorSamples.Count != 0 ? provider.LookupVectorSamples.SelectMany(sample => new[] { sample.x, sample.y, sample.z, sample.w }) : provider.LookupSamples;
             var signature = (provider.LookupVectorSamples.Count != 0 ? "rgba:" : "r:") + string.Join(",", samples.Select(sample =>
                 sample.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
             signature += "|positions:" + string.Join(",", provider.LookupPositions.Select(position =>
                 position.ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
-            var path = outputRoot + "/Lookup-" + Hash128.Compute(signature) + ".asset";
+            var path = session.LookupRoot + "/Lookup-" + Hash128.Compute(signature) + ".asset";
+            FluxParticleGenerationSession.EnsureFolder(session.LookupRoot);
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (texture == null)
             {
                 texture = FluxParticleLookupTexture.Create(provider);
                 AssetDatabase.CreateAsset(texture, path);
             }
+            session.Record(path, "Lookup", owner);
             return texture;
         }
 
-        static Shader SaveShader(string source, string outputRoot)
+        static Shader SaveShader(string source, FluxParticleGenerationSession session, string owner)
         {
-            Directory.CreateDirectory(outputRoot);
-            var path = outputRoot + "/" + Hash128.Compute(source) + ".shader";
+            FluxParticleGenerationSession.EnsureFolder(session.ShaderRoot);
+            var path = session.ShaderRoot + "/" + Hash128.Compute(source) + ".shader";
             if (!File.Exists(path))
             {
                 File.WriteAllText(path, source);
@@ -364,8 +380,13 @@ namespace TpLab.Flux.FX.Editor.Build
             {
                 throw new InvalidOperationException($"Generated Shader was modified: {path}");
             }
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
+            if (shader == null)
+            {
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
+            }
+            session.Record(path, "Shader", owner);
             if (shader == null || ShaderUtil.ShaderHasError(shader))
             {
                 throw new InvalidOperationException($"Program Shader failed to compile: {path}");
