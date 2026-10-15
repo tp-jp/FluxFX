@@ -98,7 +98,8 @@ namespace TpLab.Flux.FX.Editor.Modules.Shared
         /// </summary>
         public void Operation(string id, FluxParticlePhase phase, IEnumerable<FluxParticleValueRead> reads,
             IEnumerable<FluxParticleValueWrite> writes, string hlslPath, string entryPoint, bool switchable,
-            IEnumerable<string> parameters = null, IEnumerable<string> dependencies = null)
+            IEnumerable<string> parameters = null, IEnumerable<string> dependencies = null,
+            IEnumerable<string> optionalDependencies = null)
         {
             RequireOpen();
             var inputs = reads.ToArray();
@@ -106,6 +107,10 @@ namespace TpLab.Flux.FX.Editor.Modules.Shared
                 .Select(read => read.ProducerOperationId).Concat(dependencies ?? Array.Empty<string>()).Distinct().ToArray();
             context.AddOperation(new FluxParticleOperationDefinition(id, moduleId, phase, inputs, writes,
                 predecessors, hlslPath, entryPoint, parameters, switchable ? enabledParameterId : null));
+            foreach (var predecessor in optionalDependencies ?? Array.Empty<string>())
+            {
+                context.AddOptionalDependency(new FluxParticleOptionalOperationDependency(id, predecessor));
+            }
         }
 
         /// <summary>
