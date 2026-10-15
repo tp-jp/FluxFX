@@ -79,6 +79,8 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal string EditorSessionId => manifest.editorSessionId;
 
+        internal IReadOnlyList<AssetRecord> Assets => manifest.assets;
+
         internal static string CurrentEditorSessionId
         {
             get
@@ -194,6 +196,10 @@ namespace TpLab.Flux.FX.Editor.Build
             manifest.state = state ?? (string.IsNullOrEmpty(manifest.error) ? "Completed" : "Failed");
             manifest.endedUtc = DateTime.UtcNow.ToString("O");
             Save();
+            if (manifest.root == DefaultRoot)
+            {
+                FluxParticleGenerationCleanup.Request();
+            }
         }
 
         void Save()

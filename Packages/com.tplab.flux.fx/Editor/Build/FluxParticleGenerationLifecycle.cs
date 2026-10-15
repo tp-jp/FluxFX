@@ -92,6 +92,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void Recover()
         {
+            FluxParticleGenerationCleanup.Request();
             var active = new[] { PlayKey, BuildKey, SdkKey }.Select(key => SessionState.GetString(key, "")).ToArray();
             if (!Directory.Exists(FluxParticleGenerationSession.ManifestRoot)) return;
             foreach (var path in Directory.GetFiles(FluxParticleGenerationSession.ManifestRoot, "*.json"))
