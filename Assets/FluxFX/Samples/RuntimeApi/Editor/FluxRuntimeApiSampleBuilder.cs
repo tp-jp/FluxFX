@@ -152,6 +152,8 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             if (Application.isPlaying) throw new InvalidOperationException("Stop Play Mode before creating the sample.");
             if (File.Exists(ScenePath)) throw new InvalidOperationException("Sample scene already exists: " + ScenePath);
             Directory.CreateDirectory(Root + "/Generated");
+            Directory.CreateDirectory(Root + "/Materials");
+            Directory.CreateDirectory(Root + "/Textures");
             AssetDatabase.Refresh();
             EnsureProgram();
             File.Copy(Root + "/Editor/EmptyScene.txt", ScenePath);
@@ -176,7 +178,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 floor.transform.position = new Vector3(0, -0.15f, 2);
                 floor.transform.localScale = new Vector3(30, 0.2f, 30);
                 var floorMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.07f, 0.1f, 0.15f) };
-                AssetDatabase.CreateAsset(floorMaterial, Root + "/Generated/Floor.mat");
+                AssetDatabase.CreateAsset(floorMaterial, Root + "/Materials/Floor.mat");
                 floor.GetComponent<MeshRenderer>().sharedMaterial = floorMaterial;
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
                 var controller = new GameObject("Runtime API Controls").AddUdonSharpComponent<FluxRuntimeApiSample>();
@@ -308,7 +310,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             }
             atlas.SetPixels(pixels);
             atlas.Apply();
-            var texturePath = Root + "/Generated/ParticleAtlas.png";
+            var texturePath = Root + "/Textures/ParticleAtlas.png";
             File.WriteAllBytes(texturePath, atlas.EncodeToPNG());
             Object.DestroyImmediate(atlas);
             AssetDatabase.ImportAsset(texturePath);
@@ -320,7 +322,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             importer.SaveAndReimport();
             var material = new Material(Shader.Find("FluxFX/ParticleMaterial"));
             material.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
-            AssetDatabase.CreateAsset(material, Root + "/Generated/Particles.mat");
+            AssetDatabase.CreateAsset(material, Root + "/Materials/Particles.mat");
             return material;
         }
 

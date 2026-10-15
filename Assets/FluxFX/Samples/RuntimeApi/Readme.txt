@@ -26,7 +26,14 @@ Main / Emission / ShapeとModuleハンドルの呼び出し例
 Editor/FluxRuntimeApiSampleBuilder.cs:
 UI接続とShader・Materialの事前生成処理
 Generated:
-サンプル用の生成Asset（RuntimeにMaterialを生成しません）
+形状別のコンパイル済みShader・Render Material・Kernel Material
+保存済みSceneが直接参照する配布用Assetのため、.metaと一緒にバージョン管理します。
+通常のビルドキャッシュ Assets/FluxFX/Generated とは扱いが異なります。
+RuntimeにMaterialを生成しません。
+Materials:
+床MaterialとParticleの元Material（.metaと一緒にバージョン管理）
+Textures:
+Particle Atlas画像（.metaと一緒にバージョン管理）
 
 既存のサンプルSceneを編集しても、自動で再生成・上書きはしません。
 
