@@ -11,13 +11,10 @@ namespace TpLab.Flux.FX.Scripts.Modules
 
         public Vector3 Force => force;
 
-        public override FluxParticleExecutionStage Stage =>
-            FluxParticleExecutionStage.VelocityUpdate;
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.VelocityUpdate;
 
-        public override FluxParticleAttribute ReadAttributes =>
-            FluxParticleAttribute.Velocity;
+        public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.Velocity;
 
-        public override FluxParticleAttribute WriteAttributes =>
-            FluxParticleAttribute.Velocity;
+        public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.Velocity;
     }
 }

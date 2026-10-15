@@ -24,13 +24,10 @@ namespace TpLab.Flux.FX.Scripts.Modules
 
         public float Speed => speed;
 
-        public override FluxParticleExecutionStage Stage =>
-            FluxParticleExecutionStage.VelocityUpdate;
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.VelocityUpdate;
 
-        public override FluxParticleAttribute ReadAttributes =>
-            FluxParticleAttribute.Position | FluxParticleAttribute.Velocity;
+        public override FluxParticleAttribute ReadAttributes => FluxParticleAttribute.Position | FluxParticleAttribute.Velocity;
 
-        public override FluxParticleAttribute WriteAttributes =>
-            FluxParticleAttribute.Velocity;
+        public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.Velocity;
     }
 }

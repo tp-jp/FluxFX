@@ -31,8 +31,7 @@ namespace TpLab.Flux.FX.Scripts.Modules
 
         public float Radial => radial;
 
-        public override FluxParticleExecutionStage Stage =>
-            FluxParticleExecutionStage.PositionUpdate;
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.PositionUpdate;
 
         public override FluxParticleAttribute ReadAttributes =>
             FluxParticleAttribute.Position |
@@ -40,7 +39,6 @@ namespace TpLab.Flux.FX.Scripts.Modules
             FluxParticleAttribute.Velocity |
             FluxParticleAttribute.Lifetime;
 
-        public override FluxParticleAttribute WriteAttributes =>
-            FluxParticleAttribute.Position;
+        public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.Position;
     }
 }

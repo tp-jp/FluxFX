@@ -24,14 +24,12 @@ namespace TpLab.Flux.FX.Scripts.Modules
 
         public float Cycles => cycles;
 
-        public override FluxParticleExecutionStage Stage =>
-            FluxParticleExecutionStage.Rendering;
+        public override FluxParticleExecutionStage Stage => FluxParticleExecutionStage.Rendering;
 
         public override FluxParticleAttribute ReadAttributes =>
             FluxParticleAttribute.Age |
             FluxParticleAttribute.Lifetime;
 
-        public override FluxParticleAttribute WriteAttributes =>
-            FluxParticleAttribute.None;
+        public override FluxParticleAttribute WriteAttributes => FluxParticleAttribute.None;
     }
 }
