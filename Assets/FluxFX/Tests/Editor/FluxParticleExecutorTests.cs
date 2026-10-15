@@ -343,6 +343,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             var previous = runtime.transform.Find("__FluxFXGenerated").gameObject;
+            var previousReadback = (FluxReadback)runtime.GetProgramVariable("aliveCountReadback");
+            Assert.IsNotNull(previousReadback);
             var previousSteps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             var stepShaders = previousSteps.Select(kernel => kernel.Shader).ToArray();
             var render = (Material)runtime.GetProgramVariable("renderMaterial");
@@ -352,6 +354,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession, 9);
 
             Assert.IsTrue(previous == null);
+            Assert.IsTrue(previousReadback == null);
+            var rebuiltReadback = (FluxReadback)runtime.GetProgramVariable("aliveCountReadback");
+            Assert.IsNotNull(rebuiltReadback);
+            Assert.AreEqual(1, runtime.GetComponentsInChildren<FluxReadback>(true).Length);
             Assert.AreEqual(1, runtime.transform.Cast<Transform>().Count(child => child.name == "__FluxFXGenerated"));
             var steps = (FluxKernel[])runtime.GetProgramVariable("stepKernels");
             CollectionAssert.AreEqual(stepShaders, steps.Select(kernel => kernel.Shader));
@@ -2205,6 +2211,98 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(handle.HasEnabled());
             Assert.IsTrue(handle.GetEnabled());
             Assert.IsFalse(handle.SetEnabled(false));
+        }
+
+        [Test]
+        public void AliveCountReadbackFailureCompletesRequestAndClearDiscardsIt()
+        {
+            RequireGraphics();
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsNotNull(runtime.GetProgramVariable("aliveCountReadback"));
+            runtime.SetProgramVariable("_discardAliveCount", false);
+            runtime.SetProgramVariable("_aliveCountPending", true);
+            runtime._OnFluxReadbackComplete();
+            Assert.IsFalse(runtime.IsAliveCountPending);
+            Assert.AreEqual(-1, runtime.AliveCount);
+
+            runtime.SetProgramVariable("_aliveCountPending", true);
+            runtime.Clear();
+            runtime._OnFluxReadbackComplete();
+            Assert.IsFalse(runtime.IsAliveCountPending);
+            Assert.AreEqual(0, runtime.AliveCount);
+        }
+
+        [UnityTest]
+        [Explicit]
+        [Category("UdonRuntime")]
+        public IEnumerator AliveCountExecutesOnUdonVmAndDiscardsResultsAfterClearAndReinitialize()
+        {
+            RequireGraphics();
+            Object.DestroyImmediate(root);
+            yield return new EnterPlayMode();
+            root = new GameObject("Alive Count Udon VM Test");
+            authoring = root.AddComponent<FluxParticleAuthoring>();
+            folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            generationSession = FluxParticleGenerationSession.Begin("Test", folder);
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            system.SetProgramVariable("particleCount", 4);
+            var probePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/FluxFX/Tests/ModuleHandleProbe.prefab");
+            Assert.IsNotNull(probePrefab);
+            var probeObject = (GameObject)PrefabUtility.InstantiatePrefab(probePrefab);
+            probeObject.transform.SetParent(root.transform, false);
+            var probeProxy = probeObject.GetComponent<UdonSharp.UdonSharpBehaviour>();
+            probeProxy.SetProgramVariable("target", runtime.GetComponentInParent<FluxParticleSystem>());
+            GameObject managerObject = null;
+            try
+            {
+                if (!VRC.Udon.UdonManager.HasInstance)
+                {
+                    managerObject = new GameObject("Alive Count Test Udon Manager");
+                    managerObject.AddComponent<VRC.Udon.UdonManager>().Awake();
+                }
+                foreach (var backing in root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true))
+                {
+                    backing.InitializeUdonContent();
+                }
+                foreach (var proxy in root.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true))
+                {
+                    UdonSharpEditorUtility.CopyProxyToUdon(proxy);
+                }
+                var probe = UdonSharpEditorUtility.GetBackingUdonBehaviour(probeProxy);
+                Assert.AreEqual(UdonSharpEditorUtility.GetBackingUdonBehaviour(runtime.GetComponentInParent<FluxParticleSystem>()), probe.GetProgramVariable("target"));
+                UdonSharpEditorUtility.GetBackingUdonBehaviour(system).SendCustomEvent("Pause");
+                var expected = new[] { 3, 0, 0, 0, 2 };
+                for (var stage = 0; stage < expected.Length; stage++)
+                {
+                    yield return new WaitForSecondsRealtime(0.25f);
+                    probe.SetProgramVariable("aliveStage", stage);
+                    probe.SendCustomEvent("VerifyAliveCount");
+                    Assert.AreEqual(true, probe.GetProgramVariable("aliveRequestAccepted"), "Request stage " + stage);
+                    var deadline = Time.realtimeSinceStartup + 5;
+                    do
+                    {
+                        yield return null;
+                        probe.SendCustomEvent("ReadAliveCount");
+                    }
+                    while ((bool)probe.GetProgramVariable("alivePending") && Time.realtimeSinceStartup < deadline);
+                    Assert.AreEqual(false, probe.GetProgramVariable("alivePending"), "Readback timed out at stage " + stage);
+                    Assert.AreEqual(expected[stage], probe.GetProgramVariable("aliveResult"), "Alive count at stage " + stage);
+                }
+            }
+            finally
+            {
+                foreach (var buffer in root.GetComponentsInChildren<FluxBuffer>(true))
+                {
+                    var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(buffer);
+                    var texture = backing.GetProgramVariable("_texture") as RenderTexture;
+                    if (texture == null) continue;
+                    texture.Release();
+                    Object.DestroyImmediate(texture);
+                }
+                if (managerObject != null) Object.DestroyImmediate(managerObject);
+            }
         }
 
         [UnityTest, Explicit, Category("UdonRuntime")]

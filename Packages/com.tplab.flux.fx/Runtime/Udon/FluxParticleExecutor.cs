@@ -68,6 +68,8 @@ namespace TpLab.Flux.FX.Udon
         FluxBuffer[] allocationBuffers;
         [SerializeField]
         string[] allocationLookupProperties;
+        [SerializeField]
+        FluxReadback aliveCountReadback;
 
         FluxBuffer[] _current;
         FluxBuffer[] _next;
@@ -76,6 +78,61 @@ namespace TpLab.Flux.FX.Udon
         bool _initialized;
         bool _started;
         float _simulationTime;
+        const float AliveCountInterval = 0.2f;
+        int _aliveCount = -1;
+        bool _aliveCountPending;
+        bool _discardAliveCount;
+        float _nextAliveCountTime;
+
+        /// <summary>
+        /// 最後に取得した生存Particle数。未取得または取得失敗時は-1
+        /// </summary>
+        public int AliveCount => _aliveCount;
+
+        /// <summary>
+        /// 生存数の読み戻し処理中かどうか
+        /// </summary>
+        public bool IsAliveCountPending => _aliveCountPending;
+
+        /// <summary>
+        /// 現在のStateを集計し、生存数の非同期取得を要求します。要求間隔は0.2秒以上です。
+        /// </summary>
+        /// <returns>要求を開始した場合はtrue</returns>
+        public bool RequestAliveCount()
+        {
+            if (!_initialized || aliveCountReadback == null || _aliveCountPending || aliveCountReadback.IsRequesting ||
+                Time.realtimeSinceStartup < _nextAliveCountTime) return false;
+            BindAvailability(0);
+            FluxParticleSpawnAllocator.BuildCounts(allocationKernels, allocationBuffers);
+            _aliveCountPending = true;
+            _discardAliveCount = false;
+            if (!aliveCountReadback.TryRequest(allocationBuffers[allocationBuffers.Length - 1], this))
+            {
+                _aliveCountPending = false;
+                return false;
+            }
+            _nextAliveCountTime = Time.realtimeSinceStartup + AliveCountInterval;
+            return true;
+        }
+
+        /// <summary>
+        /// FluxReadbackの完了結果から生存数を更新します。
+        /// </summary>
+        public void _OnFluxReadbackComplete()
+        {
+            if (!_aliveCountPending) return;
+            _aliveCountPending = false;
+            if (!_initialized || _discardAliveCount) return;
+            if (!aliveCountReadback.Succeeded || aliveCountReadback.Count != 1 || aliveCountReadback.Data == null ||
+                aliveCountReadback.Data.Length != 1)
+            {
+                _aliveCount = -1;
+                return;
+            }
+            var free = aliveCountReadback.Data[0].r;
+            _aliveCount = float.IsNaN(free) || float.IsInfinity(free) ? -1
+                : Mathf.Clamp(_count - Mathf.RoundToInt(free), 0, _count);
+        }
 
         /// <summary>
         /// Particle System専用の描画Material
@@ -185,6 +242,9 @@ namespace TpLab.Flux.FX.Udon
         {
             if (!_initialized) return;
             _simulationTime = 0;
+            _aliveCount = 0;
+            _discardAliveCount = true;
+            _nextAliveCountTime = 0;
 
             for (var page = 0; page < _current.Length; page++)
             {
@@ -360,6 +420,9 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public void Release()
         {
+            _aliveCount = -1;
+            _discardAliveCount = true;
+            _nextAliveCountTime = 0;
             if (allocationBuffers != null)
             {
                 for (var level = 0; level < allocationBuffers.Length; level++)
@@ -403,27 +466,32 @@ namespace TpLab.Flux.FX.Udon
 
             if (active > 0)
             {
-                var availability = allocationKernels[0];
-                availability.SetFloat(deltaTimeProperty, deltaTime);
-                if (!string.IsNullOrEmpty(simulationTimeProperty))
-                {
-                    availability.SetFloat(simulationTimeProperty, _simulationTime);
-                }
-                if (emitterRowProperties != null && emitterRowProperties.Length == 3)
-                {
-                    var matrix = emitterTransform.localToWorldMatrix;
-                    for (var row = 0; row < 3; row++)
-                    {
-                        availability.SetVector(emitterRowProperties[row], matrix.GetRow(row));
-                    }
-                }
-                for (var page = 0; page < _current.Length; page++)
-                {
-                    availability.SetBuffer(renderPageProperties[page], _current[page]);
-                }
+                BindAvailability(deltaTime);
             }
             FluxParticleSpawnAllocator.Execute(allocationKernels, allocationBuffers, spawnMaskBuffer,
                 spawnKeyBuffer, first, active, seedBase);
+        }
+
+        void BindAvailability(float deltaTime)
+        {
+            var availability = allocationKernels[0];
+            availability.SetFloat(deltaTimeProperty, deltaTime);
+            if (!string.IsNullOrEmpty(simulationTimeProperty))
+            {
+                availability.SetFloat(simulationTimeProperty, _simulationTime);
+            }
+            if (emitterRowProperties != null && emitterRowProperties.Length == 3)
+            {
+                var matrix = emitterTransform.localToWorldMatrix;
+                for (var row = 0; row < 3; row++)
+                {
+                    availability.SetVector(emitterRowProperties[row], matrix.GetRow(row));
+                }
+            }
+            for (var page = 0; page < _current.Length; page++)
+            {
+                availability.SetBuffer(renderPageProperties[page], _current[page]);
+            }
         }
 
         int FindParameter(string id)

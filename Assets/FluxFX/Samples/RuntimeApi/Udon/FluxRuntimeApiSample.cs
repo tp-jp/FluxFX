@@ -142,7 +142,10 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         {
             if (!_ready || Time.time < _nextStatus) return;
             _nextStatus = Time.time + 0.2f;
-            status.text = shapeSelector.captionText.text + "  /  " + _target.Main.GetParticleCount() + " slots\n" +
+            _target.RequestAliveCount();
+            var alive = _target.AliveCount;
+            status.text = shapeSelector.captionText.text + "  /  Alive " + (alive < 0 ? "--" : alive.ToString()) +
+                " / " + _target.Main.GetParticleCount() + " slots\n" +
                 "Playback  " + _target.PlaybackTime.ToString("F1") + " s";
             playLabel.text = _target.IsPaused || !_target.IsEmitting ? "Play" : "Pause";
         }

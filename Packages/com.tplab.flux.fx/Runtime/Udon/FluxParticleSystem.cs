@@ -108,6 +108,19 @@ namespace TpLab.Flux.FX.Udon
         public int ParticleCount => particleCount;
 
         /// <summary>
+        /// 最後に取得した生存Particle数。未取得または取得失敗時は-1
+        /// </summary>
+        [PublicAPI]
+        public int AliveCount => particleExecutor != null ? particleExecutor.AliveCount : -1;
+
+        /// <summary>
+        /// 生存数の非同期取得を要求します。
+        /// </summary>
+        /// <returns>要求を開始した場合はtrue</returns>
+        [PublicAPI]
+        public bool RequestAliveCount() => particleExecutor != null && particleExecutor.RequestAliveCount();
+
+        /// <summary>
         /// Emission RateのRuntime Parameter
         /// </summary>
         [PublicAPI]

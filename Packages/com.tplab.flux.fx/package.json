@@ -8,7 +8,7 @@
   "vpmDependencies": {
     "com.vrchat.worlds": "^3.10.5",
     "com.tplab.sceneflow": "^2.1.0",
-    "com.tplab.flux": "^0.0.1"
+    "com.tplab.flux": "^0.0.4"
   },
   "author": {
     "name": "tp.jp",

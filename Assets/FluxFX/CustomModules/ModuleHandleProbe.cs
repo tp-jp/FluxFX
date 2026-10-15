@@ -17,6 +17,51 @@ namespace TpLab.Flux.FX.CustomModules
         public bool passed;
         public int resultPage;
         public RenderTexture resultTexture;
+        public int aliveStage;
+        public int aliveResult;
+        public bool alivePending;
+        public bool aliveRequestAccepted;
+
+        public void VerifyAliveCount()
+        {
+            target.Pause();
+            var executor = target.Executor;
+            aliveRequestAccepted = false;
+            switch (aliveStage)
+            {
+                case 0:
+                    if (!executor.Initialize(4)) return;
+                    if (!executor.SetVector("lifetime.range", new Vector4(1, 1, 0, 0))) return;
+                    executor.Step(0, 0, 3, 0);
+                    aliveRequestAccepted = target.RequestAliveCount() && !target.RequestAliveCount();
+                    break;
+                case 1:
+                    executor.Step(2, 0, 0, 0);
+                    aliveRequestAccepted = target.RequestAliveCount();
+                    break;
+                case 2:
+                    executor.Step(0, 0, 4, 0);
+                    aliveRequestAccepted = target.RequestAliveCount();
+                    executor.Clear();
+                    break;
+                case 3:
+                    executor.Step(0, 0, 3, 0);
+                    aliveRequestAccepted = target.RequestAliveCount();
+                    executor.Release();
+                    aliveRequestAccepted &= executor.Initialize(4);
+                    break;
+                case 4:
+                    executor.Step(0, 0, 2, 0);
+                    aliveRequestAccepted = target.RequestAliveCount();
+                    break;
+            }
+        }
+
+        public void ReadAliveCount()
+        {
+            aliveResult = target.AliveCount;
+            alivePending = target.Executor.IsAliveCountPending;
+        }
 
         bool VerifyStandardHandles()
         {

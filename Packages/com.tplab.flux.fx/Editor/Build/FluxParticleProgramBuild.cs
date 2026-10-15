@@ -24,6 +24,7 @@ namespace TpLab.Flux.FX.Editor.Build
     {
         const string PagePrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticlePage.prefab";
         const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
+        const string ReadbackPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleReadback.prefab";
 
         /// <summary>
         /// SceneFlowのBuild/Play前処理でParticleの実行環境を構成します。
@@ -130,13 +131,18 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
             var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
-            if (pagePrefab == null || stepPrefab == null)
+            var readbackPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ReadbackPrefabPath);
+            if (pagePrefab == null || stepPrefab == null || readbackPrefab == null)
             {
                 throw new InvalidOperationException("Program Backend template Prefabs are missing. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
             if (stepPrefab.GetComponent<FluxKernel>() == null)
             {
                 throw new InvalidOperationException("Step prefab must contain FluxKernel on its root.");
+            }
+            if (readbackPrefab.GetComponent<FluxReadback>() == null)
+            {
+                throw new InvalidOperationException("Readback prefab must contain FluxReadback on its root.");
             }
             RequireComponent<FluxBuffer>(pagePrefab.transform, "BufferA");
             RequireComponent<FluxBuffer>(pagePrefab.transform, "BufferB");
@@ -166,6 +172,10 @@ namespace TpLab.Flux.FX.Editor.Build
                 .Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable)
                 .Select(provider => FluxParticleHlslNames.ProviderProperty(provider.ValueId)).ToArray());
             var generated = CreateGeneratedRoot(runtime);
+            var readbackObject = (GameObject)PrefabUtility.InstantiatePrefab(readbackPrefab, generated.gameObject.scene);
+            readbackObject.name = "AliveCountReadback";
+            readbackObject.transform.SetParent(generated, false);
+            runtime.SetProgramVariable("aliveCountReadback", readbackObject.GetComponent<FluxReadback>());
             var allocation = FluxParticleSpawnAllocationBuilder.Create(CreateGroup(generated, "SpawnAllocation"), bufferCapacity, allocationShaders, false);
             runtime.SetProgramVariable("allocationBuffers", allocation.Buffers);
             runtime.SetProgramVariable("allocationKernels", allocation.Kernels);
