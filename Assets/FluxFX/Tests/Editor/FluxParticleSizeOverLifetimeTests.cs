@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Preview;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -54,22 +56,43 @@ namespace TpLab.Flux.FX.Tests.Editor
             CollectionAssert.Contains(operation.Dependencies, "render.size-start");
             StringAssert.Contains("render.valueRenderSize", compiled.RendererSource);
             Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear, compiled.InitialValues.ContainsKey("size.end"));
+            var contract = FluxParticleSizeOverLifetimeContract.Module;
+            var binding = compiled.ModuleBindings.Single(value => value.ModuleId == "tplab.fluxfx.size-over-lifetime");
+            Assert.AreEqual("FluxParticleSizeOverLifetimeHandle", contract.HandleName);
+            Assert.AreEqual("SizeOverLifetime", contract.AccessorName);
+            Assert.AreEqual("EndSize", FluxParticleSizeOverLifetimeContract.EndSize.ApiName);
+            Assert.AreEqual("size.enabled", binding.EnabledParameterId);
+            Assert.AreSame(contract.Enabled, compiled.Shaders.Compilation.Parameters["size.enabled"].Contract);
+            Assert.AreEqual(1, compiled.InitialValues["size.enabled"].x);
+            Assert.AreEqual(1, binding.Parameters.Count);
+            if (mode == FluxParticleSizeOverLifetimeMode.Linear)
+            {
+                var end = compiled.Shaders.Compilation.Parameters["size.end"];
+                Assert.AreSame(FluxParticleSizeOverLifetimeContract.EndSize, end.Contract);
+                Assert.AreSame(end, binding.Parameters[0]);
+                Assert.AreEqual(FluxParticleValueType.Float, end.Type);
+                Assert.AreEqual(FluxParticleParameterPolicy.Live, end.Policy);
+                Assert.AreEqual(new Vector4(4, 0, 0, 0), compiled.InitialValues[end.Id]);
+            }
             if (mode == FluxParticleSizeOverLifetimeMode.Curve)
             {
+                Assert.IsNull(binding.Parameters[0]);
+                Assert.IsFalse(compiled.Shaders.Compilation.Parameters.ContainsKey("size.end"));
                 Assert.AreEqual(128, compiled.Shaders.Compilation.Providers["size.curve"].LookupSamples.Count);
             }
         }
 
-        [Test]
-        public void DisabledSizeModuleKeepsLifetimeEvaluationForRuntimeToggle()
+        [TestCase(FluxParticleSizeOverLifetimeMode.Linear)]
+        [TestCase(FluxParticleSizeOverLifetimeMode.Curve)]
+        public void DisabledSizeModuleKeepsLifetimeEvaluationForRuntimeToggle(FluxParticleSizeOverLifetimeMode mode)
         {
-            Configure(FluxParticleSizeOverLifetimeMode.Curve, false);
+            Configure(mode, false);
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.size-over-lifetime"));
-            Assert.IsTrue(compiled.Shaders.Compilation.Providers.ContainsKey("size.curve"));
+            Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Curve, compiled.Shaders.Compilation.Providers.ContainsKey("size.curve"));
             Assert.AreEqual(0, compiled.InitialValues["size.enabled"].x);
             Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.size-start"));
         }
@@ -88,13 +111,35 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase(-1f)]
         [TestCase(float.NaN)]
         [TestCase(float.PositiveInfinity)]
+        [TestCase(float.NegativeInfinity)]
         public void RejectsInvalidLinearEndSize(float end)
         {
             Configure(FluxParticleSizeOverLifetimeMode.Linear, false);
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("endSize").floatValue = end;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+            var error = Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+            StringAssert.Contains("size.end", error.Message);
+        }
+
+        [TestCase(FluxParticleSizeOverLifetimeMode.Linear, 0f)]
+        [TestCase(FluxParticleSizeOverLifetimeMode.Curve, float.NaN)]
+        public void EndSizeAllowsZeroInLinearAndIsUnusedInCurve(FluxParticleSizeOverLifetimeMode mode, float end)
+        {
+            Configure(mode, false);
+            var serialized = new SerializedObject(authoring);
+            serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("endSize").floatValue = end;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            if (mode == FluxParticleSizeOverLifetimeMode.Linear)
+            {
+                Assert.AreEqual(Vector4.zero, compiled.InitialValues["size.end"]);
+            }
+            else
+            {
+                Assert.IsFalse(compiled.InitialValues.ContainsKey("size.end"));
+                Assert.IsTrue(compiled.Shaders.Compilation.Providers.ContainsKey("size.curve"));
+            }
         }
 
         [TestCase(FluxParticleSizeOverLifetimeMode.Linear, false)]
@@ -115,21 +160,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var steps = generated.Passes.Select((pass, index) => CreateShader("Step" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => CreateShader("Clear" + index, source)).ToArray();
             CreateShader("Billboard", compiled.RendererSource);
-            var evaluation = CreateShader("Evaluate", string.Join(Environment.NewLine, new[]
-            {
-                @"Shader ""Hidden/FluxFX/Tests/SizeEvaluation"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
-                "HLSLPROGRAM",
-                "#pragma target 3.5",
-                "#pragma vertex vert_img",
-                "#pragma fragment frag",
-                @"#include ""UnityCG.cginc""",
-                generated.RenderSource,
-                "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
-                "return alive ? float4(value.valueRenderSize, 0, 0, 1) : float4(0, 0, 0, 0); }",
-                "ENDHLSL",
-                "} } Fallback Off }"
-            }));
-            var material = Own(new Material(evaluation));
+            var material = CreateEvaluationMaterial(generated.RenderSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
                 foreach (var parameter in generated.Compilation.Parameters.Values)
@@ -175,6 +206,58 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var replay = Evaluate(session, material);
                 for (var i = 0; i < 2; i++) Assert.AreEqual(start[i].r, replay[i].r, 0.0001f);
             }
+        }
+
+        [TestCase(FluxParticleSizeOverLifetimeMode.Linear)]
+        [TestCase(FluxParticleSizeOverLifetimeMode.Curve)]
+        public void PreviewEvaluatesSizeAndRestartsWithContractBindings(FluxParticleSizeOverLifetimeMode mode)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
+                !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
+                !SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat))
+            {
+                Assert.Ignore("GPU with RGBAFloat textures is required.");
+            }
+            var curve = Configure(mode, false);
+            var serialized = new SerializedObject(authoring);
+            serialized.FindProperty("lifetime.lifetime").floatValue = 10;
+            serialized.FindProperty("emission.rate").floatValue = 8;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var material = CreateEvaluationMaterial(compiled.Shaders.RenderSource);
+            using (var preview = new FluxParticleEditorPreview(compiled, authoring, 2))
+            {
+                var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
+                    .GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                preview.Step(0.25f);
+                Assert.AreEqual(2, Evaluate(session, material)[0].r, 0.002f);
+                preview.Step(5);
+                var expected = mode == FluxParticleSizeOverLifetimeMode.Linear ? 3 : 2 * curve.Evaluate(0.5f);
+                Assert.AreEqual(expected, Evaluate(session, material)[0].r, 0.002f);
+                preview.Restart();
+                Assert.AreEqual(0, Evaluate(session, material)[0].a, 0.002f);
+                preview.Step(0.25f);
+                Assert.AreEqual(2, Evaluate(session, material)[0].r, 0.002f);
+            }
+        }
+
+        Material CreateEvaluationMaterial(string renderSource)
+        {
+            var evaluation = CreateShader("Evaluate", string.Join(Environment.NewLine, new[]
+            {
+                @"Shader ""Hidden/FluxFX/Tests/SizeEvaluation"" { SubShader { Pass { ZTest Always Cull Off ZWrite Off Blend Off",
+                "HLSLPROGRAM",
+                "#pragma target 3.5",
+                "#pragma vertex vert_img",
+                "#pragma fragment frag",
+                @"#include ""UnityCG.cginc""",
+                renderSource,
+                "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
+                "return alive ? float4(value.valueRenderSize, 0, 0, 1) : float4(0, 0, 0, 0); }",
+                "ENDHLSL",
+                "} } Fallback Off }"
+            }));
+            return Own(new Material(evaluation));
         }
 
         AnimationCurve Configure(FluxParticleSizeOverLifetimeMode mode, bool random)
@@ -232,15 +315,17 @@ namespace TpLab.Flux.FX.Tests.Editor
         static Color[] Evaluate(FluxParticleProgramGpuSession session, Material material)
         {
             session.BindRender(material);
-            var target = new RenderTexture(2, 1, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            var readback = new Texture2D(2, 1, TextureFormat.RGBAFloat, false, true);
+            var width = session.CurrentPages[0].width;
+            var height = session.CurrentPages[0].height;
+            var target = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var readback = new Texture2D(width, height, TextureFormat.RGBAFloat, false, true);
             var previous = RenderTexture.active;
             try
             {
                 target.Create();
                 Graphics.Blit(null, target, material);
                 RenderTexture.active = target;
-                readback.ReadPixels(new Rect(0, 0, 2, 1), 0, 0);
+                readback.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 readback.Apply();
                 return readback.GetPixels();
             }

@@ -1,10 +1,10 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
 {
@@ -14,9 +14,8 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
     public sealed class FluxParticleSizeOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/SizeOverLifetime/";
-        const int EndSizeSlot = 0;
         public Type ModuleType => typeof(FluxParticleSizeOverLifetimeModule);
-        public string ModuleId => "tplab.fluxfx.size-over-lifetime";
+        public string ModuleId => FluxParticleSizeOverLifetimeContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
@@ -26,19 +25,14 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
                 throw new InvalidOperationException("Unsupported size over lifetime mode.");
             }
 
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "size.enabled", size.Enabled, 1);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleSizeOverLifetimeContract.Module, size.Enabled);
             var start = new FluxParticleValueRead("render.size", FluxParticleReadVersion.AfterOperation, "render.size-start");
             FluxParticleValueRead[] reads;
             string hlsl;
             var parameters = Array.Empty<string>();
             if (size.Mode == FluxParticleSizeOverLifetimeMode.Linear)
             {
-                if (float.IsNaN(size.EndSize) || float.IsInfinity(size.EndSize) || size.EndSize < 0)
-                {
-                    throw new InvalidOperationException("End size must be finite and non-negative.");
-                }
-                var end = contribution.Parameter(EndSizeSlot, "size.end", FluxParticleValueType.Float,
-                    FluxParticleParameterPolicy.Live, new Vector4(size.EndSize, 0, 0, 0));
+                var end = contribution.Bind(FluxParticleSizeOverLifetimeContract.EndSize, size.EndSize);
                 parameters = new[] { end };
                 reads = new[]
                 {
@@ -50,7 +44,7 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
             }
             else
             {
-                contribution.UnavailableParameter(EndSizeSlot);
+                contribution.UnavailableParameter(FluxParticleSizeOverLifetimeContract.EndSize);
                 var age = contribution.NormalizedAge("size.normalized-age");
                 var curve = contribution.Curve("size.curve", age, size.Curve);
                 reads = new[] { start, new FluxParticleValueRead(curve, FluxParticleReadVersion.Provided) };
