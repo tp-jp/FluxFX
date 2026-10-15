@@ -328,12 +328,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
 
             SetShape(FluxParticleShapeType.Sphere, 2.5f);
-            var generated = FluxParticleBuildPipeline.Build(_authoring).Shaders;
+            var compiled = FluxParticleBuildPipeline.Build(_authoring);
+            var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("Step" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("Clear" + index, source)).ToArray();
 
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
+                ApplyInitialValues(session, compiled);
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
                 session.SetFloat("shape.radius", 2.5f);
@@ -384,11 +386,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             velocity.FindPropertyRelative("max").floatValue = 3f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var generated = FluxParticleBuildPipeline.Build(_authoring).Shaders;
+            var compiled = FluxParticleBuildPipeline.Build(_authoring);
+            var generated = compiled.Shaders;
             var steps = generated.Passes.Select((pass, index) => Import("DirectionStep" + index, pass.Source)).ToArray();
             var clears = generated.ClearSources.Select((source, index) => Import("DirectionClear" + index, source)).ToArray();
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
+                ApplyInitialValues(session, compiled);
                 session.SetVector("spawn.position", shape == FluxParticleShapeType.Circle ? new Vector4(3, 2, -1, 0) : Vector4.zero);
                 if (speedMode == FluxParticleStartSpeedMode.Constant) session.SetFloat("spawn.speed", 2f);
                 else session.SetVector("spawn.speed-range", new Vector4(1, 3, 0, 0));
@@ -496,6 +500,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var renderShader = Import("VisualRender", RenderEvaluationShader(generated));
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
+                ApplyInitialValues(session, compiled);
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
@@ -558,6 +563,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var billboard = Import("SizeBillboard", compiled.RendererSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
+                ApplyInitialValues(session, compiled);
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
@@ -728,6 +734,22 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        static void ApplyInitialValues(FluxParticleProgramGpuSession session, FluxParticleBuildResult compiled)
+        {
+            foreach (var parameter in compiled.Shaders.Compilation.Parameters.Values)
+            {
+                var value = compiled.InitialValues[parameter.Id];
+                if (parameter.Type == FluxParticleValueType.Float)
+                {
+                    session.SetFloat(parameter.Id, value.x);
+                }
+                else
+                {
+                    session.SetVector(parameter.Id, value);
+                }
+            }
+        }
+
         Shader Import(string name, string source)
         {
             if (!AssetDatabase.IsValidFolder(_temporaryFolder))
@@ -735,7 +757,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(_temporaryFolder));
             }
             var path = _temporaryFolder + "/" + name + ".shader";
-            File.WriteAllText(path, source);
+            File.WriteAllText(path, source.Replace("\r\n", "\n").Replace("\r", "\n"));
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             Assert.IsNotNull(shader, path);
