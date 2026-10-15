@@ -1,5 +1,4 @@
 using System;
-using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
 
@@ -11,18 +10,27 @@ namespace TpLab.Flux.FX.Udon
         // Spawn Seedを長時間安定して扱うため、Shader側と同じ周期に制限する。
         const int SpawnSeedPeriod = 1048576;
 
+        [SerializeField]
+        float rate;
+        [SerializeField]
+        float startDelay;
+        [SerializeField]
+        float duration = 5;
+        [SerializeField]
+        bool loop = true;
+        [SerializeField]
+        float[] burstTimes = new float[0];
+        [SerializeField]
+        int[] burstCounts = new int[0];
+
         float[] _burstTimes;
         int[] _burstCounts;
         int _particleCount;
         int _spawnCursor;
         int _spawnSeed;
-        float _startDelay;
         float _duration;
         bool _loop;
-        object _parameters;
         double[] _playback;
-
-        FluxParticleEmissionParameters Parameters => (FluxParticleEmissionParameters)_parameters;
 
         public int SpawnStart { get; private set; }
 
@@ -33,36 +41,106 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 非LoopのEmissionが終了しているかどうか
         /// </summary>
-        public bool HasCompleted => FluxParticleEmissionScheduler.HasCompleted(_playback);
+        public bool HasCompleted => _playback != null && FluxParticleEmissionScheduler.HasCompleted(_playback);
 
-        internal void Initialize(
-            FluxParticleEmissionParameters parameters,
-            float[] burstTimes,
-            int[] burstCounts,
-            int particleCount,
-            float startDelay,
-            float duration,
-            bool loop)
+        public float Rate => rate;
+        public float StartDelay => startDelay;
+        public float Duration => duration;
+        public bool Loop => loop;
+        public int BurstCount => burstTimes.Length;
+
+        /// <summary>
+        /// 1秒あたりの生成数を変更します。
+        /// </summary>
+        public bool SetRate(float value)
         {
-            _parameters = parameters;
-            _burstTimes = burstTimes;
-            _burstCounts = burstCounts;
-            _particleCount = particleCount;
-            _startDelay = Mathf.Max(0, startDelay);
-            _duration = Mathf.Max(duration, FluxParticleEmissionScheduler.MinimumDuration);
-            _loop = loop;
-            _playback = FluxParticleEmissionScheduler.Create(_startDelay);
-
-            ResetPlayback();
+            if (!FiniteNonNegative(value)) return false;
+            rate = value;
+            return true;
         }
 
+        /// <summary>
+        /// 次回Restartの待機秒数を変更します。
+        /// </summary>
+        public bool SetStartDelay(float value)
+        {
+            if (!FiniteNonNegative(value)) return false;
+            startDelay = value;
+            return true;
+        }
+
+        /// <summary>
+        /// 次回Restartの周期を変更します。
+        /// </summary>
+        public bool SetDuration(float value)
+        {
+            if (!FiniteNonNegative(value) || value < FluxParticleEmissionScheduler.MinimumDuration) return false;
+            duration = value;
+            return true;
+        }
+
+        /// <summary>
+        /// 次回RestartのLoop設定を変更します。
+        /// </summary>
+        public void SetLoop(bool value)
+        {
+            loop = value;
+        }
+
+        public float GetBurstTime(int index)
+        {
+            if (index < 0 || index >= burstTimes.Length) return 0;
+            return burstTimes[index];
+        }
+
+        public int GetBurstCount(int index)
+        {
+            if (index < 0 || index >= burstCounts.Length) return 0;
+            return burstCounts[index];
+        }
+
+        /// <summary>
+        /// 昇順のBurst設定をコピーし、次回Restartから使用します。
+        /// </summary>
+        public bool SetBursts(float[] times, int[] counts)
+        {
+            if (times == null || counts == null || times.Length != counts.Length) return false;
+            for (var i = 0; i < times.Length; i++)
+            {
+                if (!FiniteNonNegative(times[i]) || counts[i] < 1 || (i > 0 && times[i] < times[i - 1])) return false;
+            }
+            var copiedTimes = new float[times.Length];
+            var copiedCounts = new int[counts.Length];
+            for (var i = 0; i < times.Length; i++)
+            {
+                copiedTimes[i] = times[i];
+                copiedCounts[i] = counts[i];
+            }
+            burstTimes = copiedTimes;
+            burstCounts = copiedCounts;
+            return true;
+        }
+
+        static bool FiniteNonNegative(float value)
+        {
+            return value >= 0 && !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
+        internal void Initialize(int particleCount)
+        {
+            _particleCount = particleCount;
+            _playback = FluxParticleEmissionScheduler.Create(startDelay);
+            ResetPlayback();
+        }
         internal void UpdateEmission(float deltaTime)
         {
             SpawnStart = _spawnCursor;
             SpawnSeedStart = _spawnSeed;
             SpawnCount = 0;
 
-            var requested = FluxParticleEmissionScheduler.Emit(_playback, deltaTime, Parameters.GetRate(),
+            if (_playback == null || _particleCount < 1) return;
+
+            var requested = FluxParticleEmissionScheduler.Emit(_playback, deltaTime, rate,
                 _duration, _loop, _burstTimes, _burstCounts);
             SpawnCount = (int)Math.Min(requested, _particleCount);
             var skipped = requested - SpawnCount;
@@ -77,13 +155,21 @@ namespace TpLab.Flux.FX.Udon
             var divisor = (long)period;
             var remainder = count - count / divisor * divisor;
             var position = start + remainder;
-            if (position >= divisor) position -= divisor;
+            if (position >= divisor)
+            {
+                position -= divisor;
+            }
             return (int)position;
         }
 
         internal void ResetPlayback()
         {
-            FluxParticleEmissionScheduler.Reset(_playback, _startDelay);
+            if (_playback == null) return;
+            _duration = duration;
+            _loop = loop;
+            _burstTimes = burstTimes;
+            _burstCounts = burstCounts;
+            FluxParticleEmissionScheduler.Reset(_playback, startDelay);
             SpawnStart = _spawnCursor;
             SpawnSeedStart = _spawnSeed;
             SpawnCount = 0;

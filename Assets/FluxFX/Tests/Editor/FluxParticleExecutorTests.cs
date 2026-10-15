@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Parameters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -454,10 +455,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             var system = runtime.GetComponentInParent<FluxParticleSystem>();
             var emitter = system.GetComponentInChildren<FluxParticleEmitter>(true);
             var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-            var parameters = new TpLab.Flux.FX.Udon.Parameters.FluxParticleEmissionParameters();
-            parameters.Add(1d);
+            emitter.SetRate(1);
+            emitter.SetStartDelay(0);
+            emitter.SetDuration(0.5f);
+            emitter.SetLoop(false);
+            emitter.SetBursts(new[] { 0f }, new[] { 1 });
             typeof(FluxParticleEmitter).GetMethod("Initialize", flags).Invoke(emitter,
-                new object[] { parameters, new[] { 0f }, new[] { 1 }, 4, 0f, 0.5f, false });
+                new object[] { 4 });
             typeof(FluxParticleSystem).GetField("particleEmitter", flags).SetValue(system, emitter);
             typeof(FluxParticleSystem).GetField("particleExecutor", flags).SetValue(system, runtime);
             typeof(FluxParticleSystem).GetField("_programReady", flags).SetValue(system, true);
@@ -1682,6 +1686,125 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out var guid, out long localId));
             return guid + ":" + localId;
         }
+        [Test]
+        public void MainAndShapeHandlesPreservePreInitializeValuesAndStaticConstraints()
+        {
+            RequireGraphics();
+            typeof(ShapeSettings).GetField("type", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(authoring.Shape, FluxParticleShapeType.Cone);
+            SetModules(new FluxParticleRotationOverLifetimeModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            var main = system.Main;
+            var shape = system.Shape;
+            Assert.AreSame(main, system.Main);
+            Assert.AreSame(shape, system.Shape);
+            Assert.AreEqual(system.ParticleCount, main.GetParticleCount());
+            Assert.AreEqual(FluxParticleSimulationSpace.Local, main.GetSimulationSpace());
+            Assert.AreEqual(FluxParticleShapeType.Cone, shape.GetShapeType());
+            Assert.IsTrue(main.SetStartLifetimeRange(new Vector2(4, 4)));
+            Assert.IsTrue(main.SetStartSpeed(0));
+            Assert.IsTrue(main.SetStartColor(Color.red));
+            Assert.IsTrue(main.SetStartSize(2));
+            Assert.IsTrue(main.SetStartRotation(new Vector3(0, 0, 45)));
+            Assert.IsFalse(main.SetStartRotation(Vector3.right));
+            Assert.IsFalse(main.SetStartSpeedRange(new Vector2(1, 2)));
+            Assert.IsTrue(shape.SetPosition(new Vector3(1, 2, 3)));
+            Assert.IsTrue(shape.SetRadius(0));
+            Assert.IsTrue(shape.SetAngle(30));
+            Assert.IsFalse(shape.SetAngle(90));
+            Assert.IsFalse(shape.SetSize(Vector3.one));
+            Assert.IsTrue(runtime.Initialize(4));
+            Assert.AreEqual(Color.red, main.GetStartColor());
+            Assert.AreEqual(new Vector2(4, 4), main.GetStartLifetimeRange());
+            runtime.Step(0, 0, 1, 1);
+            AssertVector(new Vector4(1, 2, 3, 0), ReadValue(runtime, compiled, "particle.position", 0));
+            Assert.IsFalse(main.SetStartLifetimeRange(new Vector2(2, 2)));
+            Assert.IsFalse(main.SetStartColor(Color.blue));
+            Assert.IsFalse(main.SetStartSize(3));
+            Assert.IsFalse(main.SetStartRotation(Vector3.zero));
+            Assert.IsTrue(main.SetStartSpeed(2));
+            Assert.IsTrue(shape.SetRadius(3));
+            Assert.AreEqual(2, main.GetStartSpeed());
+            Assert.AreEqual(3, shape.GetRadius());
+        }
+
+        [Test]
+        public void RandomMainBindingsRejectPartialRangeChangesAndUnsupportedShapeParameters()
+        {
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(InitialVelocitySettings).GetField("mode", flags).SetValue(authoring.InitialVelocity, FluxParticleStartSpeedMode.RandomBetweenTwoConstants);
+            typeof(TpLab.Flux.FX.Scripts.RenderSettings).GetField("startColorMode", flags).SetValue(authoring.Render, FluxParticleStartColorMode.RandomBetweenTwoConstants);
+            typeof(TpLab.Flux.FX.Scripts.RenderSettings).GetField("startSizeMode", flags).SetValue(authoring.Render, FluxParticleStartSizeMode.RandomBetweenTwoConstants);
+            typeof(TpLab.Flux.FX.Scripts.RenderSettings).GetField("startRotationMode", flags).SetValue(authoring.Render, FluxParticleStartRotationMode.RandomBetweenTwoConstants);
+            typeof(ShapeSettings).GetField("type", flags).SetValue(authoring.Shape, FluxParticleShapeType.Box);
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            var main = system.Main;
+            Assert.IsTrue(main.SetStartSpeedRange(new Vector2(1, 3)));
+            Assert.IsFalse(main.SetStartSpeed(2));
+            Assert.IsTrue(main.SetStartSizeRange(new Vector2(1, 2)));
+            Assert.IsFalse(main.SetStartSizeRange(new Vector2(3, 1)));
+            Assert.IsTrue(main.SetStartColorRange(Color.red, Color.blue));
+            Assert.IsFalse(main.SetStartColorRange(Color.green, new Color(float.NaN, 0, 0, 1)));
+            Assert.AreEqual(Color.red, main.GetStartColorMin());
+            Assert.AreEqual(Color.blue, main.GetStartColorMax());
+            Assert.IsFalse(main.SetStartColor(Color.white));
+            Assert.IsTrue(main.SetStartRotationRange(Vector3.zero, new Vector3(0, 0, 180)));
+            Assert.IsFalse(main.SetStartRotationRange(Vector3.zero, Vector3.right));
+            Assert.AreEqual(new Vector3(0, 0, 180), main.GetStartRotationMax());
+            Assert.IsTrue(system.Shape.SetSize(new Vector3(2, 3, 4)));
+            Assert.IsFalse(system.Shape.SetRadius(3));
+            Assert.IsFalse(system.Shape.SetAngle(30));
+            Assert.AreEqual(new Vector3(2, 3, 4), system.Shape.GetSize());
+        }
+
+        [Test]
+        public void EmissionRateChangesImmediatelyAndPlaybackConfigurationAppliesOnRestart()
+        {
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            var emitter = system.Emitter;
+            var emission = system.Emission;
+            Assert.AreSame(emission, system.Emission);
+            Assert.IsTrue(emission.SetRate(4));
+            Assert.IsTrue(system.Main.SetStartDelay(0));
+            Assert.IsTrue(system.Main.SetDuration(1));
+            system.Main.SetLoop(false);
+            Assert.IsTrue(emission.SetBursts(new float[0], new int[0]));
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(FluxParticleEmitter).GetMethod("Initialize", flags).Invoke(emitter, new object[] { 16 });
+            var update = typeof(FluxParticleEmitter).GetMethod("UpdateEmission", flags);
+            update.Invoke(emitter, new object[] { 0.25f });
+            Assert.AreEqual(1, emitter.SpawnCount);
+            Assert.IsTrue(emission.SetRate(8));
+            Assert.IsTrue(system.Main.SetStartDelay(0.5f));
+            Assert.IsTrue(system.Main.SetDuration(0.5f));
+            system.Main.SetLoop(true);
+            var times = new[] { 0f };
+            var counts = new[] { 3 };
+            Assert.IsTrue(emission.SetBursts(times, counts));
+            times[0] = 100;
+            counts[0] = 100;
+            Assert.AreEqual(0, emission.GetBurstTime(0));
+            Assert.AreEqual(3, emission.GetBurstParticleCount(0));
+            Assert.IsFalse(emission.SetBursts(new[] { 1f, 0f }, new[] { 1, 1 }));
+            Assert.IsFalse(emission.SetRate(float.NaN));
+            Assert.IsFalse(system.Main.SetDuration(0));
+            update.Invoke(emitter, new object[] { 0.25f });
+            Assert.AreEqual(2, emitter.SpawnCount);
+            update.Invoke(emitter, new object[] { 0.5f });
+            Assert.AreEqual(4, emitter.SpawnCount);
+            Assert.IsTrue(emitter.HasCompleted);
+            system.Restart();
+            update.Invoke(emitter, new object[] { 0.5f });
+            Assert.AreEqual(0, emitter.SpawnCount);
+            update.Invoke(emitter, new object[] { 0.125f });
+            Assert.AreEqual(4, emitter.SpawnCount);
+            Assert.IsFalse(emitter.HasCompleted);
+        }
+
         [Test]
         public void StandardModuleHandlesShareExecutorParametersAndRespectStaticPolicy()
         {

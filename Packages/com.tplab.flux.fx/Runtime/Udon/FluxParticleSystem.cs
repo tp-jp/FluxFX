@@ -2,7 +2,6 @@ using JetBrains.Annotations;
 using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon
 {
@@ -27,9 +26,6 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleRenderer particleRenderer;
 
         [SerializeField]
-        string compiledParameters;
-
-        [SerializeField]
         [HideInInspector]
         FluxParticleExecutor particleExecutor;
 
@@ -45,6 +41,59 @@ namespace TpLab.Flux.FX.Udon
         bool _isPlaying;
         bool _isPaused;
         object _emission;
+        object _main;
+        object _shape;
+
+        [SerializeField]
+        int[] mainParameterSlots;
+        [SerializeField]
+        int[] shapeParameterSlots;
+        [SerializeField]
+        FluxParticleSimulationSpace simulationSpace;
+        [SerializeField]
+        FluxParticleShapeType shapeType;
+        [SerializeField]
+        FluxParticleRenderMode renderMode;
+
+        /// <summary>
+        /// Emissionの管理先
+        /// </summary>
+        public FluxParticleEmitter Emitter => particleEmitter;
+        public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
+        public FluxParticleShapeType ShapeType => shapeType;
+        public FluxParticleRenderMode RenderMode => renderMode;
+
+        /// <summary>
+        /// Mainの操作ハンドル
+        /// </summary>
+        public FluxParticleMainHandle Main
+        {
+            get
+            {
+                if (particleExecutor == null || mainParameterSlots == null) return null;
+                if (_main == null)
+                {
+                    _main = FluxParticleMainHandle.Create(this, mainParameterSlots);
+                }
+                return (FluxParticleMainHandle)_main;
+            }
+        }
+
+        /// <summary>
+        /// Shapeの操作ハンドル
+        /// </summary>
+        public FluxParticleShapeHandle Shape
+        {
+            get
+            {
+                if (particleExecutor == null || shapeParameterSlots == null) return null;
+                if (_shape == null)
+                {
+                    _shape = FluxParticleShapeHandle.Create(this, shapeParameterSlots);
+                }
+                return (FluxParticleShapeHandle)_shape;
+            }
+        }
 
         /// <summary>
         /// GPU ProgramのExecutor
@@ -62,7 +111,18 @@ namespace TpLab.Flux.FX.Udon
         /// Emission RateのRuntime Parameter
         /// </summary>
         [PublicAPI]
-        public FluxParticleEmissionParameters Emission => (FluxParticleEmissionParameters)_emission;
+        public FluxParticleEmissionHandle Emission
+        {
+            get
+            {
+                if (particleEmitter == null) return null;
+                if (_emission == null)
+                {
+                    _emission = FluxParticleEmissionHandle.Create(particleEmitter);
+                }
+                return (FluxParticleEmissionHandle)_emission;
+            }
+        }
 
         /// <summary>
         /// 一時停止中かどうか
@@ -133,19 +193,13 @@ namespace TpLab.Flux.FX.Udon
 
         void Start()
         {
-            if (!VRCJson.TryDeserializeFromJson(compiledParameters, out var compiled))
-            {
-                Logger.LogError("Particle Program playback parameters are invalid.", this);
-                return;
-            }
-
             var maximum = particleRenderer.MaximumParticleCount;
             if (particleCount < 1 || particleCount > maximum)
             {
                 Logger.LogError($"Particle count must be in [1, {maximum}] for this render Mesh and numeric precision.", this);
                 return;
             }
-            InitializeEmitter(compiled.DataDictionary);
+            particleEmitter.Initialize(particleCount);
             _programReady = particleExecutor.Initialize(particleCount);
             if (!_programReady) return;
 
@@ -163,30 +217,6 @@ namespace TpLab.Flux.FX.Udon
             if (!_programReady || _isPaused) return;
             particleEmitter.UpdateEmission(_isPlaying ? deltaTime : 0);
             particleExecutor.Step(deltaTime, particleEmitter.SpawnStart, particleEmitter.SpawnCount, particleEmitter.SpawnSeedStart);
-        }
-
-        void InitializeEmitter(DataDictionary parameters)
-        {
-            var playback = parameters["playback"].DataDictionary;
-            var startDelay = (float)playback["startDelay"].Double;
-            var duration = (float)playback["duration"].Double;
-            var loop = playback["loop"].Boolean;
-
-            var emission = parameters["emission"].DataDictionary;
-            var emissionRate = (float)emission["rate"].Double;
-            var bursts = emission["bursts"].DataList;
-            var burstTimes = new float[bursts.Count];
-            var burstCounts = new int[bursts.Count];
-
-            for (var i = 0; i < bursts.Count; i++)
-            {
-                var burst = bursts[i].DataDictionary;
-                burstTimes[i] = (float)burst["time"].Double;
-                burstCounts[i] = (int)burst["count"].Double;
-            }
-
-            _emission = FluxParticleEmissionParameters.New(emissionRate);
-            particleEmitter.Initialize(Emission, burstTimes, burstCounts, particleCount, startDelay, duration, loop);
         }
     }
 }

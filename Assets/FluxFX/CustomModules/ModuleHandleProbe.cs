@@ -1,5 +1,6 @@
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
 
@@ -65,6 +66,23 @@ namespace TpLab.Flux.FX.CustomModules
         public void Verify()
         {
             passed = false;
+            if (target.Main == null || target.Shape == null || target.Emission == null) return;
+            if (target.Main != target.Main || target.Shape != target.Shape || target.Emission != target.Emission) return;
+            if (!target.Main.SetStartLifetimeRange(new Vector2(4, 4)) || target.Main.GetStartLifetimeRange() != new Vector2(4, 4)) return;
+            if (!target.Main.SetStartColor(Color.red) || target.Main.GetStartColor() != Color.red) return;
+            if (!target.Main.SetStartSize(2) || target.Main.GetStartSize() != 2) return;
+            if (!target.Main.SetStartSpeed(0) || target.Main.GetStartSpeed() != 0) return;
+            if (target.Main.SetStartColorRange(Color.red, Color.blue) || target.Main.SetStartRotationRange(Vector3.zero, Vector3.zero)) return;
+            if (target.Main.SetStartSpeedRange(Vector2.one) || target.Main.SetStartSizeRange(Vector2.one)) return;
+            if (target.Shape.GetShapeType() != FluxParticleShapeType.Point || target.Shape.HasRadius()) return;
+            if (!target.Shape.SetPosition(Vector3.zero) || target.Shape.SetRadius(2)) return;
+            if (target.Shape.SetAngle(30) || target.Shape.SetSize(Vector3.one)) return;
+            if (!target.Emission.SetRate(12) || target.Emission.GetRate() != 12 || target.Emission.SetRate(float.NaN)) return;
+            if (!target.Emission.SetBursts(new[] { 0f }, new[] { 2 }) || target.Emission.GetBurstParticleCount(0) != 2) return;
+            if (!target.Main.SetDuration(2) || target.Main.GetDuration() != 2) return;
+            if (!target.Main.SetStartDelay(0.5f) || target.Main.GetStartDelay() != 0.5f) return;
+            target.Main.SetLoop(false);
+            if (target.Main.GetLoop()) return;
             if (!VerifyStandardHandles()) return;
             var gravity = target.Modules.Gravity;
             var lift = target.Modules.CustomLift();
@@ -82,6 +100,7 @@ namespace TpLab.Flux.FX.CustomModules
             target.Executor.SetFloat("spawn.speed", 0);
             target.Executor.Step(0, 0, 1, 1);
             target.Executor.Step(0.5f, 0, 0, 2);
+            if (target.Main.SetStartSize(3) || !target.Main.SetStartSpeed(2)) return;
             if (target.Modules.TextureSheetAnimation.SetTiles(4, 4)) return;
             if (!target.Modules.TextureSheetAnimation.SetCycles(3)) return;
             resultTexture = target.Executor.GetCurrentPage(resultPage);

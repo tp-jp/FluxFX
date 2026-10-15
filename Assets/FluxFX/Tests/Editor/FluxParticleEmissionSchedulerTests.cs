@@ -145,14 +145,16 @@ namespace TpLab.Flux.FX.Tests.Editor
             try
             {
                 var emitter = root.GetComponentInChildren<FluxParticleEmitter>(true);
-                var parameters = new FluxParticleEmissionParameters();
-                parameters.Add(4d);
+                emitter.SetRate(4);
                 var flags = BindingFlags.Instance | BindingFlags.NonPublic;
                 var type = typeof(FluxParticleEmitter);
                 var times = new[] { 0f, 0.25f, 0.5f };
                 var counts = new[] { 2, 3, 5 };
-                type.GetMethod("Initialize", flags).Invoke(emitter,
-                    new object[] { parameters, times, counts, 4, 0.5f, 0.5f, true });
+                emitter.SetStartDelay(0.5f);
+                emitter.SetDuration(0.5f);
+                emitter.SetLoop(true);
+                emitter.SetBursts(times, counts);
+                type.GetMethod("Initialize", flags).Invoke(emitter, new object[] { 4 });
                 var reference = FluxParticleEmissionScheduler.Create(0.5f);
                 var cursor = 0;
                 var seed = 0;

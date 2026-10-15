@@ -320,14 +320,26 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public bool SetParameterValue(int index, int type, Vector4 value)
         {
+            if (!CanSetParameterValue(index, type, value)) return false;
+            parameterValues[index] = value;
+            if (_initialized)
+            {
+                ApplyParameter(index, value);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Parameterを変更できるか、型・Static制約・有限値を検証します。
+        /// </summary>
+        public bool CanSetParameterValue(int index, int type, Vector4 value)
+        {
             if (parameterValues == null || index < 0 || index >= parameterValues.Length ||
                 parameterTypes[index] != type || (_started && staticParameters[index])) return false;
             for (var component = 0; component < 4; component++)
             {
                 if (float.IsNaN(value[component]) || float.IsInfinity(value[component])) return false;
             }
-            parameterValues[index] = value;
-            if (_initialized) ApplyParameter(index, value);
             return true;
         }
 

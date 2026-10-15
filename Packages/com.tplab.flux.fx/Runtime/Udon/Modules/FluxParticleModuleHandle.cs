@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
 using VRC.SDK3.Data;
 
@@ -6,32 +7,13 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// <summary>
     /// Executor参照、Enabledスロット、ローカル番号順のParameterスロットを保持します。
     /// </summary>
-    public class FluxParticleModuleHandle : DataList
+    public class FluxParticleModuleHandle : FluxParticleParameterHandle
     {
-        internal const int ExecutorIndex = 0;
-        internal const int EnabledSlotIndex = 1;
-        internal const int ParameterSlotsOffset = 2;
-
-        /// <summary>
-        /// ビルド済みBindingをハンドルへ設定します。
-        /// </summary>
-        public static void Initialize(DataList handle, DataList binding)
-        {
-            handle.AddRange(binding);
-        }
+        internal const int EnabledSlotIndex = ContextIndex;
     }
 
     public static class FluxParticleModuleHandleExtensions
     {
-        /// <summary>
-        /// 現在のモードでParameterの操作に対応しているかを返します。
-        /// </summary>
-        public static bool HasParameter(this FluxParticleModuleHandle handle, int parameter)
-        {
-            return parameter >= 0 && parameter < handle.Count - FluxParticleModuleHandle.ParameterSlotsOffset &&
-                handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int >= 0;
-        }
-
         /// <summary>
         /// Enabledの操作に対応しているかを返します。
         /// </summary>
@@ -53,24 +35,6 @@ namespace TpLab.Flux.FX.Udon.Modules
         {
             return handle.HasEnabled() && ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference)
                 .SetParameterValue(handle[FluxParticleModuleHandle.EnabledSlotIndex].Int, (int)FluxParticleValueType.Float, new Vector4(enabled ? 1 : 0, 0, 0, 0));
-        }
-
-        /// <summary>
-        /// ローカル番号に対応する現在値を取得します。
-        /// </summary>
-        public static Vector4 GetValue(this FluxParticleModuleHandle handle, int parameter)
-        {
-            if (!handle.HasParameter(parameter)) return Vector4.zero;
-            return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).GetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int);
-        }
-
-        /// <summary>
-        /// ローカル番号に対応する値をExecutorの検証を通して変更します。
-        /// </summary>
-        public static bool SetValue(this FluxParticleModuleHandle handle, int parameter, FluxParticleValueType type, Vector4 value)
-        {
-            if (!handle.HasParameter(parameter)) return false;
-            return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).SetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int, (int)type, value);
         }
     }
 }

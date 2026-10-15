@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Editor.Authoring;
 using TpLab.Flux.FX.Editor.Compilation.Compiler;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
@@ -47,7 +45,6 @@ namespace TpLab.Flux.FX.Editor.Build
             {
                 throw new InvalidOperationException($"FluxParticleExecutor is missing in prefab '{authoring.name}'. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
-            var playbackParameters = BuildPlaybackParameters(authoring);
             Configure(runtime, compiled, authoring, Root, system.ParticleCount);
             system.SetProgramVariable("particleExecutor", runtime);
             renderer.SetProgramVariable("sourceMesh", authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null);
@@ -55,7 +52,6 @@ namespace TpLab.Flux.FX.Editor.Build
             EditorUtility.SetDirty(renderer);
             system.SetProgramVariable("particleRenderer", renderer);
             system.SetProgramVariable("particleEmitter", emitter);
-            system.SetProgramVariable("compiledParameters", playbackParameters);
             EditorUtility.SetDirty(runtime);
             EditorUtility.SetDirty(system);
             AssetDatabase.SaveAssets();
@@ -190,6 +186,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 modules.SetProgramVariable("handles", null);
                 EditorUtility.SetDirty(modules);
             }
+            FluxParticleRuntimeApiBuilder.Configure(runtime, authoring, parameters);
             runtime.SetProgramVariable("emitterTransform", authoring.transform);
             runtime.SetProgramVariable("emitterRowProperties", authoring.SimulationSpace == FluxParticleSimulationSpace.World
                 ? Enumerable.Range(0, 3).Select(row => FluxParticleHlslNames.ProviderProperty("emitter.row" + row)).ToArray()
@@ -203,30 +200,6 @@ namespace TpLab.Flux.FX.Editor.Build
             if (index < 0 || parameters[index].Type != type)
                 throw new InvalidOperationException($"Module Binding requires Parameter '{id}' with type {type}.");
             return index;
-        }
-
-        static string BuildPlaybackParameters(FluxParticleAuthoring authoring)
-        {
-            var bursts = new JArray();
-            foreach (var burst in authoring.Emission.Bursts.OrderBy(burst => burst.Time))
-            {
-                if (burst == null || burst.Time < 0 || burst.Count < 1)
-                {
-                    throw new InvalidOperationException("Invalid emission burst.");
-                }
-                bursts.Add(new JObject { ["time"] = burst.Time, ["count"] = burst.Count });
-            }
-            var json = new JObject
-            {
-                ["playback"] = new JObject
-                {
-                    ["startDelay"] = authoring.Playback.StartDelay,
-                    ["duration"] = authoring.Playback.Duration,
-                    ["loop"] = authoring.Playback.Loop
-                },
-                ["emission"] = new JObject { ["rate"] = authoring.Emission.Rate, ["bursts"] = bursts }
-            };
-            return json.ToString(Formatting.None);
         }
 
         static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,
