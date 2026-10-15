@@ -78,8 +78,11 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         Material[] trailMaterials;
         [SerializeField]
+        MeshRenderer[] trailRenderers;
+        [SerializeField]
         bool trailWorldSpace;
         float[] _trailState;
+        bool _trailsEnabled;
         int _trailEnabledSlot;
         int _trailWidthSlot;
         int _trailColorSlot;
@@ -304,7 +307,9 @@ namespace TpLab.Flux.FX.Udon
             if (trailKernel != null)
             {
                 FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, _trailState);
-                FluxParticleTrailHistory.SetAppearance(trailMaterials, GetParameterValue(_trailEnabledSlot).x > 0.5f,
+                _trailsEnabled = GetParameterValue(_trailEnabledSlot).x > 0.5f;
+                SetTrailRenderers(_trailsEnabled);
+                FluxParticleTrailHistory.SetAppearance(trailMaterials, _trailsEnabled,
                     GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
             }
             BindRender();
@@ -371,11 +376,11 @@ namespace TpLab.Flux.FX.Udon
             }
             _simulationTime += deltaTime;
             BindRender();
-            if (trailKernel != null)
+            if (_trailsEnabled)
             {
                 var matrix = emitterTransform == null ? Matrix4x4.identity : emitterTransform.localToWorldMatrix;
                 FluxParticleTrailHistory.Step(trailKernel, trailBuffers, trailMaterials, _trailState,
-                    spawnMaskBuffer.Texture, _count, deltaTime, matrix, trailWorldSpace, GetParameterValue(_trailEnabledSlot).x > 0.5f);
+                    spawnMaskBuffer.Texture, _count, deltaTime, matrix, trailWorldSpace);
             }
         }
 
@@ -448,7 +453,17 @@ namespace TpLab.Flux.FX.Udon
                 ApplyParameter(index, value);
                 if (trailKernel != null && (index == _trailEnabledSlot || index == _trailWidthSlot || index == _trailColorSlot))
                 {
-                    FluxParticleTrailHistory.SetAppearance(trailMaterials, GetParameterValue(_trailEnabledSlot).x > 0.5f,
+                    var enabled = GetParameterValue(_trailEnabledSlot).x > 0.5f;
+                    if (enabled != _trailsEnabled)
+                    {
+                        if (enabled)
+                        {
+                            FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, _trailState);
+                        }
+                        _trailsEnabled = enabled;
+                        SetTrailRenderers(enabled);
+                    }
+                    FluxParticleTrailHistory.SetAppearance(trailMaterials, enabled,
                         GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
                 }
             }
@@ -504,6 +519,8 @@ namespace TpLab.Flux.FX.Udon
                 }
                 FluxParticleTrailHistory.SetAppearance(trailMaterials, false, 0, Vector4.zero);
             }
+            SetTrailRenderers(false);
+            _trailsEnabled = false;
             _trailState = null;
             _initialized = false;
             _current = null;
@@ -598,9 +615,21 @@ namespace TpLab.Flux.FX.Udon
             else renderMaterial.SetVector(property, value);
         }
 
+        void SetTrailRenderers(bool enabled)
+        {
+            if (trailRenderers == null) return;
+            for (var i = 0; i < trailRenderers.Length; i++)
+            {
+                if (trailRenderers[i] != null)
+                {
+                    trailRenderers[i].enabled = enabled;
+                }
+            }
+        }
+
         void BindRender()
         {
-            if (trailKernel != null)
+            if (_trailsEnabled)
             {
                 if (!string.IsNullOrEmpty(simulationTimeProperty)) trailKernel.SetFloat(simulationTimeProperty, _simulationTime);
             }
@@ -611,7 +640,10 @@ namespace TpLab.Flux.FX.Udon
             for (var page = 0; page < _current.Length; page++)
             {
                 renderMaterial.SetTexture(renderPageProperties[page], _current[page].Texture);
-                if (trailKernel != null) trailKernel.SetBuffer(renderPageProperties[page], _current[page]);
+                if (_trailsEnabled)
+                {
+                    trailKernel.SetBuffer(renderPageProperties[page], _current[page]);
+                }
             }
         }
 
@@ -621,6 +653,7 @@ namespace TpLab.Flux.FX.Udon
             {
                 if (trailBuffers == null || trailBuffers.Length != FluxParticleTrailHistory.PointCount + 2 ||
                     trailMaterials == null || trailMaterials.Length != FluxParticleTrailHistory.PointCount - 1 ||
+                    trailRenderers == null || trailRenderers.Length != trailMaterials.Length ||
                     ResolveParameter("trails.enabled", (int)FluxParticleValueType.Float) < 0 ||
                     ResolveParameter("trails.width", (int)FluxParticleValueType.Float) < 0 ||
                     ResolveParameter("trails.color", (int)FluxParticleValueType.Float4) < 0) return false;
@@ -630,7 +663,7 @@ namespace TpLab.Flux.FX.Udon
                 }
                 for (var i = 0; i < trailMaterials.Length; i++)
                 {
-                    if (trailMaterials[i] == null) return false;
+                    if (trailMaterials[i] == null || trailRenderers[i] == null) return false;
                 }
             }
             if (emitterRowProperties != null && emitterRowProperties.Length != 0)

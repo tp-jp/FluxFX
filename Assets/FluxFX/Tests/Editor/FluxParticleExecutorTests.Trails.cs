@@ -128,8 +128,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNotNull(handle);
             Assert.IsTrue(handle.SetEnabled(false));
             Assert.IsTrue(runtime.Initialize(4));
+            var renderers = (MeshRenderer[])runtime.GetProgramVariable("trailRenderers");
+            Assert.IsTrue(renderers.All(renderer => !renderer.enabled));
             runtime.Step(0, 0, 1, 0);
             Assert.AreEqual(0, ReadTexture(runtime.TrailMetadata, 0).g);
+            Assert.AreEqual(0, ((float[])runtime.GetProgramVariable("_trailState"))[FluxParticleTrailHistory.TickIndex]);
             handle.SetEnabled(true);
             handle.SetWidth(0.2f);
             handle.SetColor(Color.red);
@@ -180,6 +183,54 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void TrailsPreviewOffFreezesHistoryAndResumeDiscardsOldPoints()
+        {
+            RequireGraphics();
+            var module = new FluxParticleTrailsModule();
+            SetModules(module);
+            var build = FluxParticleBuildPipeline.Build(authoring);
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            var enabled = typeof(FluxParticleModule).GetField("enabled", flags);
+            using (var preview = new FluxParticleEditorPreview(build, authoring, 4))
+            {
+                preview.Step(0.25f);
+                preview.Step(0.25f);
+                var buffers = (FluxBuffer[])typeof(FluxParticleEditorPreview).GetField("trailBuffers", flags).GetValue(preview);
+                var state = (float[])typeof(FluxParticleEditorPreview).GetField("trailState", flags).GetValue(preview);
+                var oldState = (float[])state.Clone();
+                var oldHistory = buffers.Select(buffer => ReadTexture(buffer.Texture, 0)).ToArray();
+                enabled.SetValue(module, false);
+                preview.Step(0.25f);
+                Assert.AreEqual(false, typeof(FluxParticleEditorPreview).GetField("trailsEnabled", flags).GetValue(preview));
+                CollectionAssert.AreEqual(oldState, state);
+                CollectionAssert.AreEqual(oldHistory, buffers.Select(buffer => ReadTexture(buffer.Texture, 0)).ToArray());
+                using (var disabled = preview.Recreate(FluxParticleBuildPipeline.Build(authoring)))
+                {
+                    var copied = (FluxBuffer[])typeof(FluxParticleEditorPreview).GetField("trailBuffers", flags).GetValue(disabled);
+                    Assert.IsTrue(copied.All(buffer => ReadTexture(buffer.Texture, 0).a == -1));
+                }
+                enabled.SetValue(module, true);
+                preview.Step(0);
+                Assert.AreEqual(1, state[FluxParticleTrailHistory.TickIndex]);
+                Assert.AreEqual(1, ReadTexture(buffers[(int)state[FluxParticleTrailHistory.MetadataIndex]].Texture, 0).g);
+                Assert.AreEqual(1, buffers.Take(FluxParticleTrailHistory.PointCount).Count(buffer => ReadTexture(buffer.Texture, 0).a >= 0));
+                preview.Step(0.04f);
+                Assert.AreEqual(2, buffers.Take(FluxParticleTrailHistory.PointCount).Count(buffer => ReadTexture(buffer.Texture, 0).a >= 0));
+                enabled.SetValue(module, false);
+                // Inspectorの再生成がStepより先でも、OFF後に古い履歴を引き継がない。
+                using (var disabled = preview.Recreate(FluxParticleBuildPipeline.Build(authoring)))
+                {
+                    enabled.SetValue(module, true);
+                    using (var resumed = disabled.Recreate(build))
+                    {
+                        var copied = (FluxBuffer[])typeof(FluxParticleEditorPreview).GetField("trailBuffers", flags).GetValue(resumed);
+                        Assert.IsTrue(copied.All(buffer => ReadTexture(buffer.Texture, 0).a == -1));
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void TrailsRenderVisibleSegmentsAndClipReusedGeneration()
         {
             RequireGraphics();
@@ -214,6 +265,36 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 camera.Render();
                 Assert.Greater(ReadTexture(target, 32 * 64 + 32).a, 0.1f);
+                var handle = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Trails;
+                var buffers = (FluxBuffer[])runtime.GetProgramVariable("trailBuffers");
+                var oldHistory = buffers.Select(buffer => ReadTexture(buffer.Texture, 0)).ToArray();
+                var oldState = (float[])((float[])runtime.GetProgramVariable("_trailState")).Clone();
+                Assert.IsTrue(handle.SetEnabled(false));
+                Assert.IsTrue(segments.All(segment => !segment.enabled));
+                authoring.transform.position = Vector3.right * 2;
+                cameraObject.transform.position = new Vector3(0.5f, 0, -10);
+                runtime.Step(0.1f, 0, 0, 0);
+                CollectionAssert.AreEqual(oldState, (float[])runtime.GetProgramVariable("_trailState"));
+                CollectionAssert.AreEqual(oldHistory, buffers.Select(buffer => ReadTexture(buffer.Texture, 0)).ToArray());
+                camera.Render();
+                Assert.AreEqual(0, ReadTexture(target, 32 * 64 + 32).a);
+                Assert.IsTrue(handle.SetEnabled(true));
+                Assert.IsTrue(segments.All(segment => segment.enabled));
+                for (var i = 0; i < FluxParticleTrailHistory.PointCount; i++)
+                {
+                    Assert.AreEqual(-1, ReadTexture(runtime.GetTrailPoint(i), 0).a);
+                }
+                runtime.Step(0, 0, 0, 0);
+                camera.Render();
+                Assert.AreEqual(0, ReadTexture(target, 32 * 64 + 32).a, "Re-enabling must not connect to the old position.");
+                var first = ReadTexture(runtime.GetTrailPoint(0), 0);
+                Assert.IsTrue(handle.SetEnabled(true));
+                Assert.AreEqual(first, ReadTexture(runtime.GetTrailPoint(0), 0), "Setting ON again must preserve the new history.");
+                authoring.transform.position = Vector3.zero;
+                cameraObject.transform.position = new Vector3(0.5f, 0, -10);
+                runtime.Step(0.04f, 0, 0, 0);
+                camera.Render();
+                Assert.Greater(ReadTexture(target, 32 * 64 + 32).a, 0.1f, "New segments must render after resuming.");
                 // 新しいSlotの最初の点だけでは、以前の軌跡と線を作らない。
                 runtime.Step(1, 0, 0, 0);
                 runtime.Step(0, 0, 1, 0);
@@ -278,6 +359,22 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var metadata = ReadTexture((RenderTexture)probe.GetProgramVariable("resultTexture"), 0);
                 Assert.AreEqual(1, metadata.g);
                 Assert.AreNotEqual(oldPoint.a, metadata.r, "Udon VM must invalidate old history even with a repeated SpawnKey.");
+                var runtimeBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(runtime);
+                var state = (float[])((float[])runtimeBacking.GetProgramVariable("_trailState")).Clone();
+                var newest = (RenderTexture)probe.GetProgramVariable("trailOldPoint");
+                var before = ReadTexture(newest, 0);
+                var renderers = runtime.transform.Find("__FluxFXGenerated/Trails").GetComponentsInChildren<MeshRenderer>();
+                probe.SendCustomEvent("VerifyTrailsOff");
+                Assert.AreEqual(true, probe.GetProgramVariable("passed"));
+                Assert.IsTrue(renderers.All(renderer => !renderer.enabled));
+                CollectionAssert.AreEqual(state, (float[])runtimeBacking.GetProgramVariable("_trailState"));
+                Assert.AreEqual(before, ReadTexture(newest, 0));
+                probe.SendCustomEvent("VerifyTrailsResume");
+                Assert.AreEqual(true, probe.GetProgramVariable("passed"));
+                Assert.IsTrue(renderers.All(renderer => renderer.enabled));
+                Assert.AreEqual(-1, ReadTexture((RenderTexture)probe.GetProgramVariable("trailOldPoint"), 0).a);
+                Assert.AreEqual(1, ReadTexture((RenderTexture)probe.GetProgramVariable("resultTexture"), 0).g);
+                Assert.AreEqual(1, ((float[])runtimeBacking.GetProgramVariable("_trailState"))[FluxParticleTrailHistory.TickIndex]);
 
             }
             finally

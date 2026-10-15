@@ -18,11 +18,11 @@ namespace TpLab.Flux.FX.Editor.Build
     /// </summary>
     internal static class FluxParticleTrailBuilder
     {
-        internal static (FluxKernel Kernel, FluxBuffer[] Buffers, Material[] Materials, Mesh Mesh) Create(
+        internal static (FluxKernel Kernel, FluxBuffer[] Buffers, Material[] Materials, Mesh Mesh, MeshRenderer[] Renderers) Create(
             Transform parent, FluxParticleBuildResult build, FluxParticleAuthoring authoring, int count,
             FluxParticleGenerationSession session, string owner, Action<Object> own = null)
         {
-            if (!authoring.Modules.OfType<FluxParticleTrailsModule>().Any()) return (null, null, null, null);
+            if (!authoring.Modules.OfType<FluxParticleTrailsModule>().Any()) return (null, null, null, null, null);
             var preview = session == null;
             var source = FluxParticleTrailShaderGenerator.Generate(build.Shaders);
             var shader = preview ? ShaderUtil.CreateShaderAsset(source, true) : FluxParticleProgramBuild.SaveShader(source, session, owner);
@@ -46,6 +46,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 kernel.SetProgramVariable("material", kernelMaterial);
             }
             var materials = new Material[FluxParticleTrailHistory.PointCount - 1];
+            var renderers = new MeshRenderer[preview ? 0 : materials.Length];
             var bounds = authoring.Render.CullingBounds;
             Mesh mesh;
             if (preview)
@@ -93,6 +94,8 @@ namespace TpLab.Flux.FX.Editor.Build
                     go.transform.SetParent(group.transform, false);
                     go.AddComponent<MeshFilter>().sharedMesh = mesh;
                     var renderer = go.AddComponent<MeshRenderer>();
+                    renderers[segment] = renderer;
+                    renderer.enabled = false;
                     renderer.sharedMaterial = material;
                     renderer.shadowCastingMode = ShadowCastingMode.Off;
                     renderer.receiveShadows = false;
@@ -101,7 +104,7 @@ namespace TpLab.Flux.FX.Editor.Build
                     EditorUtility.SetDirty(material);
                 }
             }
-            return (kernel, buffers, materials, mesh);
+            return (kernel, buffers, materials, mesh, renderers);
         }
 
         static Mesh CreateMesh(Bounds bounds)

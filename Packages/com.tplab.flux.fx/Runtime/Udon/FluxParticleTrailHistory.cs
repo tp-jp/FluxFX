@@ -47,7 +47,7 @@ namespace TpLab.Flux.FX.Udon
         /// 生存状態と受理済みSpawnを反映し、30Hzを上限に位置を記録します。
         /// </summary>
         public static void Step(FluxKernel kernel, FluxBuffer[] buffers, Material[] materials, float[] state,
-            Texture spawnMask, int count, float deltaTime, Matrix4x4 localToWorld, bool worldSpace, bool enabled)
+            Texture spawnMask, int count, float deltaTime, Matrix4x4 localToWorld, bool worldSpace)
         {
             // Floatで世代を正確に比較できる範囲内で全履歴を更新します。
             if (state[TickIndex] >= MaximumTick) Clear(kernel, buffers, materials, state);
@@ -56,7 +56,7 @@ namespace TpLab.Flux.FX.Udon
             var texture = buffers[0].Texture;
             kernel.SetVector("_TrailSize", new Vector4(texture.width, texture.height, tracked, count));
             kernel.SetFloat("_TrailTick", state[TickIndex]);
-            kernel.SetFloat("_TrailEnabled", enabled ? 1f : 0f);
+            kernel.SetFloat("_TrailEnabled", 1f);
             kernel.SetTexture("_TrailSpawnMask", spawnMask);
             kernel.SetFloat("_TrailHasSpawnMask", spawnMask == null ? 0f : 1f);
             kernel.SetFloat("_TrailWorldSpace", worldSpace ? 1f : 0f);
