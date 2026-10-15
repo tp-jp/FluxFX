@@ -1,15 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using TpLab.Flux.FX.CustomModules;
-using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Samples.RuntimeApi.Runtime;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
-using TpLab.Flux.Udon;
 using UdonSharp;
 using UdonSharp.Compiler;
 using UdonSharpEditor;
@@ -27,7 +24,7 @@ using Object = UnityEngine.Object;
 namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
 {
     /// <summary>
-    /// Runtime APIを操作するUIと、形状別の実行環境を生成します。
+    /// Runtime APIを操作するUIと、形状別のAuthoring設定を作成します。
     /// </summary>
     public static class FluxRuntimeApiSampleBuilder
     {
@@ -145,13 +142,12 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
         }
 
         /// <summary>
-        /// サンプルSceneと事前生成Assetを新規作成します。
+        /// Authoring設定・UI・素材を含むサンプルSceneを新規作成します。
         /// </summary>
         public static void Create(Action completed)
         {
             if (Application.isPlaying) throw new InvalidOperationException("Stop Play Mode before creating the sample.");
             if (File.Exists(ScenePath)) throw new InvalidOperationException("Sample scene already exists: " + ScenePath);
-            Directory.CreateDirectory(Root + "/Generated");
             Directory.CreateDirectory(Root + "/Materials");
             Directory.CreateDirectory(Root + "/Textures");
             AssetDatabase.Refresh();
@@ -197,23 +193,6 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                     ConfigureAuthoring(authoring, i, material);
                     systems[i] = system;
                 }
-                // Save first so generated material identities use stable scene object IDs.
-                EditorSceneManager.SaveScene(scene);
-                for (var i = 0; i < systems.Length; i++)
-                {
-                    var system = systems[i];
-                    var authoring = system.GetComponent<FluxParticleAuthoring>();
-                    var executor = system.GetComponentInChildren<FluxParticleExecutor>(true);
-                    var output = Root + "/Generated/" + (FluxParticleShapeType)i;
-                    FluxParticleProgramBuild.Configure(executor, FluxParticleBuildPipeline.Build(authoring), authoring, output, Capacity);
-                    var kernels = system.GetComponentsInChildren<FluxKernel>(true);
-                    for (var k = 0; k < kernels.Length; k++)
-                    {
-                        var kernelMaterial = new Material(kernels[k].Shader);
-                        AssetDatabase.CreateAsset(kernelMaterial, output + "/Kernel-" + k + ".mat");
-                        kernels[k].SetProgramVariable("material", kernelMaterial);
-                    }
-                }
                 controller.SetProgramVariable("systems", systems);
                 CreateUi(controller, camera);
                 EditorApplication.delayCall += () =>
@@ -227,7 +206,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                                 UdonSharpEditorUtility.CopyProxyToUdon(proxy);
                             }
                         }
-                        ValidateGraph(systems, controller);
+                        ValidateAuthoring(systems, controller);
                         EditorSceneManager.SaveScene(scene);
                         AssetDatabase.SaveAssets();
                         Capture(camera);
@@ -520,28 +499,14 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             }
         }
 
-        static void ValidateGraph(FluxParticleSystem[] systems, FluxRuntimeApiSample controller)
+        static void ValidateAuthoring(FluxParticleSystem[] systems, FluxRuntimeApiSample controller)
         {
             foreach (var system in systems)
             {
-                if (system.Main == null || system.Shape == null || system.Emission == null || system.Modules == null)
+                var authoring = system.GetComponent<FluxParticleAuthoring>();
+                if (authoring == null || authoring.Render.Material == null)
                 {
-                    throw new InvalidOperationException("Runtime API binding is missing: " + system.name);
-                }
-                var modules = system.Modules;
-                if (modules.Gravity == null || modules.Drag == null || modules.Force == null || modules.Noise == null ||
-                    modules.Vortex == null || modules.LimitVelocity == null || modules.VelocityOverLifetime == null ||
-                    modules.ColorOverLifetime == null || modules.SizeOverLifetime == null || modules.RotationOverLifetime == null ||
-                    modules.TextureSheetAnimation == null || modules.CustomLift() == null)
-                {
-                    throw new InvalidOperationException("Module binding is missing: " + system.name);
-                }
-                foreach (var kernel in system.GetComponentsInChildren<FluxKernel>(true))
-                {
-                    if (kernel.Shader == null || ShaderUtil.ShaderHasError(kernel.Shader) || kernel.GetProgramVariable("material") == null)
-                    {
-                        throw new InvalidOperationException("Kernel is not ready: " + kernel.name);
-                    }
+                    throw new InvalidOperationException("Authoring or source Material is missing: " + system.name);
                 }
             }
             var controls = (Slider[])controller.GetProgramVariable("controls");
