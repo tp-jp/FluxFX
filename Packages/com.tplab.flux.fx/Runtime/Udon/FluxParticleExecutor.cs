@@ -42,6 +42,8 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         string[] parameterIds;
         [SerializeField]
+        string[] moduleIds;
+        [SerializeField]
         string[] parameterProperties;
         [SerializeField]
         int[] parameterTypes;
@@ -265,9 +267,7 @@ namespace TpLab.Flux.FX.Udon
         public bool SetFloat(string id, float value)
         {
             var index = FindParameter(id);
-            if (index < 0 || parameterTypes[index] != 1 || (_started && staticParameters[index])) return false;
-            ApplyParameter(index, new Vector4(value, 0, 0, 0));
-            return true;
+            return SetParameterValue(index, 1, new Vector4(value, 0, 0, 0));
         }
 
         /// <summary>
@@ -279,8 +279,55 @@ namespace TpLab.Flux.FX.Udon
         public bool SetVector(string id, Vector4 value)
         {
             var index = FindParameter(id);
-            if (index < 0 || parameterTypes[index] < 2 || parameterTypes[index] > 4 || (_started && staticParameters[index])) return false;
-            ApplyParameter(index, value);
+            if (index < 0 || parameterTypes[index] < 2 || parameterTypes[index] > 4) return false;
+            return SetParameterValue(index, parameterTypes[index], value);
+        }
+
+        /// <summary>
+        /// ビルド済みProgramへのModuleの組み込み有無を返します。
+        /// </summary>
+        public bool HasModule(string id)
+        {
+            if (moduleIds == null) return false;
+            for (var i = 0; i < moduleIds.Length; i++)
+            {
+                if (moduleIds[i] == id) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// IDと型に一致するParameterスロットを解決します。
+        /// </summary>
+        /// <returns>一致したスロット。見つからない場合は-1</returns>
+        public int ResolveParameter(string id, int type)
+        {
+            var index = FindParameter(id);
+            return index >= 0 && parameterTypes[index] == type ? index : -1;
+        }
+
+        /// <summary>
+        /// Executorが保持する現在のParameter値を取得します。
+        /// </summary>
+        public Vector4 GetParameterValue(int index)
+        {
+            if (parameterValues == null || index < 0 || index >= parameterValues.Length) return Vector4.zero;
+            return parameterValues[index];
+        }
+
+        /// <summary>
+        /// 解決済みスロットの型・Static制約・有限値を検証してParameterを変更します。
+        /// </summary>
+        public bool SetParameterValue(int index, int type, Vector4 value)
+        {
+            if (parameterValues == null || index < 0 || index >= parameterValues.Length ||
+                parameterTypes[index] != type || (_started && staticParameters[index])) return false;
+            for (var component = 0; component < 4; component++)
+            {
+                if (float.IsNaN(value[component]) || float.IsInfinity(value[component])) return false;
+            }
+            parameterValues[index] = value;
+            if (_initialized) ApplyParameter(index, value);
             return true;
         }
 
@@ -369,7 +416,7 @@ namespace TpLab.Flux.FX.Udon
 
         int FindParameter(string id)
         {
-            if (!_initialized) return -1;
+            if (parameterIds == null) return -1;
             for (var i = 0; i < parameterIds.Length; i++)
             {
                 if (parameterIds[i] == id) return i;

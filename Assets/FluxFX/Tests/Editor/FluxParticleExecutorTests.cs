@@ -9,6 +9,7 @@ using TpLab.Flux.FX.Editor.Compilation.Modules;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.FX.Udon.Modules;
 using TpLab.Flux.Udon;
 using UdonSharpEditor;
 using UnityEditor;
@@ -65,6 +66,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 AssetDatabase.DeleteAsset(folder);
             }
+            if (Application.isPlaying) yield return new ExitPlayMode();
         }
 
         // 共通のWorld変換はPoint・Circle・Coneを通常実行し、全Shapeと速度の組み合わせはFull Regressionで検証する。
@@ -1677,6 +1679,146 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(AssetDatabase.TryGetGUIDAndLocalFileIdentifier(asset, out var guid, out long localId));
             return guid + ":" + localId;
         }
+        [Test]
+        public void ModuleHandlesShareExecutorValuesAndRemainInstanceLocal()
+        {
+            RequireGraphics();
+            SetModules(new FluxParticleGravityModule());
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var first = CreateRuntime(compiled);
+            var second = CreateRuntime(compiled);
+            var modules = first.GetComponentInParent<FluxParticleSystem>().Modules;
+            var gravity = modules.Gravity;
+            var other = second.GetComponentInParent<FluxParticleSystem>().Modules.Gravity;
+            Assert.IsNotNull(gravity);
+            Assert.IsTrue(gravity.HasEnabled());
+            var binding = modules.GetBinding("fluxfx.gravity");
+            Assert.AreSame(first, binding[0].Reference);
+            Assert.AreEqual(first.ResolveParameter("gravity.enabled", 1), binding[1].Int);
+            Assert.AreEqual(first.ResolveParameter("gravity", 3), binding[2].Int);
+            Assert.AreSame(gravity, modules.Gravity);
+            Assert.AreNotSame(gravity, other);
+            var original = other.GetGravity();
+            Assert.IsTrue(gravity.SetGravity(new Vector3(0, -2, 0)));
+            Assert.AreEqual(original, other.GetGravity());
+            Assert.IsFalse(gravity.SetGravity(new Vector3(float.NaN, 0, 0)));
+            Assert.AreEqual(new Vector3(0, -2, 0), gravity.GetGravity());
+            Assert.IsTrue(first.SetVector("gravity", new Vector3(0, -4, 0)));
+            Assert.AreEqual(new Vector3(0, -4, 0), gravity.GetGravity());
+            Assert.IsTrue(first.Initialize(4));
+            Assert.AreEqual(new Vector3(0, -4, 0), gravity.GetGravity());
+            first.SetFloat("spawn.speed", 0);
+            first.Step(0, 0, 1, 1);
+            first.Step(0.5f, 0, 0, 2);
+            AssertVector(new Vector4(0, -2, 0, 0), ReadValue(first, compiled, "particle.velocity", 0));
+            Assert.IsTrue(gravity.SetEnabled(false));
+            Assert.AreSame(gravity, modules.Gravity);
+            first.Step(0.5f, 0, 0, 3);
+            AssertVector(new Vector4(0, -2, 0, 0), ReadValue(first, compiled, "particle.velocity", 0));
+            Assert.IsFalse(first.SetParameterValue(first.ResolveParameter("gravity", 3), 1, Vector4.one));
+        }
+
+        [Test]
+        public void ModuleHandlesReturnNullForUncompiledModules()
+        {
+            SetModules();
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
+            Assert.IsNotNull(modules);
+            Assert.IsNull(modules.Gravity);
+            Assert.IsNull(modules.Gravity);
+            Assert.IsFalse(runtime.HasModule("fluxfx.gravity"));
+            Assert.IsNull(modules.GetBinding("fluxfx.gravity"));
+        }
+
+        [Test]
+        public void ModuleBindingRejectsMissingParameterBeforeGeneratingAssets()
+        {
+            SetModules();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            SetModules(new FluxParticleGravityModule());
+            Assert.Throws<InvalidOperationException>(() => CreateRuntime(compiled));
+            Assert.IsFalse(AssetDatabase.IsValidFolder(folder));
+        }
+
+        [Test]
+        public void ModuleHandleWithoutEnabledRemainsEnabledAndRejectsToggle()
+        {
+            var binding = new VRC.SDK3.Data.DataList();
+            binding.Add(new VRC.SDK3.Data.DataToken());
+            binding.Add(-1);
+            var handle = new FluxParticleModuleHandle();
+            FluxParticleModuleHandle.Initialize(handle, binding);
+            Assert.IsFalse(handle.HasEnabled());
+            Assert.IsTrue(handle.GetEnabled());
+            Assert.IsFalse(handle.SetEnabled(false));
+        }
+
+        [UnityTest, Explicit, Category("UdonRuntime")]
+        public IEnumerator ModuleHandlesExecuteOnUdonVmAndUpdateGpuState()
+        {
+            RequireGraphics();
+            Object.DestroyImmediate(root);
+            yield return new EnterPlayMode();
+            root = new GameObject("Module Handle Udon VM Test");
+            authoring = root.AddComponent<FluxParticleAuthoring>();
+            folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            var definition = new FluxParticleModuleRegistry().GetAll().Single(value => value.ModuleId == "custom.fluxfx.lift");
+            SetModules(new FluxParticleGravityModule(), (FluxParticleModule)Activator.CreateInstance(definition.ModuleType));
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            SetModules();
+            var empty = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var probePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/FluxFX/Tests/ModuleHandleProbe.prefab");
+            Assert.IsNotNull(probePrefab);
+            var probeObject = (GameObject)PrefabUtility.InstantiatePrefab(probePrefab);
+            probeObject.transform.SetParent(root.transform, false);
+            var probeProxy = probeObject.GetComponent<UdonSharp.UdonSharpBehaviour>();
+            probeProxy.SetProgramVariable("target", runtime.GetComponentInParent<FluxParticleSystem>());
+            probeProxy.SetProgramVariable("empty", empty.GetComponentInParent<FluxParticleSystem>());
+            var binding = compiled.Shaders.Compilation.StateLayout.Pages.SelectMany(page => page.Bindings)
+                .Single(value => value.ValueId == "particle.velocity");
+            probeProxy.SetProgramVariable("resultPage", binding.PageId);
+            GameObject managerObject = null;
+            try
+            {
+                if (!VRC.Udon.UdonManager.HasInstance)
+                {
+                    managerObject = new GameObject("Module Handle Test Udon Manager");
+                    managerObject.AddComponent<VRC.Udon.UdonManager>().Awake();
+                }
+                foreach (var backing in root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true))
+                {
+                    backing.InitializeUdonContent();
+                }
+                foreach (var proxy in root.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true))
+                {
+                    UdonSharpEditorUtility.CopyProxyToUdon(proxy);
+                }
+                var probe = UdonSharpEditorUtility.GetBackingUdonBehaviour(probeProxy);
+                Assert.AreEqual(UdonSharpEditorUtility.GetBackingUdonBehaviour(runtime.GetComponentInParent<FluxParticleSystem>()), probe.GetProgramVariable("target"));
+                probe.SendCustomEvent("Verify");
+                Assert.AreEqual(true, probe.GetProgramVariable("passed"), "Compiled Udon probe must complete all handle checks.");
+                var texture = (RenderTexture)probe.GetProgramVariable("resultTexture");
+                Assert.IsNotNull(texture, "Udon must expose the committed GPU state through GetCurrentPage.");
+                var velocity = ReadTexture(texture, 0);
+                Assert.AreEqual(1, velocity[binding.ChannelOffset + 1], 0.0001f,
+                    "Gravity (-2) and Custom Lift (8 at half strength) must produce Y velocity 1 after 0.5 seconds.");
+            }
+            finally
+            {
+                foreach (var buffer in root.GetComponentsInChildren<FluxBuffer>(true))
+                {
+                    var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(buffer);
+                    var texture = backing.GetProgramVariable("_texture") as RenderTexture;
+                    if (texture == null) continue;
+                    texture.Release();
+                    Object.DestroyImmediate(texture);
+                }
+                if (managerObject != null) Object.DestroyImmediate(managerObject);
+            }
+        }
+
         FluxParticleExecutor CreateRuntime(FluxParticleBuildResult compiled, int capacity = 4)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
@@ -1687,6 +1829,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNotNull(runtime, "Run Tools/FluxFX/Setup Program Backend Prefabs before executing these tests.");
             runtimes.Add(runtime);
             FluxParticleProgramBuild.Configure(runtime, compiled, authoring, folder, capacity);
+            go.GetComponent<FluxParticleSystem>().SetProgramVariable("particleExecutor", runtime);
             foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))
             {
                 var material = new Material(kernel.Shader);

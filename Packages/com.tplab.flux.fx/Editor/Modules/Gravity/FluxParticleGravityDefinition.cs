@@ -7,16 +7,20 @@ namespace TpLab.Flux.FX.Editor.Compilation.Modules
     /// <summary>
     /// GravityのParameterとVelocity更新Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleGravityDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleGravityDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleGravityModule);
         public string ModuleId => "fluxfx.gravity";
+        public string EnabledParameterId => "gravity.enabled";
+        public FluxParticleParameterDefinition[] HandleParameters => new[]
+        {
+            new FluxParticleParameterDefinition("gravity", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var gravity = (FluxParticleGravityModule)module;
-            context.AddParameter(new FluxParticleParameterDefinition("gravity", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live), gravity.Gravity);
+            context.AddParameter(HandleParameters[0], gravity.Gravity);
             context.AddParameter(new FluxParticleParameterDefinition("gravity.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("gravity", ModuleId, FluxParticlePhase.Update,

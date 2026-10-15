@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Editor.Compilation.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
 using UdonSharpEditor;
@@ -89,6 +90,24 @@ namespace TpLab.Flux.FX.Editor.Compilation
             var program = compiled.Shaders;
             var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
             var parameterValues = parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray();
+            var registry = new FluxParticleModuleRegistry();
+            var moduleDefinitions = authoring.Modules.Where(module => module.Enabled)
+                .Select(module => registry.TryGet(module.GetType(), out var definition) ? definition
+                    : throw new InvalidOperationException("Module Definition is missing.")).ToArray();
+            var bindingIds = new List<string>();
+            var bindingOffsets = new List<int> { 0 };
+            var bindingSlots = new List<int>();
+            var enabledSlots = new List<int>();
+            foreach (var definition in moduleDefinitions)
+            {
+                if (!(definition is IFluxParticleModuleBindingDefinition binding)) continue;
+                bindingIds.Add(definition.ModuleId);
+                enabledSlots.Add(binding.EnabledParameterId == null ? -1
+                    : ResolveBindingSlot(parameters, binding.EnabledParameterId, FluxParticleValueType.Float));
+                foreach (var parameter in binding.HandleParameters)
+                    bindingSlots.Add(ResolveBindingSlot(parameters, parameter.Id, parameter.Type));
+                bindingOffsets.Add(bindingSlots.Count);
+            }
             var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);
             var stepPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StepPrefabPath);
             if (pagePrefab == null || stepPrefab == null)
@@ -148,11 +167,31 @@ namespace TpLab.Flux.FX.Editor.Compilation
             runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
             runtime.SetProgramVariable("renderMaterial", render);
             ConfigureManifest(runtime, program, parameters, parameterValues);
+            runtime.SetProgramVariable("moduleIds", moduleDefinitions.Select(definition => definition.ModuleId).ToArray());
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>()?.Modules;
+            if (modules != null)
+            {
+                modules.SetProgramVariable("executor", runtime);
+                modules.SetProgramVariable("bindingIds", bindingIds.ToArray());
+                modules.SetProgramVariable("bindingOffsets", bindingOffsets.ToArray());
+                modules.SetProgramVariable("bindingSlots", bindingSlots.ToArray());
+                modules.SetProgramVariable("enabledSlots", enabledSlots.ToArray());
+                modules.SetProgramVariable("handles", null);
+                EditorUtility.SetDirty(modules);
+            }
             runtime.SetProgramVariable("emitterTransform", authoring.transform);
             runtime.SetProgramVariable("emitterRowProperties", authoring.SimulationSpace == FluxParticleSimulationSpace.World
                 ? Enumerable.Range(0, 3).Select(row => FluxParticleHlslNames.ProviderProperty("emitter.row" + row)).ToArray()
                 : Array.Empty<string>());
             EditorUtility.SetDirty(runtime);
+        }
+
+        static int ResolveBindingSlot(FluxParticleParameterDefinition[] parameters, string id, FluxParticleValueType type)
+        {
+            var index = Array.FindIndex(parameters, parameter => parameter.Id == id);
+            if (index < 0 || parameters[index].Type != type)
+                throw new InvalidOperationException($"Module Binding requires Parameter '{id}' with type {type}.");
+            return index;
         }
 
         static string BuildPlaybackParameters(FluxParticleAuthoring authoring)

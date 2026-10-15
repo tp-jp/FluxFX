@@ -9,18 +9,22 @@ namespace TpLab.Flux.FX.CustomModules.Editor
     /// <summary>
     /// Custom Liftの時間変化する加速度を登録します。
     /// </summary>
-    public sealed class CustomLiftDefinition : IFluxParticleModuleDefinition
+    public sealed class CustomLiftDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(CustomLiftModule);
         public string ModuleId => "custom.fluxfx.lift";
+        public string EnabledParameterId => "custom-lift.enabled";
+        public FluxParticleParameterDefinition[] HandleParameters => new[]
+        {
+            new FluxParticleParameterDefinition("custom-lift.strength", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live),
+            new FluxParticleParameterDefinition("custom-lift.direction", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var lift = (CustomLiftModule)module;
-            context.AddParameter(new FluxParticleParameterDefinition("custom-lift.strength", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(lift.Strength, 0, 0, 0));
-            context.AddParameter(new FluxParticleParameterDefinition("custom-lift.direction", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live), lift.Direction);
+            context.AddParameter(HandleParameters[0], new Vector4(lift.Strength, 0, 0, 0));
+            context.AddParameter(HandleParameters[1], lift.Direction);
             context.AddParameter(new FluxParticleParameterDefinition("custom-lift.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             if (!context.Providers.ContainsKey("step.time"))

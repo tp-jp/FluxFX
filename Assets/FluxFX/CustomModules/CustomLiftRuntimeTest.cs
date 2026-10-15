@@ -1,4 +1,5 @@
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.FX.Udon.Modules;
 using UdonSharp;
 using UnityEngine;
 
@@ -22,11 +23,12 @@ namespace TpLab.Flux.FX.CustomModules
 
         public void ToggleParameters()
         {
-            var executor = fluxParticleSystem.Executor;
+            var lift = fluxParticleSystem.Modules.CustomLift();
+            if (lift == null) return;
             _isHighStrength = !_isHighStrength;
-            executor.SetFloat("custom-lift.strength", _isHighStrength ? highStrength : lowStrength);
-            executor.SetVector("custom-lift.direction", _isHighStrength ? Vector3.right : Vector3.up);
-            executor.SetFloat("custom-lift.enabled", 1);
+            lift.SetStrength(_isHighStrength ? highStrength : lowStrength);
+            lift.SetDirection(_isHighStrength ? Vector3.right : Vector3.up);
+            lift.SetEnabled(true);
         }
     }
 }

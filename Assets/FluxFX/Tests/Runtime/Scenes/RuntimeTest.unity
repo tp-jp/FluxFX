@@ -219,6 +219,12 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 7033779131796818726}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &520056258 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2248276467720798585, guid: f2a56eb888362ac4590f468133e62e5a,
+    type: 3}
+  m_PrefabInstance: {fileID: 7033779131796818726}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &582417274 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3809686262624099320, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -613,11 +619,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2680331688606634723, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-    - target: {fileID: 3011812459262992520, guid: f2a56eb888362ac4590f468133e62e5a,
+    - target: {fileID: 2771034766471100750, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: particleCount
-      value: 1048576
-      objectReference: {fileID: 0}
+      propertyPath: serializationData.Prefab
+      value: 
+      objectReference: {fileID: 2771034766471100750, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
     - target: {fileID: 3011812459262992520, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -653,6 +660,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 4611180189421235476, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+    - target: {fileID: 4876580894953398945, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: _syncMethod
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5318433019894970630, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: serializationData.Prefab
@@ -792,16 +804,6 @@ PrefabInstance:
         type: 3}
       propertyPath: shape.type
       value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: emission.rate
-      value: 104858
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: render.startSize
-      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -1850,6 +1852,10 @@ MonoBehaviour:
     - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 1761716984}
     ID: 64
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 520056258}
+    ID: 65
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}

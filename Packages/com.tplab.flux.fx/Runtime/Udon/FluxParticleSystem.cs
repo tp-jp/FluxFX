@@ -33,6 +33,14 @@ namespace TpLab.Flux.FX.Udon
         [HideInInspector]
         FluxParticleExecutor particleExecutor;
 
+        [SerializeField]
+        FluxParticleModules modules;
+
+        /// <summary>
+        /// 組み込み済みModuleへの操作入口
+        /// </summary>
+        public FluxParticleModules Modules => modules;
+
         bool _programReady;
         bool _isPlaying;
         bool _isPaused;
