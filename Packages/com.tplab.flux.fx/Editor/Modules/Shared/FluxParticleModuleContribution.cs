@@ -81,6 +81,19 @@ namespace TpLab.Flux.FX.Editor.Modules.Shared
         }
 
         /// <summary>
+        /// 指定した入力で評価するGradientのValueとLookup Providerを登録します。
+        /// </summary>
+        public string Gradient(string id, string input, Gradient gradient)
+        {
+            RequireOpen();
+            var samples = FluxParticleGradientBaker.Bake(gradient, out var positions);
+            context.AddValue(new FluxParticleValueDefinition(id, FluxParticleValueType.Float4, FluxParticleWritePolicy.ReadOnly, moduleId));
+            context.AddProvider(new FluxParticleValueProvider(id, FluxParticleProviderKind.LookupTable,
+                new[] { input }, lookupVectorSamples: samples, lookupPositions: positions));
+            return id;
+        }
+
+        /// <summary>
         /// Operationを登録し、AfterOperationの参照元を依存関係へ追加します。
         /// </summary>
         public void Operation(string id, FluxParticlePhase phase, IEnumerable<FluxParticleValueRead> reads,

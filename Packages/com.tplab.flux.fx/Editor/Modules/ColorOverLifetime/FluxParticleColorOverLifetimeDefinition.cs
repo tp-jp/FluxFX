@@ -1,6 +1,6 @@
 using System;
-using System.Linq;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
@@ -10,79 +10,57 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
     /// <summary>
     /// Color over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
+    public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
+        const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/";
+        const int EndColorSlot = 0;
+
         public Type ModuleType => typeof(FluxParticleColorOverLifetimeModule);
+
         public string ModuleId => "fluxfx.color-over-lifetime";
-        public string EnabledParameterId => "color.enabled";
-        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
-        {
-            ((FluxParticleColorOverLifetimeModule)module).Mode == FluxParticleColorOverLifetimeMode.Linear ? new FluxParticleParameterDefinition("color.end", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Live) : null
-        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
-            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
             var color = (FluxParticleColorOverLifetimeModule)module;
-            if (color.Mode == FluxParticleColorOverLifetimeMode.Gradient)
-            {
-                AddGradient(color, context);
-                return;
-            }
-            if (color.Mode != FluxParticleColorOverLifetimeMode.Linear)
+            if (color.Mode != FluxParticleColorOverLifetimeMode.Linear && color.Mode != FluxParticleColorOverLifetimeMode.Gradient)
             {
                 throw new InvalidOperationException("Unsupported color over lifetime mode.");
             }
-            context.SetInitialValue("color.end", color.EndColor);
-            context.AddOperation(new FluxParticleOperationDefinition("render.color", ModuleId, FluxParticlePhase.Render,
-                new[]
+
+            var contribution = new FluxParticleModuleContribution(context, ModuleId, "color.enabled", color.Enabled, 1);
+            var start = new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start");
+            FluxParticleValueRead[] reads;
+            string hlsl;
+            string entryPoint;
+            var parameters = Array.Empty<string>();
+            if (color.Mode == FluxParticleColorOverLifetimeMode.Linear)
+            {
+                var end = contribution.Parameter(EndColorSlot, "color.end", FluxParticleValueType.Float4,
+                    FluxParticleParameterPolicy.Live, color.EndColor);
+                parameters = new[] { end };
+                reads = new[]
                 {
-                    new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start"),
+                    start,
                     new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
                     new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided)
-                },
-                new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
-                new[] { "render.start" },
-                "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/RenderColor.hlsl", "FluxFX_RenderColor",
-                new[] { "color.end" }, EnabledParameterId));
-        }
-
-        void AddGradient(FluxParticleColorOverLifetimeModule color, FluxParticleProgramContribution context)
-        {
-            if (color.Gradient == null || (color.Gradient.mode != UnityEngine.GradientMode.Blend && color.Gradient.mode != UnityEngine.GradientMode.Fixed))
-            {
-                throw new InvalidOperationException("Unsupported color gradient mode.");
+                };
+                hlsl = "RenderColor.hlsl";
+                entryPoint = "FluxFX_RenderColor";
             }
-            var positions = color.Gradient.mode == UnityEngine.GradientMode.Fixed
-                ? color.Gradient.colorKeys.Select(key => key.time).Concat(color.Gradient.alphaKeys.Select(key => key.time))
-                    .Concat(new[] { 0f, 1f }).Distinct().OrderBy(time => time).ToArray()
-                : Array.Empty<float>();
-            var samples = new UnityEngine.Vector4[positions.Length != 0 ? positions.Length : 128];
-            for (var i = 0; i < samples.Length; i++)
+            else
             {
-                var time = positions.Length == 0 ? i / (float)(samples.Length - 1)
-                    : i == 0 ? positions[0] : (positions[i - 1] + positions[i]) * 0.5f;
-                samples[i] = color.Gradient.Evaluate(time);
+                contribution.UnavailableParameter(EndColorSlot);
+                var age = contribution.NormalizedAge("color.normalized-age");
+                var gradient = contribution.Gradient("color.gradient", age, color.Gradient);
+                reads = new[] { start, new FluxParticleValueRead(gradient, FluxParticleReadVersion.Provided) };
+                hlsl = "RenderColorGradient.hlsl";
+                entryPoint = "FluxFX_RenderColorGradient";
             }
-            context.AddValue(new FluxParticleValueDefinition("color.normalized-age", FluxParticleValueType.Float,
-                FluxParticleWritePolicy.ReadOnly, ModuleId));
-            context.AddValue(new FluxParticleValueDefinition("color.gradient", FluxParticleValueType.Float4,
-                FluxParticleWritePolicy.ReadOnly, ModuleId));
-            context.AddProvider(new FluxParticleValueProvider("color.normalized-age", FluxParticleProviderKind.Derived,
-                new[] { "particle.age", "particle.lifetime" },
-                hlslPath: "Packages/com.tplab.flux.fx/Editor/Modules/Shared/NormalizedAge.hlsl", entryPoint: "FluxFX_NormalizedAge"));
-            context.AddProvider(new FluxParticleValueProvider("color.gradient", FluxParticleProviderKind.LookupTable,
-                new[] { "color.normalized-age" }, lookupVectorSamples: samples, lookupPositions: positions));
-            context.AddOperation(new FluxParticleOperationDefinition("render.color", ModuleId, FluxParticlePhase.Render,
-                new[]
-                {
-                    new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start"),
-                    new FluxParticleValueRead("color.gradient", FluxParticleReadVersion.Provided)
-                },
-                new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
-                new[] { "render.start" },
-                "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/RenderColorGradient.hlsl", "FluxFX_RenderColorGradient", enabledParameterId: EnabledParameterId));
+            contribution.Operation("render.color", FluxParticlePhase.Render,
+                reads: reads,
+                writes: new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
+                hlslPath: Hlsl + hlsl, entryPoint: entryPoint, switchable: true, parameters: parameters);
+            contribution.Complete();
         }
     }
 }

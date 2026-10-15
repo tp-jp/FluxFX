@@ -39,7 +39,6 @@ namespace TpLab.Flux.FX.Editor.Core
             AddParameter(builder, "spawn.velocity", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live);
             AddParameter(builder, "lifetime.range", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Static);
             AddParameter(builder, "color.start", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static);
-            AddParameter(builder, "color.end", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Live);
 
             builder.AddProvider(new FluxParticleValueProvider("particle.lifetime", FluxParticleProviderKind.Derived,
                 new[] { "particle.spawn-key" }, new[] { "lifetime.range" }, Hlsl + "Lifetime.hlsl", "FluxFX_Lifetime"));

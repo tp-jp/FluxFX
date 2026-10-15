@@ -30,8 +30,7 @@ namespace TpLab.Flux.FX.Editor.Authoring
             var values = new Dictionary<string, Vector4>(StringComparer.Ordinal)
             {
                 ["spawn.position"] = Vector4.zero,
-                ["lifetime.range"] = new Vector4(min, max, 0, 0),
-                ["color.end"] = authoring.Render.StartColor
+                ["lifetime.range"] = new Vector4(min, max, 0, 0)
             };
             if (randomColor)
             {

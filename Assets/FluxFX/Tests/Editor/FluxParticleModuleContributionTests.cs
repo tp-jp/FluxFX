@@ -26,21 +26,40 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var authoring = root.AddComponent<FluxParticleAuthoring>();
                 var serialized = new SerializedObject(authoring);
                 var modules = serialized.FindProperty("modules");
-                modules.arraySize = 3;
+                modules.arraySize = 5;
                 modules.GetArrayElementAtIndex(0).managedReferenceValue = new FluxParticleGravityModule();
                 modules.GetArrayElementAtIndex(1).managedReferenceValue = new FluxParticleSizeOverLifetimeModule();
                 modules.GetArrayElementAtIndex(2).managedReferenceValue = new FluxParticleDragModule();
+                modules.GetArrayElementAtIndex(3).managedReferenceValue = new FluxParticleColorOverLifetimeModule();
+                modules.GetArrayElementAtIndex(4).managedReferenceValue = new FluxParticleRotationOverLifetimeModule();
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 serialized.Update();
                 var size = serialized.FindProperty("modules").GetArrayElementAtIndex(1);
                 size.FindPropertyRelative("mode").intValue = (int)mode;
                 size.FindPropertyRelative("enabled").boolValue = false;
+                var color = serialized.FindProperty("modules").GetArrayElementAtIndex(3);
+                color.FindPropertyRelative("mode").intValue = (int)(mode == FluxParticleSizeOverLifetimeMode.Linear
+                    ? FluxParticleColorOverLifetimeMode.Linear : FluxParticleColorOverLifetimeMode.Gradient);
+                color.FindPropertyRelative("enabled").boolValue = false;
+                var rotation = serialized.FindProperty("modules").GetArrayElementAtIndex(4);
+                rotation.FindPropertyRelative("mode").intValue = (int)(mode == FluxParticleSizeOverLifetimeMode.Linear
+                    ? FluxParticleRotationOverLifetimeMode.Linear : FluxParticleRotationOverLifetimeMode.Curve);
+                rotation.FindPropertyRelative("enabled").boolValue = false;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 var build = FluxParticleBuildPipeline.Build(authoring);
                 var gravity = build.ModuleBindings.Single(binding => binding.ModuleId == "fluxfx.gravity");
                 var binding = build.ModuleBindings.Single(value => value.ModuleId == "tplab.fluxfx.size-over-lifetime");
                 var drag = build.ModuleBindings.Single(value => value.ModuleId == "fluxfx.drag");
+                var colorBinding = build.ModuleBindings.Single(value => value.ModuleId == "fluxfx.color-over-lifetime");
+                var rotationBinding = build.ModuleBindings.Single(value => value.ModuleId == "tplab.fluxfx.rotation-over-lifetime");
+                Assert.AreEqual(1, colorBinding.Parameters.Count);
+                Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear ? "color.end" : null, colorBinding.Parameters[0]?.Id);
+                Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear, build.InitialValues.ContainsKey("color.end"));
+                Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear, build.Shaders.Compilation.Parameters.ContainsKey("color.end"));
+                Assert.AreEqual("rotation.end", rotationBinding.Parameters.Single().Id);
+                Assert.AreEqual(0, build.InitialValues[colorBinding.EnabledParameterId].x);
+                Assert.AreEqual(0, build.InitialValues[rotationBinding.EnabledParameterId].x);
                 Assert.AreEqual("gravity", gravity.Parameters.Single().Id);
                 Assert.AreEqual("drag", drag.Parameters.Single().Id);
                 Assert.AreEqual("size.enabled", binding.EnabledParameterId);
@@ -53,7 +72,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 serialized.Update();
                 serialized.FindProperty("modules").arraySize = 0;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-                Assert.AreEqual(3, build.ModuleBindings.Count);
+                Assert.AreEqual(5, build.ModuleBindings.Count);
                 Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear ? "size.end" : null, binding.Parameters[0]?.Id);
             }
             finally

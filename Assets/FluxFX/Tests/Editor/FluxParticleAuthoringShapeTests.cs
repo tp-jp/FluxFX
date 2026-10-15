@@ -339,7 +339,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetFloat("shape.radius", 2.5f);
                 session.SetVector("lifetime.range", new Vector4(3, 3, 0, 0));
                 session.SetVector("color.start", Vector4.one);
-                session.SetVector("color.end", Vector4.one);
                 session.SetFloat("render.size", 1);
                 session.SetUniformFloat("step.delta-time", 0);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
@@ -397,7 +396,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 if (shape == FluxParticleShapeType.Cone) session.SetFloat("shape.angle", 30f);
                 session.SetVector("lifetime.range", new Vector4(3, 3, 0, 0));
                 session.SetVector("color.start", Vector4.one);
-                session.SetVector("color.end", Vector4.one);
                 session.SetFloat("render.size", 1);
                 session.SetUniformFloat("step.delta-time", 0);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
@@ -503,7 +501,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
                 session.SetVector("color.start-min", new Vector4(0, 0, 0, 0));
                 session.SetVector("color.start-max", new Vector4(1, 1, 1, 1));
-                session.SetVector("color.end", Vector4.one);
                 session.SetVector("render.size-range", new Vector4(0.5f, 2f, 0, 0));
                 session.SetUniformFloat("step.delta-time", 0);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
@@ -565,7 +562,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetFloat("spawn.speed", 0);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
                 session.SetVector("color.start", Vector4.one);
-                session.SetVector("color.end", Vector4.one);
                 session.SetVector("render.size-range", new Vector4(0.5f, 2f, 0, 0));
                 session.SetUniformFloat("step.delta-time", 0);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));

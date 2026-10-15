@@ -750,7 +750,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNotNull(material);
             Assert.AreSame(material, first.RenderMaterial);
             Assert.AreSame(material, (Material)first.GetProgramVariable("renderMaterial"));
-            Assert.IsTrue(second.SetVector("color.end", new Vector4(0, 1, 0, 1)));
+            Assert.IsTrue(second.SetVector("spawn.position", new Vector4(0, 1, 0, 0)));
         }
 
         [Test]

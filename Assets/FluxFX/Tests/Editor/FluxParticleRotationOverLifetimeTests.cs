@@ -120,7 +120,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetFloat("spawn.speed", 0f);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
                 session.SetVector("color.start", Vector4.one);
-                session.SetVector("color.end", Vector4.one);
                 session.SetFloat("render.size", 1f);
                 session.SetVector("rotation.start", new Vector4(0, 0, 45, 0));
                 session.SetVector("rotation.end", new Vector4(0, 0, 180, 0));

@@ -10,23 +10,17 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
     /// <summary>
     /// Rotation over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
+    public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/RotationOverLifetime/";
+        const int EndRotationSlot = 0;
 
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
+
         public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
-        public string EnabledParameterId => "rotation.enabled";
-        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
-        {
-            new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
-        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
-            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
-            var handleParameters = GetHandleParameters(module);
             var rotation = (FluxParticleRotationOverLifetimeModule)module;
             if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear &&
                 rotation.Mode != FluxParticleRotationOverLifetimeMode.Curve)
@@ -39,36 +33,30 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
                 throw new InvalidOperationException("Program Backend currently requires: Billboard rotation over lifetime around Z only.");
             }
 
-            context.AddParameter(handleParameters[0], end);
+            var contribution = new FluxParticleModuleContribution(context, ModuleId, "rotation.enabled", rotation.Enabled, 1);
+            var endRotation = contribution.Parameter(EndRotationSlot, "rotation.end", FluxParticleValueType.Float3,
+                FluxParticleParameterPolicy.Live, end);
+            var start = new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start");
             var reads = new[]
             {
-                new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),
+                start,
                 new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
                 new FluxParticleValueRead("particle.lifetime", FluxParticleReadVersion.Provided)
             };
             var hlsl = "AuthoringRotationOverLifetimeLinear.hlsl";
             if (rotation.Mode == FluxParticleRotationOverLifetimeMode.Curve)
             {
-                var samples = FluxParticleCurveBaker.Bake(rotation.Curve);
-                context.AddValue(new FluxParticleValueDefinition("rotation.normalized-age", FluxParticleValueType.Float,
-                    FluxParticleWritePolicy.ReadOnly, ModuleId));
-                context.AddValue(new FluxParticleValueDefinition("rotation.curve", FluxParticleValueType.Float,
-                    FluxParticleWritePolicy.ReadOnly, ModuleId));
-                context.AddProvider(new FluxParticleValueProvider("rotation.normalized-age", FluxParticleProviderKind.Derived,
-                    new[] { "particle.age", "particle.lifetime" }, hlslPath: "Packages/com.tplab.flux.fx/Editor/Modules/Shared/NormalizedAge.hlsl", entryPoint: "FluxFX_NormalizedAge"));
-                context.AddProvider(new FluxParticleValueProvider("rotation.curve", FluxParticleProviderKind.LookupTable,
-                    new[] { "rotation.normalized-age" }, lookupSamples: samples));
-                reads = new[]
-                {
-                    reads[0],
-                    new FluxParticleValueRead("rotation.curve", FluxParticleReadVersion.Provided)
-                };
+                var age = contribution.NormalizedAge("rotation.normalized-age");
+                var curve = contribution.Curve("rotation.curve", age, rotation.Curve);
+                reads = new[] { start, new FluxParticleValueRead(curve, FluxParticleReadVersion.Provided) };
                 hlsl = "AuthoringRotationOverLifetimeCurve.hlsl";
             }
-            context.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", ModuleId, FluxParticlePhase.Render,
-                reads, new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
-                new[] { "render.rotation-start" }, Hlsl + hlsl,
-                "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }, EnabledParameterId));
+            contribution.Operation("render.rotation-over-lifetime", FluxParticlePhase.Render,
+                reads: reads,
+                writes: new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
+                hlslPath: Hlsl + hlsl, entryPoint: "FluxFX_RenderRotationOverLifetime",
+                switchable: true, parameters: new[] { endRotation });
+            contribution.Complete();
         }
     }
 }
