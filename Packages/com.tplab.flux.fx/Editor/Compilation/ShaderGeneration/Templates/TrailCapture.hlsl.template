@@ -1,0 +1,33 @@
+{{RenderCode}}
+sampler2D _TrailMetadata, _TrailSpawnMask;
+float4 _TrailSize, _FluxStateSize, _TrailRow0, _TrailRow1, _TrailRow2;
+float _TrailMode, _TrailTick, _TrailEnabled, _TrailWorldSpace, _TrailHasSpawnMask;
+float4 FluxFX_Trail(float2 trailUV)
+{
+    if (_TrailMode > 1.5) return float4(0,0,0,-1);
+    uint2 pixel = (uint2)floor(trailUV * _TrailSize.xy);
+    uint index = pixel.y * (uint)_TrailSize.x + pixel.x;
+    uint count = (uint)_TrailSize.z;
+    uint total = (uint)_TrailSize.w;
+    if (index >= count) return float4(0,0,0,-1);
+    uint slot = index * (total / count) + min(index, total % count);
+    float2 uv = (float2(slot % (uint)_FluxStateSize.x, slot / (uint)_FluxStateSize.x) + 0.5) / _FluxStateSize.xy;
+    bool alive;
+    FluxFX_EvaluateRender(uv, alive);
+    alive = alive && _TrailEnabled > 0.5;
+    float4 meta = tex2D(_TrailMetadata, trailUV);
+    if (_TrailMode < 0.5)
+    {
+        bool spawned = _TrailHasSpawnMask > 0.5 && tex2D(_TrailSpawnMask, uv).r > 0.5;
+        float generation = spawned || meta.y < 0.5 ? _TrailTick : meta.x;
+        return float4(generation, alive ? 1 : 0, 0, 0);
+    }
+    if (!alive) return float4(0,0,0,-1);
+    float3 position = {{Position}};
+    if (_TrailWorldSpace < 0.5)
+    {
+        float4 local = float4(position, 1);
+        position = float3(dot(_TrailRow0, local), dot(_TrailRow1, local), dot(_TrailRow2, local));
+    }
+    return float4(position, meta.x);
+}

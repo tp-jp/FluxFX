@@ -71,6 +71,34 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         FluxReadback aliveCountReadback;
 
+        [SerializeField]
+        FluxKernel trailKernel;
+        [SerializeField]
+        FluxBuffer[] trailBuffers;
+        [SerializeField]
+        Material[] trailMaterials;
+        [SerializeField]
+        bool trailWorldSpace;
+        float[] _trailState;
+        int _trailEnabledSlot;
+        int _trailWidthSlot;
+        int _trailColorSlot;
+
+        /// <summary>
+        /// 軌跡の世代と生存状態を保持するTexture。未組み込みの場合はnull
+        /// </summary>
+        public RenderTexture TrailMetadata => trailKernel == null || _trailState == null ? null : trailBuffers[(int)_trailState[FluxParticleTrailHistory.MetadataIndex]].Texture;
+
+        /// <summary>
+        /// 最新の軌跡記録Textureを取得します。
+        /// </summary>
+        public RenderTexture GetTrailPoint(int age)
+        {
+            if (trailKernel == null || _trailState == null || age < 0 || age >= FluxParticleTrailHistory.PointCount) return null;
+            var index = ((int)_trailState[FluxParticleTrailHistory.HeadIndex] + FluxParticleTrailHistory.PointCount - 1 - age) % FluxParticleTrailHistory.PointCount;
+            return trailBuffers[index].Texture;
+        }
+
         FluxBuffer[] _current;
         FluxBuffer[] _next;
         bool[] _updated;
@@ -202,6 +230,27 @@ namespace TpLab.Flux.FX.Udon
             }
 
             renderMaterial.SetVector("_FluxStateSize", stateSize);
+            if (trailKernel != null)
+            {
+                _trailState = new float[4];
+                _trailEnabledSlot = ResolveParameter("trails.enabled", 1);
+                _trailWidthSlot = ResolveParameter("trails.width", 1);
+                _trailColorSlot = ResolveParameter("trails.color", 4);
+                for (var i = 0; i < trailBuffers.Length; i++)
+                {
+                    if (!ConfigureBuffer(trailBuffers[i], Mathf.Min(count, FluxParticleTrailHistory.MaximumTrails)))
+                    {
+                        Release();
+                        return false;
+                    }
+                }
+                trailKernel.SetVector("_FluxStateSize", stateSize);
+                for (var i = 0; i < allocationLookupProperties.Length; i++)
+                {
+                    var property = allocationLookupProperties[i];
+                    trailKernel.SetTexture(property, renderMaterial.GetTexture(property));
+                }
+            }
             var allocationCount = count;
             for (var level = 0; level < allocationBuffers.Length; level++)
             {
@@ -252,6 +301,12 @@ namespace TpLab.Flux.FX.Udon
                 clearKernels[page].Dispatch(_next[page]);
             }
             GenerateSpawnInputs(0, 0, 0, 0);
+            if (trailKernel != null)
+            {
+                FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, _trailState);
+                FluxParticleTrailHistory.SetAppearance(trailMaterials, GetParameterValue(_trailEnabledSlot).x > 0.5f,
+                    GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
+            }
             BindRender();
         }
 
@@ -316,6 +371,12 @@ namespace TpLab.Flux.FX.Udon
             }
             _simulationTime += deltaTime;
             BindRender();
+            if (trailKernel != null)
+            {
+                var matrix = emitterTransform == null ? Matrix4x4.identity : emitterTransform.localToWorldMatrix;
+                FluxParticleTrailHistory.Step(trailKernel, trailBuffers, trailMaterials, _trailState,
+                    spawnMaskBuffer.Texture, _count, deltaTime, matrix, trailWorldSpace, GetParameterValue(_trailEnabledSlot).x > 0.5f);
+            }
         }
 
         /// <summary>
@@ -385,6 +446,11 @@ namespace TpLab.Flux.FX.Udon
             if (_initialized)
             {
                 ApplyParameter(index, value);
+                if (trailKernel != null && (index == _trailEnabledSlot || index == _trailWidthSlot || index == _trailColorSlot))
+                {
+                    FluxParticleTrailHistory.SetAppearance(trailMaterials, GetParameterValue(_trailEnabledSlot).x > 0.5f,
+                        GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
+                }
             }
             return true;
         }
@@ -430,6 +496,15 @@ namespace TpLab.Flux.FX.Udon
                     if (allocationBuffers[level] != null) allocationBuffers[level].Release();
                 }
             }
+            if (trailBuffers != null)
+            {
+                for (var i = 0; i < trailBuffers.Length; i++)
+                {
+                    if (trailBuffers[i] != null) trailBuffers[i].Release();
+                }
+                FluxParticleTrailHistory.SetAppearance(trailMaterials, false, 0, Vector4.zero);
+            }
+            _trailState = null;
             _initialized = false;
             _current = null;
             _next = null;
@@ -514,12 +589,21 @@ namespace TpLab.Flux.FX.Udon
             }
             if (parameterTypes[index] == 1) allocationKernels[0].SetFloat(property, value.x);
             else allocationKernels[0].SetVector(property, value);
+            if (trailKernel != null)
+            {
+                if (parameterTypes[index] == 1) trailKernel.SetFloat(property, value.x);
+                else trailKernel.SetVector(property, value);
+            }
             if (parameterTypes[index] == 1) renderMaterial.SetFloat(property, value.x);
             else renderMaterial.SetVector(property, value);
         }
 
         void BindRender()
         {
+            if (trailKernel != null)
+            {
+                if (!string.IsNullOrEmpty(simulationTimeProperty)) trailKernel.SetFloat(simulationTimeProperty, _simulationTime);
+            }
             if (!string.IsNullOrEmpty(simulationTimeProperty))
             {
                 renderMaterial.SetFloat(simulationTimeProperty, _simulationTime);
@@ -527,11 +611,28 @@ namespace TpLab.Flux.FX.Udon
             for (var page = 0; page < _current.Length; page++)
             {
                 renderMaterial.SetTexture(renderPageProperties[page], _current[page].Texture);
+                if (trailKernel != null) trailKernel.SetBuffer(renderPageProperties[page], _current[page]);
             }
         }
 
         bool ValidateManifest()
         {
+            if (trailKernel != null)
+            {
+                if (trailBuffers == null || trailBuffers.Length != FluxParticleTrailHistory.PointCount + 2 ||
+                    trailMaterials == null || trailMaterials.Length != FluxParticleTrailHistory.PointCount - 1 ||
+                    ResolveParameter("trails.enabled", (int)FluxParticleValueType.Float) < 0 ||
+                    ResolveParameter("trails.width", (int)FluxParticleValueType.Float) < 0 ||
+                    ResolveParameter("trails.color", (int)FluxParticleValueType.Float4) < 0) return false;
+                for (var i = 0; i < trailBuffers.Length; i++)
+                {
+                    if (trailBuffers[i] == null) return false;
+                }
+                for (var i = 0; i < trailMaterials.Length; i++)
+                {
+                    if (trailMaterials[i] == null) return false;
+                }
+            }
             if (emitterRowProperties != null && emitterRowProperties.Length != 0)
             {
                 if (emitterRowProperties.Length != 3 || emitterTransform == null) return false;

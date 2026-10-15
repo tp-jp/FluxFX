@@ -196,6 +196,11 @@ namespace TpLab.Flux.FX.Editor.Build
             runtime.SetProgramVariable("spawnMaskBuffer", maskBuffer);
             runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
             runtime.SetProgramVariable("renderMaterial", render);
+            var trails = FluxParticleTrailBuilder.Create(generated, compiled, authoring, bufferCapacity, session, owner);
+            runtime.SetProgramVariable("trailKernel", trails.Kernel);
+            runtime.SetProgramVariable("trailBuffers", trails.Buffers);
+            runtime.SetProgramVariable("trailMaterials", trails.Materials);
+            runtime.SetProgramVariable("trailWorldSpace", authoring.SimulationSpace == FluxParticleSimulationSpace.World);
             ConfigureManifest(runtime, program, parameters, parameterValues);
             runtime.SetProgramVariable("moduleIds", moduleIds);
             var modules = runtime.GetComponentInParent<FluxParticleSystem>()?.Modules;
@@ -377,7 +382,7 @@ namespace TpLab.Flux.FX.Editor.Build
             return texture;
         }
 
-        static Shader SaveShader(string source, FluxParticleGenerationSession session, string owner)
+        internal static Shader SaveShader(string source, FluxParticleGenerationSession session, string owner)
         {
             FluxParticleGenerationSession.EnsureFolder(session.ShaderRoot);
             var path = session.ShaderRoot + "/" + Hash128.Compute(source) + ".shader";

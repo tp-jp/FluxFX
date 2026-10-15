@@ -22,6 +22,26 @@ namespace TpLab.Flux.FX.CustomModules
         public bool alivePending;
         public bool aliveRequestAccepted;
 
+        public RenderTexture trailOldPoint;
+
+        public void VerifyTrails()
+        {
+            passed = false;
+            target.Pause();
+            var trails = target.Modules.Trails;
+            if (trails == null || trails != target.Modules.Trails || empty.Modules.Trails != null) return;
+            if (!trails.SetWidth(0.2f) || trails.GetWidth() != 0.2f) return;
+            if (!trails.SetColor(Color.red) || trails.GetColor() != Color.red) return;
+            if (!target.Executor.Initialize(4)) return;
+            target.Executor.SetVector("lifetime.range", new Vector4(0.01f, 0.01f, 0, 0));
+            target.Executor.Step(0, 0, 1, 17);
+            trailOldPoint = target.Executor.GetTrailPoint(0);
+            target.Executor.Step(0.011f, 0, 0, 0);
+            target.Executor.Step(0.005f, 0, 1, 17);
+            resultTexture = target.Executor.TrailMetadata;
+            passed = trailOldPoint != null && resultTexture != null;
+        }
+
         public void VerifyBlink()
         {
             passed = false;

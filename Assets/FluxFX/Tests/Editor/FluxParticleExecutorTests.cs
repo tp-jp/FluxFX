@@ -24,7 +24,7 @@ using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {
-    public sealed class FluxParticleExecutorTests
+    public sealed partial class FluxParticleExecutorTests
     {
         GameObject root;
         FluxParticleAuthoring authoring;

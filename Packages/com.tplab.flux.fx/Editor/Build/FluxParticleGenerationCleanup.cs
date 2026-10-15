@@ -139,7 +139,8 @@ namespace TpLab.Flux.FX.Editor.Build
             var type = AssetDatabase.GetMainAssetTypeAtPath(asset.path);
             return asset.kind == "Material" && directory == session.MaterialRoot && type == typeof(Material) ||
                 asset.kind == "Shader" && directory == session.ShaderRoot && type == typeof(Shader) ||
-                asset.kind == "Lookup" && directory == session.LookupRoot && type == typeof(Texture2D);
+                asset.kind == "Lookup" && directory == session.LookupRoot && type == typeof(Texture2D) ||
+                asset.kind == "Mesh" && directory == session.MeshRoot && type == typeof(Mesh);
         }
 
         static void RemoveEmptyFolder(string path)

@@ -99,6 +99,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             RegisterStandard<FluxParticleSizeOverLifetimeModule>("Size over Lifetime", 200, "SizeOverLifetimeExpanded");
             RegisterStandard<FluxParticleRotationOverLifetimeModule>("Rotation over Lifetime", 300, "RotationOverLifetimeExpanded");
             RegisterStandard<FluxParticleBlinkModule>("Blink", 500, "BlinkExpanded");
+            RegisterStandard<FluxParticleTrailsModule>("Trails", 510, "TrailsExpanded");
             RegisterStandard<FluxParticleTextureSheetAnimationModule>("Texture Sheet Animation", 400, "TextureSheetAnimationExpanded");
         }
 

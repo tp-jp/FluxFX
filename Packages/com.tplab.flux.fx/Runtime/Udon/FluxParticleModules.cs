@@ -80,6 +80,11 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public FluxParticleBlinkHandle Blink => FluxParticleBlinkHandle.Get(this);
 
+        /// <summary>
+        /// Trailsの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleTrailsHandle Trails => FluxParticleTrailsHandle.Get(this);
+
         [SerializeField]
         string[] bindingIds;
         [SerializeField]

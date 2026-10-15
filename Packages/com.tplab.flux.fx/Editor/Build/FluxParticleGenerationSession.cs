@@ -68,6 +68,11 @@ namespace TpLab.Flux.FX.Editor.Build
         public string LookupRoot => manifest.root + "/Cache/Lookups";
 
         /// <summary>
+        /// 共有描画Meshの保存先
+        /// </summary>
+        public string MeshRoot => manifest.root + "/Cache/Meshes";
+
+        /// <summary>
         /// このセッションのMaterial保存先
         /// </summary>
         public string MaterialRoot => manifest.root + "/Sessions/" + Id + "/Materials";
@@ -138,6 +143,7 @@ namespace TpLab.Flux.FX.Editor.Build
             if (path != ValidateRoot(path)) throw new ArgumentException("Asset path must be normalized.", nameof(path));
             if (!path.StartsWith(ShaderRoot + "/", StringComparison.Ordinal) &&
                 !path.StartsWith(LookupRoot + "/", StringComparison.Ordinal) &&
+                !path.StartsWith(MeshRoot + "/", StringComparison.Ordinal) &&
                 !path.StartsWith(MaterialRoot + "/", StringComparison.Ordinal))
             {
                 throw new ArgumentException("Asset is outside this generation session.", nameof(path));

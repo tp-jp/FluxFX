@@ -171,7 +171,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(12, standardCount);
+            Assert.AreEqual(13, standardCount);
         }
 
         [Test]
@@ -195,6 +195,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleRotationOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleBlinkModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleTrailsModule)));
         }
 
         [Test]

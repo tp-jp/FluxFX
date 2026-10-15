@@ -51,7 +51,7 @@ namespace TpLab.Flux.FX.Editor.Build
             return buffer;
         }
 
-        static FluxKernel CreateKernel(Transform parent, string name, Shader shader, bool preview)
+        internal static FluxKernel CreateKernel(Transform parent, string name, Shader shader, bool preview)
         {
             var go = CreateObject(parent, name, preview, KernelPrefabPath);
             var kernel = preview ? go.AddComponent<FluxKernel>() : go.GetComponent<FluxKernel>();

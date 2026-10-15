@@ -448,3 +448,9 @@ msgstr "RGB"
 
 msgid "Both"
 msgstr "RGBとAlpha"
+
+msgid "Trails"
+msgstr "トレイル"
+
+msgid "Width"
+msgstr "幅"

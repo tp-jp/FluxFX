@@ -58,6 +58,25 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void TrailMeshCacheRemainsReferencedAndIsCollectedAfterRelease()
+        {
+            FluxParticleGenerationSession.EnsureFolder(session.MeshRoot);
+            var path = session.MeshRoot + "/Trail.asset";
+            var mesh = new Mesh();
+            AssetDatabase.CreateAsset(mesh, path);
+            session.Record(path, "Mesh", "test");
+            CreateRenderer();
+            instance.AddComponent<MeshFilter>().sharedMesh = mesh;
+            session.Dispose();
+            Assert.AreEqual(0, FluxParticleGenerationCleanup.Collect(root));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Mesh>(path));
+            Object.DestroyImmediate(instance);
+            instance = null;
+            Assert.AreEqual(3, FluxParticleGenerationCleanup.Collect(root));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<Mesh>(path));
+        }
+
+        [Test]
         public void RunningSessionProtectsAssetsUntilItEnds()
         {
             Assert.AreEqual(0, FluxParticleGenerationCleanup.Collect(root));
