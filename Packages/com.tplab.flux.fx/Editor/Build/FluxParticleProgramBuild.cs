@@ -228,10 +228,9 @@ namespace TpLab.Flux.FX.Editor.Build
         static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,
             FluxParticleAuthoring authoring, Shader shader, FluxParticleGenerationSession session, string owner)
         {
-            var renderSource = authoring.Render.Material;
-            var texture = renderSource == null ? null : renderSource.mainTexture;
-            var scale = renderSource == null ? Vector2.one : renderSource.mainTextureScale;
-            var offset = renderSource == null ? Vector2.zero : renderSource.mainTextureOffset;
+            var texture = authoring.Render.Texture;
+            var scale = authoring.Render.Tiling;
+            var offset = authoring.Render.Offset;
             // A runtime instance must not share a mutable render Material with another Particle System.
             // GlobalObjectId is stable for saved scene/prefab objects; temporary test objects use InstanceID.
             var globalId = GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject);

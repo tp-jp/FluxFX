@@ -22,6 +22,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var mesh = _render.FindPropertyRelative("mesh");
 
             DrawEnum(mode, "Mode");
+            DrawEnum(
+                _render.FindPropertyRelative("blendMode"),
+                "Blend Mode");
 
             if ((FluxParticleRenderMode)mode.enumValueIndex == FluxParticleRenderMode.Mesh)
             {
@@ -34,12 +37,15 @@ namespace TpLab.Flux.FX.Editor.Inspector
             }
 
             EditorGUILayout.PropertyField(
-                _render.FindPropertyRelative("material"),
-                new GUIContent(L10n.Tr("Material")));
-
-            DrawEnum(
-                _render.FindPropertyRelative("blendMode"),
-                "Blend Mode");
+                _render.FindPropertyRelative("texture"),
+                new GUIContent(L10n.Tr("Texture")));
+            using (new EditorGUI.IndentLevelScope())
+            {
+                EditorGUILayout.PropertyField(_render.FindPropertyRelative("tiling"),
+                    new GUIContent(L10n.Tr("Tiling")));
+                EditorGUILayout.PropertyField(_render.FindPropertyRelative("offset"),
+                    new GUIContent(L10n.Tr("Offset")));
+            }
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("cullingBounds"),
                 new GUIContent(L10n.Tr("Culling Bounds"), L10n.Tr("Renderer-local bounds used for culling. Include the full particle travel range, including in World simulation.")));

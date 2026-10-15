@@ -551,7 +551,9 @@ MonoBehaviour:
   render:
     mode: 0
     mesh: {fileID: 0}
-    material: {fileID: 0}
+    texture: {fileID: 0}
+    tiling: {x: 1, y: 1}
+    offset: {x: 0, y: 0}
     blendMode: 0
     cullingBounds:
       m_Center: {x: 0, y: 0, z: 0}

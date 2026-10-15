@@ -97,7 +97,6 @@ namespace TpLab.Flux.FX.Editor.Authoring
             Require(Finite(center.x) && Finite(center.y) && Finite(center.z) &&
                 Finite(boundsSize.x) && Finite(boundsSize.y) && Finite(boundsSize.z) &&
                 boundsSize.x > 0 && boundsSize.y > 0 && boundsSize.z > 0, "Finite culling bounds with positive size");
-            Require(authoring.Render.Material == null || authoring.Render.Material.shader.name == "FluxFX/ParticleMaterial", "FluxFX/ParticleMaterial material or no material");
             Require(FiniteNonNegative(authoring.Emission.Rate) && FiniteNonNegative(authoring.Playback.StartDelay),
                 "Finite playback and emission settings");
             Require(FiniteNonNegative(authoring.Playback.Duration) &&

@@ -220,7 +220,13 @@ namespace TpLab.Flux.FX.Scripts
         Mesh mesh;
 
         [SerializeField]
-        Material material;
+        Texture2D texture;
+
+        [SerializeField]
+        Vector2 tiling = Vector2.one;
+
+        [SerializeField]
+        Vector2 offset;
 
         [SerializeField]
         FluxParticleBlendMode blendMode;
@@ -269,7 +275,9 @@ namespace TpLab.Flux.FX.Scripts
 
         public FluxParticleRenderMode Mode => mode;
         public Mesh Mesh => mesh;
-        public Material Material => material;
+        public Texture2D Texture => texture;
+        public Vector2 Tiling => tiling;
+        public Vector2 Offset => offset;
         public FluxParticleBlendMode BlendMode => blendMode;
         public Bounds CullingBounds => cullingBounds;
         public Color StartColor => startColor;

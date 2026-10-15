@@ -403,3 +403,9 @@ msgstr "Spawn割り当て推定メモリ"
 
 msgid "Spawn Allocation Passes (When Emitting)"
 msgstr "生成時のSpawn割り当てPass数"
+
+msgid "Texture"
+msgstr "テクスチャ"
+
+msgid "Tiling"
+msgstr "タイリング"

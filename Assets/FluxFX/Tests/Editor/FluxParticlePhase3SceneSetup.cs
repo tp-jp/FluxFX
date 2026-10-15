@@ -129,7 +129,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
             var render = authoringSerialized.FindProperty("render");
             render.FindPropertyRelative("mode").enumValueIndex = (int)FluxParticleRenderMode.Billboard;
-            render.FindPropertyRelative("material").objectReferenceValue = null;
+            render.FindPropertyRelative("texture").objectReferenceValue = null;
             render.FindPropertyRelative("startColorMode").enumValueIndex = (int)FluxParticleStartColorMode.Constant;
             render.FindPropertyRelative("startSizeMode").enumValueIndex = (int)FluxParticleStartSizeMode.Constant;
             render.FindPropertyRelative("startRotation").vector3Value = Vector3.zero;

@@ -174,7 +174,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 floor.GetComponent<MeshRenderer>().sharedMaterial = floorMaterial;
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
                 var controller = new GameObject("Runtime API Controls").AddUdonSharpComponent<FluxRuntimeApiSample>();
-                var material = CreateParticleMaterial();
+                var texture = CreateParticleTexture();
                 var systems = new FluxParticleSystem[Enum.GetValues(typeof(FluxParticleShapeType)).Length];
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
                 for (var i = 0; i < systems.Length; i++)
@@ -186,7 +186,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                     system.SetProgramVariable("particleCount", Capacity);
                     system.SetProgramVariable("playOnAwake", false);
                     var authoring = instance.GetComponent<FluxParticleAuthoring>();
-                    ConfigureAuthoring(authoring, i, material);
+                    ConfigureAuthoring(authoring, i, texture);
                     systems[i] = system;
                 }
                 controller.SetProgramVariable("systems", systems);
@@ -237,7 +237,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             if (asset.SerializedProgramAsset.RetrieveProgram() == null) throw new InvalidOperationException("Sample Udon program did not compile.");
         }
 
-        static void ConfigureAuthoring(FluxParticleAuthoring authoring, int shape, Material material)
+        static void ConfigureAuthoring(FluxParticleAuthoring authoring, int shape, Texture2D texture)
         {
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty("shape.type").intValue = shape;
@@ -245,7 +245,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             serialized.FindProperty("shape.size").vector3Value = Vector3.one * 2;
             serialized.FindProperty("initialVelocity.speed").floatValue = 2;
             serialized.FindProperty("emission.rate").floatValue = 100;
-            serialized.FindProperty("render.material").objectReferenceValue = material;
+            serialized.FindProperty("render.texture").objectReferenceValue = texture;
             serialized.FindProperty("render.blendMode").intValue = (int)FluxParticleBlendMode.Alpha;
             serialized.FindProperty("render.startSize").floatValue = 3.5f;
             serialized.FindProperty("render.startColor").colorValue = new Color(0.15f, 0.75f, 1);
@@ -266,7 +266,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        static Material CreateParticleMaterial()
+        static Texture2D CreateParticleTexture()
         {
             const int size = 128;
             var atlas = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -295,10 +295,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             importer.wrapMode = TextureWrapMode.Clamp;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
-            var material = new Material(Shader.Find("FluxFX/ParticleMaterial"));
-            material.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
-            AssetDatabase.CreateAsset(material, Root + "/Materials/Particles.mat");
-            return material;
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
         }
 
         static RectTransform Rect(string name, Transform parent, float x, float y, float width, float height)
@@ -619,9 +616,9 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             foreach (var system in systems)
             {
                 var authoring = system.GetComponent<FluxParticleAuthoring>();
-                if (authoring == null || authoring.Render.Material == null)
+                if (authoring == null || authoring.Render.Texture == null)
                 {
-                    throw new InvalidOperationException("Authoring or source Material is missing: " + system.name);
+                    throw new InvalidOperationException("Authoring or Texture is missing: " + system.name);
                 }
             }
             var controls = (Slider[])controller.GetProgramVariable("controls");

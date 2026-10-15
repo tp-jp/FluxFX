@@ -93,10 +93,9 @@ namespace TpLab.Flux.FX.Editor.Preview
                     else session.SetVector(parameter.Id, value);
                 }
                 material = Own(new Material(CreateShader(build.RendererSource)));
-                var source = authoring.Render.Material;
-                material.mainTexture = source == null ? null : source.mainTexture;
-                material.mainTextureScale = source == null ? Vector2.one : source.mainTextureScale;
-                material.mainTextureOffset = source == null ? Vector2.zero : source.mainTextureOffset;
+                material.mainTexture = authoring.Render.Texture;
+                material.mainTextureScale = authoring.Render.Tiling;
+                material.mainTextureOffset = authoring.Render.Offset;
                 var blend = authoring.Render.BlendMode;
                 material.SetFloat("_SrcBlend", blend == FluxParticleBlendMode.Opaque ? 1 : 5);
                 material.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);

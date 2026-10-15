@@ -118,10 +118,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var authoring = (FluxParticleAuthoring)_authoringObject.targetObject;
             var count = ((FluxParticleSystem)target).ParticleCount;
             var signature = EditorJsonUtility.ToJson(authoring) + ":" + count;
-            if (authoring.Render.Material != null)
-            {
-                signature += EditorJsonUtility.ToJson(authoring.Render.Material);
-            }
             if (signature != _backendPreviewSignature || (_particlePreview == null && _backendPreviewError == null))
             {
                 _backendPreviewSignature = signature;

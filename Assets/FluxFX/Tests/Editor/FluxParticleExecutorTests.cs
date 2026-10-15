@@ -181,41 +181,40 @@ namespace TpLab.Flux.FX.Tests.Editor
             runtime.Step(0.5f, 0, 0, 2);
             AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
         }
-        [Test]
-        public void ParticleMaterialSourceTransfersTextureSettingsToGeneratedRenderer()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RendererTransfersTextureSettingsToGeneratedMaterial(bool useTexture)
         {
             RequireGraphics();
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/ParticleMaterial.shader");
-            Assert.IsNotNull(shader);
-            Assert.IsFalse(ShaderUtil.ShaderHasError(shader));
-            Assert.AreEqual("FluxFX/ParticleMaterial", shader.name);
-            Assert.AreEqual(1, shader.GetPropertyCount());
             AssetDatabase.CreateFolder("Assets/FluxFX/Tests", folder.Substring(folder.LastIndexOf('/') + 1));
             var texture = new Texture2D(2, 2);
             texture.SetPixels(new[] { Color.red, Color.green, Color.blue, Color.white });
             texture.Apply();
             AssetDatabase.CreateAsset(texture, folder + "/SourceTexture.asset");
-            var source = new Material(shader)
-            {
-                mainTexture = texture,
-                mainTextureScale = new Vector2(2, 3),
-                mainTextureOffset = new Vector2(0.25f, 0.5f)
-            };
-            AssetDatabase.CreateAsset(source, folder + "/SourceMaterial.mat");
+            var tiling = new Vector2(2, 3);
+            var offset = new Vector2(0.25f, 0.5f);
             var serialized = new SerializedObject(authoring);
-            serialized.FindProperty("render.material").objectReferenceValue = source;
+            serialized.FindProperty("render.texture").objectReferenceValue = useTexture ? texture : null;
+            serialized.FindProperty("render.tiling").vector2Value = tiling;
+            serialized.FindProperty("render.offset").vector2Value = offset;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             var render = runtime.GetProgramVariable("renderMaterial") as Material;
             Assert.IsNotNull(render);
-            Assert.AreNotSame(source, render);
-            Assert.AreEqual(texture, render.mainTexture);
-            Assert.AreEqual(source.mainTextureScale, render.mainTextureScale);
-            Assert.AreEqual(source.mainTextureOffset, render.mainTextureOffset);
+            Assert.AreEqual(useTexture ? texture : null, render.mainTexture);
+            Assert.AreEqual(tiling, render.mainTextureScale);
+            Assert.AreEqual(offset, render.mainTextureOffset);
             Assert.AreEqual("Hidden/FluxFX/Program/Billboard", render.shader.name);
             Assert.IsTrue(render.HasProperty(FluxParticleHlslNames.PageProperty(0, FluxParticlePageVersion.Updated)));
-            Assert.AreEqual("FluxFX/ParticleMaterial", source.shader.name);
+            using (var preview = new TpLab.Flux.FX.Editor.Preview.FluxParticleEditorPreview(compiled, authoring, 4))
+            {
+                var previewMaterial = (Material)typeof(TpLab.Flux.FX.Editor.Preview.FluxParticleEditorPreview)
+                    .GetField("material", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                Assert.AreEqual(render.mainTexture, previewMaterial.mainTexture);
+                Assert.AreEqual(tiling, previewMaterial.mainTextureScale);
+                Assert.AreEqual(offset, previewMaterial.mainTextureOffset);
+            }
         }
         [Test]
         public void AuthoringUsesTwoPagesAndMapsInitialValues()
