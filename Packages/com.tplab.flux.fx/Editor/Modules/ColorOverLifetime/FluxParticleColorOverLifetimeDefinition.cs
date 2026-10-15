@@ -1,5 +1,6 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -13,11 +14,10 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
     public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/";
-        const int EndColorSlot = 0;
 
         public Type ModuleType => typeof(FluxParticleColorOverLifetimeModule);
 
-        public string ModuleId => "fluxfx.color-over-lifetime";
+        public string ModuleId => FluxParticleColorOverLifetimeContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
@@ -27,7 +27,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
                 throw new InvalidOperationException("Unsupported color over lifetime mode.");
             }
 
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "color.enabled", color.Enabled, 1);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleColorOverLifetimeContract.Module, color.Enabled);
             var start = new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start");
             FluxParticleValueRead[] reads;
             string hlsl;
@@ -35,8 +35,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
             var parameters = Array.Empty<string>();
             if (color.Mode == FluxParticleColorOverLifetimeMode.Linear)
             {
-                var end = contribution.Parameter(EndColorSlot, "color.end", FluxParticleValueType.Float4,
-                    FluxParticleParameterPolicy.Live, color.EndColor);
+                var end = contribution.Bind(FluxParticleColorOverLifetimeContract.EndColor, color.EndColor);
                 parameters = new[] { end };
                 reads = new[]
                 {
@@ -49,7 +48,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
             }
             else
             {
-                contribution.UnavailableParameter(EndColorSlot);
+                contribution.UnavailableParameter(FluxParticleColorOverLifetimeContract.EndColor);
                 var age = contribution.NormalizedAge("color.normalized-age");
                 var gradient = contribution.Gradient("color.gradient", age, color.Gradient);
                 reads = new[] { start, new FluxParticleValueRead(gradient, FluxParticleReadVersion.Provided) };

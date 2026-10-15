@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -58,6 +59,19 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear, build.InitialValues.ContainsKey("color.end"));
                 Assert.AreEqual(mode == FluxParticleSizeOverLifetimeMode.Linear, build.Shaders.Compilation.Parameters.ContainsKey("color.end"));
                 Assert.AreEqual("rotation.end", rotationBinding.Parameters.Single().Id);
+                Assert.AreSame(FluxParticleColorOverLifetimeContract.Module.Enabled,
+                    build.Shaders.Compilation.Parameters["color.enabled"].Contract);
+                Assert.AreSame(FluxParticleRotationOverLifetimeContract.Module.Enabled,
+                    build.Shaders.Compilation.Parameters["rotation.enabled"].Contract);
+                if (mode == FluxParticleSizeOverLifetimeMode.Linear)
+                {
+                    Assert.AreSame(FluxParticleColorOverLifetimeContract.EndColor, colorBinding.Parameters[0].Contract);
+                    Assert.AreEqual(FluxParticleValueType.Float4, colorBinding.Parameters[0].Type);
+                    Assert.AreEqual(FluxParticleParameterPolicy.Live, colorBinding.Parameters[0].Policy);
+                }
+                Assert.AreSame(FluxParticleRotationOverLifetimeContract.EndRotation, rotationBinding.Parameters[0].Contract);
+                Assert.AreEqual(FluxParticleValueType.Float3, rotationBinding.Parameters[0].Type);
+                Assert.AreEqual(FluxParticleParameterPolicy.Live, rotationBinding.Parameters[0].Policy);
                 Assert.AreEqual(0, build.InitialValues[colorBinding.EnabledParameterId].x);
                 Assert.AreEqual(0, build.InitialValues[rotationBinding.EnabledParameterId].x);
                 Assert.AreEqual("gravity", gravity.Parameters.Single().Id);

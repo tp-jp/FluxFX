@@ -1,5 +1,6 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -13,11 +14,10 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
     public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/RotationOverLifetime/";
-        const int EndRotationSlot = 0;
 
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
 
-        public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
+        public string ModuleId => FluxParticleRotationOverLifetimeContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
@@ -33,9 +33,8 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
                 throw new InvalidOperationException("Program Backend currently requires: Billboard rotation over lifetime around Z only.");
             }
 
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "rotation.enabled", rotation.Enabled, 1);
-            var endRotation = contribution.Parameter(EndRotationSlot, "rotation.end", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, end);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleRotationOverLifetimeContract.Module, rotation.Enabled);
+            var endRotation = contribution.Bind(FluxParticleRotationOverLifetimeContract.EndRotation, end);
             var start = new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start");
             var reads = new[]
             {

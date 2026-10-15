@@ -116,14 +116,21 @@ namespace TpLab.Flux.FX.Tests.Editor
             CreateShader("RotationBillboard", compiled.RendererSource);
             using (var session = new FluxParticleProgramGpuSession(generated, steps, clears, 2, 1))
             {
+                foreach (var parameter in generated.Compilation.Parameters.Values)
+                {
+                    var value = compiled.InitialValues[parameter.Id];
+                    if (parameter.Type == FluxParticleValueType.Float)
+                    {
+                        session.SetFloat(parameter.Id, value.x);
+                    }
+                    else
+                    {
+                        session.SetVector(parameter.Id, value);
+                    }
+                }
                 session.SetVector("spawn.position", Vector4.zero);
                 session.SetFloat("spawn.speed", 0f);
                 session.SetVector("lifetime.range", new Vector4(10, 10, 0, 0));
-                session.SetVector("color.start", Vector4.one);
-                session.SetFloat("render.size", 1f);
-                session.SetVector("rotation.start", new Vector4(0, 0, 45, 0));
-                session.SetVector("rotation.end", new Vector4(0, 0, 180, 0));
-                session.SetFloat("rotation.enabled", compiled.InitialValues["rotation.enabled"].x);
                 session.SetUniformFloat("step.delta-time", 0f);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
                 var mask = Texture(new Color(1, 0, 0, 0), new Color(1, 0, 0, 0));
