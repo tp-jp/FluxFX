@@ -1,6 +1,7 @@
 using System;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Compilation.Modules

@@ -8,6 +8,10 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleModuleHandle : DataList
     {
+        internal const int ExecutorIndex = 0;
+        internal const int EnabledSlotIndex = 1;
+        internal const int ParameterSlotsOffset = 2;
+
         /// <summary>
         /// ビルド済みBindingをハンドルへ設定します。
         /// </summary>
@@ -22,14 +26,14 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Enabledの操作に対応しているかを返します。
         /// </summary>
-        public static bool HasEnabled(this FluxParticleModuleHandle handle) => handle[1].Int >= 0;
+        public static bool HasEnabled(this FluxParticleModuleHandle handle) => handle[FluxParticleModuleHandle.EnabledSlotIndex].Int >= 0;
 
         /// <summary>
         /// Moduleの有効状態を取得します。Enabled非対応の場合はtrueを返します。
         /// </summary>
         public static bool GetEnabled(this FluxParticleModuleHandle handle)
         {
-            return !handle.HasEnabled() || ((FluxParticleExecutor)handle[0].Reference).GetParameterValue(handle[1].Int).x != 0;
+            return !handle.HasEnabled() || ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).GetParameterValue(handle[FluxParticleModuleHandle.EnabledSlotIndex].Int).x != 0;
         }
 
         /// <summary>
@@ -38,8 +42,8 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <returns>変更できた場合はtrue。Enabled非対応の場合はfalse</returns>
         public static bool SetEnabled(this FluxParticleModuleHandle handle, bool enabled)
         {
-            return handle.HasEnabled() && ((FluxParticleExecutor)handle[0].Reference)
-                .SetParameterValue(handle[1].Int, 1, new Vector4(enabled ? 1 : 0, 0, 0, 0));
+            return handle.HasEnabled() && ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference)
+                .SetParameterValue(handle[FluxParticleModuleHandle.EnabledSlotIndex].Int, (int)FluxParticleValueType.Float, new Vector4(enabled ? 1 : 0, 0, 0, 0));
         }
 
         /// <summary>
@@ -47,15 +51,15 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static Vector4 GetValue(this FluxParticleModuleHandle handle, int parameter)
         {
-            return ((FluxParticleExecutor)handle[0].Reference).GetParameterValue(handle[parameter + 2].Int);
+            return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).GetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int);
         }
 
         /// <summary>
         /// ローカル番号に対応する値をExecutorの検証を通して変更します。
         /// </summary>
-        public static bool SetValue(this FluxParticleModuleHandle handle, int parameter, int type, Vector4 value)
+        public static bool SetValue(this FluxParticleModuleHandle handle, int parameter, FluxParticleValueType type, Vector4 value)
         {
-            return ((FluxParticleExecutor)handle[0].Reference).SetParameterValue(handle[parameter + 2].Int, type, value);
+            return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).SetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int, (int)type, value);
         }
     }
 }

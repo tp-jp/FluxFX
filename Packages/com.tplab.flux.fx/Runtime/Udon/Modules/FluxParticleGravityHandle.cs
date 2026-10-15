@@ -8,6 +8,8 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleGravityHandle : FluxParticleModuleHandle
     {
+        internal const int GravityParameterIndex = 0;
+
         /// <summary>
         /// Gravityのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -34,11 +36,11 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 重力加速度を取得します。
         /// </summary>
-        public static Vector3 GetGravity(this FluxParticleGravityHandle handle) => handle.GetValue(0);
+        public static Vector3 GetGravity(this FluxParticleGravityHandle handle) => handle.GetValue(FluxParticleGravityHandle.GravityParameterIndex);
 
         /// <summary>
         /// 重力加速度を変更します。
         /// </summary>
-        public static bool SetGravity(this FluxParticleGravityHandle handle, Vector3 value) => handle.SetValue(0, 3, value);
+        public static bool SetGravity(this FluxParticleGravityHandle handle, Vector3 value) => handle.SetValue(FluxParticleGravityHandle.GravityParameterIndex, FluxParticleValueType.Float3, value);
     }
 }

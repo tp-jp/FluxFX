@@ -5,6 +5,7 @@ using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
+using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;

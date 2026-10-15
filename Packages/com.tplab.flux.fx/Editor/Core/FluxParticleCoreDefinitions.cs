@@ -1,4 +1,5 @@
 using System;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {

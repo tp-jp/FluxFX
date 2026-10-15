@@ -8,7 +8,11 @@ namespace TpLab.Flux.FX.CustomModules
     /// <summary>
     /// Custom Liftの操作ハンドル
     /// </summary>
-    public class CustomLiftHandle : FluxParticleModuleHandle { }
+    public class CustomLiftHandle : FluxParticleModuleHandle
+    {
+        internal const int StrengthParameterIndex = 0;
+        internal const int DirectionParameterIndex = 1;
+    }
 
     public static class CustomLiftHandleExtensions
     {
@@ -35,21 +39,21 @@ namespace TpLab.Flux.FX.CustomModules
         /// <summary>
         /// 加速度の強さを取得します。
         /// </summary>
-        public static float GetStrength(this CustomLiftHandle handle) => handle.GetValue(0).x;
+        public static float GetStrength(this CustomLiftHandle handle) => handle.GetValue(CustomLiftHandle.StrengthParameterIndex).x;
 
         /// <summary>
         /// 加速度の強さを変更します。
         /// </summary>
-        public static bool SetStrength(this CustomLiftHandle handle, float strength) => handle.SetValue(0, 1, new Vector4(strength, 0, 0, 0));
+        public static bool SetStrength(this CustomLiftHandle handle, float strength) => handle.SetValue(CustomLiftHandle.StrengthParameterIndex, FluxParticleValueType.Float, new Vector4(strength, 0, 0, 0));
 
         /// <summary>
         /// 加速度の方向を取得します。
         /// </summary>
-        public static Vector3 GetDirection(this CustomLiftHandle handle) => handle.GetValue(1);
+        public static Vector3 GetDirection(this CustomLiftHandle handle) => handle.GetValue(CustomLiftHandle.DirectionParameterIndex);
 
         /// <summary>
         /// 加速度の方向を変更します。
         /// </summary>
-        public static bool SetDirection(this CustomLiftHandle handle, Vector3 direction) => handle.SetValue(1, 3, direction);
+        public static bool SetDirection(this CustomLiftHandle handle, Vector3 direction) => handle.SetValue(CustomLiftHandle.DirectionParameterIndex, FluxParticleValueType.Float3, direction);
     }
 }

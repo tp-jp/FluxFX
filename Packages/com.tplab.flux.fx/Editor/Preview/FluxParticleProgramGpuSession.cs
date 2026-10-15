@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Compilation

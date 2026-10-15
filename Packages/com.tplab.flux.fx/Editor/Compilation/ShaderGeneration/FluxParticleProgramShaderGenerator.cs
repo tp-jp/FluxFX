@@ -5,6 +5,7 @@ using System.IO;
 using UnityEditor.PackageManager;
 using System.Text;
 using System.Text.RegularExpressions;
+using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Compilation
 {
