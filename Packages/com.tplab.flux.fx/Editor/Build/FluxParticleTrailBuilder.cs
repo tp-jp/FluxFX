@@ -18,11 +18,16 @@ namespace TpLab.Flux.FX.Editor.Build
     /// </summary>
     internal static class FluxParticleTrailBuilder
     {
-        internal static (FluxKernel Kernel, FluxBuffer[] Buffers, Material[] Materials, Mesh Mesh, MeshRenderer[] Renderers) Create(
+        internal static (FluxKernel Kernel, FluxBuffer[] Buffers, Material[] Materials, Mesh Mesh, MeshRenderer[] Renderers, int Capacity) Create(
             Transform parent, FluxParticleBuildResult build, FluxParticleAuthoring authoring, int count,
             FluxParticleGenerationSession session, string owner, Action<Object> own = null)
         {
-            if (!authoring.Modules.OfType<FluxParticleTrailsModule>().Any()) return (null, null, null, null, null);
+            var module = authoring.Modules.OfType<FluxParticleTrailsModule>().SingleOrDefault();
+            if (module == null) return (null, null, null, null, null, 0);
+            var tracked = Math.Min(count, module.MaxTrails);
+            var maximum = FluxParticleCapacity.GetMaximumCount(SystemInfo.maxTextureSize, SystemInfo.supports32bitsIndexBuffer,
+                4, 6, SystemInfo.maxGraphicsBufferSize, 28);
+            if (tracked < 1 || tracked > maximum) throw new InvalidOperationException("Trail capacity exceeds Texture or Mesh limits.");
             var preview = session == null;
             var source = FluxParticleTrailShaderGenerator.Generate(build.Shaders);
             var shader = preview ? ShaderUtil.CreateShaderAsset(source, true) : FluxParticleProgramBuild.SaveShader(source, session, owner);
@@ -32,8 +37,7 @@ namespace TpLab.Flux.FX.Editor.Build
             if (renderShader == null || ShaderUtil.ShaderHasError(renderShader)) throw new InvalidOperationException("Trail render Shader failed to compile.");
             var group = new GameObject("Trails");
             group.transform.SetParent(parent, false);
-            var tracked = Math.Min(count, FluxParticleTrailHistory.MaximumTrails);
-            var buffers = new FluxBuffer[FluxParticleTrailHistory.PointCount + 2];
+            var buffers = new FluxBuffer[module.PointsPerTrail + 2];
             for (var i = 0; i < buffers.Length; i++)
             {
                 buffers[i] = FluxParticleSpawnAllocationBuilder.CreateBuffer(group.transform, "History " + i, tracked, preview);
@@ -45,25 +49,25 @@ namespace TpLab.Flux.FX.Editor.Build
                 own(kernelMaterial);
                 kernel.SetProgramVariable("material", kernelMaterial);
             }
-            var materials = new Material[FluxParticleTrailHistory.PointCount - 1];
+            var materials = new Material[module.PointsPerTrail - 1];
             var renderers = new MeshRenderer[preview ? 0 : materials.Length];
             var bounds = authoring.Render.CullingBounds;
             Mesh mesh;
             if (preview)
             {
-                mesh = CreateMesh(bounds);
+                mesh = CreateMesh(tracked, bounds);
                 own(mesh);
             }
             else
             {
                 var values = new[] { bounds.center.x, bounds.center.y, bounds.center.z, bounds.size.x, bounds.size.y, bounds.size.z };
-                var signature = "trail-segments-v1:" + string.Join(",", values.Select(value => value.ToString("R", CultureInfo.InvariantCulture)));
+                var signature = "trail-segments-v2:" + tracked + ":" + string.Join(",", values.Select(value => value.ToString("R", CultureInfo.InvariantCulture)));
                 var meshPath = session.MeshRoot + "/Trail-" + Hash128.Compute(signature) + ".asset";
                 FluxParticleGenerationSession.EnsureFolder(session.MeshRoot);
                 mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
                 if (mesh == null)
                 {
-                    mesh = CreateMesh(bounds);
+                    mesh = CreateMesh(tracked, bounds);
                     AssetDatabase.CreateAsset(mesh, meshPath);
                 }
                 session.Record(meshPath, "Mesh", owner);
@@ -104,12 +108,11 @@ namespace TpLab.Flux.FX.Editor.Build
                     EditorUtility.SetDirty(material);
                 }
             }
-            return (kernel, buffers, materials, mesh, renderers);
+            return (kernel, buffers, materials, mesh, renderers, tracked);
         }
 
-        static Mesh CreateMesh(Bounds bounds)
+        static Mesh CreateMesh(int count, Bounds bounds)
         {
-            var count = FluxParticleTrailHistory.MaximumTrails;
             var vertices = new Vector3[count * 4];
             var uv = new Vector2[vertices.Length];
             var indices = new Vector2[vertices.Length];
@@ -128,7 +131,7 @@ namespace TpLab.Flux.FX.Editor.Build
                     triangles[i * 6 + j] = i * 4 + order[j];
                 }
             }
-            return new Mesh { name = "FluxFX Trail Segments", vertices = vertices, uv = uv, uv2 = indices, triangles = triangles, bounds = bounds };
+            return new Mesh { name = "FluxFX Trail Segments", indexFormat = count * 4 > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16, vertices = vertices, uv = uv, uv2 = indices, triangles = triangles, bounds = bounds };
         }
     }
 }

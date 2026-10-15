@@ -197,6 +197,7 @@ namespace TpLab.Flux.FX.Editor.Build
             runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
             runtime.SetProgramVariable("renderMaterial", render);
             var trails = FluxParticleTrailBuilder.Create(generated, compiled, authoring, bufferCapacity, session, owner);
+            runtime.SetProgramVariable("trailCapacity", trails.Capacity);
             runtime.SetProgramVariable("trailKernel", trails.Kernel);
             runtime.SetProgramVariable("trailBuffers", trails.Buffers);
             runtime.SetProgramVariable("trailMaterials", trails.Materials);

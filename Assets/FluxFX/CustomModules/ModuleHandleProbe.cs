@@ -60,6 +60,18 @@ namespace TpLab.Flux.FX.CustomModules
             passed = trailOldPoint != null && resultTexture != null;
         }
 
+        public void VerifyTrailsDuration()
+        {
+            passed = false;
+            var trails = target.Modules.Trails;
+            if (trails.SetDuration(0) || trails.SetDuration(float.PositiveInfinity)) return;
+            if (!trails.SetDuration(1.25f) || trails.GetDuration() != 1.25f) return;
+            target.Executor.Step(0, 0, 0, 0);
+            trailOldPoint = target.Executor.GetTrailPoint(1);
+            resultTexture = target.Executor.TrailMetadata;
+            passed = target.Executor.GetTrailPoint(7) != null && target.Executor.GetTrailPoint(8) == null;
+        }
+
         public void VerifyBlink()
         {
             passed = false;

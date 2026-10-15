@@ -136,6 +136,12 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             new ControlSpec(4, SampleControl.BlinkRandomPhase, "Random phase", 0f, 1f, 0f, false),
             new ControlSpec(4, SampleControl.BlinkTimeMode, "Time / System or Particle age", 0f, 1f, 0f, true),
             new ControlSpec(4, SampleControl.BlinkTarget, "Target / RGB, Alpha or Both", 0f, 2f, 1f, true),
+            new ControlSpec(4, SampleControl.TrailWidth, "Width", 0f, 1f, 0.05f, false),
+            new ControlSpec(4, SampleControl.TrailR, "Color / R", 0f, 1f, 1f, false),
+            new ControlSpec(4, SampleControl.TrailG, "Color / G", 0f, 1f, 1f, false),
+            new ControlSpec(4, SampleControl.TrailB, "Color / B", 0f, 1f, 1f, false),
+            new ControlSpec(4, SampleControl.TrailA, "Color / A", 0f, 1f, 1f, false),
+            new ControlSpec(4, SampleControl.TrailDuration, "Duration (s) / resets trails", 0.05f, 5f, 0.5f, false),
         };
 
         [MenuItem("Tools/FluxFX/Samples/Open Runtime API Playground")]
@@ -263,7 +269,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 new FluxParticleNoiseModule(), new FluxParticleVortexModule(), new FluxParticleLimitVelocityModule(),
                 new FluxParticleVelocityOverLifetimeModule(), new FluxParticleColorOverLifetimeModule(),
                 new FluxParticleSizeOverLifetimeModule(), new FluxParticleRotationOverLifetimeModule(),
-                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule()
+                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule(), new FluxParticleTrailsModule()
             };
             var modules = serialized.FindProperty("modules");
             modules.arraySize = definitions.Length;
@@ -371,14 +377,14 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
         static readonly string[] ModuleNames =
         {
             "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit Velocity", "Velocity over Lifetime",
-            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink"
+            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink", "Trails"
         };
 
         static readonly SampleControl[] ModuleStarts =
         {
             SampleControl.GravityX, SampleControl.Drag, SampleControl.ForceX, SampleControl.NoiseStrength,
             SampleControl.VortexStrength, SampleControl.MaxSpeed, SampleControl.VelocityStartX,
-            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.Intensity
+            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.TrailWidth, SampleControl.Count
         };
 
         static void BuildSlider(Transform body, ControlSpec spec, float offset, Slider[] controls, Text[] values, UdonBehaviour target)
@@ -413,13 +419,13 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var end = page == MotionPage ? (int)SampleModule.ColorOverLifetime : ModuleNames.Length;
             for (var module = first; module < end; module++)
             {
-                var specs = Specs.Where(spec => spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
+                var specs = Specs.Where(spec => spec.Id != SampleControl.Intensity && spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
                 var height = 48 + specs.Length * 72;
                 var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
                 var header = Rect("Header", section, 0, 0, 438, 36);
                 header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
                 toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
-                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink, target);
+                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink && module != (int)SampleModule.Trails, target);
                 Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
                 toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
                 var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
@@ -440,7 +446,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
         /// <summary>
         /// 既存UIの値を維持し、Moduleの見出しとパラメーターをまとめます。
         /// </summary>
-        public static void UpdateModuleUi(FluxRuntimeApiSample controller)
+        public static void UpdateModuleUi(FluxRuntimeApiSample controller, bool renderOnly = false)
         {
             var oldControls = (Slider[])controller.GetProgramVariable("controls");
             var oldValues = (Text[])controller.GetProgramVariable("values");
@@ -466,12 +472,18 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var enabled = new bool[(int)SampleModule.Count];
             for (var i = 0; i < enabled.Length; i++)
             {
-                enabled[i] = i < oldToggles.Length ? oldToggles[i].isOn : i != (int)SampleModule.Blink;
+                enabled[i] = i < oldToggles.Length ? oldToggles[i].isOn : i != (int)SampleModule.Blink && i != (int)SampleModule.Trails;
             }
             var toggles = new Toggle[enabled.Length];
             var groups = new CanvasGroup[enabled.Length];
+            if (renderOnly)
+            {
+                var oldGroups = (CanvasGroup[])controller.GetProgramVariable("moduleParameterGroups");
+                Array.Copy(oldToggles, toggles, (int)SampleModule.ColorOverLifetime);
+                Array.Copy(oldGroups, groups, (int)SampleModule.ColorOverLifetime);
+            }
             var target = UdonSharpEditorUtility.GetBackingUdonBehaviour(controller);
-            for (var page = MotionPage; page <= RenderPage; page++)
+            for (var page = renderOnly ? RenderPage : MotionPage; page <= RenderPage; page++)
             {
                 var scroll = pages[page].GetComponent<ScrollRect>();
                 for (var child = scroll.content.childCount - 1; child >= 0; child--)
@@ -499,6 +511,28 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             ConfigureSelectionControls(pages[MotionPage].GetComponentInParent<Canvas>(true));
             EditorUtility.SetDirty(controller);
             UdonSharpEditorUtility.CopyProxyToUdon(controller);
+        }
+
+        /// <summary>
+        /// 各形状へTrailsを追加し、既存値を維持してUIを更新します。
+        /// </summary>
+        public static void UpdateTrailsUi(FluxRuntimeApiSample controller)
+        {
+            var systems = (FluxParticleSystem[])controller.GetProgramVariable("systems");
+            foreach (var system in systems)
+            {
+                var authoring = system.GetComponent<FluxParticleAuthoring>();
+                if (authoring.Modules.OfType<FluxParticleTrailsModule>().Any()) continue;
+                var serialized = new SerializedObject(authoring);
+                var modules = serialized.FindProperty("modules");
+                var index = modules.arraySize;
+                modules.arraySize++;
+                modules.GetArrayElementAtIndex(index).managedReferenceValue = new FluxParticleTrailsModule();
+                modules.GetArrayElementAtIndex(index).FindPropertyRelative("enabled").boolValue = false;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.RecordPrefabInstancePropertyModifications(authoring);
+            }
+            UpdateModuleUi(controller, true);
         }
 
         static void CreateUi(FluxRuntimeApiSample controller, Camera camera)

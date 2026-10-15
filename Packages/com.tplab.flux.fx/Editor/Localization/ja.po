@@ -454,3 +454,9 @@ msgstr "トレイル"
 
 msgid "Width"
 msgstr "幅"
+
+msgid "Max Trails"
+msgstr "最大トレイル数"
+
+msgid "Points Per Trail"
+msgstr "トレイルの点数"

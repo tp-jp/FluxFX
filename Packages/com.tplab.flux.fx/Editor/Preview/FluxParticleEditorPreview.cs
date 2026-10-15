@@ -39,7 +39,8 @@ namespace TpLab.Flux.FX.Editor.Preview
         readonly Mesh trailMesh;
         readonly FluxParticleTrailsModule trailModule;
         bool trailsEnabled;
-        readonly float[] trailState = new float[4];
+        readonly float[] trailState;
+        float trailDuration;
         int countGeneration;
         bool countPending;
         double lastCountTime;
@@ -150,6 +151,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                     trailCaptureMaterial = (Material)trailKernel.GetProgramVariable("material");
                     trailKernel.SetVector("_FluxStateSize", dimensions);
                     trailModule = authoring.Modules.OfType<FluxParticleTrailsModule>().Single();
+                    trailState = new float[trailBuffers.Length - 2 + FluxParticleTrailHistory.SampleAgeOffset];
                 }
                 Restart();
             }
@@ -185,7 +187,9 @@ namespace TpLab.Flux.FX.Editor.Preview
                 {
                     RenderTexture.active = active;
                 }
-                if (trailsEnabled && replacement.trailsEnabled && trailBuffers.All(buffer => buffer.Texture.IsCreated()))
+                if (trailsEnabled && replacement.trailsEnabled && trailDuration == replacement.trailDuration &&
+                    trailBuffers.Length == replacement.trailBuffers.Length && trailBuffers[0].Count == replacement.trailBuffers[0].Count &&
+                    trailBuffers.All(buffer => buffer.Texture.IsCreated()))
                 {
                     for (var i = 0; i < trailBuffers.Length; i++)
                     {
@@ -216,8 +220,9 @@ namespace TpLab.Flux.FX.Editor.Preview
             if (trailKernel != null)
             {
                 FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, trailState);
+                trailDuration = trailModule.Duration;
                 trailsEnabled = trailModule.Enabled;
-                FluxParticleTrailHistory.SetAppearance(trailMaterials, trailsEnabled, trailModule.Width, trailModule.Color);
+                FluxParticleTrailHistory.SetAppearance(trailMaterials, trailsEnabled, trailModule.Width, trailModule.Color, trailDuration);
             }
             PlaybackTime = 0;
             countGeneration++;
@@ -262,14 +267,14 @@ namespace TpLab.Flux.FX.Editor.Preview
                         first, (int)visible, (int)((seed + skipped) % 1048576));
                 }
                 session.Step(visible > 0 ? mask.Texture : null);
-                UpdateTrailEnabled();
+                UpdateTrailConfiguration();
                 if (trailsEnabled)
                 {
                     if (usesSimulationTime) session.SetUniformFloat("step.time", (float)(PlaybackTime + deltaTime));
                     session.BindRender(trailCaptureMaterial);
                     FluxParticleTrailHistory.Step(trailKernel, trailBuffers, trailMaterials, trailState,
                         visible > 0 ? mask.Texture : null, Count, deltaTime, authoring.transform.localToWorldMatrix,
-                        authoring.SimulationSpace == FluxParticleSimulationSpace.World);
+                        authoring.SimulationSpace == FluxParticleSimulationSpace.World, trailDuration);
                 }
             }
             finally
@@ -292,7 +297,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             if (usesSimulationTime) session.SetUniformFloat("step.time", (float)PlaybackTime);
             session.BindRender(material);
             Graphics.DrawMesh(mesh, matrix, material, layer, camera, 0, null, ShadowCastingMode.Off, false, null, LightProbeUsage.Off);
-            UpdateTrailEnabled();
+            UpdateTrailConfiguration();
             if (trailsEnabled)
             {
                 for (var i = 0; i < trailMaterials.Length; i++)
@@ -302,15 +307,16 @@ namespace TpLab.Flux.FX.Editor.Preview
             }
         }
 
-        void UpdateTrailEnabled()
+        void UpdateTrailConfiguration()
         {
-            if (trailModule == null || trailsEnabled == trailModule.Enabled) return;
+            if (trailModule == null || trailsEnabled == trailModule.Enabled && trailDuration == trailModule.Duration) return;
             if (trailModule.Enabled)
             {
                 FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, trailState);
             }
+            trailDuration = trailModule.Duration;
             trailsEnabled = trailModule.Enabled;
-            FluxParticleTrailHistory.SetAppearance(trailMaterials, trailsEnabled, trailModule.Width, trailModule.Color);
+            FluxParticleTrailHistory.SetAppearance(trailMaterials, trailsEnabled, trailModule.Width, trailModule.Color, trailDuration);
         }
 
         /// <summary>

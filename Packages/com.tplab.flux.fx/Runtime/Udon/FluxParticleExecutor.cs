@@ -74,6 +74,8 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         FluxKernel trailKernel;
         [SerializeField]
+        int trailCapacity;
+        [SerializeField]
         FluxBuffer[] trailBuffers;
         [SerializeField]
         Material[] trailMaterials;
@@ -86,6 +88,7 @@ namespace TpLab.Flux.FX.Udon
         int _trailEnabledSlot;
         int _trailWidthSlot;
         int _trailColorSlot;
+        int _trailDurationSlot;
 
         /// <summary>
         /// 軌跡の世代と生存状態を保持するTexture。未組み込みの場合はnull
@@ -97,8 +100,8 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public RenderTexture GetTrailPoint(int age)
         {
-            if (trailKernel == null || _trailState == null || age < 0 || age >= FluxParticleTrailHistory.PointCount) return null;
-            var index = ((int)_trailState[FluxParticleTrailHistory.HeadIndex] + FluxParticleTrailHistory.PointCount - 1 - age) % FluxParticleTrailHistory.PointCount;
+            if (trailKernel == null || _trailState == null || age < 0 || age >= trailBuffers.Length - 2) return null;
+            var index = ((int)_trailState[FluxParticleTrailHistory.HeadIndex] + trailBuffers.Length - 3 - age) % (trailBuffers.Length - 2);
             return trailBuffers[index].Texture;
         }
 
@@ -235,13 +238,14 @@ namespace TpLab.Flux.FX.Udon
             renderMaterial.SetVector("_FluxStateSize", stateSize);
             if (trailKernel != null)
             {
-                _trailState = new float[4];
+                _trailState = new float[trailBuffers.Length - 2 + FluxParticleTrailHistory.SampleAgeOffset];
                 _trailEnabledSlot = ResolveParameter("trails.enabled", 1);
                 _trailWidthSlot = ResolveParameter("trails.width", 1);
                 _trailColorSlot = ResolveParameter("trails.color", 4);
+                _trailDurationSlot = ResolveParameter("trails.duration", 1);
                 for (var i = 0; i < trailBuffers.Length; i++)
                 {
-                    if (!ConfigureBuffer(trailBuffers[i], Mathf.Min(count, FluxParticleTrailHistory.MaximumTrails)))
+                    if (!ConfigureBuffer(trailBuffers[i], Mathf.Min(count, trailCapacity)))
                     {
                         Release();
                         return false;
@@ -310,7 +314,7 @@ namespace TpLab.Flux.FX.Udon
                 _trailsEnabled = GetParameterValue(_trailEnabledSlot).x > 0.5f;
                 SetTrailRenderers(_trailsEnabled);
                 FluxParticleTrailHistory.SetAppearance(trailMaterials, _trailsEnabled,
-                    GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
+                    GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot), GetParameterValue(_trailDurationSlot).x);
             }
             BindRender();
         }
@@ -380,7 +384,7 @@ namespace TpLab.Flux.FX.Udon
             {
                 var matrix = emitterTransform == null ? Matrix4x4.identity : emitterTransform.localToWorldMatrix;
                 FluxParticleTrailHistory.Step(trailKernel, trailBuffers, trailMaterials, _trailState,
-                    spawnMaskBuffer.Texture, _count, deltaTime, matrix, trailWorldSpace);
+                    spawnMaskBuffer.Texture, _count, deltaTime, matrix, trailWorldSpace, GetParameterValue(_trailDurationSlot).x);
             }
         }
 
@@ -447,24 +451,25 @@ namespace TpLab.Flux.FX.Udon
         public bool SetParameterValue(int index, int type, Vector4 value)
         {
             if (!CanSetParameterValue(index, type, value)) return false;
+            var previousValue = parameterValues[index];
             parameterValues[index] = value;
             if (_initialized)
             {
                 ApplyParameter(index, value);
-                if (trailKernel != null && (index == _trailEnabledSlot || index == _trailWidthSlot || index == _trailColorSlot))
+                if (trailKernel != null && (index == _trailEnabledSlot || index == _trailWidthSlot || index == _trailColorSlot || index == _trailDurationSlot))
                 {
                     var enabled = GetParameterValue(_trailEnabledSlot).x > 0.5f;
+                    if (enabled && (!_trailsEnabled || index == _trailDurationSlot && previousValue.x != value.x))
+                    {
+                        FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, _trailState);
+                    }
                     if (enabled != _trailsEnabled)
                     {
-                        if (enabled)
-                        {
-                            FluxParticleTrailHistory.Clear(trailKernel, trailBuffers, trailMaterials, _trailState);
-                        }
                         _trailsEnabled = enabled;
                         SetTrailRenderers(enabled);
                     }
                     FluxParticleTrailHistory.SetAppearance(trailMaterials, enabled,
-                        GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot));
+                        GetParameterValue(_trailWidthSlot).x, GetParameterValue(_trailColorSlot), GetParameterValue(_trailDurationSlot).x);
                 }
             }
             return true;
@@ -481,6 +486,8 @@ namespace TpLab.Flux.FX.Udon
             {
                 if (float.IsNaN(value[component]) || float.IsInfinity(value[component])) return false;
             }
+            if (parameterIds[index] == "trails.duration" &&
+                !FluxParticleTrailHistory.IsValidDuration(value.x, trailBuffers == null ? 2 : trailBuffers.Length - 2)) return false;
             return true;
         }
 
@@ -517,7 +524,7 @@ namespace TpLab.Flux.FX.Udon
                 {
                     if (trailBuffers[i] != null) trailBuffers[i].Release();
                 }
-                FluxParticleTrailHistory.SetAppearance(trailMaterials, false, 0, Vector4.zero);
+                FluxParticleTrailHistory.SetAppearance(trailMaterials, false, 0, Vector4.zero, 0.5f);
             }
             SetTrailRenderers(false);
             _trailsEnabled = false;
@@ -651,12 +658,16 @@ namespace TpLab.Flux.FX.Udon
         {
             if (trailKernel != null)
             {
-                if (trailBuffers == null || trailBuffers.Length != FluxParticleTrailHistory.PointCount + 2 ||
-                    trailMaterials == null || trailMaterials.Length != FluxParticleTrailHistory.PointCount - 1 ||
+                if (trailCapacity < 1 || trailCapacity > FluxParticleCapacity.MaximumExactCount ||
+                    trailBuffers == null || trailBuffers.Length < 4 ||
+                    trailMaterials == null || trailMaterials.Length != trailBuffers.Length - 3 ||
                     trailRenderers == null || trailRenderers.Length != trailMaterials.Length ||
                     ResolveParameter("trails.enabled", (int)FluxParticleValueType.Float) < 0 ||
                     ResolveParameter("trails.width", (int)FluxParticleValueType.Float) < 0 ||
-                    ResolveParameter("trails.color", (int)FluxParticleValueType.Float4) < 0) return false;
+                    ResolveParameter("trails.color", (int)FluxParticleValueType.Float4) < 0 ||
+                    ResolveParameter("trails.duration", (int)FluxParticleValueType.Float) < 0) return false;
+                var duration = GetParameterValue(ResolveParameter("trails.duration", (int)FluxParticleValueType.Float)).x;
+                if (!FluxParticleTrailHistory.IsValidDuration(duration, trailBuffers.Length - 2)) return false;
                 for (var i = 0; i < trailBuffers.Length; i++)
                 {
                     if (trailBuffers[i] == null) return false;

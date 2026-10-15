@@ -21,6 +21,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         RotationOverLifetime,
         TextureSheetAnimation,
         Blink,
+        Trails,
         Count
     }
 
@@ -95,7 +96,13 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         BlinkTimeMode = 66,
         BlinkTarget = 67,
         Intensity = 68,
-        Count = 69
+        TrailWidth = 69,
+        TrailR = 70,
+        TrailG = 71,
+        TrailB = 72,
+        TrailA = 73,
+        TrailDuration = 74,
+        Count = 75
     }
 
     /// <summary>
@@ -224,6 +231,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
                 case SampleModule.RotationOverLifetime: return modules.RotationOverLifetime;
                 case SampleModule.TextureSheetAnimation: return modules.TextureSheetAnimation;
                 case SampleModule.Blink: return modules.Blink;
+                case SampleModule.Trails: return modules.Trails;
                 default: return null;
             }
         }
@@ -331,6 +339,22 @@ namespace FluxFX.Samples.RuntimeApi.Udon
                 var target = Value(SampleControl.BlinkTarget);
                 blink.SetTarget(target < 0.5f ? FluxParticleBlinkTarget.Rgb : target < 1.5f ? FluxParticleBlinkTarget.Alpha : FluxParticleBlinkTarget.Both);
                 blink.SetEnabled(moduleToggles[(int)SampleModule.Blink].isOn);
+            }
+            if (modules.Trails != null)
+            {
+                var trails = modules.Trails;
+                var enabled = moduleToggles[(int)SampleModule.Trails].isOn;
+                if (!enabled)
+                {
+                    trails.SetEnabled(false);
+                }
+                trails.SetWidth(Value(SampleControl.TrailWidth));
+                trails.SetColor(Tint(SampleControl.TrailR));
+                trails.SetDuration(Value(SampleControl.TrailDuration));
+                if (enabled)
+                {
+                    trails.SetEnabled(true);
+                }
             }
         }
 

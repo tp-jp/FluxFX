@@ -8,19 +8,26 @@ namespace TpLab.Flux.FX.Udon
     /// </summary>
     public static class FluxParticleTrailHistory
     {
-        public const int MaximumTrails = 4096;
-        public const int PointCount = 16;
-        public const int MetadataA = PointCount;
-        public const int MetadataB = PointCount + 1;
         public const int TickIndex = 0;
         public const int HeadIndex = 1;
         public const int MetadataIndex = 2;
         public const int ElapsedIndex = 3;
-        public const float SampleInterval = 1f / 30f;
+        public const int SampleAgeOffset = 4;
         public const int MaximumTick = 16777215;
+        // GPUで0として扱われる非正規化数を記録間隔に使用しない。
+        const float MinimumSampleInterval = 1.17549435E-38f;
 
         /// <summary>
-        /// 履歴と世代を消去します。
+        /// 記録時間と点数から、GPUで扱える記録間隔かを検証します。
+        /// </summary>
+        public static bool IsValidDuration(float duration, int points)
+        {
+            return points >= 2 && !float.IsNaN(duration) && !float.IsInfinity(duration) &&
+                duration / (points - 1) >= MinimumSampleInterval;
+        }
+
+        /// <summary>
+        /// 履歴・世代・記録点の経過時間を消去します。
         /// </summary>
         public static void Clear(FluxKernel kernel, FluxBuffer[] buffers, Material[] materials, float[] state)
         {
@@ -29,32 +36,40 @@ namespace TpLab.Flux.FX.Udon
             {
                 kernel.Dispatch(buffers[i]);
             }
+            var points = buffers.Length - 2;
             state[TickIndex] = 0;
             state[HeadIndex] = 0;
-            state[MetadataIndex] = MetadataA;
-            state[ElapsedIndex] = SampleInterval;
-            var metadata = buffers[MetadataA];
+            state[MetadataIndex] = points;
+            state[ElapsedIndex] = 0;
+            for (var i = SampleAgeOffset; i < state.Length; i++)
+            {
+                state[i] = -1;
+            }
+            var metadata = buffers[points];
             var size = new Vector4(metadata.Texture.width, metadata.Texture.height, metadata.Count, 0);
             for (var segment = 0; segment < materials.Length; segment++)
             {
                 materials[segment].SetVector("_TrailSize", size);
-                materials[segment].SetVector("_TrailFade", new Vector4((float)segment / (PointCount - 1), (float)(segment + 1) / (PointCount - 1), 0, 0));
             }
             Bind(buffers, materials, state);
         }
 
         /// <summary>
-        /// 生存状態と受理済みSpawnを反映し、30Hzを上限に位置を記録します。
+        /// 生存状態と受理済みSpawnを反映し、記録時間と点数に応じた間隔で位置を記録します。
         /// </summary>
         public static void Step(FluxKernel kernel, FluxBuffer[] buffers, Material[] materials, float[] state,
-            Texture spawnMask, int count, float deltaTime, Matrix4x4 localToWorld, bool worldSpace)
+            Texture spawnMask, int count, float deltaTime, Matrix4x4 localToWorld, bool worldSpace, float duration)
         {
             // Floatで世代を正確に比較できる範囲内で全履歴を更新します。
-            if (state[TickIndex] >= MaximumTick) Clear(kernel, buffers, materials, state);
+            if (state[TickIndex] >= MaximumTick)
+            {
+                Clear(kernel, buffers, materials, state);
+            }
             state[TickIndex] += 1;
-            var tracked = Mathf.Min(MaximumTrails, count);
+            var points = buffers.Length - 2;
+            var interval = duration / (points - 1);
             var texture = buffers[0].Texture;
-            kernel.SetVector("_TrailSize", new Vector4(texture.width, texture.height, tracked, count));
+            kernel.SetVector("_TrailSize", new Vector4(texture.width, texture.height, buffers[0].Count, count));
             kernel.SetFloat("_TrailTick", state[TickIndex]);
             kernel.SetFloat("_TrailEnabled", 1f);
             kernel.SetTexture("_TrailSpawnMask", spawnMask);
@@ -65,27 +80,31 @@ namespace TpLab.Flux.FX.Udon
                 kernel.SetVector("_TrailRow" + row, localToWorld.GetRow(row));
             }
             var previous = (int)state[MetadataIndex];
-            var next = previous == MetadataA ? MetadataB : MetadataA;
+            var next = previous == points ? points + 1 : points;
             kernel.SetBuffer("_TrailMetadata", buffers[previous]);
             kernel.SetFloat("_TrailMode", 0);
             kernel.Dispatch(buffers[next]);
             state[MetadataIndex] = next;
+            for (var i = SampleAgeOffset; i < state.Length; i++)
+            {
+                if (state[i] < 0) continue;
+                state[i] = Mathf.Min(float.MaxValue, state[i] + deltaTime);
+            }
             state[ElapsedIndex] += deltaTime;
-            if (state[ElapsedIndex] >= SampleInterval)
+            if (state[TickIndex] == 1 || state[ElapsedIndex] >= interval)
             {
                 kernel.SetBuffer("_TrailMetadata", buffers[next]);
                 kernel.SetFloat("_TrailMode", 1);
-                kernel.Dispatch(buffers[(int)state[HeadIndex]]);
-                state[HeadIndex] = ((int)state[HeadIndex] + 1) % PointCount;
-                state[ElapsedIndex] %= SampleInterval;
+                var head = (int)state[HeadIndex];
+                kernel.Dispatch(buffers[head]);
+                state[SampleAgeOffset + head] = 0;
+                state[HeadIndex] = (head + 1) % points;
+                state[ElapsedIndex] %= interval;
                 Bind(buffers, materials, state);
             }
             else
             {
-                for (var segment = 0; segment < materials.Length; segment++)
-                {
-                    materials[segment].SetTexture("_TrailMetadata", buffers[next].Texture);
-                }
+                BindAges(buffers, materials, state);
             }
         }
 
@@ -94,20 +113,33 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public static void Bind(FluxBuffer[] buffers, Material[] materials, float[] state)
         {
-            var metadata = buffers[(int)state[MetadataIndex]];
-            for (var segment = 0; segment < PointCount - 1; segment++)
+            var points = buffers.Length - 2;
+            for (var segment = 0; segment < materials.Length; segment++)
             {
-                var first = ((int)state[HeadIndex] + segment) % PointCount;
+                var first = ((int)state[HeadIndex] + segment) % points;
                 materials[segment].SetTexture("_TrailFirst", buffers[first].Texture);
-                materials[segment].SetTexture("_TrailSecond", buffers[(first + 1) % PointCount].Texture);
+                materials[segment].SetTexture("_TrailSecond", buffers[(first + 1) % points].Texture);
+            }
+            BindAges(buffers, materials, state);
+        }
+
+        static void BindAges(FluxBuffer[] buffers, Material[] materials, float[] state)
+        {
+            var metadata = buffers[(int)state[MetadataIndex]];
+            var points = buffers.Length - 2;
+            for (var segment = 0; segment < materials.Length; segment++)
+            {
+                var first = ((int)state[HeadIndex] + segment) % points;
+                var second = (first + 1) % points;
                 materials[segment].SetTexture("_TrailMetadata", metadata.Texture);
+                materials[segment].SetVector("_TrailAges", new Vector4(state[SampleAgeOffset + first], state[SampleAgeOffset + second], 0, 0));
             }
         }
 
         /// <summary>
         /// 描画設定を全区間へ反映します。
         /// </summary>
-        public static void SetAppearance(Material[] materials, bool enabled, float width, Vector4 color)
+        public static void SetAppearance(Material[] materials, bool enabled, float width, Vector4 color, float duration)
         {
             if (materials == null) return;
             for (var i = 0; i < materials.Length; i++)
@@ -115,6 +147,7 @@ namespace TpLab.Flux.FX.Udon
                 materials[i].SetFloat("_TrailEnabled", enabled ? 1f : 0f);
                 materials[i].SetFloat("_TrailWidth", width);
                 materials[i].SetVector("_TrailColor", color);
+                materials[i].SetFloat("_TrailDuration", duration);
             }
         }
     }

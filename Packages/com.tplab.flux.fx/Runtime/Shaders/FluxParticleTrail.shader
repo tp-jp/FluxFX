@@ -6,6 +6,7 @@ Shader "Hidden/FluxFX/Trail"
         _TrailSecond ("Second", 2D) = "black" {}
         _TrailMetadata ("Generation", 2D) = "black" {}
         _TrailEnabled ("Enabled", Float) = 1
+        _TrailDuration ("Duration", Float) = 0.5
         _TrailWidth ("Width", Float) = 0.05
         _TrailColor ("Color", Vector) = (1,1,1,1)
     }
@@ -24,8 +25,8 @@ Shader "Hidden/FluxFX/Trail"
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
             sampler2D _TrailFirst, _TrailSecond, _TrailMetadata;
-            float4 _TrailSize, _TrailFade, _TrailColor;
-            float _TrailWidth, _TrailEnabled;
+            float4 _TrailSize, _TrailAges, _TrailColor;
+            float _TrailWidth, _TrailEnabled, _TrailDuration;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -50,18 +51,27 @@ Shader "Hidden/FluxFX/Trail"
                 float4 a = tex2Dlod(_TrailFirst, float4(uv,0,0));
                 float4 b = tex2Dlod(_TrailSecond, float4(uv,0,0));
                 float4 meta = tex2Dlod(_TrailMetadata, float4(uv,0,0));
+                float firstAge = _TrailAges.x;
+                float secondAge = _TrailAges.y;
+                if (firstAge > _TrailDuration && firstAge > secondAge)
+                {
+                    float fraction = saturate((firstAge - _TrailDuration) / (firstAge - secondAge));
+                    a.xyz = lerp(a.xyz, b.xyz, fraction);
+                    firstAge = _TrailDuration;
+                }
                 float3 tangent = b.xyz - a.xyz;
                 float lengthSquared = dot(tangent, tangent);
                 float3 position = lerp(a.xyz, b.xyz, v.uv.x);
                 float3 side = cross(tangent, _WorldSpaceCameraPos - position);
                 float sideLength = dot(side, side);
                 side = sideLength > 1e-12 ? side * rsqrt(max(sideLength, 1e-12)) : UNITY_MATRIX_I_V._m00_m10_m20;
-                float fade = lerp(_TrailFade.x, _TrailFade.y, v.uv.x);
+                float fade = saturate(1 - lerp(firstAge, secondAge, v.uv.x) / _TrailDuration);
                 position += side * (v.uv.y - 0.5) * _TrailWidth * fade;
                 o.vertex = UnityWorldToClipPos(position);
                 o.alpha = fade;
                 o.valid = _TrailEnabled > 0.5 && v.trail.x < _TrailSize.z && meta.y > 0.5 &&
-                    a.w >= 0 && a.w == meta.x && b.w == meta.x && lengthSquared > 1e-12;
+                    a.w >= 0 && a.w == meta.x && b.w == meta.x && lengthSquared > 1e-12 &&
+                    _TrailAges.x >= 0 && secondAge >= 0 && secondAge < _TrailDuration;
                 return o;
             }
             float4 frag(v2f i) : SV_Target

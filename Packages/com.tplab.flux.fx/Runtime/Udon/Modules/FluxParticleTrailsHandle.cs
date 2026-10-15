@@ -11,6 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
     {
         internal const int WidthParameterIndex = 0;
         internal const int ColorParameterIndex = 1;
+        internal const int DurationParameterIndex = 2;
 
         /// <summary>
         /// Trailsのハンドルを取得し、初回のみ生成します。
@@ -35,6 +36,17 @@ namespace TpLab.Flux.FX.Udon.Modules
 
     public static class FluxParticleTrailsHandleExtensions
     {
+        /// <summary>
+        /// 軌跡の記録時間を取得します。
+        /// </summary>
+        public static float GetDuration(this FluxParticleTrailsHandle handle) => handle.GetValue(FluxParticleTrailsHandle.DurationParameterIndex).x;
+
+        /// <summary>
+        /// 軌跡の記録時間を変更し、有効な履歴を消去します。
+        /// </summary>
+        /// <param name="value">正の記録時間（秒）</param>
+        public static bool SetDuration(this FluxParticleTrailsHandle handle, float value) => value > 0 && handle.SetValue(FluxParticleTrailsHandle.DurationParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+
         /// <summary>
         /// 軌跡の幅を取得します。
         /// </summary>
