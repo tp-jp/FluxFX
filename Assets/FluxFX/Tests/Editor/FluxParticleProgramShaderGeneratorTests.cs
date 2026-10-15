@@ -140,7 +140,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 if (definitions.Operations.ContainsKey(id)) continue;
                 definitions.AddOperation(new FluxParticleOperationDefinition(id, "custom", FluxParticlePhase.Render,
                     Array.Empty<FluxParticleValueRead>(), Array.Empty<FluxParticleValueWrite>(), Array.Empty<string>(),
-                    "Packages/com.tplab.flux.fx/Editor/Compilation/Hlsl/Gravity.hlsl", "Custom"));
+                    "Packages/com.tplab.flux.fx/Editor/Modules/Gravity/Gravity.hlsl", "Custom"));
             }
             var exception = Assert.Throws<InvalidOperationException>(() => Generate(definitions));
             StringAssert.Contains("Context type name collision", exception.Message);
