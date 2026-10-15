@@ -164,6 +164,17 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
             _definitions.AddOptionalDependency(dependency);
         }
 
+        internal void SetModuleEnabled(string parameterId, bool enabled)
+        {
+            if (!Parameters.TryGetValue(parameterId, out var parameter) ||
+                parameter.Type != FluxParticleValueType.Float || parameter.Policy != FluxParticleParameterPolicy.Live ||
+                !_initialValues.ContainsKey(parameterId))
+            {
+                throw new InvalidOperationException($"Module Enabled requires an initialized Live Float parameter: {parameterId}");
+            }
+            _initialValues[parameterId] = new Vector4(enabled ? 1f : 0f, 0, 0, 0);
+        }
+
         void RequireOwner(string ownerId)
         {
             if (_ownerId != null && ownerId != _ownerId)

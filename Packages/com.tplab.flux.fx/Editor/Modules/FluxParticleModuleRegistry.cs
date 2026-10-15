@@ -76,7 +76,7 @@ namespace TpLab.Flux.FX.Editor.Modules
 
         /// <summary>
         /// 登録済みModuleからContributionを収集します。未登録・重複したModule設定は拒否します。
-        /// 無効なModuleも登録の存在は検証し、Definitionの実行のみ省略します。
+        /// OFFのModuleも収集し、Enabledの初期値へ反映します。
         /// </summary>
         /// <param name="modules">AuthoringのModule設定一覧</param>
         /// <param name="context">Coreと共有する論理Program Context</param>
@@ -111,12 +111,17 @@ namespace TpLab.Flux.FX.Editor.Modules
                     throw new InvalidOperationException($"Unregistered Particle Module: {type.FullName}");
                 }
 
-                if (!module.Enabled)
+                var enabledParameterId = (definition as IFluxParticleModuleBindingDefinition)?.EnabledParameterId;
+                if (!module.Enabled && enabledParameterId == null)
                 {
-                    continue;
+                    throw new InvalidOperationException($"Module {definition.ModuleId} requires an Enabled parameter to start disabled.");
                 }
 
                 definition.Contribute(module, context.ForModule(definition.ModuleId));
+                if (enabledParameterId != null)
+                {
+                    context.SetModuleEnabled(enabledParameterId, module.Enabled);
+                }
             }
         }
 

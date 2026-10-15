@@ -73,13 +73,14 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledModuleDoesNotAddRotationEvaluation()
+        public void DisabledModuleKeepsRotationEvaluationForRuntimeToggle()
         {
             AddRotationModule(new Vector3(0, 0, 180), FluxParticleRotationOverLifetimeMode.Curve, false);
             var compiled = FluxParticleBuildPipeline.Build(_authoring);
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(op => op.Id == "render.rotation-start"));
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(op => op.Id == "render.rotation-over-lifetime"));
-            Assert.IsFalse(compiled.InitialValues.ContainsKey("rotation.end"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(op => op.Id == "render.rotation-start"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(op => op.Id == "render.rotation-over-lifetime"));
+            Assert.AreEqual(0, compiled.InitialValues["rotation.enabled"].x);
+            Assert.IsTrue(compiled.InitialValues.ContainsKey("rotation.end"));
         }
 
         [TestCase((FluxParticleRotationOverLifetimeMode)99, 0f, 0f, 180f)]
@@ -123,6 +124,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.SetFloat("render.size", 1f);
                 session.SetVector("rotation.start", new Vector4(0, 0, 45, 0));
                 session.SetVector("rotation.end", new Vector4(0, 0, 180, 0));
+                session.SetFloat("rotation.enabled", compiled.InitialValues["rotation.enabled"].x);
                 session.SetUniformFloat("step.delta-time", 0f);
                 session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
                 var mask = Texture(new Color(1, 0, 0, 0), new Color(1, 0, 0, 0));

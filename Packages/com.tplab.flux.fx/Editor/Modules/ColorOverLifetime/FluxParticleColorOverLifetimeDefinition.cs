@@ -14,7 +14,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
     {
         public Type ModuleType => typeof(FluxParticleColorOverLifetimeModule);
         public string ModuleId => "fluxfx.color-over-lifetime";
-        public string EnabledParameterId => null;
+        public string EnabledParameterId => "color.enabled";
         public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
         {
             ((FluxParticleColorOverLifetimeModule)module).Mode == FluxParticleColorOverLifetimeMode.Linear ? new FluxParticleParameterDefinition("color.end", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Live) : null
@@ -22,6 +22,8 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
             var color = (FluxParticleColorOverLifetimeModule)module;
             if (color.Mode == FluxParticleColorOverLifetimeMode.Gradient)
             {
@@ -43,7 +45,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
                 new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
                 new[] { "render.start" },
                 "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/RenderColor.hlsl", "FluxFX_RenderColor",
-                new[] { "color.end" }));
+                new[] { "color.end" }, EnabledParameterId));
         }
 
         void AddGradient(FluxParticleColorOverLifetimeModule color, FluxParticleProgramContribution context)
@@ -80,7 +82,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
                 },
                 new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
                 new[] { "render.start" },
-                "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/RenderColorGradient.hlsl", "FluxFX_RenderColorGradient"));
+                "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/RenderColorGradient.hlsl", "FluxFX_RenderColorGradient", enabledParameterId: EnabledParameterId));
         }
     }
 }

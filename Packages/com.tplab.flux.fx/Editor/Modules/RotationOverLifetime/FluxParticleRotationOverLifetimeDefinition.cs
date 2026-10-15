@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
 
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
-        public string EnabledParameterId => null;
+        public string EnabledParameterId => "rotation.enabled";
         public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
         {
             new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
@@ -24,6 +24,8 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
             var handleParameters = GetHandleParameters(module);
             var rotation = (FluxParticleRotationOverLifetimeModule)module;
             if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear &&
@@ -66,7 +68,7 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
             context.AddOperation(new FluxParticleOperationDefinition("render.rotation-over-lifetime", ModuleId, FluxParticlePhase.Render,
                 reads, new[] { new FluxParticleValueWrite("render.rotation", FluxParticleWriteKind.Modify) },
                 new[] { "render.rotation-start" }, Hlsl + hlsl,
-                "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }));
+                "FluxFX_RenderRotationOverLifetime", new[] { "rotation.end" }, EnabledParameterId));
         }
     }
 }

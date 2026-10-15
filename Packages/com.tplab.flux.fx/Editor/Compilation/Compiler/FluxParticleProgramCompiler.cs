@@ -118,13 +118,14 @@ namespace TpLab.Flux.FX.Editor.Compilation.Compiler
                 }
                 if (operation.EnabledParameterId != null)
                 {
-                    if (operation.Phase != FluxParticlePhase.Update ||
+                    if ((operation.Phase != FluxParticlePhase.Update && operation.Phase != FluxParticlePhase.Render) ||
                         !definitions.Parameters.TryGetValue(operation.EnabledParameterId, out var enabled) ||
                         enabled.Type != FluxParticleValueType.Float ||
+                        enabled.Policy == FluxParticleParameterPolicy.SpawnLocked ||
                         operation.Writes.Any(write => write.Kind != FluxParticleWriteKind.Modify ||
                             !operation.Reads.Any(read => read.ValueId == write.ValueId)))
                     {
-                        throw new InvalidOperationException($"Enabled Operation requires Update Modify with explicit fallback reads: {operation.Id}");
+                        throw new InvalidOperationException($"Enabled Operation requires Update/Render Modify with explicit fallback reads and a non-SpawnLocked Float parameter: {operation.Id}");
                     }
                 }
                 var written = new HashSet<string>(StringComparer.Ordinal);

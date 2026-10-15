@@ -13,7 +13,7 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
     {
         public Type ModuleType => typeof(FluxParticleTextureSheetAnimationModule);
         public string ModuleId => "tplab.fluxfx.texture-sheet-animation";
-        public string EnabledParameterId => null;
+        public string EnabledParameterId => "texture-sheet.enabled";
         public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
         {
             new FluxParticleParameterDefinition("texture-sheet.tiles", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Static),
@@ -22,6 +22,8 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
             var handleParameters = GetHandleParameters(module);
             var sheet = (FluxParticleTextureSheetAnimationModule)module;
             if (sheet.TilesX < 1 || sheet.TilesY < 1 || (long)sheet.TilesX * sheet.TilesY > 16777216)
@@ -44,7 +46,7 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
                 new[] { new FluxParticleValueWrite("render.uv-transform", FluxParticleWriteKind.Modify) },
                 new[] { "render.uv-start" },
                 "Packages/com.tplab.flux.fx/Editor/Modules/TextureSheetAnimation/TextureSheetAnimation.hlsl", "FluxFX_TextureSheetAnimation",
-                new[] { "texture-sheet.tiles", "texture-sheet.cycles" }));
+                new[] { "texture-sheet.tiles", "texture-sheet.cycles" }, EnabledParameterId));
         }
     }
 }

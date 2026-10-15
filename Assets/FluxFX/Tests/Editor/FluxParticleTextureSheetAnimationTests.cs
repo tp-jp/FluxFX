@@ -60,8 +60,9 @@ namespace TpLab.Flux.FX.Tests.Editor
             serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.IsFalse(compiled.InitialValues.ContainsKey("texture-sheet.tiles"));
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.texture-sheet-animation"));
+            Assert.IsTrue(compiled.InitialValues.ContainsKey("texture-sheet.tiles"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.texture-sheet-animation"));
+            Assert.AreEqual(0, compiled.InitialValues["texture-sheet.enabled"].x);
         }
 
         [TestCase(0, 2, 1f)]

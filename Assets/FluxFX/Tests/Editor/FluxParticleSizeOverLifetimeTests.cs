@@ -61,15 +61,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledSizeModuleAddsNoLifetimeEvaluation()
+        public void DisabledSizeModuleKeepsLifetimeEvaluationForRuntimeToggle()
         {
             Configure(FluxParticleSizeOverLifetimeMode.Curve, false);
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty("modules").GetArrayElementAtIndex(0).FindPropertyRelative("enabled").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             var compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.size-over-lifetime"));
-            Assert.IsFalse(compiled.Shaders.Compilation.Providers.ContainsKey("size.curve"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.size-over-lifetime"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Providers.ContainsKey("size.curve"));
+            Assert.AreEqual(0, compiled.InitialValues["size.enabled"].x);
             Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "render.size-start"));
         }
 

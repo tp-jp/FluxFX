@@ -56,6 +56,10 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 4876580894953398945}
   executor: {fileID: 3878382104185693372}
+  bindingIds: []
+  bindingOffsets: 
+  bindingSlots: 
+  enabledSlots: 
 --- !u!114 &4876580894953398945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -474,9 +478,13 @@ MonoBehaviour:
   playOnAwake: 1
   particleEmitter: {fileID: 8702989573185071428}
   particleRenderer: {fileID: 403502797558332974}
-  compiledParameters: 
   particleExecutor: {fileID: 0}
   modules: {fileID: 2771034766471100750}
+  mainParameterSlots: 
+  shapeParameterSlots: 
+  simulationSpace: 0
+  shapeType: 0
+  renderMode: 0
 --- !u!114 &3665951349089362475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,7 +551,7 @@ MonoBehaviour:
   render:
     mode: 0
     mesh: {fileID: 0}
-    material: {fileID: 2100000, guid: 6f74acbbe75c83d4497e7580fa399df3, type: 2}
+    material: {fileID: 0}
     blendMode: 0
     cullingBounds:
       m_Center: {x: 0, y: 0, z: 0}
@@ -619,6 +627,12 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 835442151511798266}
+  rate: 0
+  startDelay: 0
+  duration: 5
+  loop: 1
+  burstTimes: []
+  burstCounts: 
 --- !u!114 &835442151511798266
 MonoBehaviour:
   m_ObjectHideFlags: 0

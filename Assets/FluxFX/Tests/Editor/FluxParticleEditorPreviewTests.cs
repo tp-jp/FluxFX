@@ -441,8 +441,9 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Object.DestroyImmediate(root);
             }
         }
-        [Test]
-        public void NoisePreviewReceivesSimulationTime()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void NoisePreviewReceivesSimulationTime(bool initiallyEnabled)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ||
                 !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat) ||
@@ -460,6 +461,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                     {
                         new TpLab.Flux.FX.Scripts.Modules.FluxParticleNoiseModule()
                     });
+                typeof(TpLab.Flux.FX.Scripts.Modules.FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(authoring.Modules[0], initiallyEnabled);
                 var build = FluxParticleBuildPipeline.Build(authoring);
                 preview = new FluxParticleEditorPreview(build, authoring, 4);
                 var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
@@ -468,9 +471,9 @@ namespace TpLab.Flux.FX.Tests.Editor
                 preview.Step(0.25f);
                 preview.Step(0.25f);
                 var velocity = ReadValue(session, build, "particle.velocity");
-                Assert.AreEqual(Mathf.Sin(0.25f) * 0.25f, velocity.x, 0.0005f);
-                Assert.AreEqual(Mathf.Sin(0.25f * 1.17f) * 0.25f, velocity.y, 0.0005f);
-                Assert.AreEqual(Mathf.Sin(0.25f * 0.83f) * 0.25f, velocity.z, 0.0005f);
+                Assert.AreEqual(initiallyEnabled ? Mathf.Sin(0.25f) * 0.25f : 0, velocity.x, 0.0005f);
+                Assert.AreEqual(initiallyEnabled ? Mathf.Sin(0.25f * 1.17f) * 0.25f : 0, velocity.y, 0.0005f);
+                Assert.AreEqual(initiallyEnabled ? Mathf.Sin(0.25f * 0.83f) * 0.25f : 0, velocity.z, 0.0005f);
             }
             finally
             {

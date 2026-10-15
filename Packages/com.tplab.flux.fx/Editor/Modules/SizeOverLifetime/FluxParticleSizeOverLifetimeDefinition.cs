@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/SizeOverLifetime/";
         public Type ModuleType => typeof(FluxParticleSizeOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.size-over-lifetime";
-        public string EnabledParameterId => null;
+        public string EnabledParameterId => "size.enabled";
         public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
         {
             ((FluxParticleSizeOverLifetimeModule)module).Mode == FluxParticleSizeOverLifetimeMode.Linear ? new FluxParticleParameterDefinition("size.end", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live) : null
@@ -24,6 +24,8 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            context.AddParameter(new FluxParticleParameterDefinition(EnabledParameterId, FluxParticleValueType.Float,
+                FluxParticleParameterPolicy.Live), new UnityEngine.Vector4(1, 0, 0, 0));
             var handleParameters = GetHandleParameters(module);
             var size = (FluxParticleSizeOverLifetimeModule)module;
             if (size.Mode != FluxParticleSizeOverLifetimeMode.Linear && size.Mode != FluxParticleSizeOverLifetimeMode.Curve)
@@ -62,7 +64,7 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
             }
             context.AddOperation(new FluxParticleOperationDefinition("render.size-over-lifetime", ModuleId, FluxParticlePhase.Render,
                 reads, new[] { new FluxParticleValueWrite("render.size", FluxParticleWriteKind.Modify) },
-                new[] { "render.size-start" }, Hlsl + hlsl, "FluxFX_SizeOverLifetime", parameters));
+                new[] { "render.size-start" }, Hlsl + hlsl, "FluxFX_SizeOverLifetime", parameters, EnabledParameterId));
         }
     }
 }

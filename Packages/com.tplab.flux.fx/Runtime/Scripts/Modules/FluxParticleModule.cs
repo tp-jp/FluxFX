@@ -9,6 +9,9 @@ namespace TpLab.Flux.FX.Scripts.Modules
         [SerializeField]
         bool enabled = true;
 
+        /// <summary>
+        /// RuntimeとPreviewでの有効状態の初期値
+        /// </summary>
         public bool Enabled => enabled;
 
         public abstract FluxParticleExecutionStage Stage { get; }

@@ -1006,20 +1006,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledCustomStateModuleAddsNoStateOrPass()
+        public void DisabledCustomStateModuleRequiresRuntimeEnabledDefinition()
         {
-            var baseline = FluxParticleBuildPipeline.Build(authoring);
             var module = new TestStateModule();
             typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
             SetModules(module);
-            var compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.AreEqual(baseline.Shaders.Compilation.StateLayout.Pages.Count, compiled.Shaders.Compilation.StateLayout.Pages.Count);
-            Assert.AreEqual(baseline.Shaders.Passes.Count, compiled.Shaders.Passes.Count);
-            Assert.IsFalse(compiled.Shaders.Compilation.StateLayout.TryGetBinding(TestStateDefinition.State, out _));
-            Assert.IsFalse(compiled.InitialValues.ContainsKey(TestStateDefinition.Strength));
+            StringAssert.Contains("requires an Enabled parameter", Assert.Throws<InvalidOperationException>(
+                () => FluxParticleBuildPipeline.Build(authoring)).Message);
         }
 
-        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, int inactiveSlot, bool rotation = false, bool size = false)
+        void AssertCustomRender(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, Color expected, int inactiveSlot, bool rotation = false, bool size = false, bool corrections = false, bool uv = false)
         {
             var source = string.Join(Environment.NewLine, new[]
             {
@@ -1033,6 +1029,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                 @"#include ""UnityCG.cginc""",
                 compiled.Shaders.RenderSource,
                 "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
+                corrections ? "return alive ? float4(value.valueRenderColor.r, value.valueRenderSize, value.valueRenderRotation.z, value.valueRenderUvTransform.x) : float4(0, 0, 0, 0); }" :
+                uv ? "return alive ? value.valueRenderUvTransform : float4(0, 0, 0, 0); }" :
                 size ? "return alive ? float4(value.valueRenderSize, 0, 0, 1) : float4(0, 0, 0, 0); }" :
                 rotation
                     ? "return alive ? float4(value.valueRenderRotation, 1) : float4(0, 0, 0, 0); }"
@@ -1081,7 +1079,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 }
                 target.Create();
                 Graphics.Blit(null, target, material);
-                AssertVector(expected, ReadTexture(target, 0), rotation ? 0.05f : size ? 0.002f : 0.0001f);
+                AssertVector(expected, ReadTexture(target, 0), rotation || corrections ? 0.05f : size ? 0.002f : 0.0001f);
                 AssertVector(Vector4.zero, ReadTexture(target, inactiveSlot));
             }
             finally
@@ -1241,14 +1239,15 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledVelocityOverLifetimeAddsNoOperationOrParameters()
+        public void DisabledVelocityOverLifetimeKeepsOperationAndParameters()
         {
             var module = CreateVelocityModule(Vector3.one, Vector3.one);
             typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
             SetModules(module);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "velocity-over-lifetime"));
-            Assert.IsFalse(compiled.InitialValues.ContainsKey("velocity-over-lifetime.start"));
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "velocity-over-lifetime"));
+            Assert.IsTrue(compiled.InitialValues.ContainsKey("velocity-over-lifetime.start"));
+            Assert.AreEqual(0, compiled.InitialValues["velocity-over-lifetime.enabled"].x);
         }
         [Test]
         public void VelocityOverLifetimeRejectsNonFiniteParameters()
@@ -1350,16 +1349,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void DisabledForceAddsNoOperationAndNonFiniteForceIsRejected()
+        public void DisabledForceKeepsOperationAndRejectsNonFiniteForce()
         {
             var module = new FluxParticleForceModule();
             var flags = BindingFlags.Instance | BindingFlags.NonPublic;
             typeof(FluxParticleModule).GetField("enabled", flags).SetValue(module, false);
             SetModules(module);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.IsFalse(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "force"));
-            Assert.IsFalse(compiled.InitialValues.ContainsKey("force"));
-            typeof(FluxParticleModule).GetField("enabled", flags).SetValue(module, true);
+            Assert.IsTrue(compiled.Shaders.Compilation.Operations.Any(operation => operation.Id == "force"));
+            Assert.IsTrue(compiled.InitialValues.ContainsKey("force"));
+            Assert.AreEqual(0, compiled.InitialValues["force.enabled"].x);
             typeof(FluxParticleForceModule).GetField("force", flags).SetValue(module, new Vector3(float.NaN, 0, 0));
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
         }
@@ -1809,9 +1808,27 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void StandardModuleHandlesShareExecutorParametersAndRespectStaticPolicy()
         {
             RequireGraphics();
-            SetModules(CreateStandardModules());
+            var settings = CreateStandardModules();
+            foreach (var module in settings)
+            {
+                typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
+            }
+            SetModules(settings);
             var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
             var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
+            var handles = new FluxParticleModuleHandle[]
+            {
+                modules.Gravity, modules.Drag, modules.Force, modules.Noise, modules.Vortex,
+                modules.LimitVelocity, modules.VelocityOverLifetime, modules.ColorOverLifetime,
+                modules.SizeOverLifetime, modules.RotationOverLifetime, modules.TextureSheetAnimation
+            };
+            foreach (var handle in handles)
+            {
+                Assert.IsNotNull(handle);
+                Assert.IsFalse(handle.GetEnabled());
+                Assert.IsTrue(handle.SetEnabled(true));
+                Assert.IsTrue(handle.GetEnabled());
+            }
             Assert.IsNotNull(modules.Drag);
             Assert.AreSame(modules.Drag, modules.Drag);
             Assert.IsTrue(modules.Drag.SetDrag(2f));
@@ -1895,19 +1912,19 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(modules.ColorOverLifetime.SetEndColor(new Color(0.2f, 0.3f, 0.4f, 1)));
             Assert.AreEqual(new Color(0.2f, 0.3f, 0.4f, 1), modules.ColorOverLifetime.GetEndColor());
             Assert.AreEqual(new Vector4(0.2f, 0.3f, 0.4f, 1), runtime.GetParameterValue(runtime.ResolveParameter("color.end", (int)FluxParticleValueType.Float4)));
-            Assert.AreEqual(false, modules.ColorOverLifetime.HasEnabled());
+            Assert.AreEqual(true, modules.ColorOverLifetime.HasEnabled());
             Assert.IsNotNull(modules.SizeOverLifetime);
             Assert.AreSame(modules.SizeOverLifetime, modules.SizeOverLifetime);
             Assert.IsTrue(modules.SizeOverLifetime.SetEndSize(2f));
             Assert.AreEqual(2f, modules.SizeOverLifetime.GetEndSize());
             Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("size.end", (int)FluxParticleValueType.Float)));
-            Assert.AreEqual(false, modules.SizeOverLifetime.HasEnabled());
+            Assert.AreEqual(true, modules.SizeOverLifetime.HasEnabled());
             Assert.IsNotNull(modules.RotationOverLifetime);
             Assert.AreSame(modules.RotationOverLifetime, modules.RotationOverLifetime);
             Assert.IsTrue(modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 2)));
             Assert.AreEqual(new Vector3(0, 0, 2), modules.RotationOverLifetime.GetEndRotation());
             Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("rotation.end", (int)FluxParticleValueType.Float3)));
-            Assert.AreEqual(false, modules.RotationOverLifetime.HasEnabled());
+            Assert.AreEqual(true, modules.RotationOverLifetime.HasEnabled());
             Assert.IsNotNull(modules.TextureSheetAnimation);
             Assert.AreSame(modules.TextureSheetAnimation, modules.TextureSheetAnimation);
             Assert.IsTrue(modules.TextureSheetAnimation.SetTiles(2, 3));
@@ -1916,7 +1933,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(modules.TextureSheetAnimation.SetCycles(2f));
             Assert.AreEqual(2f, modules.TextureSheetAnimation.GetCycles());
             Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("texture-sheet.cycles", (int)FluxParticleValueType.Float)));
-            Assert.AreEqual(false, modules.TextureSheetAnimation.HasEnabled());
+            Assert.AreEqual(true, modules.TextureSheetAnimation.HasEnabled());
             Assert.IsFalse(modules.Noise.SetStrength(-1));
             Assert.IsFalse(modules.Vortex.SetStrength(float.PositiveInfinity));
             Assert.IsFalse(modules.TextureSheetAnimation.SetTiles(int.MaxValue, 2));
@@ -1954,14 +1971,97 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(!lookupMode, modules.ColorOverLifetime.SetEndColor(Color.red));
             Assert.AreEqual(!lookupMode, modules.SizeOverLifetime.SetEndSize(2));
             Assert.IsTrue(modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 90)));
-            Assert.IsFalse(modules.ColorOverLifetime.HasEnabled());
-            Assert.IsFalse(modules.SizeOverLifetime.SetEnabled(false));
+            Assert.IsTrue(modules.ColorOverLifetime.HasEnabled());
+            Assert.IsTrue(modules.SizeOverLifetime.SetEnabled(false));
             if (lookupMode)
             {
                 Assert.AreEqual(default(Color), modules.ColorOverLifetime.GetEndColor());
                 Assert.AreEqual(0, modules.SizeOverLifetime.GetEndSize());
             }
         }
+
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RenderModuleHandlesBypassOnlyTheirOwnCorrectionAndRestoreWithoutStepping(bool lookupMode)
+        {
+            void Set(object target, string field, object value)
+            {
+                target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
+            }
+
+            var color = new FluxParticleColorOverLifetimeModule();
+            var size = new FluxParticleSizeOverLifetimeModule();
+            var rotation = new FluxParticleRotationOverLifetimeModule();
+            var sheet = new FluxParticleTextureSheetAnimationModule();
+            Set(authoring.Lifetime, "lifetime", 2f);
+            Set(authoring.Render, "startColor", new Color(0.8f, 0.6f, 0.4f, 1));
+            Set(authoring.Render, "startSize", 2f);
+            Set(authoring.Render, "startRotation", new Vector3(0, 0, 10));
+            Set(color, "endColor", new Color(0.2f, 0.3f, 0.1f, 1));
+            Set(size, "endSize", 4f);
+            Set(rotation, "endRotation", new Vector3(0, 0, 90));
+            Set(sheet, "tilesX", 2);
+            Set(sheet, "tilesY", 2);
+            if (lookupMode)
+            {
+                Set(color, "mode", FluxParticleColorOverLifetimeMode.Gradient);
+                var gradient = new Gradient();
+                gradient.SetKeys(new[] { new GradientColorKey(Color.white * 0.25f, 0), new GradientColorKey(Color.white * 0.25f, 1) },
+                    new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) });
+                Set(color, "gradient", gradient);
+                Set(size, "mode", FluxParticleSizeOverLifetimeMode.Curve);
+                Set(size, "curve", AnimationCurve.Constant(0, 1, 2));
+                Set(rotation, "mode", FluxParticleRotationOverLifetimeMode.Curve);
+                Set(rotation, "curve", AnimationCurve.Constant(0, 1, 0.5f));
+            }
+            foreach (var module in new FluxParticleModule[] { color, size, rotation, sheet })
+            {
+                typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, false);
+            }
+            SetModules(color, size, rotation, sheet);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0, 0, 1, 1);
+            runtime.Step(0.5f, 0, 0, 2);
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
+            var handles = new FluxParticleModuleHandle[]
+            {
+                modules.ColorOverLifetime, modules.SizeOverLifetime, modules.RotationOverLifetime, modules.TextureSheetAnimation
+            };
+            var enabled = lookupMode ? new Color(0.2f, 4, 55, 0.5f) : new Color(0.65f, 2.5f, 32.5f, 0.5f);
+            var baseline = new Color(0.8f, 2, 10, 1);
+            AssertCustomRender(runtime, compiled, baseline, 1, corrections: true);
+            foreach (var handle in handles)
+            {
+                Assert.IsNotNull(handle);
+                Assert.IsFalse(handle.GetEnabled());
+                Assert.IsTrue(handle.SetEnabled(true));
+            }
+            AssertCustomRender(runtime, compiled, enabled, 1, corrections: true);
+            for (var i = 0; i < handles.Length; i++)
+            {
+                Assert.IsTrue(handles[i].HasEnabled());
+                Assert.IsTrue(handles[i].GetEnabled());
+                Assert.IsTrue(handles[i].SetEnabled(false));
+                Assert.IsFalse(handles[i].GetEnabled());
+                var expected = enabled;
+                expected[i] = baseline[i];
+                AssertCustomRender(runtime, compiled, expected, 1, corrections: true);
+                Assert.IsTrue(handles[i].SetEnabled(true));
+            }
+            AssertCustomRender(runtime, compiled, enabled, 1, corrections: true);
+            foreach (var handle in handles)
+            {
+                Assert.IsTrue(handle.SetEnabled(false));
+            }
+            AssertCustomRender(runtime, compiled, baseline, 1, corrections: true);
+            AssertCustomRender(runtime, compiled, new Color(1, 1, 0, 0), 1, uv: true);
+            Assert.AreEqual(0.5f, runtime.PlaybackTime, 0.0001f);
+            Assert.AreEqual(0.5f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f);
+        }
+
 
         static FluxParticleModule[] CreateStandardModules()
         {
@@ -1985,7 +2085,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void ModuleHandlesShareExecutorValuesAndRemainInstanceLocal()
         {
             RequireGraphics();
-            SetModules(new FluxParticleGravityModule());
+            var setting = new FluxParticleGravityModule();
+            typeof(FluxParticleModule).GetField("enabled", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(setting, false);
+            SetModules(setting);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var first = CreateRuntime(compiled);
             var second = CreateRuntime(compiled);
@@ -2011,6 +2113,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(new Vector3(0, -4, 0), gravity.GetGravity());
             first.SetFloat("spawn.speed", 0);
             first.Step(0, 0, 1, 1);
+            Assert.IsFalse(gravity.GetEnabled());
+            first.Step(0.5f, 0, 0, 2);
+            AssertVector(Vector4.zero, ReadValue(first, compiled, "particle.velocity", 0));
+            Assert.IsTrue(gravity.SetEnabled(true));
             first.Step(0.5f, 0, 0, 2);
             AssertVector(new Vector4(0, -2, 0, 0), ReadValue(first, compiled, "particle.velocity", 0));
             Assert.IsTrue(gravity.SetEnabled(false));

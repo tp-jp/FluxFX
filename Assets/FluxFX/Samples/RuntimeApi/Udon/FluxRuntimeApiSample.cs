@@ -16,6 +16,10 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         Vortex,
         LimitVelocity,
         VelocityOverLifetime,
+        ColorOverLifetime,
+        SizeOverLifetime,
+        RotationOverLifetime,
+        TextureSheetAnimation,
         Count
     }
 
@@ -180,11 +184,34 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         {
             for (var i = 0; i < moduleParameterGroups.Length; i++)
             {
-                var enabled = moduleToggles[i].isOn;
+                var available = _target == null || GetModule((SampleModule)i) != null;
+                moduleToggles[i].interactable = available;
+                var enabled = available && moduleToggles[i].isOn;
                 moduleParameterGroups[i].interactable = enabled;
                 moduleParameterGroups[i].alpha = enabled ? 1f : 0.35f;
             }
         }
+
+        FluxParticleModuleHandle GetModule(SampleModule module)
+        {
+            var modules = _target.Modules;
+            switch (module)
+            {
+                case SampleModule.Gravity: return modules.Gravity;
+                case SampleModule.Drag: return modules.Drag;
+                case SampleModule.Force: return modules.Force;
+                case SampleModule.Noise: return modules.Noise;
+                case SampleModule.Vortex: return modules.Vortex;
+                case SampleModule.LimitVelocity: return modules.LimitVelocity;
+                case SampleModule.VelocityOverLifetime: return modules.VelocityOverLifetime;
+                case SampleModule.ColorOverLifetime: return modules.ColorOverLifetime;
+                case SampleModule.SizeOverLifetime: return modules.SizeOverLifetime;
+                case SampleModule.RotationOverLifetime: return modules.RotationOverLifetime;
+                case SampleModule.TextureSheetAnimation: return modules.TextureSheetAnimation;
+                default: return null;
+            }
+        }
+
 
         void ApplyLiveValues()
         {
@@ -206,33 +233,75 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             {
                 _target.Shape.SetSize(Vector(SampleControl.BoxX));
             }
+            ApplyModuleValues();
+        }
+
+        void ApplyModuleValues()
+        {
             var modules = _target.Modules;
-            modules.Gravity.SetGravity(Vector(SampleControl.GravityX));
-            modules.Drag.SetDrag(Value(SampleControl.Drag));
-            modules.Force.SetForce(Vector(SampleControl.ForceX));
-            modules.Noise.SetStrength(Value(SampleControl.NoiseStrength));
-            modules.Noise.SetScale(Value(SampleControl.NoiseScale));
-            modules.Noise.SetSpeed(Value(SampleControl.NoiseSpeed));
-            modules.Vortex.SetStrength(Value(SampleControl.VortexStrength));
-            modules.Vortex.SetAxis(Vector(SampleControl.VortexAxisX));
-            modules.Vortex.SetCenter(Vector(SampleControl.VortexCenterX));
-            modules.LimitVelocity.SetMaxSpeed(Value(SampleControl.MaxSpeed));
-            modules.VelocityOverLifetime.SetStart(Vector(SampleControl.VelocityStartX));
-            modules.VelocityOverLifetime.SetEnd(Vector(SampleControl.VelocityEndX));
-            modules.VelocityOverLifetime.SetOrbital(Vector(SampleControl.OrbitalX));
-            modules.VelocityOverLifetime.SetOffset(Vector(SampleControl.OrbitOffsetX));
-            modules.VelocityOverLifetime.SetRadial(Value(SampleControl.Radial));
-            modules.ColorOverLifetime.SetEndColor(Tint(SampleControl.EndR));
-            modules.SizeOverLifetime.SetEndSize(Value(SampleControl.EndSize));
-            modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, Value(SampleControl.EndRotation)));
-            modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
-            modules.Gravity.SetEnabled(moduleToggles[(int)SampleModule.Gravity].isOn);
-            modules.Drag.SetEnabled(moduleToggles[(int)SampleModule.Drag].isOn);
-            modules.Force.SetEnabled(moduleToggles[(int)SampleModule.Force].isOn);
-            modules.Noise.SetEnabled(moduleToggles[(int)SampleModule.Noise].isOn);
-            modules.Vortex.SetEnabled(moduleToggles[(int)SampleModule.Vortex].isOn);
-            modules.LimitVelocity.SetEnabled(moduleToggles[(int)SampleModule.LimitVelocity].isOn);
-            modules.VelocityOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.VelocityOverLifetime].isOn);
+            if (modules.Gravity != null)
+            {
+                modules.Gravity.SetGravity(Vector(SampleControl.GravityX));
+                modules.Gravity.SetEnabled(moduleToggles[(int)SampleModule.Gravity].isOn);
+            }
+            if (modules.Drag != null)
+            {
+                modules.Drag.SetDrag(Value(SampleControl.Drag));
+                modules.Drag.SetEnabled(moduleToggles[(int)SampleModule.Drag].isOn);
+            }
+            if (modules.Force != null)
+            {
+                modules.Force.SetForce(Vector(SampleControl.ForceX));
+                modules.Force.SetEnabled(moduleToggles[(int)SampleModule.Force].isOn);
+            }
+            if (modules.Noise != null)
+            {
+                modules.Noise.SetStrength(Value(SampleControl.NoiseStrength));
+                modules.Noise.SetScale(Value(SampleControl.NoiseScale));
+                modules.Noise.SetSpeed(Value(SampleControl.NoiseSpeed));
+                modules.Noise.SetEnabled(moduleToggles[(int)SampleModule.Noise].isOn);
+            }
+            if (modules.Vortex != null)
+            {
+                modules.Vortex.SetStrength(Value(SampleControl.VortexStrength));
+                modules.Vortex.SetAxis(Vector(SampleControl.VortexAxisX));
+                modules.Vortex.SetCenter(Vector(SampleControl.VortexCenterX));
+                modules.Vortex.SetEnabled(moduleToggles[(int)SampleModule.Vortex].isOn);
+            }
+            if (modules.LimitVelocity != null)
+            {
+                modules.LimitVelocity.SetMaxSpeed(Value(SampleControl.MaxSpeed));
+                modules.LimitVelocity.SetEnabled(moduleToggles[(int)SampleModule.LimitVelocity].isOn);
+            }
+            if (modules.VelocityOverLifetime != null)
+            {
+                modules.VelocityOverLifetime.SetStart(Vector(SampleControl.VelocityStartX));
+                modules.VelocityOverLifetime.SetEnd(Vector(SampleControl.VelocityEndX));
+                modules.VelocityOverLifetime.SetOrbital(Vector(SampleControl.OrbitalX));
+                modules.VelocityOverLifetime.SetOffset(Vector(SampleControl.OrbitOffsetX));
+                modules.VelocityOverLifetime.SetRadial(Value(SampleControl.Radial));
+                modules.VelocityOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.VelocityOverLifetime].isOn);
+            }
+            if (modules.ColorOverLifetime != null)
+            {
+                modules.ColorOverLifetime.SetEndColor(Tint(SampleControl.EndR));
+                modules.ColorOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.ColorOverLifetime].isOn);
+            }
+            if (modules.SizeOverLifetime != null)
+            {
+                modules.SizeOverLifetime.SetEndSize(Value(SampleControl.EndSize));
+                modules.SizeOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.SizeOverLifetime].isOn);
+            }
+            if (modules.RotationOverLifetime != null)
+            {
+                modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, Value(SampleControl.EndRotation)));
+                modules.RotationOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.RotationOverLifetime].isOn);
+            }
+            if (modules.TextureSheetAnimation != null)
+            {
+                modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
+                modules.TextureSheetAnimation.SetEnabled(moduleToggles[(int)SampleModule.TextureSheetAnimation].isOn);
+            }
         }
 
         void ApplyBursts()
@@ -259,7 +328,10 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             accepted &= _target.Main.SetStartSize(Value(SampleControl.StartSize));
             accepted &= _target.Main.SetStartColor(Tint(SampleControl.StartR));
             accepted &= _target.Main.SetStartRotation(new Vector3(0, 0, Value(SampleControl.StartRotation)));
-            accepted &= _target.Modules.TextureSheetAnimation.SetTiles((int)Value(SampleControl.TilesX), (int)Value(SampleControl.TilesY));
+            if (_target.Modules.TextureSheetAnimation != null)
+            {
+                accepted &= _target.Modules.TextureSheetAnimation.SetTiles((int)Value(SampleControl.TilesX), (int)Value(SampleControl.TilesY));
+            }
             ApplyLiveValues();
             ApplyBursts();
             _target.Restart();

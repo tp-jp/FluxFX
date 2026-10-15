@@ -14,6 +14,30 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         const string Core = "fluxfx.core";
 
+        [TestCase(FluxParticleWriteKind.Modify, true, FluxParticleParameterPolicy.Live, true)]
+        [TestCase(FluxParticleWriteKind.Replace, true, FluxParticleParameterPolicy.Live, false)]
+        [TestCase(FluxParticleWriteKind.Modify, false, FluxParticleParameterPolicy.Live, false)]
+        [TestCase(FluxParticleWriteKind.Modify, true, FluxParticleParameterPolicy.SpawnLocked, false)]
+        public void RenderEnabledRequiresPreservedInputAndUsableParameter(FluxParticleWriteKind kind, bool readInput,
+            FluxParticleParameterPolicy policy, bool valid)
+        {
+            var definitions = CreateStandard();
+            var operation = definitions.Operations["render.color-over-life"];
+            definitions.AddParameter(new FluxParticleParameterDefinition("render.enabled", FluxParticleValueType.Float, policy));
+            definitions.ReplaceOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
+                operation.Reads.Where(read => readInput || read.ValueId != "render.color"),
+                new[] { Write("render.color", kind) }, new[] { "render.init-color" }, "Tests/Render.hlsl", "Execute",
+                enabledParameterId: "render.enabled"));
+            if (valid)
+            {
+                Assert.DoesNotThrow(() => Compile(definitions));
+            }
+            else
+            {
+                StringAssert.Contains("Enabled Operation requires", Assert.Throws<InvalidOperationException>(() => Compile(definitions)).Message);
+            }
+        }
+
         [Test]
         public void StandardSimulationProducesTwoPagesAndTwoPasses()
         {

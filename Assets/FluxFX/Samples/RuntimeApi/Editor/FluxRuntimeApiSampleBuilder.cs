@@ -380,8 +380,8 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             Toggle[] toggles, CanvasGroup[] groups, UdonBehaviour target)
         {
             var y = 12f;
-            var first = page == MotionPage ? 0 : (int)SampleModule.Count;
-            var end = page == MotionPage ? (int)SampleModule.Count : ModuleNames.Length;
+            var first = page == MotionPage ? 0 : (int)SampleModule.ColorOverLifetime;
+            var end = page == MotionPage ? (int)SampleModule.ColorOverLifetime : ModuleNames.Length;
             for (var module = first; module < end; module++)
             {
                 var specs = Specs.Where(spec => spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
@@ -389,23 +389,14 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
                 var header = Rect("Header", section, 0, 0, 438, 36);
                 header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
-                if (page == MotionPage)
-                {
-                    toggles[module] = Toggle(header, ModuleNames[module], 10, 5, module == (int)SampleModule.Noise, target);
-                    Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
-                    toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
-                }
-                else
-                {
-                    Label(header, ModuleNames[module], 12, 0, 414, 36, 18).color = Accent;
-                }
+                toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
+                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime, target);
+                Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
+                toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
                 var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
-                if (page == MotionPage)
-                {
-                    groups[module] = body.gameObject.AddComponent<CanvasGroup>();
-                    groups[module].interactable = toggles[module].isOn;
-                    groups[module].alpha = toggles[module].isOn ? 1f : 0.35f;
-                }
+                groups[module] = body.gameObject.AddComponent<CanvasGroup>();
+                groups[module].interactable = toggles[module].isOn;
+                groups[module].alpha = toggles[module].isOn ? 1f : 0.35f;
                 var offset = 0f;
                 foreach (var spec in specs)
                 {
@@ -455,7 +446,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var enabled = new bool[(int)SampleModule.Count];
             for (var i = 0; i < enabled.Length; i++)
             {
-                enabled[i] = oldToggles[i].isOn;
+                enabled[i] = i >= oldToggles.Length || oldToggles[i].isOn;
             }
             var toggles = new Toggle[enabled.Length];
             var groups = new CanvasGroup[enabled.Length];
