@@ -169,17 +169,25 @@ namespace TpLab.Flux.FX.CustomModules
             if (!modules.VelocityOverLifetime.SetEnabled(false) || modules.VelocityOverLifetime.GetEnabled()) return false;
             if (modules.ColorOverLifetime == null || modules.ColorOverLifetime != modules.ColorOverLifetime || empty.Modules.ColorOverLifetime != null) return false;
             if (!modules.ColorOverLifetime.SetEndColor(new Color(0.2f, 0.3f, 0.4f, 1)) || modules.ColorOverLifetime.GetEndColor() != new Color(0.2f, 0.3f, 0.4f, 1)) return false;
-            if (modules.ColorOverLifetime.HasEnabled() || modules.ColorOverLifetime.SetEnabled(false)) return false;
+            if (!modules.ColorOverLifetime.HasEnabled()) return false;
+            if (!modules.ColorOverLifetime.SetEnabled(false) || modules.ColorOverLifetime.GetEnabled()) return false;
+            if (!modules.ColorOverLifetime.SetEnabled(true) || !modules.ColorOverLifetime.GetEnabled()) return false;
             if (modules.SizeOverLifetime == null || modules.SizeOverLifetime != modules.SizeOverLifetime || empty.Modules.SizeOverLifetime != null) return false;
             if (!modules.SizeOverLifetime.SetEndSize(2f) || modules.SizeOverLifetime.GetEndSize() != 2f) return false;
-            if (modules.SizeOverLifetime.HasEnabled() || modules.SizeOverLifetime.SetEnabled(false)) return false;
+            if (!modules.SizeOverLifetime.HasEnabled()) return false;
+            if (!modules.SizeOverLifetime.SetEnabled(false) || modules.SizeOverLifetime.GetEnabled()) return false;
+            if (!modules.SizeOverLifetime.SetEnabled(true) || !modules.SizeOverLifetime.GetEnabled()) return false;
             if (modules.RotationOverLifetime == null || modules.RotationOverLifetime != modules.RotationOverLifetime || empty.Modules.RotationOverLifetime != null) return false;
             if (!modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 2)) || modules.RotationOverLifetime.GetEndRotation() != new Vector3(0, 0, 2)) return false;
-            if (modules.RotationOverLifetime.HasEnabled() || modules.RotationOverLifetime.SetEnabled(false)) return false;
+            if (!modules.RotationOverLifetime.HasEnabled()) return false;
+            if (!modules.RotationOverLifetime.SetEnabled(false) || modules.RotationOverLifetime.GetEnabled()) return false;
+            if (!modules.RotationOverLifetime.SetEnabled(true) || !modules.RotationOverLifetime.GetEnabled()) return false;
             if (modules.TextureSheetAnimation == null || modules.TextureSheetAnimation != modules.TextureSheetAnimation || empty.Modules.TextureSheetAnimation != null) return false;
             if (!modules.TextureSheetAnimation.SetTiles(2, 3) || modules.TextureSheetAnimation.GetTiles() != new Vector2(2, 3)) return false;
             if (!modules.TextureSheetAnimation.SetCycles(2f) || modules.TextureSheetAnimation.GetCycles() != 2f) return false;
-            if (modules.TextureSheetAnimation.HasEnabled() || modules.TextureSheetAnimation.SetEnabled(false)) return false;
+            if (!modules.TextureSheetAnimation.HasEnabled()) return false;
+            if (!modules.TextureSheetAnimation.SetEnabled(false) || modules.TextureSheetAnimation.GetEnabled()) return false;
+            if (!modules.TextureSheetAnimation.SetEnabled(true) || !modules.TextureSheetAnimation.GetEnabled()) return false;
             return true;
         }
 

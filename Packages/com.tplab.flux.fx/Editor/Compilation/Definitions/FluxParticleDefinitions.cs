@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Udon;
+using FluxParticleParameterContract = TpLab.Flux.FX.Editor.Contracts.FluxParticleParameterContract;
 
 namespace TpLab.Flux.FX.Editor.Compilation.Definitions
 {
@@ -233,6 +234,18 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         /// 実行中の値変更とSpawn時固定の契約
         /// </summary>
         public FluxParticleParameterPolicy Policy { get; }
+
+        /// <summary>
+        /// 変換元のParameter契約。直接定義した場合はnull
+        /// </summary>
+        public FluxParticleParameterContract Contract { get; }
+
+        internal FluxParticleParameterDefinition(FluxParticleParameterContract contract,
+            FluxParticleValueType type, FluxParticleParameterPolicy policy)
+            : this(contract.Id, type, policy)
+        {
+            Contract = contract;
+        }
 
         /// <summary>
         /// Shader Parameterとその変更契約を設定します。

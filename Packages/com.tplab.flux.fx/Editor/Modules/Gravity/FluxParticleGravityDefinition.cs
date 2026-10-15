@@ -1,8 +1,8 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
-using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Modules.Gravity
 {
@@ -11,16 +11,14 @@ namespace TpLab.Flux.FX.Editor.Modules.Gravity
     /// </summary>
     public sealed class FluxParticleGravityDefinition : IFluxParticleModuleDefinition
     {
-        const int GravitySlot = 0;
         public Type ModuleType => typeof(FluxParticleGravityModule);
-        public string ModuleId => "fluxfx.gravity";
+        public string ModuleId => FluxParticleGravityContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var gravity = (FluxParticleGravityModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "gravity.enabled", gravity.Enabled, 1);
-            var acceleration = contribution.Parameter(GravitySlot, "gravity", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, gravity.Gravity);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleGravityContract.Module, gravity.Enabled);
+            var acceleration = contribution.Bind(FluxParticleGravityContract.Acceleration, gravity.Gravity);
             contribution.Operation("gravity", FluxParticlePhase.Update,
                 reads: new[]
                 {
