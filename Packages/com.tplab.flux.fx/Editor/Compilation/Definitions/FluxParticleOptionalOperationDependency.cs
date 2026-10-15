@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Definitions
 {
     /// <summary>
     /// 対象Operationが存在する場合だけ有効になる順序制約です。

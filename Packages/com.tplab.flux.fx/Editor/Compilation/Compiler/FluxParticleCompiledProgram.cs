@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Compiler
 {
     /// <summary>
     /// State Pageの保存形式を表します。

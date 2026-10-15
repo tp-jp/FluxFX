@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Scripts.Modules;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Definitions
 {
     /// <summary>
     /// CoreとModuleが同じ形式の宣言を登録するための収集先です。

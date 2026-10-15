@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;

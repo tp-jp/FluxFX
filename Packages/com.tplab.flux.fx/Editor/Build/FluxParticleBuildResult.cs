@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// Particleのコンパイル結果と生成Shaderを保持します。

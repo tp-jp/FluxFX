@@ -1,7 +1,8 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Scripts.Modules;
 
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+namespace TpLab.Flux.FX.Editor.Modules
 {
     /// <summary>
     /// Moduleの論理定義を登録するための契約です。

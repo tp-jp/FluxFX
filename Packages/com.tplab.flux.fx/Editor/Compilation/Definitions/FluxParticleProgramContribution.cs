@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using UnityEngine;
 using TpLab.Flux.FX.Udon;
+using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Definitions
 {
     /// <summary>
     /// CoreとModuleが論理Programの定義とParameter初期値を登録するためのContextです。

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Compiler
 {
     /// <summary>
     /// Update Phaseで同じValueを更新するOperationを登録順に依存せず接続します。

@@ -4,7 +4,7 @@ using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Authoring
 {
     /// <summary>
     /// Authoring設定とModuleの初期値からParameter初期値を構築します。

@@ -1,4 +1,5 @@
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+namespace TpLab.Flux.FX.Editor.Modules
 {
     /// <summary>
     /// Moduleハンドルが使用するParameterの対応を定義します。

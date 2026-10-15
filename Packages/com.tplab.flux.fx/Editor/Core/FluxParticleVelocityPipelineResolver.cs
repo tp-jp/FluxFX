@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Core
 {
     /// <summary>
     /// Velocityの更新列とMotionの読み取り元を解決します。

@@ -4,8 +4,12 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TpLab.Flux.FX.Editor.Authoring;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
+using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts;
-using TpLab.Flux.FX.Editor.Compilation.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
 using UdonSharpEditor;
@@ -13,7 +17,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// 生成AssetとPrefabを構成し、実行計画をUdon Runtimeへ設定します。

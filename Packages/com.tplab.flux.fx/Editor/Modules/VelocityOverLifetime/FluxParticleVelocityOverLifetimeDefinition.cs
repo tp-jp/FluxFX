@@ -1,9 +1,10 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
 {
     /// <summary>
     /// 時間変化・周回・放射方向の速度を位置へ加算するOperationを提供します。

@@ -1,6 +1,10 @@
+using TpLab.Flux.FX.Editor.Authoring;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
+using TpLab.Flux.FX.Editor.Core;
 using TpLab.Flux.FX.Scripts;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// Authoring設定からParticleの実行・描画データを生成します。

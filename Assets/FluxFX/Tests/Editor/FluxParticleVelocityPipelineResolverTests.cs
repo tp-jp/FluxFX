@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Core;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {

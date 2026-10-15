@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Editor.Localization;
 
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;

@@ -1,7 +1,8 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// 固定LUTの宣言から補間方式に応じたTextureを生成します。

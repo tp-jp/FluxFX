@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using NUnit.Framework;
-using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Parameters;

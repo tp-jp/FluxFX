@@ -4,7 +4,7 @@ using TpLab.Flux.Udon;
 using UnityEditor;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// RuntimeとPreviewで使用する空きSlot集計のBufferとKernelを構成します。

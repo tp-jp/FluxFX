@@ -1,7 +1,8 @@
+using TpLab.Flux.FX.Editor.Inspector;
 using UnityEditor;
 using UnityEditor.Overlays;
 
-namespace TpLab.Flux.FX.Editor.Inspector
+namespace TpLab.Flux.FX.Editor.Preview
 {
     /// <summary>
     /// SceneViewにParticleプレビューの操作と生存粒子数を表示します。

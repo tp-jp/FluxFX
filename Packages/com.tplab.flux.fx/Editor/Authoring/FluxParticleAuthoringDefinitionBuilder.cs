@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using TpLab.Flux.FX.Udon;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Core;
+using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts;
+using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Authoring
 {
     /// <summary>
     /// Authoring設定とModuleからParticleの論理定義を構築します。

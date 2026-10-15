@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TpLab.Flux.FX.Editor.Compilation;
-using TpLab.Flux.FX.Editor.Compilation.Modules;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Inspector;
+using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Tests.Editor

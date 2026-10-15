@@ -1,4 +1,3 @@
-using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.Editor;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
@@ -6,7 +5,7 @@ using TpLab.SceneFlow.Editor.Cores;
 using TpLab.SceneFlow.Editor.Passes;
 using Object = UnityEngine.Object;
 
-namespace TpLab.Flux.FX.Editor
+namespace TpLab.Flux.FX.Editor.Build
 {
     /// <summary>
     /// Particle Systemをコンパイルし、ShaderとBuild結果を後続Passへ渡します。

@@ -1,9 +1,10 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
 {
     /// <summary>
     /// Texture Sheet AnimationのRender Operationを提供します。

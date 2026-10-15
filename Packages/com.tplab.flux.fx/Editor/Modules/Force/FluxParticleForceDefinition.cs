@@ -1,9 +1,10 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+namespace TpLab.Flux.FX.Editor.Modules.Force
 {
     /// <summary>
     /// 一定の加速度をVelocityへ加算するOperationを提供します。

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Authoring;
+using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
@@ -12,7 +13,7 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace TpLab.Flux.FX.Editor.Inspector
+namespace TpLab.Flux.FX.Editor.Preview
 {
     /// <summary>
     /// Editor内でParticleのGPU実行とプレビュー描画を管理します。

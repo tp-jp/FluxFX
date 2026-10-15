@@ -3,7 +3,7 @@ using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Authoring
 {
     /// <summary>
     /// Particle Authoringの設定を検証します。

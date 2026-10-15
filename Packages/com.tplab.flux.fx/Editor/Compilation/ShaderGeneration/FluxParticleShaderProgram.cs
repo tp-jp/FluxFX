@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
 {
     /// <summary>
     /// HLSL実装と生成側で共有する衝突しない識別子の規則です。

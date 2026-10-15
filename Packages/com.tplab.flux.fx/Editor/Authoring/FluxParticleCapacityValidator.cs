@@ -1,7 +1,7 @@
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Authoring
 {
     /// <summary>
     /// EditorのGPU情報からParticle容量を検証します。

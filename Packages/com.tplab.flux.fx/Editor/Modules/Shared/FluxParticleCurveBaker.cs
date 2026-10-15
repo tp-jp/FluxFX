@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Modules.Shared
 {
     /// <summary>
     /// AnimationCurveを固定LUT用のサンプルへ変換します。

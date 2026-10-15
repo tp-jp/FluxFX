@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Udon;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
 {
     /// <summary>
     /// ParticleのBillboard・Mesh描画Shaderを生成します。

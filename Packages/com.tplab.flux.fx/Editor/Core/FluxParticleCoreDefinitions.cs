@@ -1,7 +1,9 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
 using TpLab.Flux.FX.Udon;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Core
 {
     /// <summary>
     /// Particle Systemが必須とするCore Value、Provider、Spawn、Renderの定義を構築します。

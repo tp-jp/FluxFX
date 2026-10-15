@@ -1,8 +1,11 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using TpLab.Flux.FX.Editor.Compilation;
-using TpLab.Flux.FX.Editor.Compilation.Modules;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
+using TpLab.Flux.FX.Editor.Core;
+using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Tests.Editor

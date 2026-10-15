@@ -1,6 +1,6 @@
 using System;
 using NUnit.Framework;
-using TpLab.Flux.FX.Editor.Compilation;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {

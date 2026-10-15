@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Udon;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.Definitions
 {
     /// <summary>
     /// 論理値への書き込みを許可する対象です。

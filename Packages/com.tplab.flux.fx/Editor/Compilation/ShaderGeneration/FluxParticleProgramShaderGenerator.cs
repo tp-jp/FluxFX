@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using UnityEditor.PackageManager;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using TpLab.Flux.FX.Editor.Compilation.Compiler;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Udon;
+using UnityEditor.PackageManager;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
 {
     /// <summary>
     /// State LayoutとOperation宣言からShaderとBindingを生成します。

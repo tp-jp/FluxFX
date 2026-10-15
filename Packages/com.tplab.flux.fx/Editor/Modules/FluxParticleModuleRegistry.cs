@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TpLab.Flux.FX.Editor.Compilation.Modules;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 
-namespace TpLab.Flux.FX.Editor.Compilation
+namespace TpLab.Flux.FX.Editor.Modules
 {
     /// <summary>
     /// Editor内の標準・外部Module Definitionを発見し、対応するModule設定へ結び付けます。

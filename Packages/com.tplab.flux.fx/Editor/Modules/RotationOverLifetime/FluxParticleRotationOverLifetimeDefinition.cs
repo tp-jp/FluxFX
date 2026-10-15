@@ -1,9 +1,11 @@
 using System;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 
-namespace TpLab.Flux.FX.Editor.Compilation.Modules
+namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
 {
     /// <summary>
     /// Rotation over LifetimeのRender Operationを提供します。

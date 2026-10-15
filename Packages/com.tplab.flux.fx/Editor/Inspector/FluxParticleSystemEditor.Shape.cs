@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
