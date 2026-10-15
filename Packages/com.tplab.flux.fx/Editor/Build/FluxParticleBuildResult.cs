@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Compilation.ShaderGeneration;
 using UnityEngine;
 
@@ -24,11 +26,18 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         public string RendererSource { get; }
 
-        public FluxParticleBuildResult(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues, string rendererSource)
+        /// <summary>
+        /// Compilation時に確定したModule Binding
+        /// </summary>
+        public IReadOnlyList<FluxParticleModuleBinding> ModuleBindings { get; }
+
+        public FluxParticleBuildResult(FluxParticleShaderProgram program, IReadOnlyDictionary<string, Vector4> initialValues, string rendererSource,
+            IEnumerable<FluxParticleModuleBinding> moduleBindings = null)
         {
             Shaders = program;
             InitialValues = initialValues;
             RendererSource = rendererSource;
+            ModuleBindings = new List<FluxParticleModuleBinding>(moduleBindings ?? Array.Empty<FluxParticleModuleBinding>()).AsReadOnly();
         }
 
     }

@@ -111,13 +111,19 @@ namespace TpLab.Flux.FX.Editor.Modules
                     throw new InvalidOperationException($"Unregistered Particle Module: {type.FullName}");
                 }
 
-                var enabledParameterId = (definition as IFluxParticleModuleBindingDefinition)?.EnabledParameterId;
+                definition.Contribute(module, context.ForModule(definition.ModuleId));
+                if (!context.ModuleBindings.TryGetValue(definition.ModuleId, out var compiledBinding))
+                {
+                    var legacy = definition as IFluxParticleModuleBindingDefinition;
+                    compiledBinding = new FluxParticleModuleBinding(definition.ModuleId, legacy?.EnabledParameterId,
+                        legacy?.GetHandleParameters(module), hasRuntimeBinding: legacy != null);
+                    context.AddModuleBinding(compiledBinding);
+                }
+                var enabledParameterId = compiledBinding.EnabledParameterId;
                 if (!module.Enabled && enabledParameterId == null)
                 {
                     throw new InvalidOperationException($"Module {definition.ModuleId} requires an Enabled parameter to start disabled.");
                 }
-
-                definition.Contribute(module, context.ForModule(definition.ModuleId));
                 if (enabledParameterId != null)
                 {
                     context.SetModuleEnabled(enabledParameterId, module.Enabled);

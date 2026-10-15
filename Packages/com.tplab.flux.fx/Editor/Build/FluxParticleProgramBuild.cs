@@ -91,25 +91,24 @@ namespace TpLab.Flux.FX.Editor.Build
             var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
             var parameterValues = parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray();
             var registry = new FluxParticleModuleRegistry();
-            var includedModules = authoring.Modules.ToArray();
-            var moduleDefinitions = includedModules
-                .Select(module => registry.TryGet(module.GetType(), out var definition) ? definition
+            var moduleIds = authoring.Modules
+                .Select(module => registry.TryGet(module.GetType(), out var definition) ? definition.ModuleId
                     : throw new InvalidOperationException("Module Definition is missing.")).ToArray();
+            if (!moduleIds.OrderBy(id => id, StringComparer.Ordinal).SequenceEqual(compiled.ModuleBindings.Select(binding => binding.ModuleId).OrderBy(id => id, StringComparer.Ordinal)))
+            {
+                throw new InvalidOperationException("Authoring Modules differ from the compiled Module bindings. Rebuild the Program.");
+            }
             var bindingIds = new List<string>();
             var bindingOffsets = new List<int> { 0 };
             var bindingSlots = new List<int>();
             var enabledSlots = new List<int>();
-            for (var moduleIndex = 0; moduleIndex < moduleDefinitions.Length; moduleIndex++)
+            foreach (var binding in compiled.ModuleBindings)
             {
-                var definition = moduleDefinitions[moduleIndex];
-                if (!(definition is IFluxParticleModuleBindingDefinition binding))
-                {
-                    continue;
-                }
-                bindingIds.Add(definition.ModuleId);
+                if (!binding.HasRuntimeBinding) continue;
+                bindingIds.Add(binding.ModuleId);
                 enabledSlots.Add(binding.EnabledParameterId == null ? -1
                     : ResolveBindingSlot(parameters, binding.EnabledParameterId, FluxParticleValueType.Float));
-                foreach (var parameter in binding.GetHandleParameters(includedModules[moduleIndex]))
+                foreach (var parameter in binding.Parameters)
                 {
                     bindingSlots.Add(parameter == null ? -1 : ResolveBindingSlot(parameters, parameter.Id, parameter.Type));
                 }
@@ -174,7 +173,7 @@ namespace TpLab.Flux.FX.Editor.Build
             runtime.SetProgramVariable("spawnKeyBuffer", keyBuffer);
             runtime.SetProgramVariable("renderMaterial", render);
             ConfigureManifest(runtime, program, parameters, parameterValues);
-            runtime.SetProgramVariable("moduleIds", moduleDefinitions.Select(definition => definition.ModuleId).ToArray());
+            runtime.SetProgramVariable("moduleIds", moduleIds);
             var modules = runtime.GetComponentInParent<FluxParticleSystem>()?.Modules;
             if (modules != null)
             {

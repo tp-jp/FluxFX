@@ -15,6 +15,12 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         readonly Dictionary<string, Vector4> _initialValues;
         readonly IReadOnlyDictionary<string, Vector4> _readOnlyInitialValues;
         readonly string _ownerId;
+        readonly Dictionary<string, FluxParticleModuleBinding> _moduleBindings;
+
+        /// <summary>
+        /// Moduleごとの確定済みBinding
+        /// </summary>
+        public IReadOnlyDictionary<string, FluxParticleModuleBinding> ModuleBindings { get; }
 
         /// <summary>
         /// ビルド対象の描画方式
@@ -52,16 +58,20 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         /// <param name="definitions">CoreとModuleが共有する論理定義集合</param>
         /// <param name="renderMode">ビルド対象の描画方式</param>
         public FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, FluxParticleRenderMode renderMode = FluxParticleRenderMode.Billboard)
-            : this(definitions, new Dictionary<string, Vector4>(StringComparer.Ordinal), null, renderMode)
+            : this(definitions, new Dictionary<string, Vector4>(StringComparer.Ordinal),
+                new Dictionary<string, FluxParticleModuleBinding>(StringComparer.Ordinal), null, renderMode)
         {
         }
 
-        FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, Dictionary<string, Vector4> initialValues, string ownerId, FluxParticleRenderMode renderMode)
+        FluxParticleProgramContribution(FluxParticleDefinitionBuilder definitions, Dictionary<string, Vector4> initialValues,
+            Dictionary<string, FluxParticleModuleBinding> moduleBindings, string ownerId, FluxParticleRenderMode renderMode)
         {
             _definitions = definitions ?? throw new ArgumentNullException(nameof(definitions));
             _initialValues = initialValues;
             _readOnlyInitialValues = new ReadOnlyDictionary<string, Vector4>(_initialValues);
             _ownerId = ownerId;
+            _moduleBindings = moduleBindings;
+            ModuleBindings = new ReadOnlyDictionary<string, FluxParticleModuleBinding>(_moduleBindings);
             RenderMode = renderMode;
         }
 
@@ -74,7 +84,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
             {
                 throw new ArgumentException("Module ID is required.", nameof(moduleId));
             }
-            return new FluxParticleProgramContribution(_definitions, _initialValues, moduleId, RenderMode);
+            return new FluxParticleProgramContribution(_definitions, _initialValues, _moduleBindings, moduleId, RenderMode);
         }
 
         /// <summary>
@@ -162,6 +172,17 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
                 throw new InvalidOperationException($"Module {_ownerId} cannot constrain Operation {dependency.OperationId}.");
             }
             _definitions.AddOptionalDependency(dependency);
+        }
+
+        /// <summary>
+        /// ModuleのRuntime Bindingを登録します。
+        /// </summary>
+        public void AddModuleBinding(FluxParticleModuleBinding binding)
+        {
+            if (binding == null) throw new ArgumentNullException(nameof(binding));
+            RequireOwner(binding.ModuleId);
+            if (_moduleBindings.ContainsKey(binding.ModuleId)) throw new InvalidOperationException($"Duplicate Module binding: {binding.ModuleId}");
+            _moduleBindings.Add(binding.ModuleId, binding);
         }
 
         internal void SetModuleEnabled(string parameterId, bool enabled)

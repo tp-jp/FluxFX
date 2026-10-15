@@ -19,12 +19,12 @@ namespace TpLab.Flux.FX.Editor.Build
         public static FluxParticleBuildResult Build(FluxParticleAuthoring authoring)
         {
             FluxParticleAuthoringValidator.Validate(authoring);
-            var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initialValues);
+            var definitions = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initialValues, out var moduleBindings);
             FluxParticleVelocityPipelineResolver.Resolve(definitions);
             var compilation = new FluxParticleProgramCompiler().Compile(definitions);
             var shaders = new FluxParticleProgramShaderGenerator().Generate(compilation, "Hidden/FluxFX/Program", FluxParticleCoreDefinitions.CreateLifecycle());
             var rendererSource = FluxParticleRenderShaderGenerator.Generate(shaders, authoring.Render.Mode, authoring.SimulationSpace == TpLab.Flux.FX.Udon.FluxParticleSimulationSpace.World);
-            return new FluxParticleBuildResult(shaders, initialValues, rendererSource);
+            return new FluxParticleBuildResult(shaders, initialValues, rendererSource, moduleBindings);
         }
     }
 }

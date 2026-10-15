@@ -25,6 +25,15 @@ namespace TpLab.Flux.FX.Editor.Authoring
         public static FluxParticleDefinitionBuilder Create(FluxParticleAuthoring authoring,
             out IReadOnlyDictionary<string, Vector4> initialValues)
         {
+            return Create(authoring, out initialValues, out _);
+        }
+
+        /// <summary>
+        /// 論理定義と初期値、Module Bindingを構築します。
+        /// </summary>
+        public static FluxParticleDefinitionBuilder Create(FluxParticleAuthoring authoring,
+            out IReadOnlyDictionary<string, Vector4> initialValues, out IReadOnlyList<FluxParticleModuleBinding> moduleBindings)
+        {
             var source = FluxParticleCoreDefinitions.Create();
             var definitions = new FluxParticleDefinitionBuilder();
             foreach (var value in source.Values.Values) definitions.AddValue(value);
@@ -52,6 +61,7 @@ namespace TpLab.Flux.FX.Editor.Authoring
             AddOperationsAndParameters(authoring, source, definitions, hasRotation);
             initialValues = new ReadOnlyDictionary<string, Vector4>(
                 FluxParticleAuthoringInitialValues.Create(authoring, moduleContext.InitialValues, hasRotation));
+            moduleBindings = Array.AsReadOnly(moduleContext.ModuleBindings.Values.ToArray());
             return definitions;
         }
 

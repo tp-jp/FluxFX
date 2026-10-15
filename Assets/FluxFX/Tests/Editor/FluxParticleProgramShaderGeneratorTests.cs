@@ -617,6 +617,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             session.SetVector("lifetime.range", new Vector4(lifetime, lifetime, 0, 0));
             session.SetVector("color.start", Vector4.one);
             session.SetVector("color.end", Vector4.zero);
+            session.SetFloat("color.enabled", 1);
             session.SetUniformFloat("step.delta-time", 0.25f);
             session.SetSpawnInput("spawn.key", Texture(new Color(123, 0, 0, 0), new Color(456, 0, 0, 0)));
         }
