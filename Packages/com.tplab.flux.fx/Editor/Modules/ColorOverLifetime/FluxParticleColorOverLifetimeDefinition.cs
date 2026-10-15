@@ -10,10 +10,15 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
     /// <summary>
     /// Color over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleColorOverLifetimeModule);
         public string ModuleId => "fluxfx.color-over-lifetime";
+        public string EnabledParameterId => null;
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            ((FluxParticleColorOverLifetimeModule)module).Mode == FluxParticleColorOverLifetimeMode.Linear ? new FluxParticleParameterDefinition("color.end", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Live) : null
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {

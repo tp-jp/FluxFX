@@ -95,21 +95,28 @@ namespace TpLab.Flux.FX.Editor.Build
             var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
             var parameterValues = parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray();
             var registry = new FluxParticleModuleRegistry();
-            var moduleDefinitions = authoring.Modules.Where(module => module.Enabled)
+            var enabledModules = authoring.Modules.Where(module => module.Enabled).ToArray();
+            var moduleDefinitions = enabledModules
                 .Select(module => registry.TryGet(module.GetType(), out var definition) ? definition
                     : throw new InvalidOperationException("Module Definition is missing.")).ToArray();
             var bindingIds = new List<string>();
             var bindingOffsets = new List<int> { 0 };
             var bindingSlots = new List<int>();
             var enabledSlots = new List<int>();
-            foreach (var definition in moduleDefinitions)
+            for (var moduleIndex = 0; moduleIndex < moduleDefinitions.Length; moduleIndex++)
             {
-                if (!(definition is IFluxParticleModuleBindingDefinition binding)) continue;
+                var definition = moduleDefinitions[moduleIndex];
+                if (!(definition is IFluxParticleModuleBindingDefinition binding))
+                {
+                    continue;
+                }
                 bindingIds.Add(definition.ModuleId);
                 enabledSlots.Add(binding.EnabledParameterId == null ? -1
                     : ResolveBindingSlot(parameters, binding.EnabledParameterId, FluxParticleValueType.Float));
-                foreach (var parameter in binding.HandleParameters)
-                    bindingSlots.Add(ResolveBindingSlot(parameters, parameter.Id, parameter.Type));
+                foreach (var parameter in binding.GetHandleParameters(enabledModules[moduleIndex]))
+                {
+                    bindingSlots.Add(parameter == null ? -1 : ResolveBindingSlot(parameters, parameter.Id, parameter.Type));
+                }
                 bindingOffsets.Add(bindingSlots.Count);
             }
             var pagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PagePrefabPath);

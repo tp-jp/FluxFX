@@ -9,24 +9,29 @@ namespace TpLab.Flux.FX.Editor.Modules.Noise
     /// <summary>
     /// PositionとSimulation Timeから求めたノイズ加速度をVelocityへ加算します。
     /// </summary>
-    public sealed class FluxParticleNoiseDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleNoiseDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleNoiseModule);
         public string ModuleId => "tplab.fluxfx.noise";
+        public string EnabledParameterId => "noise.enabled";
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            new FluxParticleParameterDefinition("noise.strength", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live),
+            new FluxParticleParameterDefinition("noise.scale", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live),
+            new FluxParticleParameterDefinition("noise.speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var noise = (FluxParticleNoiseModule)module;
             if (noise.Strength < 0 || noise.Scale < 0 || noise.Speed < 0)
             {
                 throw new InvalidOperationException("Noise strength, scale and speed must be non-negative.");
             }
-            context.AddParameter(new FluxParticleParameterDefinition("noise.strength", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(noise.Strength, 0, 0, 0));
-            context.AddParameter(new FluxParticleParameterDefinition("noise.scale", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(noise.Scale, 0, 0, 0));
-            context.AddParameter(new FluxParticleParameterDefinition("noise.speed", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(noise.Speed, 0, 0, 0));
+            context.AddParameter(handleParameters[0], new Vector4(noise.Strength, 0, 0, 0));
+            context.AddParameter(handleParameters[1], new Vector4(noise.Scale, 0, 0, 0));
+            context.AddParameter(handleParameters[2], new Vector4(noise.Speed, 0, 0, 0));
             context.AddParameter(new FluxParticleParameterDefinition("noise.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             if (!context.Providers.ContainsKey("step.time"))

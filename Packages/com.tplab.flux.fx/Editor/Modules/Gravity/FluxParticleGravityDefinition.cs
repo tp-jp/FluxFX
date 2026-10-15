@@ -14,15 +14,16 @@ namespace TpLab.Flux.FX.Editor.Modules.Gravity
         public Type ModuleType => typeof(FluxParticleGravityModule);
         public string ModuleId => "fluxfx.gravity";
         public string EnabledParameterId => "gravity.enabled";
-        public FluxParticleParameterDefinition[] HandleParameters => new[]
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new[]
         {
             new FluxParticleParameterDefinition("gravity", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
         };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var gravity = (FluxParticleGravityModule)module;
-            context.AddParameter(HandleParameters[0], gravity.Gravity);
+            context.AddParameter(handleParameters[0], gravity.Gravity);
             context.AddParameter(new FluxParticleParameterDefinition("gravity.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("gravity", ModuleId, FluxParticlePhase.Update,

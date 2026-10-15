@@ -10,15 +10,21 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
     /// <summary>
     /// Rotation over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/RotationOverLifetime/";
 
         public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.rotation-over-lifetime";
+        public string EnabledParameterId => null;
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var rotation = (FluxParticleRotationOverLifetimeModule)module;
             if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear &&
                 rotation.Mode != FluxParticleRotationOverLifetimeMode.Curve)
@@ -31,8 +37,7 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
                 throw new InvalidOperationException("Program Backend currently requires: Billboard rotation over lifetime around Z only.");
             }
 
-            context.AddParameter(new FluxParticleParameterDefinition("rotation.end", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live), end);
+            context.AddParameter(handleParameters[0], end);
             var reads = new[]
             {
                 new FluxParticleValueRead("render.rotation", FluxParticleReadVersion.AfterOperation, "render.rotation-start"),

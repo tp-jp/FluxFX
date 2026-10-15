@@ -11,14 +11,20 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
     /// <summary>
     /// Size over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleSizeOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleSizeOverLifetimeDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/SizeOverLifetime/";
         public Type ModuleType => typeof(FluxParticleSizeOverLifetimeModule);
         public string ModuleId => "tplab.fluxfx.size-over-lifetime";
+        public string EnabledParameterId => null;
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            ((FluxParticleSizeOverLifetimeModule)module).Mode == FluxParticleSizeOverLifetimeMode.Linear ? new FluxParticleParameterDefinition("size.end", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live) : null
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var size = (FluxParticleSizeOverLifetimeModule)module;
             if (size.Mode != FluxParticleSizeOverLifetimeMode.Linear && size.Mode != FluxParticleSizeOverLifetimeMode.Curve)
             {
@@ -38,8 +44,7 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
                 {
                     throw new InvalidOperationException("End size must be finite and non-negative.");
                 }
-                context.AddParameter(new FluxParticleParameterDefinition("size.end", FluxParticleValueType.Float,
-                    FluxParticleParameterPolicy.Live), new Vector4(size.EndSize, 0, 0, 0));
+                context.AddParameter(handleParameters[0], new Vector4(size.EndSize, 0, 0, 0));
                 parameters = new[] { "size.end" };
             }
             else

@@ -15,7 +15,7 @@ namespace TpLab.Flux.FX.CustomModules.Editor
         public Type ModuleType => typeof(CustomLiftModule);
         public string ModuleId => "custom.fluxfx.lift";
         public string EnabledParameterId => "custom-lift.enabled";
-        public FluxParticleParameterDefinition[] HandleParameters => new[]
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new[]
         {
             new FluxParticleParameterDefinition("custom-lift.strength", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live),
             new FluxParticleParameterDefinition("custom-lift.direction", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live)
@@ -23,9 +23,10 @@ namespace TpLab.Flux.FX.CustomModules.Editor
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var lift = (CustomLiftModule)module;
-            context.AddParameter(HandleParameters[0], new Vector4(lift.Strength, 0, 0, 0));
-            context.AddParameter(HandleParameters[1], lift.Direction);
+            context.AddParameter(handleParameters[0], new Vector4(lift.Strength, 0, 0, 0));
+            context.AddParameter(handleParameters[1], lift.Direction);
             context.AddParameter(new FluxParticleParameterDefinition("custom-lift.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             if (!context.Providers.ContainsKey("step.time"))

@@ -1683,6 +1683,182 @@ namespace TpLab.Flux.FX.Tests.Editor
             return guid + ":" + localId;
         }
         [Test]
+        public void StandardModuleHandlesShareExecutorParametersAndRespectStaticPolicy()
+        {
+            RequireGraphics();
+            SetModules(CreateStandardModules());
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
+            Assert.IsNotNull(modules.Drag);
+            Assert.AreSame(modules.Drag, modules.Drag);
+            Assert.IsTrue(modules.Drag.SetDrag(2f));
+            Assert.AreEqual(2f, modules.Drag.GetDrag());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("drag", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(true, modules.Drag.HasEnabled());
+            Assert.IsTrue(modules.Drag.SetEnabled(false));
+            Assert.IsFalse(modules.Drag.GetEnabled());
+            Assert.IsTrue(modules.Drag.SetEnabled(true));
+            Assert.IsNotNull(modules.Force);
+            Assert.AreSame(modules.Force, modules.Force);
+            Assert.IsTrue(modules.Force.SetForce(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.Force.GetForce());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("force", (int)FluxParticleValueType.Float3)));
+            Assert.AreEqual(true, modules.Force.HasEnabled());
+            Assert.IsTrue(modules.Force.SetEnabled(false));
+            Assert.IsFalse(modules.Force.GetEnabled());
+            Assert.IsTrue(modules.Force.SetEnabled(true));
+            Assert.IsNotNull(modules.Noise);
+            Assert.AreSame(modules.Noise, modules.Noise);
+            Assert.IsTrue(modules.Noise.SetStrength(2f));
+            Assert.AreEqual(2f, modules.Noise.GetStrength());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("noise.strength", (int)FluxParticleValueType.Float)));
+            Assert.IsTrue(modules.Noise.SetScale(2f));
+            Assert.AreEqual(2f, modules.Noise.GetScale());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("noise.scale", (int)FluxParticleValueType.Float)));
+            Assert.IsTrue(modules.Noise.SetSpeed(2f));
+            Assert.AreEqual(2f, modules.Noise.GetSpeed());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("noise.speed", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(true, modules.Noise.HasEnabled());
+            Assert.IsTrue(modules.Noise.SetEnabled(false));
+            Assert.IsFalse(modules.Noise.GetEnabled());
+            Assert.IsTrue(modules.Noise.SetEnabled(true));
+            Assert.IsNotNull(modules.Vortex);
+            Assert.AreSame(modules.Vortex, modules.Vortex);
+            Assert.IsTrue(modules.Vortex.SetCenter(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.Vortex.GetCenter());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("vortex.center", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.Vortex.SetAxis(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.Vortex.GetAxis());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("vortex.axis", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.Vortex.SetStrength(2f));
+            Assert.AreEqual(2f, modules.Vortex.GetStrength());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("vortex.strength", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(true, modules.Vortex.HasEnabled());
+            Assert.IsTrue(modules.Vortex.SetEnabled(false));
+            Assert.IsFalse(modules.Vortex.GetEnabled());
+            Assert.IsTrue(modules.Vortex.SetEnabled(true));
+            Assert.IsNotNull(modules.LimitVelocity);
+            Assert.AreSame(modules.LimitVelocity, modules.LimitVelocity);
+            Assert.IsTrue(modules.LimitVelocity.SetMaxSpeed(2f));
+            Assert.AreEqual(2f, modules.LimitVelocity.GetMaxSpeed());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("limit-velocity.max-speed", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(true, modules.LimitVelocity.HasEnabled());
+            Assert.IsTrue(modules.LimitVelocity.SetEnabled(false));
+            Assert.IsFalse(modules.LimitVelocity.GetEnabled());
+            Assert.IsTrue(modules.LimitVelocity.SetEnabled(true));
+            Assert.IsNotNull(modules.VelocityOverLifetime);
+            Assert.AreSame(modules.VelocityOverLifetime, modules.VelocityOverLifetime);
+            Assert.IsTrue(modules.VelocityOverLifetime.SetStart(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.VelocityOverLifetime.GetStart());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("velocity-over-lifetime.start", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.VelocityOverLifetime.SetEnd(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.VelocityOverLifetime.GetEnd());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("velocity-over-lifetime.end", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.VelocityOverLifetime.SetOrbital(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.VelocityOverLifetime.GetOrbital());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("velocity-over-lifetime.orbital", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.VelocityOverLifetime.SetOffset(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.VelocityOverLifetime.GetOffset());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("velocity-over-lifetime.offset", (int)FluxParticleValueType.Float3)));
+            Assert.IsTrue(modules.VelocityOverLifetime.SetRadial(2f));
+            Assert.AreEqual(2f, modules.VelocityOverLifetime.GetRadial());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("velocity-over-lifetime.radial", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(true, modules.VelocityOverLifetime.HasEnabled());
+            Assert.IsTrue(modules.VelocityOverLifetime.SetEnabled(false));
+            Assert.IsFalse(modules.VelocityOverLifetime.GetEnabled());
+            Assert.IsTrue(modules.VelocityOverLifetime.SetEnabled(true));
+            Assert.IsNotNull(modules.ColorOverLifetime);
+            Assert.AreSame(modules.ColorOverLifetime, modules.ColorOverLifetime);
+            Assert.IsTrue(modules.ColorOverLifetime.SetEndColor(new Color(0.2f, 0.3f, 0.4f, 1)));
+            Assert.AreEqual(new Color(0.2f, 0.3f, 0.4f, 1), modules.ColorOverLifetime.GetEndColor());
+            Assert.AreEqual(new Vector4(0.2f, 0.3f, 0.4f, 1), runtime.GetParameterValue(runtime.ResolveParameter("color.end", (int)FluxParticleValueType.Float4)));
+            Assert.AreEqual(false, modules.ColorOverLifetime.HasEnabled());
+            Assert.IsNotNull(modules.SizeOverLifetime);
+            Assert.AreSame(modules.SizeOverLifetime, modules.SizeOverLifetime);
+            Assert.IsTrue(modules.SizeOverLifetime.SetEndSize(2f));
+            Assert.AreEqual(2f, modules.SizeOverLifetime.GetEndSize());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("size.end", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(false, modules.SizeOverLifetime.HasEnabled());
+            Assert.IsNotNull(modules.RotationOverLifetime);
+            Assert.AreSame(modules.RotationOverLifetime, modules.RotationOverLifetime);
+            Assert.IsTrue(modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 2)));
+            Assert.AreEqual(new Vector3(0, 0, 2), modules.RotationOverLifetime.GetEndRotation());
+            Assert.AreEqual(new Vector4(0, 0, 2, 0), runtime.GetParameterValue(runtime.ResolveParameter("rotation.end", (int)FluxParticleValueType.Float3)));
+            Assert.AreEqual(false, modules.RotationOverLifetime.HasEnabled());
+            Assert.IsNotNull(modules.TextureSheetAnimation);
+            Assert.AreSame(modules.TextureSheetAnimation, modules.TextureSheetAnimation);
+            Assert.IsTrue(modules.TextureSheetAnimation.SetTiles(2, 3));
+            Assert.AreEqual(new Vector2(2, 3), modules.TextureSheetAnimation.GetTiles());
+            Assert.AreEqual(new Vector4(2, 3, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("texture-sheet.tiles", (int)FluxParticleValueType.Float2)));
+            Assert.IsTrue(modules.TextureSheetAnimation.SetCycles(2f));
+            Assert.AreEqual(2f, modules.TextureSheetAnimation.GetCycles());
+            Assert.AreEqual(new Vector4(2, 0, 0, 0), runtime.GetParameterValue(runtime.ResolveParameter("texture-sheet.cycles", (int)FluxParticleValueType.Float)));
+            Assert.AreEqual(false, modules.TextureSheetAnimation.HasEnabled());
+            Assert.IsFalse(modules.Noise.SetStrength(-1));
+            Assert.IsFalse(modules.Vortex.SetStrength(float.PositiveInfinity));
+            Assert.IsFalse(modules.TextureSheetAnimation.SetTiles(int.MaxValue, 2));
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0, 0, 1, 1);
+            Assert.IsFalse(modules.TextureSheetAnimation.SetTiles(4, 4));
+            Assert.AreEqual(new Vector2(2, 3), modules.TextureSheetAnimation.GetTiles());
+            Assert.IsTrue(modules.TextureSheetAnimation.SetCycles(3));
+            Assert.AreEqual(3, modules.TextureSheetAnimation.GetCycles());
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LifetimeHandlesExposeOnlyParametersUsedByCompiledMode(bool lookupMode)
+        {
+            var color = new FluxParticleColorOverLifetimeModule();
+            var size = new FluxParticleSizeOverLifetimeModule();
+            var rotation = new FluxParticleRotationOverLifetimeModule();
+            if (lookupMode)
+            {
+                typeof(FluxParticleColorOverLifetimeModule).GetField("mode", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(color, FluxParticleColorOverLifetimeMode.Gradient);
+                typeof(FluxParticleSizeOverLifetimeModule).GetField("mode", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(size, FluxParticleSizeOverLifetimeMode.Curve);
+                typeof(FluxParticleRotationOverLifetimeModule).GetField("mode", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(rotation, FluxParticleRotationOverLifetimeMode.Curve);
+            }
+            SetModules(color, size, rotation);
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
+            Assert.IsNotNull(modules.ColorOverLifetime);
+            Assert.IsNotNull(modules.SizeOverLifetime);
+            Assert.AreEqual(!lookupMode, modules.ColorOverLifetime.HasEndColor());
+            Assert.AreEqual(!lookupMode, modules.SizeOverLifetime.HasEndSize());
+            Assert.AreEqual(!lookupMode, modules.ColorOverLifetime.SetEndColor(Color.red));
+            Assert.AreEqual(!lookupMode, modules.SizeOverLifetime.SetEndSize(2));
+            Assert.IsTrue(modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 90)));
+            Assert.IsFalse(modules.ColorOverLifetime.HasEnabled());
+            Assert.IsFalse(modules.SizeOverLifetime.SetEnabled(false));
+            if (lookupMode)
+            {
+                Assert.AreEqual(default(Color), modules.ColorOverLifetime.GetEndColor());
+                Assert.AreEqual(0, modules.SizeOverLifetime.GetEndSize());
+            }
+        }
+
+        static FluxParticleModule[] CreateStandardModules()
+        {
+            return new FluxParticleModule[]
+            {
+                new FluxParticleGravityModule(),
+                new FluxParticleDragModule(),
+                new FluxParticleForceModule(),
+                new FluxParticleNoiseModule(),
+                new FluxParticleVortexModule(),
+                new FluxParticleLimitVelocityModule(),
+                new FluxParticleVelocityOverLifetimeModule(),
+                new FluxParticleColorOverLifetimeModule(),
+                new FluxParticleSizeOverLifetimeModule(),
+                new FluxParticleRotationOverLifetimeModule(),
+                new FluxParticleTextureSheetAnimationModule(),
+            };
+        }
+
+        [Test]
         public void ModuleHandlesShareExecutorValuesAndRemainInstanceLocal()
         {
             RequireGraphics();
@@ -1731,6 +1907,16 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNull(modules.Gravity);
             Assert.IsNull(modules.Gravity);
             Assert.IsFalse(runtime.HasModule("fluxfx.gravity"));
+            Assert.IsNull(modules.Drag);
+            Assert.IsNull(modules.Force);
+            Assert.IsNull(modules.Noise);
+            Assert.IsNull(modules.Vortex);
+            Assert.IsNull(modules.LimitVelocity);
+            Assert.IsNull(modules.VelocityOverLifetime);
+            Assert.IsNull(modules.ColorOverLifetime);
+            Assert.IsNull(modules.SizeOverLifetime);
+            Assert.IsNull(modules.RotationOverLifetime);
+            Assert.IsNull(modules.TextureSheetAnimation);
             Assert.IsNull(modules.GetBinding("fluxfx.gravity"));
         }
 
@@ -1767,7 +1953,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             authoring = root.AddComponent<FluxParticleAuthoring>();
             folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
             var definition = new FluxParticleModuleRegistry().GetAll().Single(value => value.ModuleId == "custom.fluxfx.lift");
-            SetModules(new FluxParticleGravityModule(), (FluxParticleModule)Activator.CreateInstance(definition.ModuleType));
+            SetModules(CreateStandardModules().Concat(new[] { (FluxParticleModule)Activator.CreateInstance(definition.ModuleType) }).ToArray());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             SetModules();

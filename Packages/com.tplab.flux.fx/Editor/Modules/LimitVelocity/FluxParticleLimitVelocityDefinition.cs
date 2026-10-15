@@ -9,20 +9,25 @@ namespace TpLab.Flux.FX.Editor.Modules.LimitVelocity
     /// <summary>
     /// Velocityの大きさを指定した上限へ制限するOperationを提供します。
     /// </summary>
-    public sealed class FluxParticleLimitVelocityDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleLimitVelocityDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleLimitVelocityModule);
         public string ModuleId => "tplab.fluxfx.limit-velocity";
+        public string EnabledParameterId => "limit-velocity.enabled";
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            new FluxParticleParameterDefinition("limit-velocity.max-speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var limit = (FluxParticleLimitVelocityModule)module;
             if (float.IsNaN(limit.MaxSpeed) || float.IsInfinity(limit.MaxSpeed) || limit.MaxSpeed < 0)
             {
                 throw new InvalidOperationException("Maximum speed must be finite and non-negative.");
             }
-            context.AddParameter(new FluxParticleParameterDefinition("limit-velocity.max-speed", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(limit.MaxSpeed, 0, 0, 0));
+            context.AddParameter(handleParameters[0], new Vector4(limit.MaxSpeed, 0, 0, 0));
             context.AddParameter(new FluxParticleParameterDefinition("limit-velocity.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("limit-velocity", ModuleId, FluxParticlePhase.Update,

@@ -24,6 +24,15 @@ namespace TpLab.Flux.FX.Udon.Modules
     public static class FluxParticleModuleHandleExtensions
     {
         /// <summary>
+        /// 現在のモードでParameterの操作に対応しているかを返します。
+        /// </summary>
+        public static bool HasParameter(this FluxParticleModuleHandle handle, int parameter)
+        {
+            return parameter >= 0 && parameter < handle.Count - FluxParticleModuleHandle.ParameterSlotsOffset &&
+                handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int >= 0;
+        }
+
+        /// <summary>
         /// Enabledの操作に対応しているかを返します。
         /// </summary>
         public static bool HasEnabled(this FluxParticleModuleHandle handle) => handle[FluxParticleModuleHandle.EnabledSlotIndex].Int >= 0;
@@ -51,6 +60,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static Vector4 GetValue(this FluxParticleModuleHandle handle, int parameter)
         {
+            if (!handle.HasParameter(parameter)) return Vector4.zero;
             return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).GetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int);
         }
 
@@ -59,6 +69,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static bool SetValue(this FluxParticleModuleHandle handle, int parameter, FluxParticleValueType type, Vector4 value)
         {
+            if (!handle.HasParameter(parameter)) return false;
             return ((FluxParticleExecutor)handle[FluxParticleModuleHandle.ExecutorIndex].Reference).SetParameterValue(handle[parameter + FluxParticleModuleHandle.ParameterSlotsOffset].Int, (int)type, value);
         }
     }

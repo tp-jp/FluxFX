@@ -9,16 +9,21 @@ namespace TpLab.Flux.FX.Editor.Modules.Drag
     /// <summary>
     /// DragのParameterとVelocity更新Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleDragDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleDragDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleDragModule);
         public string ModuleId => "fluxfx.drag";
+        public string EnabledParameterId => "drag.enabled";
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            new FluxParticleParameterDefinition("drag", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var drag = (FluxParticleDragModule)module;
-            context.AddParameter(new FluxParticleParameterDefinition("drag", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(drag.Drag, 0, 0, 0));
+            context.AddParameter(handleParameters[0], new Vector4(drag.Drag, 0, 0, 0));
             context.AddParameter(new FluxParticleParameterDefinition("drag.enabled", FluxParticleValueType.Float,
                 FluxParticleParameterPolicy.Live), new Vector4(1, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("drag", ModuleId, FluxParticlePhase.Update,

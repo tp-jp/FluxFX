@@ -9,13 +9,20 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
     /// <summary>
     /// Texture Sheet AnimationのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleTextureSheetAnimationDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleTextureSheetAnimationDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(FluxParticleTextureSheetAnimationModule);
         public string ModuleId => "tplab.fluxfx.texture-sheet-animation";
+        public string EnabledParameterId => null;
+        public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new FluxParticleParameterDefinition[]
+        {
+            new FluxParticleParameterDefinition("texture-sheet.tiles", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Static),
+            new FluxParticleParameterDefinition("texture-sheet.cycles", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live)
+        };
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
+            var handleParameters = GetHandleParameters(module);
             var sheet = (FluxParticleTextureSheetAnimationModule)module;
             if (sheet.TilesX < 1 || sheet.TilesY < 1 || (long)sheet.TilesX * sheet.TilesY > 16777216)
             {
@@ -25,10 +32,8 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
             {
                 throw new InvalidOperationException("Texture sheet cycles must be finite and non-negative.");
             }
-            context.AddParameter(new FluxParticleParameterDefinition("texture-sheet.tiles", FluxParticleValueType.Float2,
-                FluxParticleParameterPolicy.Static), new Vector4(sheet.TilesX, sheet.TilesY, 0, 0));
-            context.AddParameter(new FluxParticleParameterDefinition("texture-sheet.cycles", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live), new Vector4(sheet.Cycles, 0, 0, 0));
+            context.AddParameter(handleParameters[0], new Vector4(sheet.TilesX, sheet.TilesY, 0, 0));
+            context.AddParameter(handleParameters[1], new Vector4(sheet.Cycles, 0, 0, 0));
             context.AddOperation(new FluxParticleOperationDefinition("render.texture-sheet-animation", ModuleId, FluxParticlePhase.Render,
                 new[]
                 {

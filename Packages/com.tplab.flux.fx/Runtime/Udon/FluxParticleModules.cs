@@ -25,6 +25,56 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public FluxParticleGravityHandle Gravity => FluxParticleGravityHandle.Get(this);
 
+        /// <summary>
+        /// Dragの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleDragHandle Drag => FluxParticleDragHandle.Get(this);
+
+        /// <summary>
+        /// Forceの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleForceHandle Force => FluxParticleForceHandle.Get(this);
+
+        /// <summary>
+        /// Noiseの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleNoiseHandle Noise => FluxParticleNoiseHandle.Get(this);
+
+        /// <summary>
+        /// Vortexの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleVortexHandle Vortex => FluxParticleVortexHandle.Get(this);
+
+        /// <summary>
+        /// LimitVelocityの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleLimitVelocityHandle LimitVelocity => FluxParticleLimitVelocityHandle.Get(this);
+
+        /// <summary>
+        /// VelocityOverLifetimeの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleVelocityOverLifetimeHandle VelocityOverLifetime => FluxParticleVelocityOverLifetimeHandle.Get(this);
+
+        /// <summary>
+        /// ColorOverLifetimeの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleColorOverLifetimeHandle ColorOverLifetime => FluxParticleColorOverLifetimeHandle.Get(this);
+
+        /// <summary>
+        /// SizeOverLifetimeの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleSizeOverLifetimeHandle SizeOverLifetime => FluxParticleSizeOverLifetimeHandle.Get(this);
+
+        /// <summary>
+        /// RotationOverLifetimeの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleRotationOverLifetimeHandle RotationOverLifetime => FluxParticleRotationOverLifetimeHandle.Get(this);
+
+        /// <summary>
+        /// TextureSheetAnimationの操作ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleTextureSheetAnimationHandle TextureSheetAnimation => FluxParticleTextureSheetAnimationHandle.Get(this);
+
         [SerializeField]
         string[] bindingIds;
         [SerializeField]
@@ -69,7 +119,10 @@ namespace TpLab.Flux.FX.Udon
         /// </summary>
         public void CacheHandle(string moduleId, DataList handle)
         {
-            if (handles == null) handles = new DataDictionary();
+            if (handles == null)
+            {
+                handles = new DataDictionary();
+            }
             handles[moduleId] = handle;
         }
     }
