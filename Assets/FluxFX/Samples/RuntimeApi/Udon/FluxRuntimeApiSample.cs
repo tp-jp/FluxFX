@@ -7,6 +7,18 @@ using UnityEngine.UI;
 
 namespace FluxFX.Samples.RuntimeApi.Udon
 {
+    public enum SampleModule
+    {
+        Gravity,
+        Drag,
+        Force,
+        Noise,
+        Vortex,
+        LimitVelocity,
+        VelocityOverLifetime,
+        Count
+    }
+
     public enum SampleControl
     {
         Lifetime = 0,
@@ -61,20 +73,16 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         OrbitOffsetY = 49,
         OrbitOffsetZ = 50,
         Radial = 51,
-        LiftStrength = 52,
-        LiftX = 53,
-        LiftY = 54,
-        LiftZ = 55,
-        EndR = 56,
-        EndG = 57,
-        EndB = 58,
-        EndA = 59,
-        EndSize = 60,
-        EndRotation = 61,
-        Cycles = 62,
-        TilesX = 63,
-        TilesY = 64,
-        Count = 65
+        EndR = 52,
+        EndG = 53,
+        EndB = 54,
+        EndA = 55,
+        EndSize = 56,
+        EndRotation = 57,
+        Cycles = 58,
+        TilesX = 59,
+        TilesY = 60,
+        Count = 61
     }
 
     /// <summary>
@@ -91,6 +99,8 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         Text[] values;
         [SerializeField]
         Toggle[] moduleToggles;
+        [SerializeField]
+        CanvasGroup[] moduleParameterGroups;
         [SerializeField]
         Toggle loopToggle;
         [SerializeField]
@@ -156,6 +166,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
 
         public void OnControlsChanged()
         {
+            RefreshModuleControls();
             for (var i = 0; i < controls.Length; i++)
             {
                 values[i].text = controls[i].value.ToString(controls[i].wholeNumbers ? "F0" : "F2");
@@ -163,6 +174,16 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             if (!_ready) return;
             ApplyLiveValues();
             message.text = "Live values applied. Initial values need Apply & Restart.";
+        }
+
+        public void RefreshModuleControls()
+        {
+            for (var i = 0; i < moduleParameterGroups.Length; i++)
+            {
+                var enabled = moduleToggles[i].isOn;
+                moduleParameterGroups[i].interactable = enabled;
+                moduleParameterGroups[i].alpha = enabled ? 1f : 0.35f;
+            }
         }
 
         void ApplyLiveValues()
@@ -205,16 +226,13 @@ namespace FluxFX.Samples.RuntimeApi.Udon
             modules.SizeOverLifetime.SetEndSize(Value(SampleControl.EndSize));
             modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, Value(SampleControl.EndRotation)));
             modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
-            // modules.CustomLift().SetStrength(Value(SampleControl.LiftStrength));
-            // modules.CustomLift().SetDirection(Vector(SampleControl.LiftX));
-            modules.Gravity.SetEnabled(moduleToggles[0].isOn);
-            modules.Drag.SetEnabled(moduleToggles[1].isOn);
-            modules.Force.SetEnabled(moduleToggles[2].isOn);
-            modules.Noise.SetEnabled(moduleToggles[3].isOn);
-            modules.Vortex.SetEnabled(moduleToggles[4].isOn);
-            modules.LimitVelocity.SetEnabled(moduleToggles[5].isOn);
-            modules.VelocityOverLifetime.SetEnabled(moduleToggles[6].isOn);
-            // modules.CustomLift().SetEnabled(moduleToggles[7].isOn);
+            modules.Gravity.SetEnabled(moduleToggles[(int)SampleModule.Gravity].isOn);
+            modules.Drag.SetEnabled(moduleToggles[(int)SampleModule.Drag].isOn);
+            modules.Force.SetEnabled(moduleToggles[(int)SampleModule.Force].isOn);
+            modules.Noise.SetEnabled(moduleToggles[(int)SampleModule.Noise].isOn);
+            modules.Vortex.SetEnabled(moduleToggles[(int)SampleModule.Vortex].isOn);
+            modules.LimitVelocity.SetEnabled(moduleToggles[(int)SampleModule.LimitVelocity].isOn);
+            modules.VelocityOverLifetime.SetEnabled(moduleToggles[(int)SampleModule.VelocityOverLifetime].isOn);
         }
 
         void ApplyBursts()

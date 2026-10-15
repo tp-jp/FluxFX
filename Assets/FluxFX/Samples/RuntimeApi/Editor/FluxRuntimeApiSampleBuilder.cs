@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using FluxFX.Samples.RuntimeApi.Udon;
-using TpLab.Flux.FX.CustomModules;
+
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
@@ -119,10 +119,6 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             new ControlSpec(3, SampleControl.OrbitOffsetY, "Orbit offset / Y", -3f, 3f, 0f, false),
             new ControlSpec(3, SampleControl.OrbitOffsetZ, "Orbit offset / Z", -3f, 3f, 0f, false),
             new ControlSpec(3, SampleControl.Radial, "Radial velocity", -5f, 5f, 0f, false),
-            new ControlSpec(3, SampleControl.LiftStrength, "Custom Lift / strength", 0f, 8f, 2f, false),
-            new ControlSpec(3, SampleControl.LiftX, "Custom Lift direction / X", -1f, 1f, 0f, false),
-            new ControlSpec(3, SampleControl.LiftY, "Custom Lift direction / Y", -1f, 1f, 1f, false),
-            new ControlSpec(3, SampleControl.LiftZ, "Custom Lift direction / Z", -1f, 1f, 0f, false),
             new ControlSpec(4, SampleControl.EndR, "Color over lifetime / R", 0f, 1f, 1f, false),
             new ControlSpec(4, SampleControl.EndG, "Color over lifetime / G", 0f, 1f, 0.3f, false),
             new ControlSpec(4, SampleControl.EndB, "Color over lifetime / B", 0f, 1f, 0.1f, false),
@@ -228,12 +224,12 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
 
         static void EnsureProgram()
         {
-            var path = Root + "/Runtime/FluxRuntimeApiSample.asset";
+            var path = Root + "/Udon/FluxRuntimeApiSample.asset";
             var asset = AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path);
             if (asset == null)
             {
                 asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
-                asset.sourceCsScript = AssetDatabase.LoadAssetAtPath<MonoScript>(Root + "/Runtime/FluxRuntimeApiSample.cs");
+                asset.sourceCsScript = AssetDatabase.LoadAssetAtPath<MonoScript>(Root + "/Udon/FluxRuntimeApiSample.cs");
                 AssetDatabase.CreateAsset(asset, path);
                 typeof(UdonSharpProgramAsset).GetMethod("ClearProgramAssetCache", BindingFlags.Static | BindingFlags.NonPublic)?.Invoke(null, null);
             }
@@ -259,7 +255,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 new FluxParticleNoiseModule(), new FluxParticleVortexModule(), new FluxParticleLimitVelocityModule(),
                 new FluxParticleVelocityOverLifetimeModule(), new FluxParticleColorOverLifetimeModule(),
                 new FluxParticleSizeOverLifetimeModule(), new FluxParticleRotationOverLifetimeModule(),
-                new FluxParticleTextureSheetAnimationModule(), new CustomLiftModule()
+                new FluxParticleTextureSheetAnimationModule()
             };
             var modules = serialized.FindProperty("modules");
             modules.arraySize = definitions.Length;
@@ -363,6 +359,137 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             return toggle;
         }
 
+
+        const int MotionPage = 3;
+        const int RenderPage = 4;
+
+        static readonly string[] ModuleNames =
+        {
+            "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit Velocity", "Velocity over Lifetime",
+            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation"
+        };
+
+        static readonly SampleControl[] ModuleStarts =
+        {
+            SampleControl.GravityX, SampleControl.Drag, SampleControl.ForceX, SampleControl.NoiseStrength,
+            SampleControl.VortexStrength, SampleControl.MaxSpeed, SampleControl.VelocityStartX,
+            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.Count
+        };
+
+        static float BuildModulePage(ScrollRect scroll, int page, Slider[] controls, Text[] values,
+            Toggle[] toggles, CanvasGroup[] groups, UdonBehaviour target)
+        {
+            var y = 12f;
+            var first = page == MotionPage ? 0 : (int)SampleModule.Count;
+            var end = page == MotionPage ? (int)SampleModule.Count : ModuleNames.Length;
+            for (var module = first; module < end; module++)
+            {
+                var specs = Specs.Where(spec => spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
+                var height = 48 + specs.Length * 72;
+                var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
+                var header = Rect("Header", section, 0, 0, 438, 36);
+                header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
+                if (page == MotionPage)
+                {
+                    toggles[module] = Toggle(header, ModuleNames[module], 10, 5, module == (int)SampleModule.Noise, target);
+                    Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
+                    toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
+                }
+                else
+                {
+                    Label(header, ModuleNames[module], 12, 0, 414, 36, 18).color = Accent;
+                }
+                var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
+                if (page == MotionPage)
+                {
+                    groups[module] = body.gameObject.AddComponent<CanvasGroup>();
+                    groups[module].interactable = toggles[module].isOn;
+                    groups[module].alpha = toggles[module].isOn ? 1f : 0.35f;
+                }
+                var offset = 0f;
+                foreach (var spec in specs)
+                {
+                    Label(body, spec.Label, 16, offset, 330, 26, 16);
+                    var value = Label(body, spec.Default.ToString(spec.Integer ? "F0" : "F2"), 356, offset, 65, 26, 16);
+                    value.color = Accent;
+                    var slider = DefaultControls.CreateSlider(Resources).GetComponent<Slider>();
+                    slider.name = spec.Id.ToString();
+                    slider.transform.SetParent(body, false);
+                    Place((RectTransform)slider.transform, 20, offset + 32, 394, 20);
+                    slider.minValue = spec.Min;
+                    slider.maxValue = spec.Max;
+                    slider.wholeNumbers = spec.Integer;
+                    slider.value = spec.Default;
+                    slider.fillRect.GetComponent<Image>().color = Accent;
+                    UnityEventTools.AddStringPersistentListener(slider.onValueChanged, target.SendCustomEvent, nameof(FluxRuntimeApiSample.OnControlsChanged));
+                    controls[(int)spec.Id] = slider;
+                    values[(int)spec.Id] = value;
+                    offset += 72;
+                }
+                y += height + 16;
+            }
+            return y;
+        }
+
+        /// <summary>
+        /// 既存UIの値を維持し、Moduleの見出しとパラメーターをまとめます。
+        /// </summary>
+        public static void UpdateModuleUi(FluxRuntimeApiSample controller)
+        {
+            var oldControls = (Slider[])controller.GetProgramVariable("controls");
+            var oldValues = (Text[])controller.GetProgramVariable("values");
+            var oldToggles = (Toggle[])controller.GetProgramVariable("moduleToggles");
+            var pages = (GameObject[])controller.GetProgramVariable("pages");
+            var controls = new Slider[(int)SampleControl.Count];
+            var values = new Text[controls.Length];
+            var savedValues = new float[controls.Length];
+            const int LegacyControlCount = 65;
+            const int RemovedCustomControlCount = 4;
+            for (var i = 0; i < controls.Length; i++)
+            {
+                var oldIndex = oldControls.Length == LegacyControlCount && i >= (int)SampleControl.EndR ? i + RemovedCustomControlCount : i;
+                controls[i] = oldControls[oldIndex];
+                values[i] = oldValues[oldIndex];
+                savedValues[i] = controls[i].value;
+            }
+            var enabled = new bool[(int)SampleModule.Count];
+            for (var i = 0; i < enabled.Length; i++)
+            {
+                enabled[i] = oldToggles[i].isOn;
+            }
+            var toggles = new Toggle[enabled.Length];
+            var groups = new CanvasGroup[enabled.Length];
+            var target = UdonSharpEditorUtility.GetBackingUdonBehaviour(controller);
+            for (var page = MotionPage; page <= RenderPage; page++)
+            {
+                var scroll = pages[page].GetComponent<ScrollRect>();
+                for (var child = scroll.content.childCount - 1; child >= 0; child--)
+                {
+                    Object.DestroyImmediate(scroll.content.GetChild(child).gameObject);
+                }
+                var height = BuildModulePage(scroll, page, controls, values, toggles, groups, target);
+                scroll.content.sizeDelta = new Vector2(0, height);
+                scroll.content.anchoredPosition = Vector2.zero;
+            }
+            for (var i = 0; i < controls.Length; i++)
+            {
+                controls[i].SetValueWithoutNotify(savedValues[i]);
+                values[i].text = savedValues[i].ToString(controls[i].wholeNumbers ? "F0" : "F2");
+            }
+            for (var i = 0; i < toggles.Length; i++)
+            {
+                toggles[i].SetIsOnWithoutNotify(enabled[i]);
+            }
+            controller.SetProgramVariable("controls", controls);
+            controller.SetProgramVariable("values", values);
+            controller.SetProgramVariable("moduleToggles", toggles);
+            controller.SetProgramVariable("moduleParameterGroups", groups);
+            controller.RefreshModuleControls();
+            ConfigureSelectionControls(pages[MotionPage].GetComponentInParent<Canvas>(true));
+            EditorUtility.SetDirty(controller);
+            UdonSharpEditorUtility.CopyProxyToUdon(controller);
+        }
+
         static void CreateUi(FluxRuntimeApiSample controller, Camera camera)
         {
             var canvas = new GameObject("Runtime API UI", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(VRCUiShape)).GetComponent<Canvas>();
@@ -396,7 +523,8 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var pages = new GameObject[pageNames.Length];
             var controls = new Slider[(int)SampleControl.Count];
             var values = new Text[controls.Length];
-            var toggles = new Toggle[8];
+            var toggles = new Toggle[(int)SampleModule.Count];
+            var parameterGroups = new CanvasGroup[toggles.Length];
             Toggle loop = null;
             for (var p = 0; p < pages.Length; p++)
             {
@@ -418,16 +546,11 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                     loop = Toggle(scroll.content, "Loop (restart)", 12, y, true, target);
                     y += 40;
                 }
-                if (p == 3)
+                if (p == MotionPage || p == RenderPage)
                 {
-                    var names = new[] { "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit velocity", "Velocity over lifetime", "Custom Lift" };
-                    for (var i = 0; i < names.Length; i++)
-                    {
-                        toggles[i] = Toggle(scroll.content, names[i], 12 + i % 2 * 220, y + i / 2 * 36, i == 3, target);
-                    }
-                    y += 160;
+                    y = BuildModulePage(scroll, p, controls, values, toggles, parameterGroups, target);
                 }
-                foreach (var spec in Specs.Where(spec => spec.Page == p))
+                foreach (var spec in Specs.Where(spec => spec.Page == p && p != MotionPage && p != RenderPage))
                 {
                     Label(scroll.content, spec.Label, 12, y, 350, 26, 16);
                     var value = Label(scroll.content, spec.Default.ToString(spec.Integer ? "F0" : "F2"), 366, y, 65, 26, 16);
@@ -458,6 +581,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             controller.SetProgramVariable("controls", controls);
             controller.SetProgramVariable("values", values);
             controller.SetProgramVariable("moduleToggles", toggles);
+            controller.SetProgramVariable("moduleParameterGroups", parameterGroups);
             controller.SetProgramVariable("loopToggle", loop);
             controller.SetProgramVariable("shapeSelector", dropdown);
             controller.SetProgramVariable("pages", pages);
