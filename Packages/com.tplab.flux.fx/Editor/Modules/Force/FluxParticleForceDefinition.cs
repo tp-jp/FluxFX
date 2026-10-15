@@ -1,8 +1,8 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
-using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Modules.Force
 {
@@ -11,18 +11,15 @@ namespace TpLab.Flux.FX.Editor.Modules.Force
     /// </summary>
     public sealed class FluxParticleForceDefinition : IFluxParticleModuleDefinition
     {
-        const int ForceSlot = 0;
-
         public Type ModuleType => typeof(FluxParticleForceModule);
 
-        public string ModuleId => "tplab.fluxfx.force";
+        public string ModuleId => FluxParticleForceContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var force = (FluxParticleForceModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "force.enabled", force.Enabled, 1);
-            var forceParameter = contribution.Parameter(ForceSlot, "force", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, force.Force);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleForceContract.Module, force.Enabled);
+            var forceParameter = contribution.Bind(FluxParticleForceContract.Force, force.Force);
             contribution.Operation("force", FluxParticlePhase.Update,
                 reads: new[]
                 {

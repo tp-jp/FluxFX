@@ -1,8 +1,8 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
-using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
@@ -12,29 +12,20 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
     /// </summary>
     public sealed class FluxParticleTextureSheetAnimationDefinition : IFluxParticleModuleDefinition
     {
-        const int TilesSlot = 0;
-        const int CyclesSlot = 1;
-
         public Type ModuleType => typeof(FluxParticleTextureSheetAnimationModule);
 
-        public string ModuleId => "tplab.fluxfx.texture-sheet-animation";
+        public string ModuleId => FluxParticleTextureSheetAnimationContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var sheet = (FluxParticleTextureSheetAnimationModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "texture-sheet.enabled", sheet.Enabled, 2);
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleTextureSheetAnimationContract.Module, sheet.Enabled);
             if (sheet.TilesX < 1 || sheet.TilesY < 1 || (long)sheet.TilesX * sheet.TilesY > 16777216)
             {
                 throw new InvalidOperationException("Texture sheet tile counts must be positive and the frame count must fit float integer precision.");
             }
-            if (float.IsNaN(sheet.Cycles) || float.IsInfinity(sheet.Cycles) || sheet.Cycles < 0)
-            {
-                throw new InvalidOperationException("Texture sheet cycles must be finite and non-negative.");
-            }
-            var tilesParameter = contribution.Parameter(TilesSlot, "texture-sheet.tiles", FluxParticleValueType.Float2,
-                FluxParticleParameterPolicy.Static, new Vector4(sheet.TilesX, sheet.TilesY, 0, 0));
-            var cyclesParameter = contribution.Parameter(CyclesSlot, "texture-sheet.cycles", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live, new Vector4(sheet.Cycles, 0, 0, 0));
+            var tilesParameter = contribution.Bind(FluxParticleTextureSheetAnimationContract.Tiles, new Vector2(sheet.TilesX, sheet.TilesY));
+            var cyclesParameter = contribution.Bind(FluxParticleTextureSheetAnimationContract.Cycles, sheet.Cycles);
             contribution.Operation("render.texture-sheet-animation", FluxParticlePhase.Render,
                 reads: new[]
                 {

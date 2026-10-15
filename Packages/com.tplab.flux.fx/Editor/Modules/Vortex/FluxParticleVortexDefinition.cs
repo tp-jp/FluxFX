@@ -1,9 +1,8 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
-using TpLab.Flux.FX.Udon;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Modules.Vortex
 {
@@ -12,25 +11,17 @@ namespace TpLab.Flux.FX.Editor.Modules.Vortex
     /// </summary>
     public sealed class FluxParticleVortexDefinition : IFluxParticleModuleDefinition
     {
-        const int CenterSlot = 0;
-        const int AxisSlot = 1;
-        const int StrengthSlot = 2;
-
         public Type ModuleType => typeof(FluxParticleVortexModule);
 
-        public string ModuleId => "tplab.fluxfx.vortex";
+        public string ModuleId => FluxParticleVortexContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var vortex = (FluxParticleVortexModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "vortex.enabled", vortex.Enabled, 3);
-            if (vortex.Strength < 0) throw new InvalidOperationException("Vortex strength must be non-negative.");
-            var centerParameter = contribution.Parameter(CenterSlot, "vortex.center", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, vortex.Center);
-            var axisParameter = contribution.Parameter(AxisSlot, "vortex.axis", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, vortex.Axis);
-            var strengthParameter = contribution.Parameter(StrengthSlot, "vortex.strength", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live, new Vector4(vortex.Strength, 0, 0, 0));
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleVortexContract.Module, vortex.Enabled);
+            var centerParameter = contribution.Bind(FluxParticleVortexContract.Center, vortex.Center);
+            var axisParameter = contribution.Bind(FluxParticleVortexContract.Axis, vortex.Axis);
+            var strengthParameter = contribution.Bind(FluxParticleVortexContract.Strength, vortex.Strength);
             contribution.Operation("vortex", FluxParticlePhase.Update,
                 reads: new[]
                 {

@@ -1,9 +1,9 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
 {
@@ -14,30 +14,20 @@ namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/VelocityOverLifetime/";
         const string Prefix = "velocity-over-lifetime.";
-        const int StartSlot = 0;
-        const int EndSlot = 1;
-        const int OrbitalSlot = 2;
-        const int OffsetSlot = 3;
-        const int RadialSlot = 4;
 
         public Type ModuleType => typeof(FluxParticleVelocityOverLifetimeModule);
 
-        public string ModuleId => "tplab.fluxfx.velocity-over-lifetime";
+        public string ModuleId => FluxParticleVelocityOverLifetimeContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var velocity = (FluxParticleVelocityOverLifetimeModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "velocity-over-lifetime.enabled", velocity.Enabled, 5);
-            var startParameter = contribution.Parameter(StartSlot, "velocity-over-lifetime.start", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, velocity.Start);
-            var endParameter = contribution.Parameter(EndSlot, "velocity-over-lifetime.end", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, velocity.End);
-            var orbitalParameter = contribution.Parameter(OrbitalSlot, "velocity-over-lifetime.orbital", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, velocity.Orbital);
-            var offsetParameter = contribution.Parameter(OffsetSlot, "velocity-over-lifetime.offset", FluxParticleValueType.Float3,
-                FluxParticleParameterPolicy.Live, velocity.Offset);
-            var radialParameter = contribution.Parameter(RadialSlot, "velocity-over-lifetime.radial", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live, new Vector4(velocity.Radial, 0, 0, 0));
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleVelocityOverLifetimeContract.Module, velocity.Enabled);
+            var startParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.Start, velocity.Start);
+            var endParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.End, velocity.End);
+            var orbitalParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.Orbital, velocity.Orbital);
+            var offsetParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.Offset, velocity.Offset);
+            var radialParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.Radial, velocity.Radial);
             context.AddValue(new FluxParticleValueDefinition(Prefix + "center-offset", FluxParticleValueType.Float3,
                 FluxParticleWritePolicy.ReadOnly, ModuleId));
             context.AddProvider(new FluxParticleValueProvider(Prefix + "center-offset", FluxParticleProviderKind.Derived,

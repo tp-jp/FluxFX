@@ -1,9 +1,8 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
-using TpLab.Flux.FX.Udon;
-using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Modules.Drag
 {
@@ -12,18 +11,15 @@ namespace TpLab.Flux.FX.Editor.Modules.Drag
     /// </summary>
     public sealed class FluxParticleDragDefinition : IFluxParticleModuleDefinition
     {
-        const int DragSlot = 0;
-
         public Type ModuleType => typeof(FluxParticleDragModule);
 
-        public string ModuleId => "fluxfx.drag";
+        public string ModuleId => FluxParticleDragContract.Module.Id;
 
         public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
         {
             var drag = (FluxParticleDragModule)module;
-            var contribution = new FluxParticleModuleContribution(context, ModuleId, "drag.enabled", drag.Enabled, 1);
-            var dragParameter = contribution.Parameter(DragSlot, "drag", FluxParticleValueType.Float,
-                FluxParticleParameterPolicy.Live, new Vector4(drag.Drag, 0, 0, 0));
+            var contribution = new FluxParticleModuleContribution(context, FluxParticleDragContract.Module, drag.Enabled);
+            var dragParameter = contribution.Bind(FluxParticleDragContract.Drag, drag.Drag);
             contribution.Operation("drag", FluxParticlePhase.Update,
                 reads: new[]
                 {

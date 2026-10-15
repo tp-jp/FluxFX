@@ -1,0 +1,29 @@
+namespace TpLab.Flux.FX.Editor.Contracts.Modules
+{
+    /// <summary>
+    /// LimitVelocityの公開APIとParameterの契約
+    /// </summary>
+    public static class FluxParticleLimitVelocityContract
+    {
+        /// <summary>
+        /// 最大速度の契約
+        /// </summary>
+        public static FluxParticleParameterContract<float> MaxSpeed { get; } =
+            FluxParticleParameter.Float("limit-velocity.max-speed")
+                .ApiName("MaxSpeed")
+                .Policy(FluxParticleParameterPolicy.Live)
+                .Minimum(0)
+                .Build();
+
+        /// <summary>
+        /// Moduleの契約
+        /// </summary>
+        public static FluxParticleModuleContract Module { get; } =
+            new FluxParticleModuleContractBuilder("tplab.fluxfx.limit-velocity")
+                .Handle("FluxParticleLimitVelocityHandle")
+                .Accessor("LimitVelocity")
+                .Enabled("limit-velocity.enabled")
+                .Parameter(MaxSpeed)
+                .Build();
+    }
+}
