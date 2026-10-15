@@ -640,6 +640,35 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
+        public void AllocationBuffersAreBuiltAheadAndCanBeReleasedAndReinitializedWithSmallerCount()
+        {
+            RequireGraphics();
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled, 65);
+            var buffers = (FluxBuffer[])runtime.GetProgramVariable("allocationBuffers");
+            var kernels = (FluxKernel[])runtime.GetProgramVariable("allocationKernels");
+            CollectionAssert.AreEqual(new[] { 65, 17, 5, 2, 1 }, buffers.Select(buffer => (int)buffer.GetProgramVariable("initialCount")));
+            Assert.AreEqual(7, kernels.Length);
+            Assert.IsTrue(buffers.All(buffer => buffer.GetProgramVariable("_texture") == null));
+            Assert.IsTrue(runtime.Initialize(5));
+            CollectionAssert.AreEqual(new[] { 5, 2, 1, 1, 1 }, buffers.Select(buffer => buffer.Count));
+            var textures = buffers.Select(buffer => buffer.Texture).ToArray();
+            runtime.Step(0, 0, 5, 42);
+            for (var slot = 0; slot < 5; slot++)
+            {
+                Assert.AreEqual(42 + slot, ReadValue(runtime, compiled, "particle.spawn-key", slot).x);
+            }
+            runtime.Release();
+            Assert.IsTrue(textures.All(texture => texture == null));
+            CollectionAssert.AreEqual(buffers, (FluxBuffer[])runtime.GetProgramVariable("allocationBuffers"));
+            Assert.IsTrue(runtime.Initialize(1));
+            runtime.Step(0, 0, 1, 99);
+            Assert.AreEqual(99, ReadValue(runtime, compiled, "particle.spawn-key", 0).x);
+            var mask = (FluxBuffer)runtime.GetProgramVariable("spawnMaskBuffer");
+            Assert.AreEqual(0, ReadTexture(mask.Texture, 1).r);
+        }
+
+        [Test]
         public void FullCapacityRejectsSpawnWithoutResettingLiveParticlesAndReusesExpiredSlots()
         {
             RequireGraphics();
@@ -689,6 +718,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(first.Initialize(4));
             Assert.IsTrue(second.Initialize(4));
             Assert.AreNotSame(first.GetCurrentPage(0), second.GetCurrentPage(0));
+            var firstAllocation = (FluxBuffer[])first.GetProgramVariable("allocationBuffers");
+            var secondAllocation = (FluxBuffer[])second.GetProgramVariable("allocationBuffers");
+            for (var level = 0; level < firstAllocation.Length; level++)
+            {
+                Assert.AreNotSame(firstAllocation[level].Texture, secondAllocation[level].Texture);
+            }
             Assert.AreNotSame(first.RenderMaterial, second.RenderMaterial);
             Assert.AreSame(first.GetProgramVariable("renderMaterial"), first.RenderMaterial);
             Assert.AreSame(second.GetProgramVariable("renderMaterial"), second.RenderMaterial);

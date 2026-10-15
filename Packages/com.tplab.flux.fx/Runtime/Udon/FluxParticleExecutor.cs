@@ -61,10 +61,11 @@ namespace TpLab.Flux.FX.Udon
         string spawnKeyProperty;
 
         [SerializeField]
-        Material[] allocationMaterials;
+        FluxKernel[] allocationKernels;
+        [SerializeField]
+        FluxBuffer[] allocationBuffers;
         [SerializeField]
         string[] allocationLookupProperties;
-        RenderTexture[] _allocationLevels;
 
         FluxBuffer[] _current;
         FluxBuffer[] _next;
@@ -142,18 +143,27 @@ namespace TpLab.Flux.FX.Udon
             }
 
             renderMaterial.SetVector("_FluxStateSize", stateSize);
-            _allocationLevels = FluxParticleSpawnAllocator.CreateTextures(count);
-            if (_allocationLevels == null)
+            var allocationCount = count;
+            for (var level = 0; level < allocationBuffers.Length; level++)
             {
-                Logger.LogError("Spawn allocation RenderTexture allocation failed.", this);
+                if (!ConfigureBuffer(allocationBuffers[level], allocationCount))
+                {
+                    Release();
+                    return false;
+                }
+                allocationCount = (allocationCount + 3) / 4;
+            }
+            if (allocationBuffers[allocationBuffers.Length - 1].Count != 1)
+            {
+                Logger.LogError("Spawn allocation hierarchy is too shallow.", this);
                 Release();
                 return false;
             }
-            FluxParticleSpawnAllocator.Configure(allocationMaterials, _allocationLevels, spawnMaskBuffer.Texture, count);
+            FluxParticleSpawnAllocator.Configure(allocationKernels, allocationBuffers, spawnMaskBuffer, count);
             for (var i = 0; i < allocationLookupProperties.Length; i++)
             {
                 var property = allocationLookupProperties[i];
-                allocationMaterials[0].SetTexture(property, renderMaterial.GetTexture(property));
+                allocationKernels[0].SetTexture(property, renderMaterial.GetTexture(property));
             }
             _started = false;
             _initialized = true;
@@ -287,12 +297,17 @@ namespace TpLab.Flux.FX.Udon
 
         /// <summary>
         /// Executorが保持するRuntime参照を解放します。
-        /// Material Assetの参照は再初期化に備えて保持します。
+        /// 集計BufferのTextureを解放し、ビルド済みの構成は再初期化に備えて保持します。
         /// </summary>
         public void Release()
         {
-            FluxParticleSpawnAllocator.ReleaseTextures(_allocationLevels);
-            _allocationLevels = null;
+            if (allocationBuffers != null)
+            {
+                for (var level = 0; level < allocationBuffers.Length; level++)
+                {
+                    if (allocationBuffers[level] != null) allocationBuffers[level].Release();
+                }
+            }
             _initialized = false;
             _current = null;
             _next = null;
@@ -329,7 +344,7 @@ namespace TpLab.Flux.FX.Udon
 
             if (active > 0)
             {
-                var availability = allocationMaterials[0];
+                var availability = allocationKernels[0];
                 availability.SetFloat(deltaTimeProperty, deltaTime);
                 if (!string.IsNullOrEmpty(simulationTimeProperty))
                 {
@@ -345,11 +360,11 @@ namespace TpLab.Flux.FX.Udon
                 }
                 for (var page = 0; page < _current.Length; page++)
                 {
-                    availability.SetTexture(renderPageProperties[page], _current[page].Texture);
+                    availability.SetBuffer(renderPageProperties[page], _current[page]);
                 }
             }
-            FluxParticleSpawnAllocator.Execute(allocationMaterials, _allocationLevels, spawnMaskBuffer.Texture,
-                spawnKeyBuffer.Texture, _count, first, active, seedBase);
+            FluxParticleSpawnAllocator.Execute(allocationKernels, allocationBuffers, spawnMaskBuffer,
+                spawnKeyBuffer, first, active, seedBase);
         }
 
         int FindParameter(string id)
@@ -370,8 +385,8 @@ namespace TpLab.Flux.FX.Udon
                 if (parameterTypes[index] == 1) stepKernels[i].SetFloat(property, value.x);
                 else stepKernels[i].SetVector(property, value);
             }
-            if (parameterTypes[index] == 1) allocationMaterials[0].SetFloat(property, value.x);
-            else allocationMaterials[0].SetVector(property, value);
+            if (parameterTypes[index] == 1) allocationKernels[0].SetFloat(property, value.x);
+            else allocationKernels[0].SetVector(property, value);
             if (parameterTypes[index] == 1) renderMaterial.SetFloat(property, value.x);
             else renderMaterial.SetVector(property, value);
         }
@@ -394,10 +409,15 @@ namespace TpLab.Flux.FX.Udon
                     if (string.IsNullOrEmpty(emitterRowProperties[row])) return false;
                 }
             }
-            if (allocationMaterials == null || allocationMaterials.Length != 4 || allocationLookupProperties == null) return false;
-            for (var i = 0; i < allocationMaterials.Length; i++)
+            if (allocationBuffers == null || allocationBuffers.Length < 1 || allocationBuffers.Length > 13 ||
+                allocationKernels == null || allocationKernels.Length != allocationBuffers.Length + 2 || allocationLookupProperties == null) return false;
+            for (var i = 0; i < allocationBuffers.Length; i++)
             {
-                if (allocationMaterials[i] == null) return false;
+                if (allocationBuffers[i] == null) return false;
+            }
+            for (var i = 0; i < allocationKernels.Length; i++)
+            {
+                if (allocationKernels[i] == null) return false;
             }
             if (stepKernels == null || clearKernels == null || clearKernels.Length == 0 || renderMaterial == null) return false;
             if (spawnMaskBuffer == null || spawnKeyBuffer == null) return false;

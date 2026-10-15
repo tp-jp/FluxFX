@@ -85,6 +85,7 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new ArgumentOutOfRangeException(nameof(bufferCapacity), $"Buffer capacity must be in [1, {maximum}] for this GPU and render Mesh.");
             }
+            FluxParticleSpawnAllocationBuilder.ValidateTemplates();
             var program = compiled.Shaders;
             var parameters = program.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
             var parameterValues = parameters.Select(parameter => compiled.InitialValues[parameter.Id]).ToArray();
@@ -121,11 +122,14 @@ namespace TpLab.Flux.FX.Editor.Compilation
             {
                 throw new InvalidOperationException("Spawn allocation Shaders were not imported correctly.");
             }
-            runtime.SetProgramVariable("allocationMaterials", SaveAllocationMaterials(runtime, allocationShaders, outputRoot));
+
             runtime.SetProgramVariable("allocationLookupProperties", program.Compilation.Providers.Values
                 .Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable)
                 .Select(provider => FluxParticleHlslNames.ProviderProperty(provider.ValueId)).ToArray());
             var generated = CreateGeneratedRoot(runtime);
+            var allocation = FluxParticleSpawnAllocationBuilder.Create(CreateGroup(generated, "SpawnAllocation"), bufferCapacity, allocationShaders, false);
+            runtime.SetProgramVariable("allocationBuffers", allocation.Buffers);
+            runtime.SetProgramVariable("allocationKernels", allocation.Kernels);
             var stepRoot = CreateGroup(generated, "Steps");
             var pageRoot = CreateGroup(generated, "Pages");
             var steps = stepShaders.Select((shader, index) => CreateStep(stepRoot, stepPrefab, index, shader)).ToArray();
@@ -173,29 +177,6 @@ namespace TpLab.Flux.FX.Editor.Compilation
                 ["emission"] = new JObject { ["rate"] = authoring.Emission.Rate, ["bursts"] = bursts }
             };
             return json.ToString(Formatting.None);
-        }
-
-        static Material[] SaveAllocationMaterials(FluxParticleExecutor runtime, Shader[] shaders, string outputRoot)
-        {
-            var globalId = GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject);
-            var identity = (int)globalId.identifierType == 0 ? "Transient:" + runtime.GetInstanceID() : globalId.ToString();
-            var materials = new Material[shaders.Length];
-            for (var index = 0; index < shaders.Length; index++)
-            {
-                var shader = shaders[index];
-                var shaderId = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(shader));
-                var path = outputRoot + "/SpawnAllocation-" + Hash128.Compute(identity + "|" + index + "|" + shaderId) + ".mat";
-                var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (material == null)
-                {
-                    material = new Material(shader);
-                    AssetDatabase.CreateAsset(material, path);
-                }
-                material.shader = shader;
-                EditorUtility.SetDirty(material);
-                materials[index] = material;
-            }
-            return materials;
         }
 
         static Material SaveRenderMaterial(FluxParticleExecutor runtime, FluxParticleBuildResult compiled,

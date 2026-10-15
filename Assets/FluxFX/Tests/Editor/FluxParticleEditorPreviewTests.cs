@@ -7,6 +7,7 @@ using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.FX.Editor.Inspector;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.Udon;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
@@ -223,6 +224,11 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var session = (FluxParticleProgramGpuSession)typeof(FluxParticleEditorPreview)
                     .GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
                 var pages = session.CurrentPages.ToArray();
+                var allocation = (FluxBuffer[])typeof(FluxParticleEditorPreview)
+                    .GetField("allocationLevels", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
+                var allocationTextures = allocation.Select(buffer => buffer.Texture).ToArray();
+                var allocationScene = allocation[0].gameObject.scene;
+                Assert.IsTrue(EditorSceneManager.IsPreviewScene(allocationScene));
                 Assert.AreEqual(4, preview.Count);
                 Assert.AreEqual(0, preview.PlaybackTime);
                 preview.Step(0.25f);
@@ -252,6 +258,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.AreEqual(0, ReadValue(session, build, "particle.spawn-key").x, 0.0001f);
                 preview.Dispose();
                 Assert.IsTrue(pages.All(page => page == null));
+                Assert.IsTrue(allocationTextures.All(texture => texture == null));
+                Assert.IsFalse(allocationScene.IsValid());
                 Assert.Throws<ObjectDisposedException>(() => session.Step());
                 Assert.DoesNotThrow(() => preview.Dispose());
             }

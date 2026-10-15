@@ -4,9 +4,12 @@ using System.Linq;
 using TpLab.Flux.FX.Editor.Compilation;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.Udon;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace TpLab.Flux.FX.Editor.Inspector
@@ -20,10 +23,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
         readonly FluxParticleAuthoring authoring;
         readonly FluxParticleProgramGpuSession session;
         readonly Material material;
-        readonly Material[] allocationMaterials;
-        readonly RenderTexture[] allocationLevels;
-        readonly RenderTexture mask;
-        readonly RenderTexture keys;
+        readonly Material availabilityMaterial;
+        readonly FluxKernel[] allocationKernels;
+        readonly FluxBuffer[] allocationLevels;
+        readonly FluxBuffer mask;
+        readonly FluxBuffer keys;
+        Scene allocationScene;
         readonly Mesh mesh;
         int countGeneration;
         bool countPending;
@@ -96,22 +101,35 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 material.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);
                 material.SetFloat("_ZWrite", blend == FluxParticleBlendMode.Opaque ? 1 : 0);
                 material.renderQueue = blend == FluxParticleBlendMode.Opaque ? 2000 : 3000;
-                allocationMaterials = new[]
+                allocationScene = EditorSceneManager.NewPreviewScene();
+                var allocationRoot = Own(new GameObject("FluxFX Preview Spawn Allocation"));
+                allocationRoot.SetActive(false);
+                SceneManager.MoveGameObjectToScene(allocationRoot, allocationScene);
+                var allocation = FluxParticleSpawnAllocationBuilder.Create(allocationRoot.transform, count, new[]
                 {
-                    Own(new Material(CreateShader(shaders.AvailabilitySource))),
-                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"))),
-                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"))),
-                    Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader")))
-                };
-                allocationLevels = FluxParticleSpawnAllocator.CreateTextures(count);
-                if (allocationLevels == null) throw new InvalidOperationException("Spawn allocation RenderTexture allocation failed.");
-                foreach (var texture in allocationLevels) Own(texture);
-                mask = CreateTexture(width);
-                keys = CreateTexture(width);
-                FluxParticleSpawnAllocator.Configure(allocationMaterials, allocationLevels, mask, count);
+                    CreateShader(shaders.AvailabilitySource),
+                    AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"),
+                    AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"),
+                    AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader")
+                }, true);
+                allocationLevels = allocation.Buffers;
+                allocationKernels = allocation.Kernels;
+                foreach (var kernel in allocationKernels)
+                {
+                    var kernelMaterial = Own(new Material(kernel.Shader));
+                    kernel.SetProgramVariable("material", kernelMaterial);
+                }
+                availabilityMaterial = (Material)allocationKernels[0].GetProgramVariable("material");
+                mask = FluxParticleSpawnAllocationBuilder.CreateBuffer(allocationRoot.transform, "Mask", count, true);
+                keys = FluxParticleSpawnAllocationBuilder.CreateBuffer(allocationRoot.transform, "Keys", count, true);
+                foreach (var buffer in allocationLevels.Concat(new[] { mask, keys }))
+                {
+                    if (!buffer.Texture.IsCreated()) throw new InvalidOperationException("Preview RenderTexture allocation failed.");
+                }
+                FluxParticleSpawnAllocator.Configure(allocationKernels, allocationLevels, mask, count);
                 var dimensions = new Vector4(width, width, count, 0);
                 material.SetVector("_FluxStateSize", dimensions);
-                session.SetSpawnInput("spawn.key", keys);
+                session.SetSpawnInput("spawn.key", keys.Texture);
                 mesh = CreateMesh(count);
                 Restart();
             }
@@ -204,11 +222,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 }
                 if (visible > 0)
                 {
-                    session.BindRender(allocationMaterials[0]);
-                    FluxParticleSpawnAllocator.Execute(allocationMaterials, allocationLevels, mask, keys, Count,
+                    session.BindRender(availabilityMaterial);
+                    FluxParticleSpawnAllocator.Execute(allocationKernels, allocationLevels, mask, keys,
                         first, (int)visible, (int)((seed + skipped) % 1048576));
                 }
-                session.Step(visible > 0 ? mask : null);
+                session.Step(visible > 0 ? mask.Texture : null);
             }
             finally
             {
@@ -238,11 +256,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             if (disposed || !SystemInfo.supportsAsyncGPUReadback || countPending ||
                 EditorApplication.timeSinceStartup - lastCountTime < 0.2) return;
-            session.BindRender(allocationMaterials[0]);
+            session.BindRender(availabilityMaterial);
             var active = RenderTexture.active;
             try
             {
-                FluxParticleSpawnAllocator.BuildCounts(allocationMaterials, allocationLevels, Count);
+                FluxParticleSpawnAllocator.BuildCounts(allocationKernels, allocationLevels);
             }
             finally
             {
@@ -251,7 +269,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             lastCountTime = EditorApplication.timeSinceStartup;
             countPending = true;
             var generation = countGeneration;
-            AsyncGPUReadback.Request(allocationLevels[allocationLevels.Length - 1], 0, TextureFormat.RGBAFloat, request =>
+            AsyncGPUReadback.Request(allocationLevels[allocationLevels.Length - 1].Texture, 0, TextureFormat.RGBAFloat, request =>
             {
                 if (disposed || generation != countGeneration) return;
                 countPending = false;
@@ -274,17 +292,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     ShaderUtil.GetShaderMessages(shader).Select(message => message.message)));
             }
             return shader;
-        }
-
-        RenderTexture CreateTexture(int width)
-        {
-            var texture = Own(new RenderTexture(width, width, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            });
-            if (!texture.Create()) throw new InvalidOperationException("Preview RenderTexture allocation failed.");
-            return texture;
         }
 
         Mesh CreateMesh(int count)
@@ -374,11 +381,21 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (disposed) return;
             disposed = true;
             session?.Dispose();
+            if (allocationLevels != null)
+            {
+                foreach (var buffer in allocationLevels)
+                {
+                    if (buffer != null) buffer.Release();
+                }
+            }
+            if (mask != null) mask.Release();
+            if (keys != null) keys.Release();
             for (var i = objects.Count - 1; i >= 0; i--)
             {
                 if (objects[i] != null) Object.DestroyImmediate(objects[i]);
             }
             objects.Clear();
+            if (allocationScene.IsValid()) EditorSceneManager.ClosePreviewScene(allocationScene);
         }
     }
 }

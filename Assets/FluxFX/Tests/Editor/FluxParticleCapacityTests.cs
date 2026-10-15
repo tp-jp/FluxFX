@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Udon;
+using TpLab.Flux.Udon;
 using UnityEngine;
 using UdonSharp;
 
@@ -11,7 +12,9 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         [TestCase(typeof(FluxParticleRenderer), "get_MaximumParticleCount")]
         [TestCase(typeof(FluxParticleEmitter), "get_HasCompleted")]
-        public void CrossBehaviourGettersAreExportedByCompiledUdonProgram(Type behaviourType, string entryPoint)
+        [TestCase(typeof(FluxBuffer), "Release")]
+        [TestCase(typeof(FluxKernel), "__0_SetTexture")]
+        public void CrossBehaviourApisAreExportedByCompiledUdonProgram(Type behaviourType, string entryPoint)
         {
             var asset = UdonSharpProgramAsset.GetAllUdonSharpPrograms()
                 .SingleOrDefault(candidate => candidate.sourceCsScript != null && candidate.sourceCsScript.GetClass() == behaviourType);
