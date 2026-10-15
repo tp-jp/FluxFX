@@ -1,4 +1,3 @@
-using TpLab.Flux.FX.CustomModules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
 using TpLab.Flux.FX.Udon.Parameters;
@@ -6,7 +5,7 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TpLab.Flux.FX.Samples.RuntimeApi.Runtime
+namespace FluxFX.Samples.RuntimeApi.Udon
 {
     public enum SampleControl
     {
@@ -206,8 +205,8 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Runtime
             modules.SizeOverLifetime.SetEndSize(Value(SampleControl.EndSize));
             modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, Value(SampleControl.EndRotation)));
             modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
-            modules.CustomLift().SetStrength(Value(SampleControl.LiftStrength));
-            modules.CustomLift().SetDirection(Vector(SampleControl.LiftX));
+            // modules.CustomLift().SetStrength(Value(SampleControl.LiftStrength));
+            // modules.CustomLift().SetDirection(Vector(SampleControl.LiftX));
             modules.Gravity.SetEnabled(moduleToggles[0].isOn);
             modules.Drag.SetEnabled(moduleToggles[1].isOn);
             modules.Force.SetEnabled(moduleToggles[2].isOn);
@@ -215,7 +214,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Runtime
             modules.Vortex.SetEnabled(moduleToggles[4].isOn);
             modules.LimitVelocity.SetEnabled(moduleToggles[5].isOn);
             modules.VelocityOverLifetime.SetEnabled(moduleToggles[6].isOn);
-            modules.CustomLift().SetEnabled(moduleToggles[7].isOn);
+            // modules.CustomLift().SetEnabled(moduleToggles[7].isOn);
         }
 
         void ApplyBursts()
