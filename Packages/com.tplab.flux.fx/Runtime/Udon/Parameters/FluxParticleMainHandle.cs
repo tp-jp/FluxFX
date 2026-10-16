@@ -53,7 +53,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期Lifetimeの範囲を変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartLifetimeRange(this FluxParticleMainHandle handle, Vector2 value) => value.x >= 0 && value.y >= value.x && handle.SetValue(FluxParticleMainHandle.StartLifetimeRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
+        public static bool SetStartLifetimeRange(this FluxParticleMainHandle handle, Vector2 value) => handle.SetValue(FluxParticleMainHandle.StartLifetimeRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
 
         /// <summary>
         /// 初期速度の操作に対応しているかを返します。
@@ -68,7 +68,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期速度を変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartSpeed(this FluxParticleMainHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleMainHandle.StartSpeedParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetStartSpeed(this FluxParticleMainHandle handle, float value) => handle.SetValue(FluxParticleMainHandle.StartSpeedParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
 
         /// <summary>
         /// 初期速度の範囲の操作に対応しているかを返します。
@@ -83,7 +83,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期速度の範囲を変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartSpeedRange(this FluxParticleMainHandle handle, Vector2 value) => value.x >= 0 && value.y >= value.x && handle.SetValue(FluxParticleMainHandle.StartSpeedRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
+        public static bool SetStartSpeedRange(this FluxParticleMainHandle handle, Vector2 value) => handle.SetValue(FluxParticleMainHandle.StartSpeedRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
 
         /// <summary>
         /// 初期色の操作に対応しているかを返します。
@@ -133,7 +133,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期サイズを変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartSize(this FluxParticleMainHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleMainHandle.StartSizeParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetStartSize(this FluxParticleMainHandle handle, float value) => handle.SetValue(FluxParticleMainHandle.StartSizeParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
 
         /// <summary>
         /// 初期サイズの範囲の操作に対応しているかを返します。
@@ -148,7 +148,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期サイズの範囲を変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartSizeRange(this FluxParticleMainHandle handle, Vector2 value) => value.x >= 0 && value.y >= value.x && handle.SetValue(FluxParticleMainHandle.StartSizeRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
+        public static bool SetStartSizeRange(this FluxParticleMainHandle handle, Vector2 value) => handle.SetValue(FluxParticleMainHandle.StartSizeRangeParameterIndex, FluxParticleValueType.Float2, new Vector4(value.x, value.y, 0, 0));
 
         /// <summary>
         /// 初期回転の操作に対応しているかを返します。
@@ -163,7 +163,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期回転を変更します。非対応またはStatic制約により変更できない場合はfalseを返します。
         /// </summary>
-        public static bool SetStartRotation(this FluxParticleMainHandle handle, Vector3 value) => ValidRotation(handle, value) && handle.SetValue(FluxParticleMainHandle.StartRotationParameterIndex, FluxParticleValueType.Float3, value);
+        public static bool SetStartRotation(this FluxParticleMainHandle handle, Vector3 value) => handle.SetValue(FluxParticleMainHandle.StartRotationParameterIndex, FluxParticleValueType.Float3, value);
 
         /// <summary>
         /// 初期回転の下限の操作に対応しているかを返します。
@@ -193,7 +193,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// <summary>
         /// 初期回転の範囲を変更します。両方とも変更できる場合に設定します。
         /// </summary>
-        public static bool SetStartRotationRange(this FluxParticleMainHandle handle, Vector3 min, Vector3 max) => ValidRotation(handle, min) && ValidRotation(handle, max) && handle.SetPair(FluxParticleMainHandle.StartRotationMinParameterIndex, FluxParticleMainHandle.StartRotationMaxParameterIndex, FluxParticleValueType.Float3, min, max);
+        public static bool SetStartRotationRange(this FluxParticleMainHandle handle, Vector3 min, Vector3 max) => handle.SetPair(FluxParticleMainHandle.StartRotationMinParameterIndex, FluxParticleMainHandle.StartRotationMaxParameterIndex, FluxParticleValueType.Float3, min, max);
 
         /// <summary>
         /// ビルド済みのParticle Slot数を取得します。
@@ -234,11 +234,6 @@ namespace TpLab.Flux.FX.Udon.Parameters
         /// Loopを変更し、次回Restartから使用します。
         /// </summary>
         public static void SetLoop(this FluxParticleMainHandle handle, bool value) => GetSystem(handle).Emitter.SetLoop(value);
-
-        static bool ValidRotation(FluxParticleMainHandle handle, Vector3 value)
-        {
-            return GetSystem(handle).RenderMode != FluxParticleRenderMode.Billboard || (value.x == 0 && value.y == 0);
-        }
 
         static FluxParticleSystem GetSystem(FluxParticleMainHandle handle)
         {

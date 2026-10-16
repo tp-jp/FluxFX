@@ -43,9 +43,19 @@ namespace TpLab.Flux.FX.Editor.Contracts
         /// </summary>
         public float? MaximumProduct { get; }
 
+        /// <summary>
+        /// 成分の昇順制約の有無
+        /// </summary>
+        public bool OrderedComponents { get; }
+
         internal FluxParticleNumericConstraint(string id, int components, float[] minimum, float[] maximum,
-            bool includeMinimum, bool includeMaximum, bool integerOnly, float? maximumProduct = null)
+            bool includeMinimum, bool includeMaximum, bool integerOnly, float? maximumProduct = null, bool orderedComponents = false)
         {
+            if (orderedComponents && components < 2)
+            {
+                throw new InvalidOperationException($"Parameter '{id}': ordered components require multiple components.");
+            }
+            OrderedComponents = orderedComponents;
             ComponentCount = components;
             Minimum = Array.AsReadOnly(minimum == null ? Array.Empty<float>() : (float[])minimum.Clone());
             Maximum = Array.AsReadOnly(maximum == null ? Array.Empty<float>() : (float[])maximum.Clone());
@@ -57,6 +67,7 @@ namespace TpLab.Flux.FX.Editor.Contracts
                 throw new InvalidOperationException($"Parameter '{id}': product limit requires multiple components and a positive finite maximum.");
             }
             MaximumProduct = maximumProduct;
+            var previousMinimum = -float.MaxValue;
             for (var i = 0; i < components; i++)
             {
                 var min = Minimum.Count == 0 ? -float.MaxValue : Minimum[i];
@@ -73,6 +84,11 @@ namespace TpLab.Flux.FX.Editor.Contracts
                 {
                     max = Next(max, false);
                 }
+                if (orderedComponents)
+                {
+                    min = Math.Max(min, previousMinimum);
+                }
+                previousMinimum = integerOnly ? (float)Math.Ceiling(min) : min;
                 if (!Finite(min) || !Finite(max) || min > max || integerOnly && Math.Ceiling(min) > Math.Floor(max))
                 {
                     throw new InvalidOperationException($"Parameter '{id}': the range admits no value (component {i}).");
@@ -86,6 +102,7 @@ namespace TpLab.Flux.FX.Editor.Contracts
             for (var i = 0; i < value.Length; i++)
             {
                 var component = value[i];
+                if (OrderedComponents && i > 0 && value[i - 1] > component) return false;
                 if (!Finite(component) || IntegerOnly && Math.Truncate(component) != component) return false;
                 if (Minimum.Count != 0 && (component < Minimum[i] || !IncludeMinimum && component == Minimum[i])) return false;
                 if (Maximum.Count != 0 && (component > Maximum[i] || !IncludeMaximum && component == Maximum[i])) return false;

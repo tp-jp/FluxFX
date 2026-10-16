@@ -63,7 +63,7 @@ namespace TpLab.Flux.FX.Editor.Authoring
             {
                 throw new InvalidOperationException("Renderer intensity must be finite and non-negative.");
             }
-            definitions.AddParameter(new FluxParticleParameterDefinition("render.intensity", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+            definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("render.intensity", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             var colorOperations = definitions.Operations.Values.Where(operation => operation.Phase == FluxParticlePhase.Render &&
                 operation.Writes.Any(write => write.ValueId == "render.color")).Select(operation => operation.Id).ToArray();
             definitions.AddOperation(new FluxParticleOperationDefinition("render.intensity", "fluxfx.core", FluxParticlePhase.Render,
@@ -117,11 +117,14 @@ namespace TpLab.Flux.FX.Editor.Authoring
             var randomColor = authoring.Render.StartColorMode == FluxParticleStartColorMode.RandomBetweenTwoConstants;
             var randomSize = authoring.Render.StartSizeMode == FluxParticleStartSizeMode.RandomBetweenTwoConstants;
             foreach (var parameter in source.Parameters.Values.Where(parameter => parameter.Id != "spawn.velocity" &&
-                !(randomColor && parameter.Id == "color.start"))) definitions.AddParameter(parameter);
+                !(randomColor && parameter.Id == "color.start")))
+            {
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(parameter, authoring.Render.Mode));
+            }
             if (randomColor)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("color.start-min", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
-                definitions.AddParameter(new FluxParticleParameterDefinition("color.start-max", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("color.start-min", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("color.start-max", FluxParticleValueType.Float4, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
             }
             var radialShape = authoring.Shape.Type == FluxParticleShapeType.Sphere ||
                 authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Circle ||
@@ -144,24 +147,24 @@ namespace TpLab.Flux.FX.Editor.Authoring
             }
             if (authoring.InitialVelocity.Mode == FluxParticleStartSpeedMode.RandomBetweenTwoConstants)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed-range", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Live));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("spawn.speed-range", FluxParticleValueType.Float2, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             }
             else
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("spawn.speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("spawn.speed", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             }
             if (authoring.Shape.Type == FluxParticleShapeType.Sphere || authoring.Shape.Type == FluxParticleShapeType.Hemisphere ||
                 authoring.Shape.Type == FluxParticleShapeType.Circle || authoring.Shape.Type == FluxParticleShapeType.Cone)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("shape.radius", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("shape.radius", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             }
             if (authoring.Shape.Type == FluxParticleShapeType.Cone)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("shape.angle", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("shape.angle", FluxParticleValueType.Float, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             }
             if (authoring.Shape.Type == FluxParticleShapeType.Box)
             {
-                definitions.AddParameter(new FluxParticleParameterDefinition("shape.size", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live));
+                definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("shape.size", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Live), authoring.Render.Mode));
             }
             definitions.AddProvider(new FluxParticleValueProvider("particle.start-size", FluxParticleProviderKind.Derived,
                 randomSize ? new[] { "particle.spawn-key" } : Array.Empty<string>(),
@@ -172,23 +175,23 @@ namespace TpLab.Flux.FX.Editor.Authoring
                 new[] { new FluxParticleValueRead("particle.start-size", FluxParticleReadVersion.Provided) },
                 new[] { new FluxParticleValueWrite("render.size", FluxParticleWriteKind.Replace) }, null,
                 "Packages/com.tplab.flux.fx/Editor/Core/Hlsl/RenderStartSize.hlsl", "FluxFX_RenderStartSize"));
-            definitions.AddParameter(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
-                randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static));
+            definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition(randomSize ? "render.size-range" : "render.size",
+                randomSize ? FluxParticleValueType.Float2 : FluxParticleValueType.Float, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
             if (hasRotation)
             {
                 if (authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants)
                 {
                     definitions.AddValue(new FluxParticleValueDefinition("particle.start-rotation", FluxParticleValueType.Float3,
                         FluxParticleWritePolicy.ReadOnly, "fluxfx.core"));
-                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start-min", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
-                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start-max", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                    definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("rotation.start-min", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
+                    definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("rotation.start-max", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
                     definitions.AddProvider(new FluxParticleValueProvider("particle.start-rotation", FluxParticleProviderKind.Derived,
                         new[] { "particle.spawn-key" }, new[] { "rotation.start-min", "rotation.start-max" },
                         "Packages/com.tplab.flux.fx/Editor/Core/Hlsl/RandomStartRotation.hlsl", "FluxFX_StartRotation"));
                 }
                 else
                 {
-                    definitions.AddParameter(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static));
+                    definitions.AddParameter(FluxParticleMainShapeContracts.Apply(new FluxParticleParameterDefinition("rotation.start", FluxParticleValueType.Float3, FluxParticleParameterPolicy.Static), authoring.Render.Mode));
                 }
             }
             foreach (var operation in source.Operations.Values)

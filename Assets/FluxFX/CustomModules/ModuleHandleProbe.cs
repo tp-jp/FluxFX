@@ -229,6 +229,12 @@ namespace TpLab.Flux.FX.CustomModules
             if (!target.Main.SetStartDelay(0.5f) || target.Main.GetStartDelay() != 0.5f) return;
             target.Main.SetLoop(false);
             if (target.Main.GetLoop()) return;
+            if (target.Main.SetStartLifetimeRange(new Vector2(3, 1)) || target.Executor.SetVector("lifetime.range", new Vector4(3, 1, 0, 0))) return;
+            if (target.Main.GetStartLifetimeRange() != new Vector2(4, 4)) return;
+            if (target.Main.SetStartSpeed(-1) || target.Executor.SetFloat("spawn.speed", -1)) return;
+            if (target.Main.SetStartSize(-1) || target.Executor.SetFloat("render.size", -1)) return;
+            if (target.Main.SetStartRotation(Vector3.right) || target.Executor.SetVector("rotation.start", Vector3.right)) return;
+            if (target.Shape.SetPosition(new Vector3(float.NaN, 0, 0)) || target.Executor.SetVector("spawn.position", new Vector4(float.NaN, 0, 0, 0))) return;
             if (!VerifyStandardHandles()) return;
             var gravity = target.Modules.Gravity;
             var lift = target.Modules.CustomLift();

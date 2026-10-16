@@ -16,5 +16,6 @@ namespace TpLab.Flux.FX.Udon.Parameters
         Integer = 16,
         MaximumProduct = 32,
         AllowedValues = 64,
+        OrderedComponents = 128,
     }
 }

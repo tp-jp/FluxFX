@@ -12,6 +12,7 @@ namespace TpLab.Flux.FX.Editor.Contracts
         bool includeMaximum = true;
         bool integerOnly;
         float? maximumProduct;
+        bool orderedComponents;
 
         internal FluxParticleNumericParameterBuilder(string id, FluxParticleParameterKind kind) : base(id, kind)
         {
@@ -63,12 +64,21 @@ namespace TpLab.Flux.FX.Editor.Contracts
             return this;
         }
 
+        /// <summary>
+        /// 成分を先頭から昇順（同値を含む）に限定します。
+        /// </summary>
+        public FluxParticleNumericParameterBuilder<T> OrderedComponents()
+        {
+            orderedComponents = true;
+            return this;
+        }
+
         internal override FluxParticleParameterContract<T> CreateContract(string id, string apiName,
             FluxParticleParameterKind kind, FluxParticleParameterPolicy policy)
         {
             var components = FluxParticleParameterComponents.Get(default(T)).Length;
             var constraint = new FluxParticleNumericConstraint(id, components, minimum, maximum,
-                includeMinimum, includeMaximum, integerOnly, maximumProduct);
+                includeMinimum, includeMaximum, integerOnly, maximumProduct, orderedComponents);
             return new FluxParticleParameterContract<T>(id, apiName, kind, policy, constraint);
         }
     }

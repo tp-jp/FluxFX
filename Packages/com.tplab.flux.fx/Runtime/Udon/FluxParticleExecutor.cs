@@ -546,6 +546,8 @@ namespace TpLab.Flux.FX.Udon
                 for (var component = 0; component < type; component++)
                 {
                     var number = value[component];
+                    if ((flags & (int)FluxParticleParameterConstraintFlags.OrderedComponents) != 0 &&
+                        component > 0 && value[component - 1] > number) return false;
                     if ((flags & (int)FluxParticleParameterConstraintFlags.Minimum) != 0 &&
                         (number < parameterMinimum[index][component] ||
                          (flags & (int)FluxParticleParameterConstraintFlags.ExclusiveMinimum) != 0 && number == parameterMinimum[index][component])) return false;

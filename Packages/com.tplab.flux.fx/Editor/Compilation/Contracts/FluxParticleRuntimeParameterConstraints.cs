@@ -93,6 +93,10 @@ namespace TpLab.Flux.FX.Editor.Compilation.Contracts
                     flags |= FluxParticleParameterConstraintFlags.Maximum;
                     if (!constraint.IncludeMaximum) flags |= FluxParticleParameterConstraintFlags.ExclusiveMaximum;
                 }
+                if (constraint.OrderedComponents)
+                {
+                    flags |= FluxParticleParameterConstraintFlags.OrderedComponents;
+                }
                 if (constraint.IntegerOnly) flags |= FluxParticleParameterConstraintFlags.Integer;
                 if (constraint.MaximumProduct.HasValue)
                 {
