@@ -6,6 +6,7 @@ using TpLab.Flux.FX.Editor.Contracts;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Udon.Parameters;
 
 namespace TpLab.Flux.FX.Tests.Editor
 {
@@ -42,6 +43,32 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreSame(handle, FluxParticleModuleHandleFactory.Get<CountingModuleHandle>(modules, FluxParticleModuleIds.Gravity));
             Assert.AreEqual(1, CountingModuleHandle.Created);
             Assert.AreEqual(3, handle.Count);
+        }
+
+        [Test]
+        public void HandleInfrastructureIsInternalAndExtensionApiRemainsPublic()
+        {
+            var flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+            foreach (var name in new[] { "GetBinding", "GetCachedHandle", "CacheHandle" })
+            {
+                Assert.IsNull(typeof(FluxParticleModules).GetMethod(name, flags), name);
+            }
+            foreach (var name in new[] { "Initialize", "InitializeSlots" })
+            {
+                Assert.IsNull(typeof(FluxParticleParameterHandle).GetMethod(name, flags), name);
+            }
+            var handles = typeof(FluxParticleModules).GetProperties()
+                .Where(property => typeof(FluxParticleModuleHandle).IsAssignableFrom(property.PropertyType));
+            Assert.AreEqual(13, handles.Count());
+            foreach (var property in handles)
+            {
+                Assert.IsNull(property.PropertyType.GetMethod("Get", flags), property.Name);
+            }
+            Assert.IsNotNull(typeof(FluxParticleModuleHandleFactory).GetMethod("Get", flags));
+            foreach (var name in new[] { "HasParameter", "GetValue", "SetValue", "SetPair" })
+            {
+                Assert.IsNotNull(typeof(FluxParticleParameterHandleExtensions).GetMethod(name, flags), name);
+            }
         }
 
         [Test]

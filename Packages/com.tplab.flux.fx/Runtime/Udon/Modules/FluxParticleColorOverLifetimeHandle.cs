@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// ColorOverLifetimeのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleColorOverLifetimeHandle Get(FluxParticleModules modules)
+        internal static FluxParticleColorOverLifetimeHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleColorOverLifetimeHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.ColorOverLifetime);

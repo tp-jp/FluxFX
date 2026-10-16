@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// LimitVelocityのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleLimitVelocityHandle Get(FluxParticleModules modules)
+        internal static FluxParticleLimitVelocityHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleLimitVelocityHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.LimitVelocity);

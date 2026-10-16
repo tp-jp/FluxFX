@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Gravityのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleGravityHandle Get(FluxParticleModules modules)
+        internal static FluxParticleGravityHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleGravityHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Gravity);

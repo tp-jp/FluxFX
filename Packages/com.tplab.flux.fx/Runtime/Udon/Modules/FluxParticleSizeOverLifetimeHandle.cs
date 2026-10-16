@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// SizeOverLifetimeのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleSizeOverLifetimeHandle Get(FluxParticleModules modules)
+        internal static FluxParticleSizeOverLifetimeHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleSizeOverLifetimeHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.SizeOverLifetime);

@@ -2229,10 +2229,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             var other = second.GetComponentInParent<FluxParticleSystem>().Modules.Gravity;
             Assert.IsNotNull(gravity);
             Assert.IsTrue(gravity.HasEnabled());
-            var binding = modules.GetBinding("fluxfx.gravity");
-            Assert.AreSame(first, binding[0].Reference);
-            Assert.AreEqual(first.ResolveParameter("gravity.enabled", 1), binding[1].Int);
-            Assert.AreEqual(first.ResolveParameter("gravity", 3), binding[2].Int);
             Assert.AreSame(gravity, modules.Gravity);
             Assert.AreNotSame(gravity, other);
             var original = other.GetGravity();
@@ -2279,7 +2275,6 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsNull(modules.SizeOverLifetime);
             Assert.IsNull(modules.RotationOverLifetime);
             Assert.IsNull(modules.TextureSheetAnimation);
-            Assert.IsNull(modules.GetBinding("fluxfx.gravity"));
         }
 
         [Test]
@@ -2299,7 +2294,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             binding.Add(new VRC.SDK3.Data.DataToken());
             binding.Add(-1);
             var handle = new FluxParticleModuleHandle();
-            FluxParticleModuleHandle.Initialize(handle, binding);
+            typeof(FluxParticleParameterHandle).GetMethod("Initialize", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(null, new object[] { handle, binding });
             Assert.IsFalse(handle.HasEnabled());
             Assert.IsTrue(handle.GetEnabled());
             Assert.IsFalse(handle.SetEnabled(false));

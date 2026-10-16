@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Vortexのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleVortexHandle Get(FluxParticleModules modules)
+        internal static FluxParticleVortexHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleVortexHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Vortex);

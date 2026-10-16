@@ -5,8 +5,12 @@ using VRC.SDK3.Data;
 namespace TpLab.Flux.FX.Udon.Modules
 {
     /// <summary>
-    /// Executor参照、Enabledスロット、ローカル番号順のParameterスロットを保持します。
+    /// 標準・カスタムModuleの操作ハンドルの基底型
     /// </summary>
+    /// <remarks>
+    /// カスタムハンドルはこの型を継承し、Factoryで取得します。Parameterの操作は拡張メソッドで定義します。
+    /// HasEnabledはEnabledの対応の有無、GetEnabledは現在の有効状態です。OFFでもハンドルとParameterは保持されます。
+    /// </remarks>
     public class FluxParticleModuleHandle : FluxParticleParameterHandle
     {
         internal const int EnabledSlotIndex = ContextIndex;

@@ -8,6 +8,12 @@ namespace TpLab.Flux.FX.Udon
     /// <summary>
     /// 組み込み済みModuleの操作ハンドルをSystemごとに保持します。
     /// </summary>
+    /// <remarks>
+    /// 標準ModuleはSystem.Modulesの各プロパティ、カスタムModuleはサンプルのCustomLift()のような拡張メソッドから取得します。
+    /// 未組み込みのModuleはnullです。操作前にnullを確認してください。OFFで組み込まれたModuleは取得できます。
+    /// 同じSystem・Bindingではハンドルを再利用します。RestartやClearで取得し直す必要はありません。
+    /// ビルドによる構成変更、Systemの置き換え、Playの再開始後は取得し直してください。
+    /// </remarks>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleModules : UdonSharpBehaviour
     {
@@ -98,7 +104,7 @@ namespace TpLab.Flux.FX.Udon
         /// Moduleのビルド済みBindingを取得します。
         /// </summary>
         /// <returns>Executor参照と解決済みスロット。未対応または未組み込みの場合はnull</returns>
-        public DataList GetBinding(string moduleId)
+        internal DataList GetBinding(string moduleId)
         {
             if (bindingIds == null) return null;
             for (var i = 0; i < bindingIds.Length; i++)
@@ -115,10 +121,11 @@ namespace TpLab.Flux.FX.Udon
             }
             return null;
         }
+
         /// <summary>
         /// キャッシュ済みのModuleハンドルを取得します。
         /// </summary>
-        public DataList GetCachedHandle(string moduleId)
+        internal DataList GetCachedHandle(string moduleId)
         {
             if (handles != null && handles.TryGetValue(moduleId, out var token)) return token.DataList;
             return null;
@@ -127,7 +134,7 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// Moduleハンドルを初回取得時に登録します。
         /// </summary>
-        public void CacheHandle(string moduleId, DataList handle)
+        internal void CacheHandle(string moduleId, DataList handle)
         {
             if (handles == null)
             {

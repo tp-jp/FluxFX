@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Trailsのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleTrailsHandle Get(FluxParticleModules modules)
+        internal static FluxParticleTrailsHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleTrailsHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Trails);

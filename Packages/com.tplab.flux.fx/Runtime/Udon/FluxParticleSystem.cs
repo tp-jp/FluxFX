@@ -82,7 +82,7 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// Mainの操作ハンドル
+        /// Mainの操作ハンドル。未構成の場合はnull
         /// </summary>
         public FluxParticleMainHandle Main
         {
@@ -98,7 +98,7 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// Shapeの操作ハンドル
+        /// Shapeの操作ハンドル。未構成の場合はnull
         /// </summary>
         public FluxParticleShapeHandle Shape
         {

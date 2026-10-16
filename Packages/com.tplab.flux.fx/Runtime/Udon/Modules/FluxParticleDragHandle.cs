@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Dragのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleDragHandle Get(FluxParticleModules modules)
+        internal static FluxParticleDragHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleDragHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Drag);

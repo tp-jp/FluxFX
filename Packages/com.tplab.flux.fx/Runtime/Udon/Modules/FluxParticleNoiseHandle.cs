@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Noiseのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleNoiseHandle Get(FluxParticleModules modules)
+        internal static FluxParticleNoiseHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleNoiseHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Noise);

@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// RotationOverLifetimeのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleRotationOverLifetimeHandle Get(FluxParticleModules modules)
+        internal static FluxParticleRotationOverLifetimeHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleRotationOverLifetimeHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.RotationOverLifetime);

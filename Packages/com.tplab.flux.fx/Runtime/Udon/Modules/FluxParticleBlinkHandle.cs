@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// Blinkのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleBlinkHandle Get(FluxParticleModules modules)
+        internal static FluxParticleBlinkHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleBlinkHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Blink);

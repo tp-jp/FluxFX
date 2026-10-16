@@ -6,6 +6,11 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// <summary>
     /// Shapeの操作ハンドル
     /// </summary>
+    /// <remarks>
+    /// System.Shapeから取得し、型付き拡張メソッドで操作します。
+    /// ParameterIndexとParameterCountの定数は、別アセンブリのビルド処理と共有するBinding定義です。
+    /// 通常の利用では数値キーを指定する必要はありません。
+    /// </remarks>
     public class FluxParticleShapeHandle : FluxParticleParameterHandle
     {
         public const int PositionParameterIndex = 0;

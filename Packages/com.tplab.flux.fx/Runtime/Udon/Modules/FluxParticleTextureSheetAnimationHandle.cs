@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// TextureSheetAnimationのハンドルを取得し、初回のみ生成します。
         /// </summary>
-        public static FluxParticleTextureSheetAnimationHandle Get(FluxParticleModules modules)
+        internal static FluxParticleTextureSheetAnimationHandle Get(FluxParticleModules modules)
         {
 #if COMPILER_UDONSHARP
             return (FluxParticleTextureSheetAnimationHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.TextureSheetAnimation);

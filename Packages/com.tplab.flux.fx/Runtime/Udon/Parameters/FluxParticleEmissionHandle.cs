@@ -5,6 +5,12 @@ namespace TpLab.Flux.FX.Udon.Parameters
     /// <summary>
     /// Emitterが管理するRateとBurstの操作ハンドル
     /// </summary>
+    /// <remarks>
+    /// System.Emissionから取得し、nullでないことを確認して拡張メソッドで操作します。
+    /// 生成スケジュールと入力検証はEmitterが管理します。
+    /// newによる直接生成や、継承されたDataList操作での内容変更は行わないでください。
+    /// Systemの置き換えやPlayの再開始後は取得し直し、破棄後は使用しないでください。
+    /// </remarks>
     public class FluxParticleEmissionHandle : DataList
     {
         internal const int EmitterIndex = 0;
