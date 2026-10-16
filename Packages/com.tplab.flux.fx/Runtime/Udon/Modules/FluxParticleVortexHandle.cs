@@ -9,10 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleVortexHandle : FluxParticleModuleHandle
     {
-        internal const int CenterParameterIndex = 0;
-        internal const int AxisParameterIndex = 1;
-        internal const int StrengthParameterIndex = 2;
-
         /// <summary>
         /// Vortexのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -39,32 +35,32 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 中心を取得します。
         /// </summary>
-        public static Vector3 GetCenter(this FluxParticleVortexHandle handle) => handle.GetValue(FluxParticleVortexHandle.CenterParameterIndex);
+        public static Vector3 GetCenter(this FluxParticleVortexHandle handle) => handle.GetValue((int)FluxParticleVortexParameter.Center);
 
         /// <summary>
         /// 中心を変更します。
         /// </summary>
-        public static bool SetCenter(this FluxParticleVortexHandle handle, Vector3 value) => handle.SetValue(FluxParticleVortexHandle.CenterParameterIndex, FluxParticleValueType.Float3, value);
+        public static bool SetCenter(this FluxParticleVortexHandle handle, Vector3 value) => handle.SetValue((int)FluxParticleVortexParameter.Center, FluxParticleValueType.Float3, value);
 
         /// <summary>
         /// 回転軸を取得します。
         /// </summary>
-        public static Vector3 GetAxis(this FluxParticleVortexHandle handle) => handle.GetValue(FluxParticleVortexHandle.AxisParameterIndex);
+        public static Vector3 GetAxis(this FluxParticleVortexHandle handle) => handle.GetValue((int)FluxParticleVortexParameter.Axis);
 
         /// <summary>
         /// 回転軸を変更します。
         /// </summary>
-        public static bool SetAxis(this FluxParticleVortexHandle handle, Vector3 value) => handle.SetValue(FluxParticleVortexHandle.AxisParameterIndex, FluxParticleValueType.Float3, value);
+        public static bool SetAxis(this FluxParticleVortexHandle handle, Vector3 value) => handle.SetValue((int)FluxParticleVortexParameter.Axis, FluxParticleValueType.Float3, value);
 
         /// <summary>
         /// 強さを取得します。
         /// </summary>
-        public static float GetStrength(this FluxParticleVortexHandle handle) => handle.GetValue(FluxParticleVortexHandle.StrengthParameterIndex).x;
+        public static float GetStrength(this FluxParticleVortexHandle handle) => handle.GetValue((int)FluxParticleVortexParameter.Strength).x;
 
         /// <summary>
         /// 強さを変更します。
         /// </summary>
-        public static bool SetStrength(this FluxParticleVortexHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleVortexHandle.StrengthParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetStrength(this FluxParticleVortexHandle handle, float value) => handle.SetValue((int)FluxParticleVortexParameter.Strength, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 

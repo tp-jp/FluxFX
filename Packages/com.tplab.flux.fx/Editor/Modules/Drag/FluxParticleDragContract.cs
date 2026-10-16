@@ -1,4 +1,6 @@
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
+namespace TpLab.Flux.FX.Editor.Modules.Drag
 {
     /// <summary>
     /// Dragの公開APIとParameterの契約
@@ -22,7 +24,7 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleDragHandle")
                 .Accessor("Drag")
                 .Enabled("drag.enabled")
-                .Parameter(Drag)
+                .Parameter(FluxParticleDragParameter.Drag, Drag)
                 .Build();
     }
 }

@@ -59,6 +59,12 @@ namespace TpLab.Flux.FX.Udon
         [SerializeField]
         Vector4[] parameterMaximum;
         [SerializeField]
+        float[] parameterMaximumProduct;
+        [SerializeField]
+        int[] parameterAllowedValueOffsets;
+        [SerializeField]
+        float[] parameterAllowedValues;
+        [SerializeField]
         string deltaTimeProperty;
         [SerializeField]
         string simulationTimeProperty;
@@ -508,20 +514,45 @@ namespace TpLab.Flux.FX.Udon
                 if (float.IsNaN(value[component]) || float.IsInfinity(value[component])) return false;
             }
             if (parameterConstraintFlags == null || parameterMinimum == null || parameterMaximum == null ||
-                index >= parameterConstraintFlags.Length || index >= parameterMinimum.Length || index >= parameterMaximum.Length) return false;
+                index >= parameterConstraintFlags.Length || index >= parameterMinimum.Length || index >= parameterMaximum.Length ||
+                parameterMaximumProduct == null || index >= parameterMaximumProduct.Length ||
+                parameterAllowedValueOffsets == null || index + 1 >= parameterAllowedValueOffsets.Length || parameterAllowedValues == null) return false;
             var flags = parameterConstraintFlags[index];
+            if ((flags & (int)FluxParticleParameterConstraintFlags.AllowedValues) != 0)
+            {
+                var start = parameterAllowedValueOffsets[index];
+                var end = parameterAllowedValueOffsets[index + 1];
+                if (start < 0 || end <= start || end > parameterAllowedValues.Length) return false;
+                var found = false;
+                for (var i = start; i < end; i++)
+                {
+                    if (value.x != parameterAllowedValues[i]) continue;
+                    found = true;
+                    break;
+                }
+                if (!found) return false;
+            }
+            if ((flags & (int)FluxParticleParameterConstraintFlags.MaximumProduct) != 0)
+            {
+                double product = 1;
+                for (var component = 0; component < type; component++)
+                {
+                    product *= value[component];
+                }
+                if (product > parameterMaximumProduct[index]) return false;
+            }
             if (flags != 0)
             {
                 for (var component = 0; component < type; component++)
                 {
                     var number = value[component];
-                    if ((flags & (int)FluxParticleNumericConstraintFlags.Minimum) != 0 &&
+                    if ((flags & (int)FluxParticleParameterConstraintFlags.Minimum) != 0 &&
                         (number < parameterMinimum[index][component] ||
-                         (flags & (int)FluxParticleNumericConstraintFlags.ExclusiveMinimum) != 0 && number == parameterMinimum[index][component])) return false;
-                    if ((flags & (int)FluxParticleNumericConstraintFlags.Maximum) != 0 &&
+                         (flags & (int)FluxParticleParameterConstraintFlags.ExclusiveMinimum) != 0 && number == parameterMinimum[index][component])) return false;
+                    if ((flags & (int)FluxParticleParameterConstraintFlags.Maximum) != 0 &&
                         (number > parameterMaximum[index][component] ||
-                         (flags & (int)FluxParticleNumericConstraintFlags.ExclusiveMaximum) != 0 && number == parameterMaximum[index][component])) return false;
-                    if ((flags & (int)FluxParticleNumericConstraintFlags.Integer) != 0 && Mathf.Floor(number) != number) return false;
+                         (flags & (int)FluxParticleParameterConstraintFlags.ExclusiveMaximum) != 0 && number == parameterMaximum[index][component])) return false;
+                    if ((flags & (int)FluxParticleParameterConstraintFlags.Integer) != 0 && Mathf.Floor(number) != number) return false;
                 }
             }
             if (parameterIds[index] == "trails.duration" &&
@@ -746,7 +777,14 @@ namespace TpLab.Flux.FX.Udon
                 parameterIds.Length != staticParameters.Length || parameterIds.Length != parameterValues.Length) return false;
             if (parameterConstraintFlags == null || parameterMinimum == null || parameterMaximum == null ||
                 parameterConstraintFlags.Length != parameterIds.Length || parameterMinimum.Length != parameterIds.Length ||
-                parameterMaximum.Length != parameterIds.Length) return false;
+                parameterMaximum.Length != parameterIds.Length || parameterMaximumProduct == null ||
+                parameterMaximumProduct.Length != parameterIds.Length || parameterAllowedValueOffsets == null ||
+                parameterAllowedValueOffsets.Length != parameterIds.Length + 1 || parameterAllowedValues == null) return false;
+            if (parameterAllowedValueOffsets[0] != 0 || parameterAllowedValueOffsets[parameterIds.Length] != parameterAllowedValues.Length) return false;
+            for (var i = 0; i < parameterIds.Length; i++)
+            {
+                if (parameterAllowedValueOffsets[i] > parameterAllowedValueOffsets[i + 1]) return false;
+            }
             if (string.IsNullOrEmpty(deltaTimeProperty) || string.IsNullOrEmpty(spawnKeyProperty)) return false;
 
             for (var i = 0; i < stepKernels.Length; i++)

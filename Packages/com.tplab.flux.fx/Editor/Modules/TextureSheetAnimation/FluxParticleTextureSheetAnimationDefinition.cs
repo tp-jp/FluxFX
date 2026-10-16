@@ -1,6 +1,5 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
@@ -20,11 +19,12 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
         {
             var sheet = (FluxParticleTextureSheetAnimationModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleTextureSheetAnimationContract.Module, sheet.Enabled);
-            if (sheet.TilesX < 1 || sheet.TilesY < 1 || (long)sheet.TilesX * sheet.TilesY > 16777216)
+            var tiles = new Vector2(sheet.TilesX, sheet.TilesY);
+            if ((double)tiles.x != sheet.TilesX || (double)tiles.y != sheet.TilesY)
             {
-                throw new InvalidOperationException("Texture sheet tile counts must be positive and the frame count must fit float integer precision.");
+                throw new InvalidOperationException("Texture sheet tile counts must be exactly representable as floats.");
             }
-            var tilesParameter = contribution.Bind(FluxParticleTextureSheetAnimationContract.Tiles, new Vector2(sheet.TilesX, sheet.TilesY));
+            var tilesParameter = contribution.Bind(FluxParticleTextureSheetAnimationContract.Tiles, tiles);
             var cyclesParameter = contribution.Bind(FluxParticleTextureSheetAnimationContract.Cycles, sheet.Cycles);
             contribution.Operation("render.texture-sheet-animation", FluxParticlePhase.Render,
                 reads: new[]

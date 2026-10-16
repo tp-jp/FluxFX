@@ -9,8 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleForceHandle : FluxParticleModuleHandle
     {
-        internal const int ForceParameterIndex = 0;
-
         /// <summary>
         /// Forceのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -37,12 +35,12 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 加速度を取得します。
         /// </summary>
-        public static Vector3 GetForce(this FluxParticleForceHandle handle) => handle.GetValue(FluxParticleForceHandle.ForceParameterIndex);
+        public static Vector3 GetForce(this FluxParticleForceHandle handle) => handle.GetValue((int)FluxParticleForceParameter.Force);
 
         /// <summary>
         /// 加速度を変更します。
         /// </summary>
-        public static bool SetForce(this FluxParticleForceHandle handle, Vector3 value) => handle.SetValue(FluxParticleForceHandle.ForceParameterIndex, FluxParticleValueType.Float3, value);
+        public static bool SetForce(this FluxParticleForceHandle handle, Vector3 value) => handle.SetValue((int)FluxParticleForceParameter.Force, FluxParticleValueType.Float3, value);
     }
 }
 

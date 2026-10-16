@@ -30,6 +30,7 @@ namespace TpLab.Flux.FX.CustomModules
             target.Pause();
             var trails = target.Modules.Trails;
             if (trails == null || trails != target.Modules.Trails || empty.Modules.Trails != null) return;
+            if (trails.SetWidth(-1) || target.Executor.SetFloat("trails.width", -1)) return;
             if (!trails.SetWidth(0.2f) || trails.GetWidth() != 0.2f) return;
             if (!trails.SetColor(Color.red) || trails.GetColor() != Color.red) return;
             if (!target.Executor.Initialize(4)) return;
@@ -65,6 +66,7 @@ namespace TpLab.Flux.FX.CustomModules
             passed = false;
             var trails = target.Modules.Trails;
             if (trails.SetDuration(0) || trails.SetDuration(float.PositiveInfinity)) return;
+            if (target.Executor.SetFloat("trails.duration", 0) || target.Executor.SetFloat("trails.duration", float.Epsilon)) return;
             if (!trails.SetDuration(1.25f) || trails.GetDuration() != 1.25f) return;
             target.Executor.Step(0, 0, 0, 0);
             trailOldPoint = target.Executor.GetTrailPoint(1);
@@ -88,6 +90,11 @@ namespace TpLab.Flux.FX.CustomModules
             if (!blink.SetTimeMode(FluxParticleBlinkTimeMode.ParticleAge) || blink.GetTimeMode() != FluxParticleBlinkTimeMode.ParticleAge) return;
             if (!blink.SetTarget(FluxParticleBlinkTarget.Both) || blink.GetTarget() != FluxParticleBlinkTarget.Both) return;
             if (blink.SetDuty(2) || blink.SetFrequency(float.PositiveInfinity)) return;
+            if (target.Executor.SetFloat("blink.duty", 2) || target.Executor.SetFloat("blink.frequency", -1)) return;
+            if (blink.SetTimeMode((FluxParticleBlinkTimeMode)99) || target.Executor.SetFloat("blink.time-mode", 99)) return;
+            if (blink.SetTarget((FluxParticleBlinkTarget)(-1)) || target.Executor.SetFloat("blink.target", 0.5f)) return;
+            if (blink.GetTarget() != FluxParticleBlinkTarget.Both || blink.GetDuty() != 0.25f) return;
+            if (target.Executor.SetFloat("blink.enabled", 2)) return;
             if (!target.Executor.Initialize(4)) return;
             if (!blink.SetEnabled(false) || blink.GetEnabled()) return;
             if (!blink.SetEnabled(true) || !blink.GetEnabled()) return;
@@ -188,6 +195,12 @@ namespace TpLab.Flux.FX.CustomModules
             if (!modules.RotationOverLifetime.SetEnabled(false) || modules.RotationOverLifetime.GetEnabled()) return false;
             if (!modules.RotationOverLifetime.SetEnabled(true) || !modules.RotationOverLifetime.GetEnabled()) return false;
             if (modules.TextureSheetAnimation == null || modules.TextureSheetAnimation != modules.TextureSheetAnimation || empty.Modules.TextureSheetAnimation != null) return false;
+            if (modules.TextureSheetAnimation.SetTiles(97, 172961) || target.Executor.SetVector("texture-sheet.tiles", new Vector4(97, 172961, 0, 0))) return false;
+            if (modules.TextureSheetAnimation.SetTiles(16777217, 1)) return false;
+            if (target.Executor.SetVector("texture-sheet.tiles", new Vector4(1.5f, 1, 0, 0))) return false;
+            if (modules.Noise.SetScale(-1) || target.Executor.SetFloat("noise.scale", -1)) return false;
+            if (modules.Vortex.SetStrength(-1) || target.Executor.SetFloat("vortex.strength", -1)) return false;
+            if (modules.LimitVelocity.SetMaxSpeed(-1) || target.Executor.SetFloat("limit-velocity.max-speed", -1)) return false;
             if (!modules.TextureSheetAnimation.SetTiles(2, 3) || modules.TextureSheetAnimation.GetTiles() != new Vector2(2, 3)) return false;
             if (!modules.TextureSheetAnimation.SetCycles(2f) || modules.TextureSheetAnimation.GetCycles() != 2f) return false;
             if (!modules.TextureSheetAnimation.HasEnabled()) return false;

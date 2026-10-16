@@ -9,8 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleRotationOverLifetimeHandle : FluxParticleModuleHandle
     {
-        internal const int EndRotationParameterIndex = 0;
-
         /// <summary>
         /// RotationOverLifetimeのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -37,12 +35,12 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 終端回転を取得します。
         /// </summary>
-        public static Vector3 GetEndRotation(this FluxParticleRotationOverLifetimeHandle handle) => handle.GetValue(FluxParticleRotationOverLifetimeHandle.EndRotationParameterIndex);
+        public static Vector3 GetEndRotation(this FluxParticleRotationOverLifetimeHandle handle) => handle.GetValue((int)FluxParticleRotationOverLifetimeParameter.EndRotation);
 
         /// <summary>
         /// 終端回転を変更します。
         /// </summary>
-        public static bool SetEndRotation(this FluxParticleRotationOverLifetimeHandle handle, Vector3 value) => handle.SetValue(FluxParticleRotationOverLifetimeHandle.EndRotationParameterIndex, FluxParticleValueType.Float3, value);
+        public static bool SetEndRotation(this FluxParticleRotationOverLifetimeHandle handle, Vector3 value) => handle.SetValue((int)FluxParticleRotationOverLifetimeParameter.EndRotation, FluxParticleValueType.Float3, value);
     }
 }
 

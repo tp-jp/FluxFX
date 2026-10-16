@@ -1,6 +1,5 @@
 using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;

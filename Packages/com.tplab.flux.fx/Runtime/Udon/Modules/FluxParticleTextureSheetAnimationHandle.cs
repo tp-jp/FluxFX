@@ -9,9 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleTextureSheetAnimationHandle : FluxParticleModuleHandle
     {
-        internal const int TilesParameterIndex = 0;
-        internal const int CyclesParameterIndex = 1;
-
         /// <summary>
         /// TextureSheetAnimationのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -38,27 +35,27 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// タイル数を取得します。
         /// </summary>
-        public static Vector2 GetTiles(this FluxParticleTextureSheetAnimationHandle handle) => handle.GetValue(FluxParticleTextureSheetAnimationHandle.TilesParameterIndex);
+        public static Vector2 GetTiles(this FluxParticleTextureSheetAnimationHandle handle) => handle.GetValue((int)FluxParticleTextureSheetAnimationParameter.Tiles);
 
         /// <summary>
         /// タイル数を変更します。シミュレーション開始後は変更できません。
         /// </summary>
         public static bool SetTiles(this FluxParticleTextureSheetAnimationHandle handle, int columns, int rows)
         {
-            const int MaximumTileCount = 16777216;
-            if (columns < 1 || rows < 1 || columns > MaximumTileCount / rows) return false;
-            return handle.SetValue(FluxParticleTextureSheetAnimationHandle.TilesParameterIndex, FluxParticleValueType.Float2, new Vector4(columns, rows, 0, 0));
+            var value = new Vector4(columns, rows, 0, 0);
+            if ((double)value.x != columns || (double)value.y != rows) return false;
+            return handle.SetValue((int)FluxParticleTextureSheetAnimationParameter.Tiles, FluxParticleValueType.Float2, value);
         }
 
         /// <summary>
         /// 周回数を取得します。
         /// </summary>
-        public static float GetCycles(this FluxParticleTextureSheetAnimationHandle handle) => handle.GetValue(FluxParticleTextureSheetAnimationHandle.CyclesParameterIndex).x;
+        public static float GetCycles(this FluxParticleTextureSheetAnimationHandle handle) => handle.GetValue((int)FluxParticleTextureSheetAnimationParameter.Cycles).x;
 
         /// <summary>
         /// 周回数を変更します。
         /// </summary>
-        public static bool SetCycles(this FluxParticleTextureSheetAnimationHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleTextureSheetAnimationHandle.CyclesParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetCycles(this FluxParticleTextureSheetAnimationHandle handle, float value) => handle.SetValue((int)FluxParticleTextureSheetAnimationParameter.Cycles, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 

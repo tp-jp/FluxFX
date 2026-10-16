@@ -3,10 +3,10 @@ using System;
 namespace TpLab.Flux.FX.Udon.Parameters
 {
     /// <summary>
-    /// ビルド済み数値Parameterの入力制約
+    /// ビルド済みParameterの入力制約
     /// </summary>
     [Flags]
-    public enum FluxParticleNumericConstraintFlags
+    public enum FluxParticleParameterConstraintFlags
     {
         None = 0,
         Minimum = 1,
@@ -14,5 +14,7 @@ namespace TpLab.Flux.FX.Udon.Parameters
         ExclusiveMinimum = 4,
         ExclusiveMaximum = 8,
         Integer = 16,
+        MaximumProduct = 32,
+        AllowedValues = 64,
     }
 }

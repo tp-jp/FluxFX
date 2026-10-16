@@ -73,7 +73,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 .Policy(TpLab.Flux.FX.Editor.Contracts.FluxParticleParameterPolicy.Live)
                 .Minimum(new Vector3(-2, -3, -4), false).Maximum(new Vector3(2, 3, 4), false).Integer().Build();
             parameters[slot] = FluxParticleParameterContractCompiler.Compile(contract);
-            var constraints = new FluxParticleRuntimeNumericConstraints(parameters, new[] { contract });
+            var constraints = new FluxParticleRuntimeParameterConstraints(parameters, new[] { contract });
             runtime.SetProgramVariable("parameterConstraintFlags", constraints.Flags);
             runtime.SetProgramVariable("parameterMinimum", constraints.Minimum);
             runtime.SetProgramVariable("parameterMaximum", constraints.Maximum);

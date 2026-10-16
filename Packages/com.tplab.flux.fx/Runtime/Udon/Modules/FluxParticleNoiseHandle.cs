@@ -9,10 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleNoiseHandle : FluxParticleModuleHandle
     {
-        internal const int StrengthParameterIndex = 0;
-        internal const int ScaleParameterIndex = 1;
-        internal const int SpeedParameterIndex = 2;
-
         /// <summary>
         /// Noiseのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -39,32 +35,32 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 強さを取得します。
         /// </summary>
-        public static float GetStrength(this FluxParticleNoiseHandle handle) => handle.GetValue(FluxParticleNoiseHandle.StrengthParameterIndex).x;
+        public static float GetStrength(this FluxParticleNoiseHandle handle) => handle.GetValue((int)FluxParticleNoiseParameter.Strength).x;
 
         /// <summary>
         /// 強さを変更します。
         /// </summary>
-        public static bool SetStrength(this FluxParticleNoiseHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleNoiseHandle.StrengthParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetStrength(this FluxParticleNoiseHandle handle, float value) => handle.SetValue((int)FluxParticleNoiseParameter.Strength, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
 
         /// <summary>
         /// スケールを取得します。
         /// </summary>
-        public static float GetScale(this FluxParticleNoiseHandle handle) => handle.GetValue(FluxParticleNoiseHandle.ScaleParameterIndex).x;
+        public static float GetScale(this FluxParticleNoiseHandle handle) => handle.GetValue((int)FluxParticleNoiseParameter.Scale).x;
 
         /// <summary>
         /// スケールを変更します。
         /// </summary>
-        public static bool SetScale(this FluxParticleNoiseHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleNoiseHandle.ScaleParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetScale(this FluxParticleNoiseHandle handle, float value) => handle.SetValue((int)FluxParticleNoiseParameter.Scale, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
 
         /// <summary>
         /// 変化速度を取得します。
         /// </summary>
-        public static float GetSpeed(this FluxParticleNoiseHandle handle) => handle.GetValue(FluxParticleNoiseHandle.SpeedParameterIndex).x;
+        public static float GetSpeed(this FluxParticleNoiseHandle handle) => handle.GetValue((int)FluxParticleNoiseParameter.Speed).x;
 
         /// <summary>
         /// 変化速度を変更します。
         /// </summary>
-        public static bool SetSpeed(this FluxParticleNoiseHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleNoiseHandle.SpeedParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetSpeed(this FluxParticleNoiseHandle handle, float value) => handle.SetValue((int)FluxParticleNoiseParameter.Speed, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 

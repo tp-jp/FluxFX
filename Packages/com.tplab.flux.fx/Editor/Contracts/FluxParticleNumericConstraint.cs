@@ -38,8 +38,13 @@ namespace TpLab.Flux.FX.Editor.Contracts
         /// </summary>
         public bool IntegerOnly { get; }
 
+        /// <summary>
+        /// 全成分の積の上限。指定がない場合はnull
+        /// </summary>
+        public float? MaximumProduct { get; }
+
         internal FluxParticleNumericConstraint(string id, int components, float[] minimum, float[] maximum,
-            bool includeMinimum, bool includeMaximum, bool integerOnly)
+            bool includeMinimum, bool includeMaximum, bool integerOnly, float? maximumProduct = null)
         {
             ComponentCount = components;
             Minimum = Array.AsReadOnly(minimum == null ? Array.Empty<float>() : (float[])minimum.Clone());
@@ -47,6 +52,11 @@ namespace TpLab.Flux.FX.Editor.Contracts
             IncludeMinimum = includeMinimum;
             IncludeMaximum = includeMaximum;
             IntegerOnly = integerOnly;
+            if (maximumProduct.HasValue && (components < 2 || !Finite(maximumProduct.Value) || maximumProduct.Value <= 0))
+            {
+                throw new InvalidOperationException($"Parameter '{id}': product limit requires multiple components and a positive finite maximum.");
+            }
+            MaximumProduct = maximumProduct;
             for (var i = 0; i < components; i++)
             {
                 var min = Minimum.Count == 0 ? -float.MaxValue : Minimum[i];
@@ -79,6 +89,15 @@ namespace TpLab.Flux.FX.Editor.Contracts
                 if (!Finite(component) || IntegerOnly && Math.Truncate(component) != component) return false;
                 if (Minimum.Count != 0 && (component < Minimum[i] || !IncludeMinimum && component == Minimum[i])) return false;
                 if (Maximum.Count != 0 && (component > Maximum[i] || !IncludeMaximum && component == Maximum[i])) return false;
+            }
+            if (MaximumProduct.HasValue)
+            {
+                double product = 1;
+                foreach (var component in value)
+                {
+                    product *= component;
+                }
+                if (product > MaximumProduct.Value) return false;
             }
             return true;
         }

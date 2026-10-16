@@ -11,6 +11,7 @@ namespace TpLab.Flux.FX.Editor.Contracts
         bool includeMinimum = true;
         bool includeMaximum = true;
         bool integerOnly;
+        float? maximumProduct;
 
         internal FluxParticleNumericParameterBuilder(string id, FluxParticleParameterKind kind) : base(id, kind)
         {
@@ -53,12 +54,21 @@ namespace TpLab.Flux.FX.Editor.Contracts
             return this;
         }
 
+        /// <summary>
+        /// 全成分の積の上限を設定します。
+        /// </summary>
+        public FluxParticleNumericParameterBuilder<T> MaximumProduct(float value)
+        {
+            maximumProduct = value;
+            return this;
+        }
+
         internal override FluxParticleParameterContract<T> CreateContract(string id, string apiName,
             FluxParticleParameterKind kind, FluxParticleParameterPolicy policy)
         {
             var components = FluxParticleParameterComponents.Get(default(T)).Length;
             var constraint = new FluxParticleNumericConstraint(id, components, minimum, maximum,
-                includeMinimum, includeMaximum, integerOnly);
+                includeMinimum, includeMaximum, integerOnly, maximumProduct);
             return new FluxParticleParameterContract<T>(id, apiName, kind, policy, constraint);
         }
     }

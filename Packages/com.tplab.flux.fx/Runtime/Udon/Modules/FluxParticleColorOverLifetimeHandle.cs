@@ -9,8 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleColorOverLifetimeHandle : FluxParticleModuleHandle
     {
-        internal const int EndColorParameterIndex = 0;
-
         /// <summary>
         /// ColorOverLifetimeのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -37,17 +35,17 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 現在のモードが終端色の操作に対応しているかを返します。
         /// </summary>
-        public static bool HasEndColor(this FluxParticleColorOverLifetimeHandle handle) => handle.HasParameter(FluxParticleColorOverLifetimeHandle.EndColorParameterIndex);
+        public static bool HasEndColor(this FluxParticleColorOverLifetimeHandle handle) => handle.HasParameter((int)FluxParticleColorOverLifetimeParameter.EndColor);
 
         /// <summary>
         /// 終端色を取得します。非対応モードでは既定値を返します。
         /// </summary>
-        public static Color GetEndColor(this FluxParticleColorOverLifetimeHandle handle) => handle.GetValue(FluxParticleColorOverLifetimeHandle.EndColorParameterIndex);
+        public static Color GetEndColor(this FluxParticleColorOverLifetimeHandle handle) => handle.GetValue((int)FluxParticleColorOverLifetimeParameter.EndColor);
 
         /// <summary>
         /// 終端色を変更します。非対応モードではfalseを返します。
         /// </summary>
-        public static bool SetEndColor(this FluxParticleColorOverLifetimeHandle handle, Color value) => handle.SetValue(FluxParticleColorOverLifetimeHandle.EndColorParameterIndex, FluxParticleValueType.Float4, value);
+        public static bool SetEndColor(this FluxParticleColorOverLifetimeHandle handle, Color value) => handle.SetValue((int)FluxParticleColorOverLifetimeParameter.EndColor, FluxParticleValueType.Float4, value);
     }
 }
 

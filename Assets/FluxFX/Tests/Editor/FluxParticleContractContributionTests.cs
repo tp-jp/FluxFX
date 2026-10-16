@@ -7,7 +7,6 @@ using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.Compilation.Contracts;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Contracts;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Gravity;
 using TpLab.Flux.FX.Editor.Modules.ColorOverLifetime;
 using TpLab.Flux.FX.Editor.Modules.RotationOverLifetime;

@@ -1,6 +1,8 @@
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+namespace TpLab.Flux.FX.Editor.Modules.Vortex
 {
     /// <summary>
     /// Vortexの公開APIとParameterの契約
@@ -43,9 +45,9 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleVortexHandle")
                 .Accessor("Vortex")
                 .Enabled("vortex.enabled")
-                .Parameter(Center)
-                .Parameter(Axis)
-                .Parameter(Strength)
+                .Parameter(FluxParticleVortexParameter.Center, Center)
+                .Parameter(FluxParticleVortexParameter.Axis, Axis)
+                .Parameter(FluxParticleVortexParameter.Strength, Strength)
                 .Build();
     }
 }

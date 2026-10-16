@@ -1,4 +1,6 @@
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
+namespace TpLab.Flux.FX.Editor.Modules.LimitVelocity
 {
     /// <summary>
     /// LimitVelocityの公開APIとParameterの契約
@@ -23,7 +25,7 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleLimitVelocityHandle")
                 .Accessor("LimitVelocity")
                 .Enabled("limit-velocity.enabled")
-                .Parameter(MaxSpeed)
+                .Parameter(FluxParticleLimitVelocityParameter.MaxSpeed, MaxSpeed)
                 .Build();
     }
 }

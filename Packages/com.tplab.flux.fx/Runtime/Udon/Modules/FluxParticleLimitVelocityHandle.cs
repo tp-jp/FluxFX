@@ -9,8 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleLimitVelocityHandle : FluxParticleModuleHandle
     {
-        internal const int MaxSpeedParameterIndex = 0;
-
         /// <summary>
         /// LimitVelocityのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -37,12 +35,12 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 速度の上限を取得します。
         /// </summary>
-        public static float GetMaxSpeed(this FluxParticleLimitVelocityHandle handle) => handle.GetValue(FluxParticleLimitVelocityHandle.MaxSpeedParameterIndex).x;
+        public static float GetMaxSpeed(this FluxParticleLimitVelocityHandle handle) => handle.GetValue((int)FluxParticleLimitVelocityParameter.MaxSpeed).x;
 
         /// <summary>
         /// 速度の上限を変更します。
         /// </summary>
-        public static bool SetMaxSpeed(this FluxParticleLimitVelocityHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleLimitVelocityHandle.MaxSpeedParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetMaxSpeed(this FluxParticleLimitVelocityHandle handle, float value) => handle.SetValue((int)FluxParticleLimitVelocityParameter.MaxSpeed, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 

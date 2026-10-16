@@ -9,8 +9,6 @@ namespace TpLab.Flux.FX.Udon.Modules
     /// </summary>
     public class FluxParticleDragHandle : FluxParticleModuleHandle
     {
-        internal const int DragParameterIndex = 0;
-
         /// <summary>
         /// Dragのハンドルを取得し、初回のみ生成します。
         /// </summary>
@@ -37,12 +35,12 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 抵抗を取得します。
         /// </summary>
-        public static float GetDrag(this FluxParticleDragHandle handle) => handle.GetValue(FluxParticleDragHandle.DragParameterIndex).x;
+        public static float GetDrag(this FluxParticleDragHandle handle) => handle.GetValue((int)FluxParticleDragParameter.Drag).x;
 
         /// <summary>
         /// 抵抗を変更します。
         /// </summary>
-        public static bool SetDrag(this FluxParticleDragHandle handle, float value) => value >= 0 && handle.SetValue(FluxParticleDragHandle.DragParameterIndex, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetDrag(this FluxParticleDragHandle handle, float value) => handle.SetValue((int)FluxParticleDragParameter.Drag, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 

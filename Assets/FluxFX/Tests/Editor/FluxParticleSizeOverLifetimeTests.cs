@@ -6,7 +6,6 @@ using System.Reflection;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Preview;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;

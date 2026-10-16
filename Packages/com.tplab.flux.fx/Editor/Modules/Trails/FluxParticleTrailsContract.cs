@@ -1,6 +1,8 @@
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+namespace TpLab.Flux.FX.Editor.Modules.Trails
 {
     /// <summary>
     /// Trailsの公開APIとParameterの契約
@@ -44,9 +46,9 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleTrailsHandle")
                 .Accessor("Trails")
                 .Enabled("trails.enabled")
-                .Parameter(Width)
-                .Parameter(Color)
-                .Parameter(Duration)
+                .Parameter(FluxParticleTrailsParameter.Width, Width)
+                .Parameter(FluxParticleTrailsParameter.Color, Color)
+                .Parameter(FluxParticleTrailsParameter.Duration, Duration)
                 .Build();
     }
 }

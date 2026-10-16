@@ -1,6 +1,8 @@
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
 {
     /// <summary>
     /// TextureSheetAnimationの公開APIとParameterの契約
@@ -16,6 +18,7 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Policy(FluxParticleParameterPolicy.Static)
                 .Range(Vector2.one, new Vector2(16777216, 16777216))
                 .Integer()
+                .MaximumProduct(16777216)
                 .Build();
 
         /// <summary>
@@ -36,8 +39,8 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleTextureSheetAnimationHandle")
                 .Accessor("TextureSheetAnimation")
                 .Enabled("texture-sheet.enabled")
-                .Parameter(Tiles)
-                .Parameter(Cycles)
+                .Parameter(FluxParticleTextureSheetAnimationParameter.Tiles, Tiles)
+                .Parameter(FluxParticleTextureSheetAnimationParameter.Cycles, Cycles)
                 .Build();
     }
 }

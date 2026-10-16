@@ -1,10 +1,17 @@
+using TpLab.Flux.FX.Editor.Modules.Force;
+using TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime;
+using TpLab.Flux.FX.Editor.Modules.Drag;
+using TpLab.Flux.FX.Editor.Modules.Trails;
+using TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation;
+using TpLab.Flux.FX.Editor.Modules.Vortex;
+using TpLab.Flux.FX.Editor.Modules.Noise;
+using TpLab.Flux.FX.Editor.Modules.LimitVelocity;
 using System;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Contracts;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Editor.Modules.Blink;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -35,6 +42,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual("FluxParticle" + name + "Handle", contract.HandleName);
             Assert.AreEqual(name, contract.AccessorName);
             CollectionAssert.AreEqual(expected, contract.Parameters.Select(parameter => parameter.Id));
+            var keyType = typeof(FluxParticleSystem).Assembly.GetType("TpLab.Flux.FX.Udon.Modules.FluxParticle" + name + "Parameter", true);
+            Assert.AreEqual(expected.Length, Enum.GetValues(keyType).Length);
+            foreach (var key in Enum.GetValues(keyType))
+            {
+                Assert.AreEqual(key.ToString(), contract.Parameters[Convert.ToInt32(key)].ApiName);
+            }
             foreach (var enabled in new[] { false, true })
             {
                 var settings = (FluxParticleModule)Activator.CreateInstance(moduleType);
@@ -88,6 +101,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(FluxParticleTextureSheetAnimationContract.Tiles.IsValid(new Vector2(1, 16777216)));
             Assert.IsFalse(FluxParticleTextureSheetAnimationContract.Tiles.IsValid(new Vector2(0, 1)));
             Assert.IsFalse(FluxParticleTextureSheetAnimationContract.Tiles.IsValid(new Vector2(1, 1.5f)));
+            Assert.IsTrue(FluxParticleTextureSheetAnimationContract.Tiles.IsValid(new Vector2(4095, 4097)));
+            Assert.IsFalse(FluxParticleTextureSheetAnimationContract.Tiles.IsValid(new Vector2(97, 172961)));
         }
 
         [Test]

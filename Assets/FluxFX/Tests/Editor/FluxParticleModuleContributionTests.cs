@@ -1,10 +1,11 @@
+using TpLab.Flux.FX.Editor.Modules.RotationOverLifetime;
+using TpLab.Flux.FX.Editor.Modules.ColorOverLifetime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
-using TpLab.Flux.FX.Editor.Contracts.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Scripts.Modules;

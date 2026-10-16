@@ -1,6 +1,8 @@
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
 {
     /// <summary>
     /// VelocityOverLifetimeの公開APIとParameterの契約
@@ -60,11 +62,11 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleVelocityOverLifetimeHandle")
                 .Accessor("VelocityOverLifetime")
                 .Enabled("velocity-over-lifetime.enabled")
-                .Parameter(Start)
-                .Parameter(End)
-                .Parameter(Orbital)
-                .Parameter(Offset)
-                .Parameter(Radial)
+                .Parameter(FluxParticleVelocityOverLifetimeParameter.Start, Start)
+                .Parameter(FluxParticleVelocityOverLifetimeParameter.End, End)
+                .Parameter(FluxParticleVelocityOverLifetimeParameter.Orbital, Orbital)
+                .Parameter(FluxParticleVelocityOverLifetimeParameter.Offset, Offset)
+                .Parameter(FluxParticleVelocityOverLifetimeParameter.Radial, Radial)
                 .Build();
     }
 }

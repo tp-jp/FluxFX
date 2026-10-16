@@ -1,4 +1,6 @@
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Editor.Contracts;
+namespace TpLab.Flux.FX.Editor.Modules.Noise
 {
     /// <summary>
     /// Noiseの公開APIとParameterの契約
@@ -43,9 +45,9 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleNoiseHandle")
                 .Accessor("Noise")
                 .Enabled("noise.enabled")
-                .Parameter(Strength)
-                .Parameter(Scale)
-                .Parameter(Speed)
+                .Parameter(FluxParticleNoiseParameter.Strength, Strength)
+                .Parameter(FluxParticleNoiseParameter.Scale, Scale)
+                .Parameter(FluxParticleNoiseParameter.Speed, Speed)
                 .Build();
     }
 }

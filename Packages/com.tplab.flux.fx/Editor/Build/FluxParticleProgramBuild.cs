@@ -1,7 +1,4 @@
 using TpLab.Flux.FX.Editor.Compilation.Contracts;
-using FluxParticleParameterContract = TpLab.Flux.FX.Editor.Contracts.FluxParticleParameterContract;
-using TpLab.Flux.FX.Editor.Modules.Gravity;
-using TpLab.Flux.FX.Editor.Modules.SizeOverLifetime;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -301,15 +298,13 @@ namespace TpLab.Flux.FX.Editor.Build
             runtime.SetProgramVariable("parameterTypes", parameters.Select(parameter => (int)parameter.Type).ToArray());
             runtime.SetProgramVariable("staticParameters", parameters.Select(parameter => parameter.Policy == FluxParticleParameterPolicy.Static).ToArray());
             runtime.SetProgramVariable("parameterValues", parameterValues);
-            // Runtime検証へ移行した契約だけを対象にします。
-            var constraints = new FluxParticleRuntimeNumericConstraints(parameters, new FluxParticleParameterContract[]
-            {
-                FluxParticleGravityContract.Acceleration,
-                FluxParticleSizeOverLifetimeContract.EndSize,
-            });
+            var constraints = new FluxParticleRuntimeParameterConstraints(parameters);
             runtime.SetProgramVariable("parameterConstraintFlags", constraints.Flags);
             runtime.SetProgramVariable("parameterMinimum", constraints.Minimum);
             runtime.SetProgramVariable("parameterMaximum", constraints.Maximum);
+            runtime.SetProgramVariable("parameterMaximumProduct", constraints.MaximumProduct);
+            runtime.SetProgramVariable("parameterAllowedValueOffsets", constraints.AllowedValueOffsets);
+            runtime.SetProgramVariable("parameterAllowedValues", constraints.AllowedValues);
             runtime.SetProgramVariable("simulationTimeProperty", program.Compilation.Providers.ContainsKey("step.time")
                 ? FluxParticleHlslNames.ProviderProperty("step.time") : "");
             runtime.SetProgramVariable("deltaTimeProperty", FluxParticleHlslNames.ProviderProperty("step.delta-time"));

@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Modules;
 using TpLab.Flux.FX.Editor.Contracts;
 using TpLab.Flux.FX.Udon;
 
@@ -86,13 +87,13 @@ namespace TpLab.Flux.FX.Editor.Modules.Blink
                 .Handle("FluxParticleBlinkHandle")
                 .Accessor("Blink")
                 .Enabled("blink.enabled")
-                .Parameter(Frequency)
-                .Parameter(Duty)
-                .Parameter(Minimum)
-                .Parameter(Smoothness)
-                .Parameter(RandomPhase)
-                .Parameter(TimeMode)
-                .Parameter(Target)
+                .Parameter(FluxParticleBlinkParameter.Frequency, Frequency)
+                .Parameter(FluxParticleBlinkParameter.Duty, Duty)
+                .Parameter(FluxParticleBlinkParameter.Minimum, Minimum)
+                .Parameter(FluxParticleBlinkParameter.Smoothness, Smoothness)
+                .Parameter(FluxParticleBlinkParameter.RandomPhase, RandomPhase)
+                .Parameter(FluxParticleBlinkParameter.TimeMode, TimeMode)
+                .Parameter(FluxParticleBlinkParameter.Target, Target)
                 .Build();
     }
 }
