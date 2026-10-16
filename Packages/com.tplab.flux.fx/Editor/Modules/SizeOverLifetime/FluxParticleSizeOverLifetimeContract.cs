@@ -21,7 +21,7 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.size-over-lifetime")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.SizeOverLifetime)
                 .Handle("FluxParticleSizeOverLifetimeHandle")
                 .Accessor("SizeOverLifetime")
                 .Enabled("size.enabled")

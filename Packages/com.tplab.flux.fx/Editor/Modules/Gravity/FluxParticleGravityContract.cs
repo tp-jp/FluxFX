@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Gravity
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("fluxfx.gravity")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Gravity)
                 .Handle("FluxParticleGravityHandle")
                 .Accessor("Gravity")
                 .Enabled("gravity.enabled")

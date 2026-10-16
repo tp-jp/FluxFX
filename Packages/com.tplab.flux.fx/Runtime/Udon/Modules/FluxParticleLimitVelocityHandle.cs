@@ -1,6 +1,5 @@
 using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Modules
 {
@@ -14,19 +13,11 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static FluxParticleLimitVelocityHandle Get(FluxParticleModules modules)
         {
-            const string id = "tplab.fluxfx.limit-velocity";
-            var cached = modules.GetCachedHandle(id);
-            if (cached != null) return (FluxParticleLimitVelocityHandle)cached;
-            var binding = modules.GetBinding(id);
-            if (binding == null) return null;
 #if COMPILER_UDONSHARP
-            var handle = (FluxParticleLimitVelocityHandle)new DataList();
+            return (FluxParticleLimitVelocityHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.LimitVelocity);
 #else
-            var handle = new FluxParticleLimitVelocityHandle();
+            return FluxParticleModuleHandleFactory.Get<FluxParticleLimitVelocityHandle>(modules, FluxParticleModuleIds.LimitVelocity);
 #endif
-            Initialize(handle, binding);
-            modules.CacheHandle(id, handle);
-            return handle;
         }
     }
 

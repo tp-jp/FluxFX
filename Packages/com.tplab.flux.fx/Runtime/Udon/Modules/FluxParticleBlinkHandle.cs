@@ -1,6 +1,5 @@
 using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Modules
 {
@@ -14,19 +13,11 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static FluxParticleBlinkHandle Get(FluxParticleModules modules)
         {
-            const string id = "tplab.fluxfx.blink";
-            var cached = modules.GetCachedHandle(id);
-            if (cached != null) return (FluxParticleBlinkHandle)cached;
-            var binding = modules.GetBinding(id);
-            if (binding == null) return null;
 #if COMPILER_UDONSHARP
-            var handle = (FluxParticleBlinkHandle)new DataList();
+            return (FluxParticleBlinkHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.Blink);
 #else
-            var handle = new FluxParticleBlinkHandle();
+            return FluxParticleModuleHandleFactory.Get<FluxParticleBlinkHandle>(modules, FluxParticleModuleIds.Blink);
 #endif
-            Initialize(handle, binding);
-            modules.CacheHandle(id, handle);
-            return handle;
         }
     }
 

@@ -20,7 +20,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Drag
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("fluxfx.drag")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Drag)
                 .Handle("FluxParticleDragHandle")
                 .Accessor("Drag")
                 .Enabled("drag.enabled")

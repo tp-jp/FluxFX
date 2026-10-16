@@ -41,7 +41,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Vortex
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.vortex")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Vortex)
                 .Handle("FluxParticleVortexHandle")
                 .Accessor("Vortex")
                 .Enabled("vortex.enabled")

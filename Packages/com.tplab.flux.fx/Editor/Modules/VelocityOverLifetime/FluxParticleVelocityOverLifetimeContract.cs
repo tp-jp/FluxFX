@@ -58,7 +58,7 @@ namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.velocity-over-lifetime")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.VelocityOverLifetime)
                 .Handle("FluxParticleVelocityOverLifetimeHandle")
                 .Accessor("VelocityOverLifetime")
                 .Enabled("velocity-over-lifetime.enabled")

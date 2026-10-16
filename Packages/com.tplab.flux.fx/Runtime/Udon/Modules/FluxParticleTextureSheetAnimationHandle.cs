@@ -1,6 +1,5 @@
 using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Modules
 {
@@ -14,19 +13,11 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static FluxParticleTextureSheetAnimationHandle Get(FluxParticleModules modules)
         {
-            const string id = "tplab.fluxfx.texture-sheet-animation";
-            var cached = modules.GetCachedHandle(id);
-            if (cached != null) return (FluxParticleTextureSheetAnimationHandle)cached;
-            var binding = modules.GetBinding(id);
-            if (binding == null) return null;
 #if COMPILER_UDONSHARP
-            var handle = (FluxParticleTextureSheetAnimationHandle)new DataList();
+            return (FluxParticleTextureSheetAnimationHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.TextureSheetAnimation);
 #else
-            var handle = new FluxParticleTextureSheetAnimationHandle();
+            return FluxParticleModuleHandleFactory.Get<FluxParticleTextureSheetAnimationHandle>(modules, FluxParticleModuleIds.TextureSheetAnimation);
 #endif
-            Initialize(handle, binding);
-            modules.CacheHandle(id, handle);
-            return handle;
         }
     }
 

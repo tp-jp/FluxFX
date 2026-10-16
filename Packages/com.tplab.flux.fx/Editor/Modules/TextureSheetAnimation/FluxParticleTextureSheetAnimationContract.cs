@@ -35,7 +35,7 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.texture-sheet-animation")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.TextureSheetAnimation)
                 .Handle("FluxParticleTextureSheetAnimationHandle")
                 .Accessor("TextureSheetAnimation")
                 .Enabled("texture-sheet.enabled")

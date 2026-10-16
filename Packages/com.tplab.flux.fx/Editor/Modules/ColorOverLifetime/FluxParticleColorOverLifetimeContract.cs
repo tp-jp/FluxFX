@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("fluxfx.color-over-lifetime")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.ColorOverLifetime)
                 .Handle("FluxParticleColorOverLifetimeHandle")
                 .Accessor("ColorOverLifetime")
                 .Enabled("color.enabled")

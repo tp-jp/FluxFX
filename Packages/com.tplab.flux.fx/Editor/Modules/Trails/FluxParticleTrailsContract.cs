@@ -42,7 +42,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Trails
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.trails")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Trails)
                 .Handle("FluxParticleTrailsHandle")
                 .Accessor("Trails")
                 .Enabled("trails.enabled")

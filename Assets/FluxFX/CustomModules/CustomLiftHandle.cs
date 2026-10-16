@@ -2,7 +2,6 @@ using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.CustomModules
 {
@@ -22,19 +21,11 @@ namespace TpLab.Flux.FX.CustomModules
         /// </summary>
         public static CustomLiftHandle CustomLift(this FluxParticleModules modules)
         {
-            const string id = "custom.fluxfx.lift";
-            var cached = modules.GetCachedHandle(id);
-            if (cached != null) return (CustomLiftHandle)cached;
-            var binding = modules.GetBinding(id);
-            if (binding == null) return null;
 #if COMPILER_UDONSHARP
-            var handle = (CustomLiftHandle)new DataList();
+            return (CustomLiftHandle)FluxParticleModuleHandleFactory.Get(modules, CustomLiftIds.Module);
 #else
-            var handle = new CustomLiftHandle();
+            return FluxParticleModuleHandleFactory.Get<CustomLiftHandle>(modules, CustomLiftIds.Module);
 #endif
-            FluxParticleModuleHandle.Initialize(handle, binding);
-            modules.CacheHandle(id, handle);
-            return handle;
         }
 
         /// <summary>

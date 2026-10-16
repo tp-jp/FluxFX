@@ -41,7 +41,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Noise
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.noise")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Noise)
                 .Handle("FluxParticleNoiseHandle")
                 .Accessor("Noise")
                 .Enabled("noise.enabled")

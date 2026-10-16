@@ -1,6 +1,5 @@
 using TpLab.Flux.FX.Udon.Parameters;
 using UnityEngine;
-using VRC.SDK3.Data;
 
 namespace TpLab.Flux.FX.Udon.Modules
 {
@@ -14,19 +13,11 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// </summary>
         public static FluxParticleSizeOverLifetimeHandle Get(FluxParticleModules modules)
         {
-            const string id = "tplab.fluxfx.size-over-lifetime";
-            var cached = modules.GetCachedHandle(id);
-            if (cached != null) return (FluxParticleSizeOverLifetimeHandle)cached;
-            var binding = modules.GetBinding(id);
-            if (binding == null) return null;
 #if COMPILER_UDONSHARP
-            var handle = (FluxParticleSizeOverLifetimeHandle)new DataList();
+            return (FluxParticleSizeOverLifetimeHandle)FluxParticleModuleHandleFactory.Get(modules, FluxParticleModuleIds.SizeOverLifetime);
 #else
-            var handle = new FluxParticleSizeOverLifetimeHandle();
+            return FluxParticleModuleHandleFactory.Get<FluxParticleSizeOverLifetimeHandle>(modules, FluxParticleModuleIds.SizeOverLifetime);
 #endif
-            Initialize(handle, binding);
-            modules.CacheHandle(id, handle);
-            return handle;
         }
     }
 

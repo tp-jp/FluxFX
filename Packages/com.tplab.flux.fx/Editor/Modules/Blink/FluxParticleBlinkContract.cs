@@ -83,7 +83,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Blink
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.blink")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.Blink)
                 .Handle("FluxParticleBlinkHandle")
                 .Accessor("Blink")
                 .Enabled("blink.enabled")

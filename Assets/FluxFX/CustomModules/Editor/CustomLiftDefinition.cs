@@ -13,7 +13,7 @@ namespace TpLab.Flux.FX.CustomModules.Editor
     public sealed class CustomLiftDefinition : IFluxParticleModuleDefinition, IFluxParticleModuleBindingDefinition
     {
         public Type ModuleType => typeof(CustomLiftModule);
-        public string ModuleId => "custom.fluxfx.lift";
+        public string ModuleId => CustomLiftIds.Module;
         public string EnabledParameterId => "custom-lift.enabled";
         public FluxParticleParameterDefinition[] GetHandleParameters(FluxParticleModule module) => new[]
         {

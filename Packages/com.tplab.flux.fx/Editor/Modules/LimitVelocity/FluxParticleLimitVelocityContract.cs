@@ -21,7 +21,7 @@ namespace TpLab.Flux.FX.Editor.Modules.LimitVelocity
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
-            new FluxParticleModuleContractBuilder("tplab.fluxfx.limit-velocity")
+            new FluxParticleModuleContractBuilder(FluxParticleModuleIds.LimitVelocity)
                 .Handle("FluxParticleLimitVelocityHandle")
                 .Accessor("LimitVelocity")
                 .Enabled("limit-velocity.enabled")
