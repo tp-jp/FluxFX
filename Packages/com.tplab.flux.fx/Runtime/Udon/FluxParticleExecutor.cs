@@ -416,6 +416,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// ビルド済みProgramへのModuleの組み込み有無を返します。
         /// </summary>
+        /// <param name="id">Module ID</param>
+        /// <returns>組み込み済みの場合はtrue</returns>
         public bool HasModule(string id)
         {
             if (moduleIds == null) return false;
@@ -429,6 +431,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// IDと型に一致するParameterスロットを解決します。
         /// </summary>
+        /// <param name="id">Parameter ID</param>
+        /// <param name="type">Parameterの型</param>
         /// <returns>一致したスロット。見つからない場合は-1</returns>
         public int ResolveParameter(string id, int type)
         {
@@ -439,6 +443,8 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// Executorが保持する現在のParameter値を取得します。
         /// </summary>
+        /// <param name="index">Parameterスロット</param>
+        /// <returns>ParameterのVector4値。範囲外はVector4.zero</returns>
         public Vector4 GetParameterValue(int index)
         {
             if (parameterValues == null || index < 0 || index >= parameterValues.Length) return Vector4.zero;
@@ -448,6 +454,10 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// 解決済みスロットの型・Static制約・有限値を検証してParameterを変更します。
         /// </summary>
+        /// <param name="index">Parameterスロット</param>
+        /// <param name="type">Parameterの型</param>
+        /// <param name="value">設定するVector4値</param>
+        /// <returns>変更に成功した場合はtrue</returns>
         public bool SetParameterValue(int index, int type, Vector4 value)
         {
             if (!CanSetParameterValue(index, type, value)) return false;
@@ -478,6 +488,10 @@ namespace TpLab.Flux.FX.Udon
         /// <summary>
         /// Parameterを変更できるか、型・Static制約・有限値を検証します。
         /// </summary>
+        /// <param name="index">Parameterスロット</param>
+        /// <param name="type">Parameterの型</param>
+        /// <param name="value">設定するVector4値</param>
+        /// <returns>変更できる場合はtrue</returns>
         public bool CanSetParameterValue(int index, int type, Vector4 value)
         {
             if (parameterValues == null || index < 0 || index >= parameterValues.Length ||
