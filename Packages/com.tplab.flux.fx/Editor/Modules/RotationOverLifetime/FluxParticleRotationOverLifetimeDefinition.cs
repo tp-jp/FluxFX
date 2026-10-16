@@ -10,17 +10,15 @@ namespace TpLab.Flux.FX.Editor.Modules.RotationOverLifetime
     /// <summary>
     /// Rotation over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleRotationOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleRotationOverLifetimeDefinition : FluxParticleModuleDefinition<FluxParticleRotationOverLifetimeModule>
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/RotationOverLifetime/";
 
-        public Type ModuleType => typeof(FluxParticleRotationOverLifetimeModule);
 
-        public string ModuleId => FluxParticleRotationOverLifetimeContract.Module.Id;
+        public override string ModuleId => FluxParticleRotationOverLifetimeContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleRotationOverLifetimeModule rotation, FluxParticleProgramContribution context)
         {
-            var rotation = (FluxParticleRotationOverLifetimeModule)module;
             if (rotation.Mode != FluxParticleRotationOverLifetimeMode.Linear &&
                 rotation.Mode != FluxParticleRotationOverLifetimeMode.Curve)
             {

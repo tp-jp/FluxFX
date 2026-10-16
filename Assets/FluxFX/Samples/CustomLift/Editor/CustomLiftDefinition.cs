@@ -1,23 +1,18 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
-using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.CustomModules.Editor
 {
     /// <summary>
     /// Custom Liftの時間変化する加速度を登録します。
     /// </summary>
-    public sealed class CustomLiftDefinition : IFluxParticleModuleDefinition
+    public sealed class CustomLiftDefinition : FluxParticleModuleDefinition<CustomLiftModule>
     {
-        public Type ModuleType => typeof(CustomLiftModule);
+        public override string ModuleId => CustomLiftContract.Module.Id;
 
-        public string ModuleId => CustomLiftContract.Module.Id;
-
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(CustomLiftModule lift, FluxParticleProgramContribution context)
         {
-            var lift = (CustomLiftModule)module;
             var contribution = new FluxParticleModuleContribution(context, CustomLiftContract.Module, lift.Enabled);
             var strength = contribution.Bind(CustomLiftContract.Strength, lift.Strength);
             var direction = contribution.Bind(CustomLiftContract.Direction, lift.Direction);

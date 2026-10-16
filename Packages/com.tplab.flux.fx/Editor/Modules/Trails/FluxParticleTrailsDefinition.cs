@@ -6,15 +6,13 @@ using TpLab.Flux.FX.Udon;
 
 namespace TpLab.Flux.FX.Editor.Modules.Trails
 {
-    public sealed class FluxParticleTrailsDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleTrailsDefinition : FluxParticleModuleDefinition<FluxParticleTrailsModule>
     {
-        public Type ModuleType => typeof(FluxParticleTrailsModule);
 
-        public string ModuleId => FluxParticleTrailsContract.Module.Id;
+        public override string ModuleId => FluxParticleTrailsContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleTrailsModule trails, FluxParticleProgramContribution context)
         {
-            var trails = (FluxParticleTrailsModule)module;
             if (trails.MaxTrails < 1 || trails.MaxTrails > FluxParticleCapacity.MaximumExactCount ||
                 trails.PointsPerTrail < 2 || trails.PointsPerTrail >= FluxParticleCapacity.MaximumExactCount)
             {

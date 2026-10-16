@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -9,18 +8,16 @@ namespace TpLab.Flux.FX.Editor.Modules.VelocityOverLifetime
     /// <summary>
     /// 時間変化・周回・放射方向の速度を位置へ加算するOperationを提供します。
     /// </summary>
-    public sealed class FluxParticleVelocityOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleVelocityOverLifetimeDefinition : FluxParticleModuleDefinition<FluxParticleVelocityOverLifetimeModule>
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/VelocityOverLifetime/";
         const string Prefix = "velocity-over-lifetime.";
 
-        public Type ModuleType => typeof(FluxParticleVelocityOverLifetimeModule);
 
-        public string ModuleId => FluxParticleVelocityOverLifetimeContract.Module.Id;
+        public override string ModuleId => FluxParticleVelocityOverLifetimeContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleVelocityOverLifetimeModule velocity, FluxParticleProgramContribution context)
         {
-            var velocity = (FluxParticleVelocityOverLifetimeModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleVelocityOverLifetimeContract.Module, velocity.Enabled);
             var startParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.Start, velocity.Start);
             var endParameter = contribution.Bind(FluxParticleVelocityOverLifetimeContract.End, velocity.End);

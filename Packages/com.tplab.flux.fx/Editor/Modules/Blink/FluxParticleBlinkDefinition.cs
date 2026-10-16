@@ -1,19 +1,16 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.Modules.Blink
 {
-    public sealed class FluxParticleBlinkDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleBlinkDefinition : FluxParticleModuleDefinition<FluxParticleBlinkModule>
     {
-        public Type ModuleType => typeof(FluxParticleBlinkModule);
 
-        public string ModuleId => FluxParticleBlinkContract.Module.Id;
+        public override string ModuleId => FluxParticleBlinkContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleBlinkModule blink, FluxParticleProgramContribution context)
         {
-            var blink = (FluxParticleBlinkModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleBlinkContract.Module, blink.Enabled);
             var parameters = new[]
             {

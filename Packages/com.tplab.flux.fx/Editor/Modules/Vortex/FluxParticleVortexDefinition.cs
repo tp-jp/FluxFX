@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -8,15 +7,13 @@ namespace TpLab.Flux.FX.Editor.Modules.Vortex
     /// <summary>
     /// Step開始時のPositionから接線方向の加速度をVelocityへ加算します。
     /// </summary>
-    public sealed class FluxParticleVortexDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleVortexDefinition : FluxParticleModuleDefinition<FluxParticleVortexModule>
     {
-        public Type ModuleType => typeof(FluxParticleVortexModule);
 
-        public string ModuleId => FluxParticleVortexContract.Module.Id;
+        public override string ModuleId => FluxParticleVortexContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleVortexModule vortex, FluxParticleProgramContribution context)
         {
-            var vortex = (FluxParticleVortexModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleVortexContract.Module, vortex.Enabled);
             var centerParameter = contribution.Bind(FluxParticleVortexContract.Center, vortex.Center);
             var axisParameter = contribution.Bind(FluxParticleVortexContract.Axis, vortex.Axis);

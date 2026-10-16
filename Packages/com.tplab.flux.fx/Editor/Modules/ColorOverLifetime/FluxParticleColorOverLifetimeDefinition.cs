@@ -10,17 +10,15 @@ namespace TpLab.Flux.FX.Editor.Modules.ColorOverLifetime
     /// <summary>
     /// Color over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleColorOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleColorOverLifetimeDefinition : FluxParticleModuleDefinition<FluxParticleColorOverLifetimeModule>
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/ColorOverLifetime/";
 
-        public Type ModuleType => typeof(FluxParticleColorOverLifetimeModule);
 
-        public string ModuleId => FluxParticleColorOverLifetimeContract.Module.Id;
+        public override string ModuleId => FluxParticleColorOverLifetimeContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleColorOverLifetimeModule color, FluxParticleProgramContribution context)
         {
-            var color = (FluxParticleColorOverLifetimeModule)module;
             if (color.Mode != FluxParticleColorOverLifetimeMode.Linear && color.Mode != FluxParticleColorOverLifetimeMode.Gradient)
             {
                 throw new InvalidOperationException("Unsupported color over lifetime mode.");

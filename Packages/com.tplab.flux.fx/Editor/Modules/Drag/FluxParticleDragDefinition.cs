@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -8,15 +7,13 @@ namespace TpLab.Flux.FX.Editor.Modules.Drag
     /// <summary>
     /// DragのParameterとVelocity更新Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleDragDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleDragDefinition : FluxParticleModuleDefinition<FluxParticleDragModule>
     {
-        public Type ModuleType => typeof(FluxParticleDragModule);
 
-        public string ModuleId => FluxParticleDragContract.Module.Id;
+        public override string ModuleId => FluxParticleDragContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleDragModule drag, FluxParticleProgramContribution context)
         {
-            var drag = (FluxParticleDragModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleDragContract.Module, drag.Enabled);
             var dragParameter = contribution.Bind(FluxParticleDragContract.Drag, drag.Drag);
             contribution.Operation("drag", FluxParticlePhase.Update,

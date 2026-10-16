@@ -19,6 +19,35 @@ namespace TpLab.Flux.FX.Tests.Editor
     public sealed class FluxParticleModuleRegistryTests
     {
         [Test]
+        public void TypedDefinitionRejectsInvalidArgumentsAtRegistryBoundary()
+        {
+            IFluxParticleModuleDefinition definition = new TpLab.Flux.FX.Editor.Modules.Gravity.FluxParticleGravityDefinition();
+            var context = new FluxParticleProgramContribution(FluxParticleCoreDefinitions.Create());
+            Assert.AreEqual(typeof(FluxParticleGravityModule), definition.ModuleType);
+            Assert.Throws<ArgumentNullException>(() => definition.Contribute(null, context));
+            Assert.Throws<ArgumentNullException>(() => definition.Contribute(new FluxParticleGravityModule(), null));
+            var error = Assert.Throws<ArgumentException>(() => definition.Contribute(new FluxParticleDragModule(), context));
+            StringAssert.Contains(typeof(FluxParticleGravityModule).FullName, error.Message);
+            StringAssert.Contains(typeof(FluxParticleDragModule).FullName, error.Message);
+            Assert.IsEmpty(context.InitialValues);
+            Assert.IsEmpty(context.ModuleBindings);
+        }
+
+        [Test]
+        public void StandardAndCustomLiftDefinitionsUseTypedBaseAndAreDiscovered()
+        {
+            var definitions = new FluxParticleModuleRegistry().GetAll()
+                .Where(definition => definition.GetType().Namespace.StartsWith("TpLab.Flux.FX.Editor.Modules.") ||
+                    definition.GetType().FullName == "TpLab.Flux.FX.CustomModules.Editor.CustomLiftDefinition").ToArray();
+            Assert.AreEqual(14, definitions.Length);
+            foreach (var definition in definitions)
+            {
+                var expected = typeof(FluxParticleModuleDefinition<>).MakeGenericType(definition.ModuleType);
+                Assert.IsTrue(expected.IsAssignableFrom(definition.GetType()), definition.GetType().FullName);
+            }
+        }
+
+        [Test]
         public void CustomModuleContributesWithoutChangesToCoreDefinitions()
         {
             var definitions = FluxParticleCoreDefinitions.Create();

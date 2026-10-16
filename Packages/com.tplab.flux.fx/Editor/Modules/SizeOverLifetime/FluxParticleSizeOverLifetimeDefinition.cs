@@ -10,15 +10,13 @@ namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
     /// <summary>
     /// Size over LifetimeのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleSizeOverLifetimeDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleSizeOverLifetimeDefinition : FluxParticleModuleDefinition<FluxParticleSizeOverLifetimeModule>
     {
         const string Hlsl = "Packages/com.tplab.flux.fx/Editor/Modules/SizeOverLifetime/";
-        public Type ModuleType => typeof(FluxParticleSizeOverLifetimeModule);
-        public string ModuleId => FluxParticleSizeOverLifetimeContract.Module.Id;
+        public override string ModuleId => FluxParticleSizeOverLifetimeContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleSizeOverLifetimeModule size, FluxParticleProgramContribution context)
         {
-            var size = (FluxParticleSizeOverLifetimeModule)module;
             if (size.Mode != FluxParticleSizeOverLifetimeMode.Linear && size.Mode != FluxParticleSizeOverLifetimeMode.Curve)
             {
                 throw new InvalidOperationException("Unsupported size over lifetime mode.");

@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -8,15 +7,13 @@ namespace TpLab.Flux.FX.Editor.Modules.Noise
     /// <summary>
     /// PositionとSimulation Timeから求めたノイズ加速度をVelocityへ加算します。
     /// </summary>
-    public sealed class FluxParticleNoiseDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleNoiseDefinition : FluxParticleModuleDefinition<FluxParticleNoiseModule>
     {
-        public Type ModuleType => typeof(FluxParticleNoiseModule);
 
-        public string ModuleId => FluxParticleNoiseContract.Module.Id;
+        public override string ModuleId => FluxParticleNoiseContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleNoiseModule noise, FluxParticleProgramContribution context)
         {
-            var noise = (FluxParticleNoiseModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleNoiseContract.Module, noise.Enabled);
             var strengthParameter = contribution.Bind(FluxParticleNoiseContract.Strength, noise.Strength);
             var scaleParameter = contribution.Bind(FluxParticleNoiseContract.Scale, noise.Scale);

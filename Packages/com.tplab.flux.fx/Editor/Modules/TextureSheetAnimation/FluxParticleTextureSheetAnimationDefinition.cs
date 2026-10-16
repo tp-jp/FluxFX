@@ -9,15 +9,13 @@ namespace TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation
     /// <summary>
     /// Texture Sheet AnimationのRender Operationを提供します。
     /// </summary>
-    public sealed class FluxParticleTextureSheetAnimationDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleTextureSheetAnimationDefinition : FluxParticleModuleDefinition<FluxParticleTextureSheetAnimationModule>
     {
-        public Type ModuleType => typeof(FluxParticleTextureSheetAnimationModule);
 
-        public string ModuleId => FluxParticleTextureSheetAnimationContract.Module.Id;
+        public override string ModuleId => FluxParticleTextureSheetAnimationContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleTextureSheetAnimationModule sheet, FluxParticleProgramContribution context)
         {
-            var sheet = (FluxParticleTextureSheetAnimationModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleTextureSheetAnimationContract.Module, sheet.Enabled);
             var tiles = new Vector2(sheet.TilesX, sheet.TilesY);
             if ((double)tiles.x != sheet.TilesX || (double)tiles.y != sheet.TilesY)

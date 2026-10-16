@@ -1,4 +1,3 @@
-using System;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules.Shared;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -8,15 +7,13 @@ namespace TpLab.Flux.FX.Editor.Modules.LimitVelocity
     /// <summary>
     /// Velocityの大きさを指定した上限へ制限するOperationを提供します。
     /// </summary>
-    public sealed class FluxParticleLimitVelocityDefinition : IFluxParticleModuleDefinition
+    public sealed class FluxParticleLimitVelocityDefinition : FluxParticleModuleDefinition<FluxParticleLimitVelocityModule>
     {
-        public Type ModuleType => typeof(FluxParticleLimitVelocityModule);
 
-        public string ModuleId => FluxParticleLimitVelocityContract.Module.Id;
+        public override string ModuleId => FluxParticleLimitVelocityContract.Module.Id;
 
-        public void Contribute(FluxParticleModule module, FluxParticleProgramContribution context)
+        public override void Contribute(FluxParticleLimitVelocityModule limit, FluxParticleProgramContribution context)
         {
-            var limit = (FluxParticleLimitVelocityModule)module;
             var contribution = new FluxParticleModuleContribution(context, FluxParticleLimitVelocityContract.Module, limit.Enabled);
             var maxSpeedParameter = contribution.Bind(FluxParticleLimitVelocityContract.MaxSpeed, limit.MaxSpeed);
             contribution.Operation("limit-velocity", FluxParticlePhase.Update,
