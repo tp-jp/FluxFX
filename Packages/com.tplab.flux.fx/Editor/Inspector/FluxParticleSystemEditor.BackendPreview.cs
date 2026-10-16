@@ -21,6 +21,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
         const string BackendExpandedKey = SessionStatePrefix + "BackendExpanded";
         FluxParticleBuildResult _backendPreview;
         int _backendMaximumCount;
+        int _previewAuthoringDirtyCount = -1;
+        int _previewParticleCount = -1;
+        int _previewDisplayedAliveCount = -1;
+        double _lastSecondaryPreviewRepaint;
         string _backendPreviewSignature;
         string _backendPreviewError;
         FluxParticleEditorPreview _particlePreview;
@@ -117,6 +121,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (!HasScenePreview) return;
             var authoring = (FluxParticleAuthoring)_authoringObject.targetObject;
             var count = ((FluxParticleSystem)target).ParticleCount;
+            var dirtyCount = EditorUtility.GetDirtyCount(authoring);
+            if (_backendPreviewSignature != null && dirtyCount == _previewAuthoringDirtyCount && count == _previewParticleCount &&
+                (_particlePreview != null || _backendPreviewError != null)) return;
+            _previewAuthoringDirtyCount = dirtyCount;
+            _previewParticleCount = count;
             var signature = EditorJsonUtility.ToJson(authoring) + ":" + count;
             if (signature != _backendPreviewSignature || (_particlePreview == null && _backendPreviewError == null))
             {
@@ -146,6 +155,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _unityFocused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
             _lastPreviewTime = EditorApplication.timeSinceStartup;
             EditorApplication.update += UpdateParticlePreview;
+            Undo.undoRedoPerformed += InvalidatePreviewSettings;
             Camera.onPreCull += DrawParticlePreviewInSceneView;
             PreviewEditor = this;
             EditorApplication.focusChanged += OnPreviewFocusChanged;
@@ -157,6 +167,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void OnDisable()
         {
             EditorApplication.update -= UpdateParticlePreview;
+            Undo.undoRedoPerformed -= InvalidatePreviewSettings;
             Camera.onPreCull -= DrawParticlePreviewInSceneView;
             if (PreviewEditor == this) PreviewEditor = null;
             EditorApplication.focusChanged -= OnPreviewFocusChanged;
@@ -179,11 +190,17 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             if (!HasScenePreview) return;
             RefreshPreviewAfterSave();
-            if (_particlePreview == null && _backendPreviewError == null)
+            EnsureParticlePreview();
+            if (_particlePreview == null) return;
+            if (_previewDisplayedAliveCount != _particlePreview.AliveCount)
             {
-                EnsureParticlePreview();
+                _previewDisplayedAliveCount = _particlePreview.AliveCount;
+                if (!_previewPlaying || !_unityFocused)
+                {
+                    RepaintRunningPreview(EditorApplication.timeSinceStartup);
+                }
             }
-            if (_particlePreview == null || !_previewPlaying) return;
+            if (!_previewPlaying) return;
             var focused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
             if (focused != _unityFocused)
             {
@@ -207,9 +224,28 @@ namespace TpLab.Flux.FX.Editor.Inspector
             {
                 _backendPreviewError = exception.Message;
                 DisposeParticlePreview();
+                Repaint();
             }
-            SceneView.RepaintAll();
+            RepaintRunningPreview(now);
+        }
+
+        void InvalidatePreviewSettings()
+        {
+            _previewAuthoringDirtyCount = -1;
             Repaint();
+        }
+
+        void RepaintRunningPreview(double now)
+        {
+            // 操作中のSceneViewはシミュレーションに追従し、他のViewは低頻度で更新する。
+            var active = SceneView.lastActiveSceneView;
+            if (active != null) active.Repaint();
+            if (now - _lastSecondaryPreviewRepaint < 0.2) return;
+            _lastSecondaryPreviewRepaint = now;
+            foreach (SceneView view in SceneView.sceneViews)
+            {
+                if (view != null && view != active) view.Repaint();
+            }
         }
 
         void OnPreviewSceneSaved(Scene scene)

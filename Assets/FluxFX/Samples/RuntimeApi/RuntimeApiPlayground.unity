@@ -58054,7 +58054,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332382794]
-      value: Assembly-CSharp TpLab.Flux.FX.CustomModules.CustomLiftModule
+      value: TpLab.Flux.FX.Samples.CustomLift TpLab.Flux.FX.CustomModules.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}

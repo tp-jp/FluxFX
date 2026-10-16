@@ -350,7 +350,6 @@ namespace TpLab.Flux.FX.Editor.Preview
                 }
                 var data = request.GetData<Color>();
                 AliveCount = Count - Mathf.RoundToInt(data[0].r);
-                SceneView.RepaintAll();
             });
         }
         Shader CreateShader(string source)
