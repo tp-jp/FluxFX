@@ -83,7 +83,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Shared
         }
 
         /// <summary>
-        /// 契約に型付きの初期値を割り当て、宣言順のBindingへ登録します。
+        /// 契約に型付きの初期値を割り当て、契約のハンドル番号へ登録します。
         /// </summary>
         public string Bind<T>(FluxParticleParameterContract<T> parameter, T value) where T : struct
         {

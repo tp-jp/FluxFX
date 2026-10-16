@@ -1,6 +1,8 @@
+using TpLab.Flux.FX.Editor.Contracts;
+using TpLab.Flux.FX.Udon.Modules;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+namespace TpLab.Flux.FX.Editor.Modules.Gravity
 {
     /// <summary>
     /// Gravityの公開APIとParameterの契約
@@ -24,7 +26,7 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleGravityHandle")
                 .Accessor("Gravity")
                 .Enabled("gravity.enabled")
-                .Parameter(Acceleration)
+                .Parameter(FluxParticleGravityParameter.Gravity, Acceleration)
                 .Build();
     }
 }

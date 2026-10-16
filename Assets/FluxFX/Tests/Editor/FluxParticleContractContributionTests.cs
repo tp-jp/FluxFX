@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Editor.Modules.SizeOverLifetime;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +26,71 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleContractContributionTests
     {
+        enum ParameterKey { First, Second, Third }
+        enum OtherKey { First }
+        enum AliasedKey { First, Second = First }
+        enum SparseKey { First, Second = 2 }
+        enum NegativeKey { First = -1 }
+        enum WideKey : ulong { First = ulong.MaxValue }
+
+        [Test]
+        public void EnumKeysDetermineBindingOrderAndPreserveUnavailableSlots()
+        {
+            var first = Float("test.first", "First");
+            var second = Float("test.second", "Second");
+            var third = Float("test.third", "Third");
+            var builder = Module().Parameter(ParameterKey.Third, third).Parameter(ParameterKey.First, first);
+            Assert.Throws<InvalidOperationException>(() => builder.Build());
+            var contract = builder.Parameter(ParameterKey.Second, second).Build();
+            CollectionAssert.AreEqual(new[] { first, second, third }, contract.Parameters);
+            var context = Context();
+            var contribution = new FluxParticleModuleContribution(context, contract, true);
+            contribution.Bind(third, 0.75f);
+            contribution.UnavailableParameter(second);
+            Assert.Throws<InvalidOperationException>(() => contribution.Complete());
+            contribution.Bind(first, 0.25f);
+            contribution.Complete();
+            var binding = context.ModuleBindings[contract.Id];
+            Assert.AreSame(first, binding.Parameters[(int)ParameterKey.First].Contract);
+            Assert.IsNull(binding.Parameters[(int)ParameterKey.Second]);
+            Assert.AreSame(third, binding.Parameters[(int)ParameterKey.Third].Contract);
+        }
+
+        [Test]
+        public void EnumKeysRejectDuplicatesUndefinedValuesAndMixedDefinitions()
+        {
+            var first = Float("test.first", "First");
+            var second = Float("test.second", "Second");
+            var builder = Module().Parameter(ParameterKey.First, first);
+            Assert.Throws<InvalidOperationException>(() => builder.Parameter(ParameterKey.First, second));
+            Assert.Throws<InvalidOperationException>(() => builder.Parameter((ParameterKey)99, second));
+            Assert.Throws<InvalidOperationException>(() => builder.Parameter(OtherKey.First, second));
+            Assert.Throws<InvalidOperationException>(() => builder.Parameter(second));
+            Assert.Throws<InvalidOperationException>(() => Module().Parameter(first).Parameter(ParameterKey.Second, second));
+            Assert.Throws<ArgumentNullException>(() => builder.Parameter(ParameterKey.Second, null));
+            builder.Parameter(ParameterKey.Second, second).Parameter(ParameterKey.Third, Float("test.third", "Third"));
+            Assert.AreEqual(3, builder.Build().Parameters.Count);
+        }
+
+        [Test]
+        public void EnumKeysRejectAliasedSparseNegativeAndOversizedLayouts()
+        {
+            var parameter = Float("test.value", "Value");
+            Assert.Throws<InvalidOperationException>(() => Module().Parameter(AliasedKey.First, parameter));
+            Assert.Throws<InvalidOperationException>(() => Module().Parameter(SparseKey.First, parameter));
+            Assert.Throws<InvalidOperationException>(() => Module().Parameter(NegativeKey.First, parameter));
+            Assert.Throws<InvalidOperationException>(() => Module().Parameter(WideKey.First, parameter));
+        }
+
+        [Test]
+        public void GravityAndSizeContractsUseTheirRuntimeEnumSlots()
+        {
+            Assert.AreSame(FluxParticleGravityContract.Acceleration,
+                FluxParticleGravityContract.Module.Parameters[(int)TpLab.Flux.FX.Udon.Modules.FluxParticleGravityParameter.Gravity]);
+            Assert.AreSame(FluxParticleSizeOverLifetimeContract.EndSize,
+                FluxParticleSizeOverLifetimeContract.Module.Parameters[(int)TpLab.Flux.FX.Udon.Modules.FluxParticleSizeOverLifetimeParameter.EndSize]);
+        }
+
         enum TimeMode { Simulation, ParticleAge }
         enum Inexact { Value = 16777217 }
         enum WideSigned : long { Minimum = long.MinValue, Exact = 1L << 60 }

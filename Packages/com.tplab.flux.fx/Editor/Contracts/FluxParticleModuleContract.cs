@@ -29,7 +29,7 @@ namespace TpLab.Flux.FX.Editor.Contracts
         public FluxParticleParameterContract<bool> Enabled { get; }
 
         /// <summary>
-        /// 宣言順のParameter一覧。Enabledを除く
+        /// ハンドル番号順のParameter一覧。enum指定時はenumの番号順、未指定時は宣言順。Enabledを除く
         /// </summary>
         public IReadOnlyList<FluxParticleParameterContract> Parameters { get; }
 

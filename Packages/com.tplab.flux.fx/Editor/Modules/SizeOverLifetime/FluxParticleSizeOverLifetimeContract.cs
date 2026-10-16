@@ -1,4 +1,6 @@
-namespace TpLab.Flux.FX.Editor.Contracts.Modules
+using TpLab.Flux.FX.Editor.Contracts;
+using TpLab.Flux.FX.Udon.Modules;
+namespace TpLab.Flux.FX.Editor.Modules.SizeOverLifetime
 {
     /// <summary>
     /// Size over Lifetimeの公開APIとParameterの契約
@@ -23,7 +25,7 @@ namespace TpLab.Flux.FX.Editor.Contracts.Modules
                 .Handle("FluxParticleSizeOverLifetimeHandle")
                 .Accessor("SizeOverLifetime")
                 .Enabled("size.enabled")
-                .Parameter(EndSize)
+                .Parameter(FluxParticleSizeOverLifetimeParameter.EndSize, EndSize)
                 .Build();
     }
 }

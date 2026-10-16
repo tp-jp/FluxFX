@@ -10,6 +10,8 @@ namespace TpLab.Flux.FX.Editor.Contracts
     {
         readonly string id;
         readonly List<FluxParticleParameterContract> parameters = new List<FluxParticleParameterContract>();
+        readonly List<int> parameterSlots = new List<int>();
+        Type parameterKeyType;
         string handleName;
         string accessorName;
         string enabledId;
@@ -57,6 +59,42 @@ namespace TpLab.Flux.FX.Editor.Contracts
         public FluxParticleModuleContractBuilder Parameter(FluxParticleParameterContract parameter)
         {
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
+            if (parameterKeyType != null) throw new InvalidOperationException($"Module '{id}': keyed and sequential Parameters cannot be mixed.");
+            parameters.Add(parameter);
+            return this;
+        }
+
+        /// <summary>
+        /// Runtimeと共有するenumの番号へParameter契約を対応付けます。
+        /// </summary>
+        public FluxParticleModuleContractBuilder Parameter<TKey>(TKey key, FluxParticleParameterContract parameter)
+            where TKey : struct, Enum
+        {
+            if (parameter == null) throw new ArgumentNullException(nameof(parameter));
+            var type = typeof(TKey);
+            if (parameterKeyType == null && parameters.Count != 0)
+            {
+                throw new InvalidOperationException($"Module '{id}': keyed and sequential Parameters cannot be mixed.");
+            }
+            if (parameterKeyType != null && parameterKeyType != type)
+            {
+                throw new InvalidOperationException($"Module '{id}': all Parameter keys must use the same enum.");
+            }
+            var values = Enum.GetValues(type);
+            var slots = new HashSet<int>();
+            foreach (var value in values)
+            {
+                var number = Convert.ToDecimal(value);
+                if (number < 0 || number >= values.Length || !slots.Add((int)number))
+                {
+                    throw new InvalidOperationException($"Module '{id}': Parameter keys must be unique and contiguous from zero.");
+                }
+            }
+            if (!Enum.IsDefined(type, key)) throw new InvalidOperationException($"Module '{id}': undefined Parameter key '{key}'.");
+            var slot = Convert.ToInt32(key);
+            if (parameterSlots.Contains(slot)) throw new InvalidOperationException($"Module '{id}': duplicate Parameter key '{key}'.");
+            parameterKeyType = type;
+            parameterSlots.Add(slot);
             parameters.Add(parameter);
             return this;
         }
@@ -86,7 +124,20 @@ namespace TpLab.Flux.FX.Editor.Contracts
                     throw new InvalidOperationException($"Module '{id}', Parameter '{parameter.Id}': duplicate or reserved API name '{parameter.ApiName}'.");
                 }
             }
-            return new FluxParticleModuleContract(id, handleName, accessorName, enabled, parameters);
+            if (parameterKeyType == null)
+            {
+                return new FluxParticleModuleContract(id, handleName, accessorName, enabled, parameters);
+            }
+            if (parameters.Count != Enum.GetValues(parameterKeyType).Length)
+            {
+                throw new InvalidOperationException($"Module '{id}': every Parameter key requires a contract.");
+            }
+            var ordered = new FluxParticleParameterContract[parameters.Count];
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                ordered[parameterSlots[i]] = parameters[i];
+            }
+            return new FluxParticleModuleContract(id, handleName, accessorName, enabled, ordered);
         }
     }
 }
