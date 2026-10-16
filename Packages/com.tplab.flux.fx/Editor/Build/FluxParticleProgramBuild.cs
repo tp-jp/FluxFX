@@ -11,6 +11,7 @@ using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.Udon;
+using UdonSharp;
 using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
@@ -56,6 +57,7 @@ namespace TpLab.Flux.FX.Editor.Build
             system.SetProgramVariable("particleEmitter", emitter);
             EditorUtility.SetDirty(runtime);
             EditorUtility.SetDirty(system);
+            ConnectPrograms(system.gameObject);
             AssetDatabase.SaveAssets();
             Logger.Log($"Program Backend assigned: {authoring.name} ({compiled.Shaders.Passes.Count} Passes)", authoring);
         }
@@ -76,11 +78,37 @@ namespace TpLab.Flux.FX.Editor.Build
             try
             {
                 ConfigureCore(runtime, compiled, authoring, session, bufferCapacity);
+                ConnectPrograms(runtime.gameObject);
             }
             catch (Exception error)
             {
                 session.RecordFailure(error.Message);
                 throw;
+            }
+        }
+
+        // ビルド中のPrefab複製は、SDKの編集時の実行Program参照更新より後に行われる。
+        // Proxyの再セットアップを起動せず、複製先の参照だけを接続する。
+        static void ConnectPrograms(GameObject root)
+        {
+            foreach (var proxy in root.GetComponentsInChildren<UdonSharpBehaviour>(true))
+            {
+                var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(proxy);
+                if (backing == null || backing.gameObject != proxy.gameObject)
+                {
+                    throw new InvalidOperationException($"Udon backing behaviour is missing or invalid: {proxy.name} ({proxy.GetType().Name}).");
+                }
+                var program = backing.programSource as UdonSharpProgramAsset;
+                var compiled = program == null ? null : program.SerializedProgramAsset;
+                if (compiled == null)
+                {
+                    throw new InvalidOperationException($"Compiled Udon program is missing: {proxy.name} ({proxy.GetType().Name}). Compile UdonSharp programs before building.");
+                }
+                var serialized = new SerializedObject(backing);
+                var property = serialized.FindProperty("serializedProgramAsset");
+                if (property.objectReferenceValue == compiled) continue;
+                property.objectReferenceValue = compiled;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 

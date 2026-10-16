@@ -15,7 +15,9 @@ using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
 using TpLab.Flux.Udon;
+using UdonSharp;
 using UdonSharpEditor;
+using VRC.Udon;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -74,6 +76,44 @@ namespace TpLab.Flux.FX.Tests.Editor
                 AssetDatabase.DeleteAsset(folder);
             }
             if (Application.isPlaying) yield return new ExitPlayMode();
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ConfigureRepairsCompiledProgramReferences(bool wrongProgram)
+        {
+            RequireGraphics();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.transform.SetParent(root.transform, false);
+            var runtime = instance.GetComponentInChildren<FluxParticleExecutor>(true);
+            runtimes.Add(runtime);
+            var backings = runtime.GetComponentsInChildren<UdonBehaviour>(true);
+            Assert.Greater(backings.Length, 1);
+            var alternative = ((UdonSharpProgramAsset)backings[0].programSource).SerializedProgramAsset;
+            var changed = 0;
+            foreach (var backing in backings)
+            {
+                var serialized = new SerializedObject(backing);
+                var property = serialized.FindProperty("serializedProgramAsset");
+                var expected = ((UdonSharpProgramAsset)backing.programSource).SerializedProgramAsset;
+                if (wrongProgram && expected == alternative) continue;
+                property.objectReferenceValue = wrongProgram ? alternative : null;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                changed++;
+            }
+            Assert.Greater(changed, 0);
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                FluxParticleProgramBuild.Configure(runtime, compiled, authoring, generationSession, 128);
+                foreach (var backing in runtime.GetComponentsInChildren<UdonBehaviour>(true))
+                {
+                    var expected = ((UdonSharpProgramAsset)backing.programSource).SerializedProgramAsset;
+                    Assert.IsNotNull(expected, backing.name);
+                    Assert.AreEqual(expected, new SerializedObject(backing).FindProperty("serializedProgramAsset").objectReferenceValue, backing.name);
+                }
+            }
         }
 
         // 共通のWorld変換はPoint・Circle・Coneを通常実行し、全Shapeと速度の組み合わせはFull Regressionで検証する。
