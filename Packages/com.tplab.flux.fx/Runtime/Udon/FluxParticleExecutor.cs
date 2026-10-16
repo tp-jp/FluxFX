@@ -582,6 +582,7 @@ namespace TpLab.Flux.FX.Udon
             _aliveCount = -1;
             _discardAliveCount = true;
             _nextAliveCountTime = 0;
+            SetTrailRenderers(false);
             if (allocationBuffers != null)
             {
                 for (var level = 0; level < allocationBuffers.Length; level++)
@@ -595,9 +596,7 @@ namespace TpLab.Flux.FX.Udon
                 {
                     if (trailBuffers[i] != null) trailBuffers[i].Release();
                 }
-                FluxParticleTrailHistory.SetAppearance(trailMaterials, false, 0, Vector4.zero, 0.5f);
             }
-            SetTrailRenderers(false);
             _trailsEnabled = false;
             _trailState = null;
             _initialized = false;

@@ -264,6 +264,33 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(AssetDatabase.Contains(meshes[0].sharedMesh));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void TrailsReleaseToleratesMaterialsDestroyedBeforeExecutor(bool destroyRenderer)
+        {
+            RequireGraphics();
+            SetModules(CreateTrails(3, 4, 0.5f));
+            var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0.1f, 0, 1, 1);
+            var texture = runtime.GetTrailPoint(0);
+            var materials = (Material[])runtime.GetProgramVariable("trailMaterials");
+            var destroyedMaterial = new Material(materials[0]);
+            runtime.SetProgramVariable("trailMaterials", new[] { destroyedMaterial, null });
+            Object.DestroyImmediate(destroyedMaterial);
+            var renderers = (MeshRenderer[])runtime.GetProgramVariable("trailRenderers");
+            if (destroyRenderer)
+            {
+                Object.DestroyImmediate(renderers[0]);
+            }
+            Assert.DoesNotThrow(() => runtime.Release());
+            Assert.IsTrue(texture == null || !texture.IsCreated());
+            Assert.IsNull(runtime.TrailMetadata);
+            Assert.IsTrue(renderers.All(renderer => renderer == null || !renderer.enabled));
+            Assert.DoesNotThrow(() => runtime.Release());
+            Assert.DoesNotThrow(() => typeof(FluxParticleExecutor).GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(runtime, null));
+        }
+
         [Test]
         public void TrailsOffClearOverflowAndReinitializeDiscardHistory()
         {
@@ -294,7 +321,13 @@ namespace TpLab.Flux.FX.Tests.Editor
             runtime.Release();
             Assert.IsTrue(oldTexture == null || !oldTexture.IsCreated());
             Assert.IsNull(runtime.TrailMetadata);
+            Assert.IsTrue(renderers.All(renderer => !renderer.enabled));
             Assert.IsTrue(runtime.Initialize(4));
+            Assert.IsTrue(renderers.All(renderer => renderer.enabled));
+            var materials = (Material[])runtime.GetProgramVariable("trailMaterials");
+            Assert.AreEqual(1f, materials[0].GetFloat("_TrailEnabled"));
+            Assert.AreEqual(0.2f, materials[0].GetFloat("_TrailWidth"));
+            Assert.AreEqual((Vector4)Color.red, materials[0].GetVector("_TrailColor"));
             Assert.AreEqual(0, ReadTexture(runtime.TrailMetadata, 0).g);
             Assert.AreEqual(-1, ReadTexture(runtime.GetTrailPoint(0), 0).a);
         }
