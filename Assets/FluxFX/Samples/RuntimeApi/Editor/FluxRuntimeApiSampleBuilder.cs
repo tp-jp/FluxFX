@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.CustomModules;
 using System;
 using System.IO;
 using System.Linq;
@@ -136,6 +137,10 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             new ControlSpec(4, SampleControl.BlinkRandomPhase, "Random phase", 0f, 1f, 0f, false),
             new ControlSpec(4, SampleControl.BlinkTimeMode, "Time / System or Particle age", 0f, 1f, 0f, true),
             new ControlSpec(4, SampleControl.BlinkTarget, "Target / RGB, Alpha or Both", 0f, 2f, 1f, true),
+            new ControlSpec(3, SampleControl.LiftStrength, "Strength", -8f, 8f, 2f, false),
+            new ControlSpec(3, SampleControl.LiftDirectionX, "Direction / X", -1f, 1f, 0f, false),
+            new ControlSpec(3, SampleControl.LiftDirectionY, "Direction / Y", -1f, 1f, 1f, false),
+            new ControlSpec(3, SampleControl.LiftDirectionZ, "Direction / Z", -1f, 1f, 0f, false),
             new ControlSpec(4, SampleControl.TrailWidth, "Width", 0f, 1f, 0.05f, false),
             new ControlSpec(4, SampleControl.TrailR, "Color / R", 0f, 1f, 1f, false),
             new ControlSpec(4, SampleControl.TrailG, "Color / G", 0f, 1f, 1f, false),
@@ -269,13 +274,17 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 new FluxParticleNoiseModule(), new FluxParticleVortexModule(), new FluxParticleLimitVelocityModule(),
                 new FluxParticleVelocityOverLifetimeModule(), new FluxParticleColorOverLifetimeModule(),
                 new FluxParticleSizeOverLifetimeModule(), new FluxParticleRotationOverLifetimeModule(),
-                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule(), new FluxParticleTrailsModule()
+                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule(), new FluxParticleTrailsModule(), new CustomLiftModule()
             };
             var modules = serialized.FindProperty("modules");
             modules.arraySize = definitions.Length;
             for (var i = 0; i < definitions.Length; i++)
             {
                 modules.GetArrayElementAtIndex(i).managedReferenceValue = definitions[i];
+                if (definitions[i] is CustomLiftModule)
+                {
+                    modules.GetArrayElementAtIndex(i).FindPropertyRelative("enabled").boolValue = false;
+                }
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -377,14 +386,14 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
         static readonly string[] ModuleNames =
         {
             "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit Velocity", "Velocity over Lifetime",
-            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink", "Trails"
+            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink", "Trails", "Custom Lift"
         };
 
         static readonly SampleControl[] ModuleStarts =
         {
             SampleControl.GravityX, SampleControl.Drag, SampleControl.ForceX, SampleControl.NoiseStrength,
             SampleControl.VortexStrength, SampleControl.MaxSpeed, SampleControl.VelocityStartX,
-            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.TrailWidth, SampleControl.Count
+            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.TrailWidth, SampleControl.LiftStrength, SampleControl.Count
         };
 
         static void BuildSlider(Transform body, ControlSpec spec, float offset, Slider[] controls, Text[] values, UdonBehaviour target)
@@ -415,17 +424,17 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 BuildSlider(scroll.content, Specs.Single(spec => spec.Id == SampleControl.Intensity), y, controls, values, target);
                 y += 88;
             }
-            var first = page == MotionPage ? 0 : (int)SampleModule.ColorOverLifetime;
-            var end = page == MotionPage ? (int)SampleModule.ColorOverLifetime : ModuleNames.Length;
-            for (var module = first; module < end; module++)
+            for (var module = 0; module < ModuleNames.Length; module++)
             {
+                var motion = module < (int)SampleModule.ColorOverLifetime || module == (int)SampleModule.CustomLift;
+                if (motion != (page == MotionPage)) continue;
                 var specs = Specs.Where(spec => spec.Id != SampleControl.Intensity && spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
                 var height = 48 + specs.Length * 72;
                 var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
                 var header = Rect("Header", section, 0, 0, 438, 36);
                 header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
                 toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
-                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink && module != (int)SampleModule.Trails, target);
+                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink && module != (int)SampleModule.Trails && module != (int)SampleModule.CustomLift, target);
                 Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
                 toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
                 var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);
@@ -472,15 +481,15 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             var enabled = new bool[(int)SampleModule.Count];
             for (var i = 0; i < enabled.Length; i++)
             {
-                enabled[i] = i < oldToggles.Length ? oldToggles[i].isOn : i != (int)SampleModule.Blink && i != (int)SampleModule.Trails;
+                enabled[i] = i < oldToggles.Length ? oldToggles[i].isOn : i != (int)SampleModule.Blink && i != (int)SampleModule.Trails && i != (int)SampleModule.CustomLift;
             }
             var toggles = new Toggle[enabled.Length];
             var groups = new CanvasGroup[enabled.Length];
             if (renderOnly)
             {
                 var oldGroups = (CanvasGroup[])controller.GetProgramVariable("moduleParameterGroups");
-                Array.Copy(oldToggles, toggles, (int)SampleModule.ColorOverLifetime);
-                Array.Copy(oldGroups, groups, (int)SampleModule.ColorOverLifetime);
+                Array.Copy(oldToggles, toggles, Math.Min(oldToggles.Length, toggles.Length));
+                Array.Copy(oldGroups, groups, Math.Min(oldGroups.Length, groups.Length));
             }
             var target = UdonSharpEditorUtility.GetBackingUdonBehaviour(controller);
             for (var page = renderOnly ? RenderPage : MotionPage; page <= RenderPage; page++)
@@ -533,6 +542,28 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
                 PrefabUtility.RecordPrefabInstancePropertyModifications(authoring);
             }
             UpdateModuleUi(controller, true);
+        }
+
+        /// <summary>
+        /// 各形状へCustom Liftを追加し、既存値を維持してUIを更新します。
+        /// </summary>
+        public static void UpdateCustomLiftUi(FluxRuntimeApiSample controller)
+        {
+            var systems = (FluxParticleSystem[])controller.GetProgramVariable("systems");
+            foreach (var system in systems)
+            {
+                var authoring = system.GetComponent<FluxParticleAuthoring>();
+                if (authoring.Modules.OfType<CustomLiftModule>().Any()) continue;
+                var serialized = new SerializedObject(authoring);
+                var modules = serialized.FindProperty("modules");
+                var index = modules.arraySize;
+                modules.arraySize++;
+                modules.GetArrayElementAtIndex(index).managedReferenceValue = new CustomLiftModule();
+                modules.GetArrayElementAtIndex(index).FindPropertyRelative("enabled").boolValue = false;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.RecordPrefabInstancePropertyModifications(authoring);
+            }
+            UpdateModuleUi(controller);
         }
 
         static void CreateUi(FluxRuntimeApiSample controller, Camera camera)

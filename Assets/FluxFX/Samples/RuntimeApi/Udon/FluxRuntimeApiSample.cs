@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.CustomModules;
 using TpLab.Flux.FX.Udon;
 using TpLab.Flux.FX.Udon.Modules;
 using TpLab.Flux.FX.Udon.Parameters;
@@ -22,6 +23,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         TextureSheetAnimation,
         Blink,
         Trails,
+        CustomLift,
         Count
     }
 
@@ -102,7 +104,11 @@ namespace FluxFX.Samples.RuntimeApi.Udon
         TrailB = 72,
         TrailA = 73,
         TrailDuration = 74,
-        Count = 75
+        LiftStrength = 75,
+        LiftDirectionX = 76,
+        LiftDirectionY = 77,
+        LiftDirectionZ = 78,
+        Count = 79
     }
 
     /// <summary>
@@ -232,6 +238,7 @@ namespace FluxFX.Samples.RuntimeApi.Udon
                 case SampleModule.TextureSheetAnimation: return modules.TextureSheetAnimation;
                 case SampleModule.Blink: return modules.Blink;
                 case SampleModule.Trails: return modules.Trails;
+                case SampleModule.CustomLift: return modules.CustomLift();
                 default: return null;
             }
         }
@@ -339,6 +346,13 @@ namespace FluxFX.Samples.RuntimeApi.Udon
                 var target = Value(SampleControl.BlinkTarget);
                 blink.SetTarget(target < 0.5f ? FluxParticleBlinkTarget.Rgb : target < 1.5f ? FluxParticleBlinkTarget.Alpha : FluxParticleBlinkTarget.Both);
                 blink.SetEnabled(moduleToggles[(int)SampleModule.Blink].isOn);
+            }
+            var lift = modules.CustomLift();
+            if (lift != null)
+            {
+                lift.SetStrength(Value(SampleControl.LiftStrength));
+                lift.SetDirection(Vector(SampleControl.LiftDirectionX));
+                lift.SetEnabled(moduleToggles[(int)SampleModule.CustomLift].isOn);
             }
             if (modules.Trails != null)
             {
