@@ -2102,6 +2102,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.AreEqual(!lookupMode, modules.SizeOverLifetime.HasEndSize());
             Assert.AreEqual(!lookupMode, modules.ColorOverLifetime.SetEndColor(Color.red));
             Assert.AreEqual(!lookupMode, modules.SizeOverLifetime.SetEndSize(2));
+            Assert.AreEqual(!lookupMode, runtime.SetFloat("size.end", 2));
             Assert.IsTrue(modules.RotationOverLifetime.SetEndRotation(new Vector3(0, 0, 90)));
             Assert.IsTrue(modules.ColorOverLifetime.HasEnabled());
             Assert.IsTrue(modules.SizeOverLifetime.SetEnabled(false));

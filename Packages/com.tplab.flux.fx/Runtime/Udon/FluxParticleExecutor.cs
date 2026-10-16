@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Udon.Parameters;
 using TpLab.Flux.Udon;
 using UdonSharp;
 using UnityEngine;
@@ -51,6 +52,12 @@ namespace TpLab.Flux.FX.Udon
         bool[] staticParameters;
         [SerializeField]
         Vector4[] parameterValues;
+        [SerializeField]
+        int[] parameterConstraintFlags;
+        [SerializeField]
+        Vector4[] parameterMinimum;
+        [SerializeField]
+        Vector4[] parameterMaximum;
         [SerializeField]
         string deltaTimeProperty;
         [SerializeField]
@@ -486,7 +493,7 @@ namespace TpLab.Flux.FX.Udon
         }
 
         /// <summary>
-        /// Parameterを変更できるか、型・Static制約・有限値を検証します。
+        /// Parameterを変更できるか、型・Static制約・有限値・契約の数値制約を検証します。
         /// </summary>
         /// <param name="index">Parameterスロット</param>
         /// <param name="type">Parameterの型</param>
@@ -499,6 +506,23 @@ namespace TpLab.Flux.FX.Udon
             for (var component = 0; component < 4; component++)
             {
                 if (float.IsNaN(value[component]) || float.IsInfinity(value[component])) return false;
+            }
+            if (parameterConstraintFlags == null || parameterMinimum == null || parameterMaximum == null ||
+                index >= parameterConstraintFlags.Length || index >= parameterMinimum.Length || index >= parameterMaximum.Length) return false;
+            var flags = parameterConstraintFlags[index];
+            if (flags != 0)
+            {
+                for (var component = 0; component < type; component++)
+                {
+                    var number = value[component];
+                    if ((flags & (int)FluxParticleNumericConstraintFlags.Minimum) != 0 &&
+                        (number < parameterMinimum[index][component] ||
+                         (flags & (int)FluxParticleNumericConstraintFlags.ExclusiveMinimum) != 0 && number == parameterMinimum[index][component])) return false;
+                    if ((flags & (int)FluxParticleNumericConstraintFlags.Maximum) != 0 &&
+                        (number > parameterMaximum[index][component] ||
+                         (flags & (int)FluxParticleNumericConstraintFlags.ExclusiveMaximum) != 0 && number == parameterMaximum[index][component])) return false;
+                    if ((flags & (int)FluxParticleNumericConstraintFlags.Integer) != 0 && Mathf.Floor(number) != number) return false;
+                }
             }
             if (parameterIds[index] == "trails.duration" &&
                 !FluxParticleTrailHistory.IsValidDuration(value.x, trailBuffers == null ? 2 : trailBuffers.Length - 2)) return false;
@@ -720,6 +744,9 @@ namespace TpLab.Flux.FX.Udon
             if (parameterIds == null || parameterProperties == null || parameterTypes == null || staticParameters == null || parameterValues == null) return false;
             if (parameterIds.Length != parameterProperties.Length || parameterIds.Length != parameterTypes.Length ||
                 parameterIds.Length != staticParameters.Length || parameterIds.Length != parameterValues.Length) return false;
+            if (parameterConstraintFlags == null || parameterMinimum == null || parameterMaximum == null ||
+                parameterConstraintFlags.Length != parameterIds.Length || parameterMinimum.Length != parameterIds.Length ||
+                parameterMaximum.Length != parameterIds.Length) return false;
             if (string.IsNullOrEmpty(deltaTimeProperty) || string.IsNullOrEmpty(spawnKeyProperty)) return false;
 
             for (var i = 0; i < stepKernels.Length; i++)

@@ -174,6 +174,11 @@ namespace TpLab.Flux.FX.CustomModules
             if (!modules.ColorOverLifetime.SetEnabled(true) || !modules.ColorOverLifetime.GetEnabled()) return false;
             if (modules.SizeOverLifetime == null || modules.SizeOverLifetime != modules.SizeOverLifetime || empty.Modules.SizeOverLifetime != null) return false;
             if (!modules.SizeOverLifetime.SetEndSize(2f) || modules.SizeOverLifetime.GetEndSize() != 2f) return false;
+            if (modules.SizeOverLifetime.SetEndSize(-1) || target.Executor.SetFloat("size.end", -1)) return false;
+            if (modules.SizeOverLifetime.SetEndSize(float.NaN) || target.Executor.SetFloat("size.end", float.PositiveInfinity)) return false;
+            if (modules.SizeOverLifetime.GetEndSize() != 2f) return false;
+            if (!target.Executor.SetFloat("size.end", 0) || modules.SizeOverLifetime.GetEndSize() != 0) return false;
+            if (!modules.SizeOverLifetime.SetEndSize(2f)) return false;
             if (!modules.SizeOverLifetime.HasEnabled()) return false;
             if (!modules.SizeOverLifetime.SetEnabled(false) || modules.SizeOverLifetime.GetEnabled()) return false;
             if (!modules.SizeOverLifetime.SetEnabled(true) || !modules.SizeOverLifetime.GetEnabled()) return false;
@@ -220,6 +225,7 @@ namespace TpLab.Flux.FX.CustomModules
             if (!lift.SetStrength(8) || !lift.SetDirection(Vector3.up) || !lift.SetEnabled(true)) return;
             if (gravity.GetGravity() != new Vector3(0, -2, 0) || lift.GetStrength() != 8 || lift.GetDirection() != Vector3.up) return;
             if (gravity.SetGravity(new Vector3(float.NaN, 0, 0)) || lift.SetStrength(float.PositiveInfinity)) return;
+            if (target.Executor.SetVector("gravity", new Vector4(0, float.PositiveInfinity, 0, 0))) return;
             if (gravity.GetGravity() != new Vector3(0, -2, 0) || lift.GetStrength() != 8) return;
             if (!target.Executor.SetFloat("custom-lift.strength", 4) || lift.GetStrength() != 4) return;
             if (!lift.SetStrength(8)) return;

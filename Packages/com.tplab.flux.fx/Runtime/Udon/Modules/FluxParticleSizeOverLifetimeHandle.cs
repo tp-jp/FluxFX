@@ -45,7 +45,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// <summary>
         /// 終端サイズを変更します。非対応モードではfalseを返します。
         /// </summary>
-        public static bool SetEndSize(this FluxParticleSizeOverLifetimeHandle handle, float value) => value >= 0 && handle.SetValue((int)FluxParticleSizeOverLifetimeParameter.EndSize, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
+        public static bool SetEndSize(this FluxParticleSizeOverLifetimeHandle handle, float value) => handle.SetValue((int)FluxParticleSizeOverLifetimeParameter.EndSize, FluxParticleValueType.Float, new Vector4(value, 0, 0, 0));
     }
 }
 
