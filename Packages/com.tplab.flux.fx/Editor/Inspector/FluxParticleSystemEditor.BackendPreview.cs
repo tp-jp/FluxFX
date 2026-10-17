@@ -237,14 +237,20 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void RepaintRunningPreview(double now)
         {
-            // 操作中のSceneViewはシミュレーションに追従し、他のViewは低頻度で更新する。
+            // Always Refreshで更新されるViewへの定期Repaintは省き、描画要求の重複を避ける。
             var active = SceneView.lastActiveSceneView;
-            if (active != null) active.Repaint();
+            if (active != null && !active.sceneViewState.alwaysRefreshEnabled)
+            {
+                active.Repaint();
+            }
             if (now - _lastSecondaryPreviewRepaint < 0.2) return;
             _lastSecondaryPreviewRepaint = now;
             foreach (SceneView view in SceneView.sceneViews)
             {
-                if (view != null && view != active) view.Repaint();
+                if (view != null && view != active && !view.sceneViewState.alwaysRefreshEnabled)
+                {
+                    view.Repaint();
+                }
             }
         }
 
