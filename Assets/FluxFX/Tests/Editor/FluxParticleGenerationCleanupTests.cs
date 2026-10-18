@@ -1,5 +1,8 @@
 using System;
 using System.IO;
+using System.Reflection;
+using System.Linq;
+using System.Text;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using UnityEditor;
@@ -54,6 +57,81 @@ namespace TpLab.Flux.FX.Tests.Editor
         void AssertAssetsRemain()
         {
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Material>(materialPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(lookupPath));
+        }
+
+        int CollectAutomatically(DateTime cutoff)
+        {
+            var method = typeof(FluxParticleGenerationCleanup).GetMethod("CollectCore",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            return (int)method.Invoke(null, new object[] { root, cutoff });
+        }
+
+        [Test]
+        public void RequestsWaitAndProjectNotificationsDoNotScheduleAnotherCollection()
+        {
+            var type = typeof(FluxParticleGenerationCleanup);
+            var flags = BindingFlags.Static | BindingFlags.NonPublic;
+            var pending = type.GetField("_pending", flags);
+            var nextAttempt = type.GetField("_nextAttempt", flags);
+            var previousPending = pending.GetValue(null);
+            var previousAttempt = nextAttempt.GetValue(null);
+            try
+            {
+                var before = EditorApplication.timeSinceStartup;
+                FluxParticleGenerationCleanup.Request();
+                Assert.IsTrue((bool)pending.GetValue(null));
+                Assert.GreaterOrEqual((double)nextAttempt.GetValue(null), before + 60);
+                AssertAssetsRemain();
+                pending.SetValue(null, false);
+                type.GetMethod("OnProjectChanged", flags).Invoke(null, null);
+                Assert.IsFalse((bool)pending.GetValue(null));
+            }
+            finally
+            {
+                pending.SetValue(null, previousPending);
+                nextAttempt.SetValue(null, previousAttempt);
+            }
+        }
+
+        [Test]
+        public void AutomaticCleanupRetainsRecentCacheButRemovesSessionMaterial()
+        {
+            session.Dispose();
+            Assert.AreEqual(1, CollectAutomatically(DateTime.UtcNow.AddDays(-1)));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>(materialPath));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(lookupPath));
+            Assert.AreEqual(1, FluxParticleGenerationCleanup.Collect(root));
+        }
+
+        [Test]
+        public void AutomaticCleanupPreservesLiveReferencesEvenForOldCache()
+        {
+            CreateRenderer();
+            session.Dispose();
+            Assert.AreEqual(0, CollectAutomatically(DateTime.UtcNow.AddDays(1)));
+            AssertAssetsRemain();
+            Object.DestroyImmediate(instance);
+            instance = null;
+            Assert.AreEqual(2, CollectAutomatically(DateTime.UtcNow.AddDays(1)));
+        }
+
+        [Test]
+        public void LatestSessionUseProtectsSharedCache()
+        {
+            session.Dispose();
+            var manifest = File.ReadAllText(session.ManifestPath);
+            var data = JsonUtility.FromJson<FluxParticleGenerationSession.Manifest>(manifest);
+            foreach (var asset in data.assets)
+            {
+                asset.lastUsedUtc = DateTime.UtcNow.AddDays(-2).ToString("O");
+            }
+            File.WriteAllText(session.ManifestPath, JsonUtility.ToJson(data));
+            using (var reuse = FluxParticleGenerationSession.Begin("Reuse", root))
+            {
+                reuse.Record(lookupPath, "Lookup", "reuse");
+            }
+            Assert.AreEqual(1, CollectAutomatically(DateTime.UtcNow.AddDays(-1)));
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture2D>(lookupPath));
         }
 
@@ -114,7 +192,38 @@ namespace TpLab.Flux.FX.Tests.Editor
                 session.RecordFailure("Expected cleanup test failure");
                 session.Dispose();
             }
-            Assert.AreEqual(2, FluxParticleGenerationCleanup.Collect(root));
+            var deleted = FluxParticleGenerationCleanup.Collect(root);
+            if (deleted != 2)
+            {
+                var report = new StringBuilder();
+                report.AppendLine("Deleted: " + deleted);
+                report.AppendLine("Session: " + session.State);
+                var remaining = new[] { materialPath, lookupPath }.Where(File.Exists).ToArray();
+                foreach (var path in remaining)
+                {
+                    report.AppendLine("Remaining: " + path + " GUID=" + AssetDatabase.AssetPathToGUID(path));
+                }
+                foreach (var path in AssetDatabase.GetAllAssetPaths())
+                {
+                    if (remaining.Contains(path) || AssetDatabase.IsValidFolder(path)) continue;
+                    var references = AssetDatabase.GetDependencies(path, true).Intersect(remaining).ToArray();
+                    if (references.Length == 0) continue;
+                    report.AppendLine("Asset reference: " + path + " -> " + string.Join(", ", references));
+                }
+                foreach (var value in Resources.FindObjectsOfTypeAll<Object>())
+                {
+                    if (value == null || EditorUtility.IsPersistent(value)) continue;
+                    var references = EditorUtility.CollectDependencies(new[] { value })
+                        .Select(AssetDatabase.GetAssetPath).Intersect(remaining).ToArray();
+                    if (references.Length == 0) continue;
+                    report.AppendLine("Live reference: " + value.GetType().FullName + " / " + value.name +
+                        " / " + value.GetInstanceID() + " -> " + string.Join(", ", references));
+                }
+                Directory.CreateDirectory("Temp/FluxFXTests");
+                var reportPath = "Temp/FluxFXTests/CleanupFailure.txt";
+                File.WriteAllText(reportPath, report.ToString());
+                Assert.Fail("Expected 2 deletions. Diagnostics: " + reportPath + "\n" + report);
+            }
         }
 
         [Test]

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -14,13 +15,19 @@ namespace TpLab.Flux.FX.Editor.Build
     [InitializeOnLoad]
     public static class FluxParticleGenerationCleanup
     {
-        static bool pending;
-        static double nextAttempt;
+        const double QuietSeconds = 60;
+        const double CollectionInterval = 300;
+        const double MaintenanceInterval = 3600;
+        static bool _pending;
+        static bool _manual;
+        static double _nextAttempt;
+        static double _nextCollection;
+        static double _nextMaintenance;
 
         static FluxParticleGenerationCleanup()
         {
             EditorApplication.update += Update;
-            EditorApplication.projectChanged += Request;
+            EditorApplication.projectChanged += OnProjectChanged;
             UnityEditor.SceneManagement.EditorSceneManager.sceneSaved += scene => Request();
             UnityEditor.SceneManagement.EditorSceneManager.sceneClosed += scene => Request();
         }
@@ -30,8 +37,14 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         public static void Request()
         {
-            pending = true;
-            nextAttempt = EditorApplication.timeSinceStartup + 2;
+            _pending = true;
+            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
+        }
+
+        static void OnProjectChanged()
+        {
+            // 削除自身の通知では新しい整理を予約しません。
+            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
         }
 
         static bool IsBusy => EditorApplication.isCompiling || EditorApplication.isUpdating ||
@@ -40,11 +53,26 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void Update()
         {
-            if (!pending || EditorApplication.timeSinceStartup < nextAttempt || IsBusy) return;
-            pending = false;
+            var now = EditorApplication.timeSinceStartup;
+            if (IsBusy)
+            {
+                _nextAttempt = now + QuietSeconds;
+                return;
+            }
+            if (!_pending && now >= _nextMaintenance)
+            {
+                Request();
+            }
+            if (!_pending || (!_manual && (now < _nextAttempt || now < _nextCollection))) return;
+            var automatic = !_manual;
+            _pending = false;
+            _manual = false;
+            _nextCollection = now + CollectionInterval;
+            _nextMaintenance = now + MaintenanceInterval;
             try
             {
-                var deleted = Collect();
+                var deleted = CollectCore(FluxParticleGenerationSession.DefaultRoot,
+                    automatic ? (DateTime?)DateTime.UtcNow.AddDays(-1) : null);
                 if (deleted > 0)
                 {
                     Debug.Log("[FluxFX] Removed unused generated assets: " + deleted);
@@ -52,6 +80,7 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             catch (Exception error)
             {
+                Request();
                 Debug.LogWarning("[FluxFX] Generation cleanup was deferred: " + error.Message);
             }
         }
@@ -60,6 +89,7 @@ namespace TpLab.Flux.FX.Editor.Build
         static void CleanFromMenu()
         {
             Request();
+            _manual = true;
         }
 
         /// <summary>
@@ -69,12 +99,32 @@ namespace TpLab.Flux.FX.Editor.Build
         /// <returns>削除したAssetの数</returns>
         public static int Collect(string root = FluxParticleGenerationSession.DefaultRoot)
         {
+            return CollectCore(root, null);
+        }
+
+        static int CollectCore(string root, DateTime? cacheCutoff)
+        {
             if (IsBusy || !Directory.Exists(FluxParticleGenerationSession.ManifestRoot)) return 0;
             var sessions = Directory.GetFiles(FluxParticleGenerationSession.ManifestRoot, "*.json")
                 .Select(path => FluxParticleGenerationSession.Load(Path.GetFileNameWithoutExtension(path)))
                 .ToArray();
             var owned = sessions.Where(session => session.ShaderRoot == root + "/Cache/Shaders").ToArray();
             if (owned.Any(session => session.State == "Running")) return 0;
+
+            // 同じCacheを再利用したセッションがあれば、最新の利用記録を優先します。
+            var recentCache = new HashSet<string>(StringComparer.Ordinal);
+            if (cacheCutoff.HasValue)
+            {
+                foreach (var asset in owned.SelectMany(session => session.Assets))
+                {
+                    if (asset == null || asset.kind == "Material") continue;
+                    if (!DateTime.TryParse(asset.lastUsedUtc, CultureInfo.InvariantCulture,
+                            DateTimeStyles.RoundtripKind, out var used) || used.ToUniversalTime() > cacheCutoff.Value)
+                    {
+                        recentCache.Add(asset.path);
+                    }
+                }
+            }
 
             var candidates = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var session in owned)
@@ -86,6 +136,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 foreach (var asset in session.Assets)
                 {
                     if (!IsOwnedAsset(session, asset)) continue;
+                    if (recentCache.Contains(asset.path)) continue;
                     if (AssetDatabase.AssetPathToGUID(asset.path) != asset.guid) continue;
                     candidates[asset.path] = asset.guid;
                 }
