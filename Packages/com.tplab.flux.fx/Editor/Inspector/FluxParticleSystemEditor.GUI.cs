@@ -10,6 +10,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
     {
         void DrawProperty(SerializedProperty property, bool includeChildren = false)
         {
+            if (TryDrawLiveProperty(property)) return;
             var tooltip = GetTooltip(property.displayName);
 
             EditorGUILayout.PropertyField(
@@ -20,6 +21,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawEnum(SerializedProperty property, string label = null, string tooltip = null)
         {
+            if (TryDrawLiveProperty(property)) return;
             var names = property.enumDisplayNames;
             var localizedNames = new string[names.Length];
             var displayName = label ?? property.displayName;
@@ -79,6 +81,20 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         bool DrawSectionHeaderInternal(string label, bool collapsible, bool expanded)
         {
+            var previousEnabled = GUI.enabled;
+            try
+            {
+                GUI.enabled = true;
+                return DrawSectionHeaderContent(label, collapsible, expanded);
+            }
+            finally
+            {
+                GUI.enabled = previousEnabled;
+            }
+        }
+
+        bool DrawSectionHeaderContent(string label, bool collapsible, bool expanded)
+        {
             InitializeSectionHeaderStyles();
 
             EditorGUILayout.Space(SectionSpacing);
@@ -131,13 +147,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             if (!collapsible) return expanded;
 
-            if (Event.current.type == EventType.MouseDown &&
-                Event.current.button == 0 &&
-                rect.Contains(Event.current.mousePosition))
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
             {
                 expanded = !expanded;
-                Event.current.Use();
-                GUI.changed = true;
             }
 
             return expanded;
@@ -212,6 +224,25 @@ namespace TpLab.Flux.FX.Editor.Inspector
             string sessionStateKey,
             Action onRemove = null)
         {
+            var previousEnabled = GUI.enabled;
+            try
+            {
+                GUI.enabled = true;
+                return DrawModuleHeaderContent(label, module, expanded, sessionStateKey, onRemove);
+            }
+            finally
+            {
+                GUI.enabled = previousEnabled;
+            }
+        }
+
+        bool DrawModuleHeaderContent(
+            string label,
+            SerializedProperty module,
+            bool expanded,
+            string sessionStateKey,
+            Action onRemove)
+        {
             InitializeModuleHeaderStyles();
 
             var enabled = module.FindPropertyRelative("enabled");
@@ -231,7 +262,15 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 headerRect.width - 26 - menuWidth,
                 headerRect.height);
 
-            enabled.boolValue = EditorGUI.Toggle(toggleRect, enabled.boolValue);
+            if (!TryDrawLiveProperty(enabled, toggleRect))
+            {
+                using (new EditorGUI.DisabledScope(!CanEditAuthoring))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    var nextEnabled = EditorGUI.Toggle(toggleRect, enabled.boolValue);
+                    if (EditorGUI.EndChangeCheck() && CanEditAuthoring) enabled.boolValue = nextEnabled;
+                }
+            }
 
             if (labelRect.Contains(Event.current.mousePosition) && Event.current.type == EventType.Repaint)
             {
@@ -253,20 +292,19 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     24,
                     headerRect.height);
 
-                if (GUI.Button(menuRect, "⋮", EditorStyles.miniButton))
+                using (new EditorGUI.DisabledScope(!CanEditAuthoring))
                 {
-                    onRemove();
+                    if (GUI.Button(menuRect, "⋮", EditorStyles.miniButton))
+                    {
+                        onRemove();
+                    }
                 }
             }
 
-            if (Event.current.type == EventType.MouseDown &&
-                Event.current.button == 0 &&
-                labelRect.Contains(Event.current.mousePosition))
+            if (GUI.Button(labelRect, GUIContent.none, GUIStyle.none))
             {
                 expanded = !expanded;
                 SessionState.SetBool(sessionStateKey, expanded);
-                Event.current.Use();
-                GUI.changed = true;
             }
 
             return expanded;

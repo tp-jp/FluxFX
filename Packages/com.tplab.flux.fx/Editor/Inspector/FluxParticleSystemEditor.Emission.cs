@@ -17,11 +17,16 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             EditorGUILayout.Space(2);
 
-            EditorGUILayout.PropertyField(_emission.FindPropertyRelative("rate"), new GUIContent(L10n.Tr("Rate over Time")));
+            var rate = _emission.FindPropertyRelative("rate");
+            if (!TryDrawLiveProperty(rate, labelOverride: "Rate over Time"))
+            {
+                EditorGUILayout.PropertyField(rate, new GUIContent(L10n.Tr("Rate over Time")));
+            }
 
             EditorGUILayout.Space(4);
 
             EditorGUILayout.LabelField(L10n.Tr("Bursts"), EditorStyles.boldLabel);
+            _burstList.draggable = CanEditAuthoring;
             _burstList.DoLayoutList();
         }
 

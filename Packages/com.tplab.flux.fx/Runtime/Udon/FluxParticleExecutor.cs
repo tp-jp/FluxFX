@@ -12,6 +12,31 @@ namespace TpLab.Flux.FX.Udon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleExecutor : UdonSharpBehaviour
     {
+        // EditorのLive InspectorがUdon VMと通信するための一時データ。
+        string _inspectorParameterId;
+        int _inspectorParameterType;
+        Vector4 _inspectorValue;
+        bool _inspectorWrite;
+        bool _inspectorAvailable;
+        bool _inspectorAccepted;
+
+        /// <summary>
+        /// Live Inspectorの要求を実行し、現在値を返します。
+        /// </summary>
+        public void _ApplyInspectorRequest()
+        {
+            _inspectorAvailable = false;
+            _inspectorAccepted = false;
+            var write = _inspectorWrite;
+            _inspectorWrite = false;
+            if (!_initialized) return;
+            var slot = ResolveParameter(_inspectorParameterId, _inspectorParameterType);
+            if (slot < 0 || staticParameters[slot]) return;
+            _inspectorAvailable = true;
+            _inspectorAccepted = !write || SetParameterValue(slot, _inspectorParameterType, _inspectorValue);
+            _inspectorValue = GetParameterValue(slot);
+        }
+
         [SerializeField]
         FluxKernel[] stepKernels;
         [SerializeField]

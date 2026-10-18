@@ -460,3 +460,12 @@ msgstr "最大トレイル数"
 
 msgid "Points Per Trail"
 msgstr "トレイルの点数"
+
+msgid "During Play Mode, supported Live fields show Runtime values. Changes are discarded when Play Mode ends. Other fields and SceneView shape handles are read-only because they require rebuilding or do not yet support Inspector updates. Unbuilt or uninitialized Live fields are also read-only."
+msgstr "Play中の対応するLive項目はRuntime値を表示します。変更はPlay終了時に破棄されます。それ以外の項目やSceneViewの編集ハンドルは、再ビルドが必要またはInspectorからの反映が未対応のため変更できません。未組み込み・未初期化のLive項目も変更できません。"
+
+msgid "Runtime value. Changes are discarded when Play Mode ends."
+msgstr "Runtimeの値。変更はPlay終了時に破棄されます。"
+
+msgid "Change rejected. Check the input constraints and Runtime state."
+msgstr "変更できません。入力制約またはRuntimeの状態を確認してください。"

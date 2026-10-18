@@ -105,20 +105,20 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             if ((FluxParticleStartSpeedMode)mode.enumValueIndex == FluxParticleStartSpeedMode.Constant)
             {
-                EditorGUILayout.PropertyField(
-                    _initialVelocity.FindPropertyRelative("speed"),
-                    new GUIContent(L10n.Tr("Start Speed")));
+                DrawStartSpeedProperty("speed", "Start Speed");
             }
             else
             {
-                EditorGUILayout.PropertyField(
-                    _initialVelocity.FindPropertyRelative("min"),
-                    new GUIContent(L10n.Tr("Start Speed Min")));
-
-                EditorGUILayout.PropertyField(
-                    _initialVelocity.FindPropertyRelative("max"),
-                    new GUIContent(L10n.Tr("Start Speed Max")));
+                DrawStartSpeedProperty("min", "Start Speed Min");
+                DrawStartSpeedProperty("max", "Start Speed Max");
             }
+        }
+
+        void DrawStartSpeedProperty(string name, string label)
+        {
+            var property = _initialVelocity.FindPropertyRelative(name);
+            if (TryDrawLiveProperty(property, labelOverride: label)) return;
+            EditorGUILayout.PropertyField(property, new GUIContent(L10n.Tr(label)));
         }
     }
 }

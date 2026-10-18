@@ -11,14 +11,19 @@ namespace TpLab.Flux.FX.Tests.Editor
     /// <summary>
     /// 通常・全件・大規模の回帰テストを実行し、結果XMLを保存します。
     /// </summary>
-    internal sealed class FluxParticleRegressionRunner : ICallbacks
+    internal sealed class FluxParticleRegressionRunner : IErrorCallbacks
     {
-        static TestRunnerApi api;
-        readonly string resultPath;
+        static FluxParticleRegressionRunner _active;
+        readonly TestRunnerApi _api;
+        readonly string _resultPath;
+        bool _finished;
 
-        FluxParticleRegressionRunner(string resultPath)
+        internal FluxParticleRegressionRunner(string resultPath, TestRunnerApi api)
         {
-            this.resultPath = resultPath;
+            _resultPath = resultPath;
+            _api = api;
+            _api.RegisterCallbacks(this);
+            AssemblyReloadEvents.beforeAssemblyReload += Release;
         }
 
         [MenuItem("Tools/FluxFX/Tests/Run Standard Regression")]
@@ -39,12 +44,31 @@ namespace TpLab.Flux.FX.Tests.Editor
             Run("Scale", test => test.Categories.Contains("Scale"));
         }
 
+        [MenuItem("Tools/FluxFX/Tests/Run Runner Lifecycle Tests")]
+        public static void RunRunnerLifecycle()
+        {
+            Run("RunnerLifecycle", test => test.FullName.StartsWith(
+                "TpLab.Flux.FX.Tests.Editor.FluxParticleRegressionRunnerTests.", StringComparison.Ordinal));
+        }
+
+        [MenuItem("Tools/FluxFX/Tests/Run Live Inspector Tests")]
+        public static void RunLiveInspector()
+        {
+            if (!CanRun()) return;
+            UdonSharp.Compiler.UdonSharpCompilerV1.CompileSync(new UdonSharp.Compiler.UdonSharpCompileOptions { IsEditorBuild = false });
+            UdonSharp.Compiler.UdonSharpCompilerV1.CompileSync(new UdonSharp.Compiler.UdonSharpCompileOptions { IsEditorBuild = true });
+            Run("LiveInspector", test => test.Name.StartsWith("LiveInspector", StringComparison.Ordinal) ||
+                test.Name == "TrailsDurationChangesClearOnlyHistoryAndDeferWhileOff");
+        }
+
         [MenuItem("Tools/FluxFX/Tests/Run Standard Regression", true)]
         [MenuItem("Tools/FluxFX/Tests/Run Full Regression", true)]
         [MenuItem("Tools/FluxFX/Tests/Run Scale Tests", true)]
+        [MenuItem("Tools/FluxFX/Tests/Run Runner Lifecycle Tests", true)]
+        [MenuItem("Tools/FluxFX/Tests/Run Live Inspector Tests", true)]
         static bool CanRun()
         {
-            return api == null && !EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode;
+            return _active == null && !EditorApplication.isCompiling && !EditorApplication.isPlayingOrWillChangePlaymode;
         }
 
         static void Run(string suite, Func<ITestAdaptor, bool> include)
@@ -53,11 +77,12 @@ namespace TpLab.Flux.FX.Tests.Editor
             Directory.CreateDirectory("Temp/FluxFXTests");
             var path = "Temp/FluxFXTests/" + suite + ".xml";
             File.WriteAllText(path + ".progress.txt", "Discovering tests\n");
-            api = ScriptableObject.CreateInstance<TestRunnerApi>();
-            var callback = new FluxParticleRegressionRunner(path);
-            api.RegisterCallbacks(callback);
+            var api = ScriptableObject.CreateInstance<TestRunnerApi>();
+            var callback = new FluxParticleRegressionRunner(path, api);
+            _active = callback;
             api.RetrieveTestList(TestMode.EditMode, root =>
             {
+                if (callback._finished) return;
                 try
                 {
                     var names = new List<string>();
@@ -91,18 +116,35 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         public void TestFinished(ITestResultAdaptor result)
         {
+            if (_finished) return;
             if (!result.HasChildren)
             {
-                File.AppendAllText(resultPath + ".progress.txt", result.ResultState + " " + result.FullName + "\n");
+                File.AppendAllText(_resultPath + ".progress.txt", result.ResultState + " " + result.FullName + "\n");
             }
         }
 
         public void RunFinished(ITestResultAdaptor result)
         {
+            if (_finished) return;
+            _finished = true;
             try
             {
-                File.WriteAllText(resultPath, result.ToXml().OuterXml);
-                Debug.Log($"[FluxFX Tests] Passed={result.PassCount}, Failed={result.FailCount}, Skipped={result.SkipCount}; Results: {resultPath}");
+                File.WriteAllText(_resultPath, result.ToXml().OuterXml);
+                Debug.Log($"[FluxFX Tests] Passed={result.PassCount}, Failed={result.FailCount}, Skipped={result.SkipCount}; Results: {_resultPath}");
+            }
+            finally
+            {
+                Release();
+            }
+        }
+
+        public void OnError(string message)
+        {
+            if (_finished) return;
+            _finished = true;
+            try
+            {
+                File.AppendAllText(_resultPath + ".progress.txt", "Run failed: " + message + "\n");
             }
             finally
             {
@@ -112,10 +154,19 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         void Release()
         {
-            if (api == null) return;
-            api.UnregisterCallbacks(this);
-            UnityEngine.Object.DestroyImmediate(api);
-            api = null;
+            _finished = true;
+            AssemblyReloadEvents.beforeAssemblyReload -= Release;
+            // APIオブジェクトが破棄されても、Test Frameworkの通知登録はグローバルに残る。
+            var api = _api != null ? _api : ScriptableObject.CreateInstance<TestRunnerApi>();
+            try
+            {
+                api.UnregisterCallbacks(this);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(api);
+                if (ReferenceEquals(_active, this)) _active = null;
+            }
         }
     }
 }

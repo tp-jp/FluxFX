@@ -7,6 +7,26 @@ namespace TpLab.Flux.FX.Udon
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class FluxParticleEmitter : UdonSharpBehaviour
     {
+        // Live Inspectorとの通信。入力検証は通常のRuntime APIと共有する。
+        string _inspectorParameterId;
+        int _inspectorParameterType;
+        Vector4 _inspectorValue;
+        bool _inspectorWrite;
+        bool _inspectorAvailable;
+        bool _inspectorAccepted;
+
+        public void _ApplyInspectorRequest()
+        {
+            var write = _inspectorWrite;
+            _inspectorWrite = false;
+            _inspectorAvailable = _playback != null && _inspectorParameterId == "emission.rate" &&
+                _inspectorParameterType == (int)FluxParticleValueType.Float;
+            _inspectorAccepted = false;
+            if (!_inspectorAvailable) return;
+            _inspectorAccepted = !write || SetRate(_inspectorValue.x);
+            _inspectorValue = new Vector4(rate, 0, 0, 0);
+        }
+
         // Spawn Seedを長時間安定して扱うため、Shader側と同じ周期に制限する。
         const int SpawnSeedPeriod = 1048576;
 

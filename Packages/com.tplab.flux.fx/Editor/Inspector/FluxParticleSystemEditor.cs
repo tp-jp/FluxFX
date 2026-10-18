@@ -63,6 +63,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
         GUIStyle _sectionHeaderChevronStyle;
         GUIStyle _moduleHeaderLabelStyle;
 
+        static bool CanEditAuthoring => !EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode;
+
         void OnEnable()
         {
             LoadExpandedStates();
@@ -86,6 +88,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             InitializeBurstList();
             InitializeBackendPreview();
+            InitializeLiveInspector();
 
         }
 
@@ -103,14 +106,26 @@ namespace TpLab.Flux.FX.Editor.Inspector
             _authoringObject.Update();
 
             DrawLanguage();
-            DrawMain();
-            DrawEmission();
-            DrawShape();
-            DrawModules();
-            DrawRenderer();
+            RefreshLiveInspector();
+            var canEdit = CanEditAuthoring;
+            if (!canEdit)
+            {
+                EditorGUILayout.HelpBox(L10n.Tr("During Play Mode, supported Live fields show Runtime values. Changes are discarded when Play Mode ends. Other fields and SceneView shape handles are read-only because they require rebuilding or do not yet support Inspector updates. Unbuilt or uninitialized Live fields are also read-only."), MessageType.Info);
+            }
+            using (new EditorGUI.DisabledScope(!canEdit))
+            {
+                DrawMain();
+                DrawEmission();
+                DrawShape();
+                DrawModules();
+                DrawRenderer();
+            }
 
-            _authoringObject.ApplyModifiedProperties();
-            serializedObject.ApplyModifiedProperties();
+            if (canEdit)
+            {
+                _authoringObject.ApplyModifiedProperties();
+                serializedObject.ApplyModifiedProperties();
+            }
             DrawBackendInfo();
         }
 

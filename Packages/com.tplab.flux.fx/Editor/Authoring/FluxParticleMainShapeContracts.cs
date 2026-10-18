@@ -39,6 +39,9 @@ namespace TpLab.Flux.FX.Editor.Authoring
             FluxParticleParameterContract contract;
             switch (id)
             {
+                case "render.intensity":
+                    contract = FluxParticleRendererContract.Intensity;
+                    break;
                 case "lifetime.range":
                 case "spawn.speed-range":
                 case "render.size-range":

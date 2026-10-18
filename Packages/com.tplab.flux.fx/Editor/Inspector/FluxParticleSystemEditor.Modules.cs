@@ -59,6 +59,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void RemoveModuleAt(int index)
         {
+            if (!CanEditAuthoring || _authoringObject == null) return;
             _authoringObject.Update();
             if (index < 0 || index >= _modules.arraySize) return;
             _modules.DeleteArrayElementAtIndex(index);
@@ -71,7 +72,17 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (definitions.Count == 0) return;
 
             var expanded = SessionState.GetBool(expandedKey, true);
-            var nextExpanded = EditorGUILayout.Foldout(expanded, L10n.Tr(label), true, EditorStyles.foldoutHeader);
+            var previousEnabled = GUI.enabled;
+            bool nextExpanded;
+            try
+            {
+                GUI.enabled = true;
+                nextExpanded = EditorGUILayout.Foldout(expanded, L10n.Tr(label), true, EditorStyles.foldoutHeader);
+            }
+            finally
+            {
+                GUI.enabled = previousEnabled;
+            }
 
             if (nextExpanded != expanded)
             {
@@ -208,7 +219,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void AddModule(FluxParticleInspectorModuleMetadata definition)
         {
-            if (_authoringObject == null) return;
+            if (!CanEditAuthoring || _authoringObject == null) return;
 
             _authoringObject.Update();
 
@@ -230,7 +241,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void RemoveModule(Type moduleType)
         {
-            if (_authoringObject == null) return;
+            if (!CanEditAuthoring || _authoringObject == null) return;
 
             _authoringObject.Update();
 

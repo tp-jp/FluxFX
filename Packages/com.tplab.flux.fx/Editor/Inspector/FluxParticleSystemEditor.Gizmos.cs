@@ -34,6 +34,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
             Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius.floatValue);
 
+            if (!CanEditAuthoring)
+            {
+                Handles.matrix = previousMatrix;
+                return;
+            }
+
             EditorGUI.BeginChangeCheck();
 
             var newRadius = Handles.RadiusHandle(Quaternion.identity, Vector3.zero, radius.floatValue);
@@ -58,6 +64,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
             Handles.DrawWireArc(Vector3.zero, Vector3.forward, Vector3.right, 180, radius.floatValue);
             Handles.DrawWireArc(Vector3.zero, Vector3.right, Vector3.forward, -180, radius.floatValue);
+
+            if (!CanEditAuthoring)
+            {
+                Handles.matrix = previousMatrix;
+                return;
+            }
 
             EditorGUI.BeginChangeCheck();
 
@@ -88,6 +100,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
 
+            if (!CanEditAuthoring)
+            {
+                Handles.matrix = previousMatrix;
+                return;
+            }
+
             EditorGUI.BeginChangeCheck();
 
             var newRadius = Handles.ScaleSlider(
@@ -117,6 +135,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             var currentSize = size.vector3Value;
             Handles.DrawWireCube(Vector3.zero, currentSize);
+
+            if (!CanEditAuthoring)
+            {
+                Handles.matrix = previousMatrix;
+                return;
+            }
 
             EditorGUI.BeginChangeCheck();
 
@@ -188,6 +212,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
             Handles.DrawLine(
                 new Vector3(0, 0, -radius.floatValue),
                 new Vector3(0, directionHeight, -endRadius));
+
+            if (!CanEditAuthoring)
+            {
+                Handles.matrix = previousMatrix;
+                return;
+            }
 
             EditorGUI.BeginChangeCheck();
 
