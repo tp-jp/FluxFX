@@ -106,6 +106,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 material.mainTexture = authoring.Render.Texture;
                 material.mainTextureScale = authoring.Render.Tiling;
                 material.mainTextureOffset = authoring.Render.Offset;
+                material.SetTexture("_IntensityMask", authoring.Render.IntensityMask != null ? authoring.Render.IntensityMask : Texture2D.whiteTexture);
                 var blend = authoring.Render.BlendMode;
                 material.SetFloat("_SrcBlend", blend == FluxParticleBlendMode.Opaque ? 1 : 5);
                 material.SetFloat("_DstBlend", blend == FluxParticleBlendMode.Alpha ? 10 : blend == FluxParticleBlendMode.Additive ? 1 : 0);

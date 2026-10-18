@@ -295,8 +295,92 @@ namespace TpLab.Flux.FX.Tests.Editor
             var build = FluxParticleBuildPipeline.Build(authoring);
             var operations = build.Shaders.Compilation.Operations.Select(operation => operation.Id).ToList();
             Assert.Less(operations.IndexOf("render.color"), operations.IndexOf("render.blink"));
-            Assert.Less(operations.IndexOf("render.blink"), operations.IndexOf("render.intensity"));
+            Assert.IsFalse(operations.Contains("render.intensity"));
+            StringAssert.Contains("lerp(1.0, " + FluxParticleHlslNames.ParameterProperty("render.intensity"), build.RendererSource);
             Assert.AreEqual(2, build.Shaders.Compilation.StateLayout.Pages.Count);
+        }
+
+        [TestCase(-1f, 2f, false, 2f)]
+        [TestCase(0f, 2f, false, 1f)]
+        [TestCase(0.5f, 2f, false, 1.5f)]
+        [TestCase(1f, 0f, false, 0f)]
+        [TestCase(0f, 0f, false, 1f)]
+        [TestCase(1f, 2f, true, 1.5f)]
+        public void IntensityMaskUsesFragmentRedAndSharedTextureUvs(float maskValue, float intensity, bool sheet, float expected)
+        {
+            RequireGraphics();
+            if (sheet)
+            {
+                var module = new FluxParticleTextureSheetAnimationModule();
+                typeof(FluxParticleTextureSheetAnimationModule).GetField("tilesX", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, 2);
+                typeof(FluxParticleTextureSheetAnimationModule).GetField("cycles", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(module, 0f);
+                SetModules(module);
+            }
+            var compiled = FluxParticleBuildPipeline.Build(authoring);
+            var runtime = CreateRuntime(compiled);
+            var system = runtime.GetComponentInParent<FluxParticleSystem>();
+            Assert.IsTrue(system.SetRenderIntensity(intensity));
+            Assert.IsTrue(runtime.Initialize(4));
+            runtime.Step(0, 0, 1, 1);
+            var material = runtime.RenderMaterial;
+            var mask = new Texture2D(4, 1, TextureFormat.RGBAFloat, false, true);
+            mask.filterMode = FilterMode.Point;
+            mask.wrapMode = TextureWrapMode.Clamp;
+            mask.SetPixels(sheet
+                ? new[] { Color.black, new Color(0.5f, 0, 0, 0), Color.white, Color.white }
+                : Enumerable.Repeat(new Color(maskValue, 1, 1, 0), 4).ToArray());
+            mask.Apply();
+            material.SetTexture("_IntensityMask", maskValue < 0 ? Texture2D.whiteTexture : mask);
+            material.mainTextureScale = new Vector2(0.5f, 1);
+            material.mainTextureOffset = new Vector2(0.375f, 0);
+            material.SetInt("_SrcBlend", (int)BlendMode.One);
+            material.SetInt("_DstBlend", (int)BlendMode.Zero);
+            var mesh = new Mesh();
+            mesh.vertices = new[] { new Vector3(-0.5f, -0.5f, 0), new Vector3(0.5f, -0.5f, 0), new Vector3(0.5f, 0.5f, 0), new Vector3(-0.5f, 0.5f, 0) };
+            mesh.uv = Enumerable.Repeat(new Vector2(0.25f, 0.5f), 4).ToArray();
+            mesh.uv2 = Enumerable.Repeat(Vector2.zero, 4).ToArray();
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            var cameraObject = new GameObject("Intensity Mask Test Camera");
+            var camera = cameraObject.AddComponent<Camera>();
+            var target = new RenderTexture(32, 32, 24, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var pixels = new Texture2D(32, 32, TextureFormat.RGBAFloat, false, true);
+            var commands = new CommandBuffer();
+            var previous = RenderTexture.active;
+            try
+            {
+                target.Create();
+                camera.enabled = false;
+                camera.orthographic = true;
+                camera.orthographicSize = 1;
+                camera.aspect = 1;
+                camera.transform.position = new Vector3(0, 0, -10);
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = Color.clear;
+                camera.cullingMask = 0;
+                camera.allowHDR = true;
+                camera.allowMSAA = false;
+                camera.targetTexture = target;
+                commands.DrawMesh(mesh, Matrix4x4.identity, material);
+                camera.AddCommandBuffer(CameraEvent.AfterEverything, commands);
+                camera.Render();
+                RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, 0, 32, 32), 0, 0);
+                pixels.Apply();
+                AssertVector(new Vector4(expected, expected, expected, 1), pixels.GetPixel(16, 16), 0.002f);
+            }
+            finally
+            {
+                camera.RemoveCommandBuffer(CameraEvent.AfterEverything, commands);
+                camera.targetTexture = null;
+                commands.Release();
+                RenderTexture.active = previous;
+                Object.DestroyImmediate(cameraObject);
+                Object.DestroyImmediate(mesh);
+                Object.DestroyImmediate(mask);
+                Object.DestroyImmediate(pixels);
+                target.Release();
+                Object.DestroyImmediate(target);
+            }
         }
 
         [TestCase(false)]
@@ -313,6 +397,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var offset = new Vector2(0.25f, 0.5f);
             var serialized = new SerializedObject(authoring);
             serialized.FindProperty("render.texture").objectReferenceValue = useTexture ? texture : null;
+            serialized.FindProperty("render.intensityMask").objectReferenceValue = useTexture ? texture : null;
             serialized.FindProperty("render.tiling").vector2Value = tiling;
             serialized.FindProperty("render.offset").vector2Value = offset;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -321,6 +406,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var render = runtime.GetProgramVariable("renderMaterial") as Material;
             Assert.IsNotNull(render);
             Assert.AreEqual(useTexture ? texture : null, render.mainTexture);
+            Assert.AreEqual(useTexture ? texture : Texture2D.whiteTexture, render.GetTexture("_IntensityMask"));
             Assert.AreEqual(tiling, render.mainTextureScale);
             Assert.AreEqual(offset, render.mainTextureOffset);
             Assert.AreEqual("Hidden/FluxFX/Program/Billboard", render.shader.name);
@@ -330,6 +416,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var previewMaterial = (Material)typeof(TpLab.Flux.FX.Editor.Preview.FluxParticleEditorPreview)
                     .GetField("material", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(preview);
                 Assert.AreEqual(render.mainTexture, previewMaterial.mainTexture);
+                Assert.AreEqual(render.GetTexture("_IntensityMask"), previewMaterial.GetTexture("_IntensityMask"));
                 Assert.AreEqual(tiling, previewMaterial.mainTextureScale);
                 Assert.AreEqual(offset, previewMaterial.mainTextureOffset);
             }
@@ -1187,6 +1274,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 @"#include ""UnityCG.cginc""",
                 compiled.Shaders.RenderSource,
                 "float4 frag(v2f_img input) : SV_Target { bool alive; FluxRenderContext value = FluxFX_EvaluateRender(input.uv, alive);",
+                "value.valueRenderColor.rgb *= " + FluxParticleHlslNames.ParameterProperty("render.intensity") + ";",
                 corrections ? "return alive ? float4(value.valueRenderColor.r, value.valueRenderSize, value.valueRenderRotation.z, value.valueRenderUvTransform.x) : float4(0, 0, 0, 0); }" :
                 uv ? "return alive ? value.valueRenderUvTransform : float4(0, 0, 0, 0); }" :
                 size ? "return alive ? float4(value.valueRenderSize, 0, 0, 1) : float4(0, 0, 0, 0); }" :

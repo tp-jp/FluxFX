@@ -3,6 +3,7 @@ Shader "{{ShaderName}}"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _IntensityMask ("Intensity Mask", 2D) = "white" {}
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
@@ -25,6 +26,7 @@ Shader "{{ShaderName}}"
             #include "UnityCG.cginc"
 
             sampler2D _MainTex;
+            sampler2D _IntensityMask;
             float4 _MainTex_ST;
             float4 _FluxStateSize;
 
@@ -73,7 +75,10 @@ Shader "{{ShaderName}}"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 clip(input.alive - 0.5);
-                return tex2D(_MainTex, input.uv) * input.color;
+                float4 color = tex2D(_MainTex, input.uv) * input.color;
+                float mask = saturate(tex2D(_IntensityMask, input.uv).r);
+                color.rgb *= lerp(1.0, {{Intensity}}, mask);
+                return color;
             }
             ENDHLSL
         }

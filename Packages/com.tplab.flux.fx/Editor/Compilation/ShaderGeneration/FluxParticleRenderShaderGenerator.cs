@@ -82,6 +82,8 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
                 ["ParameterProperties"] = FluxParticleProgramShaderGenerator.GenerateParameterProperties(program.Compilation),
                 ["RenderCode"] = renderCode,
                 ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
+                ["Intensity"] = program.Compilation.Parameters.ContainsKey("render.intensity")
+                    ? FluxParticleHlslNames.ParameterProperty("render.intensity") : "1.0",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),
                 ["UvTransform"] = "render." + FluxParticleHlslNames.Value("render.uv-transform"),
             });

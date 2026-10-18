@@ -14,7 +14,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace TpLab.Flux.FX.Samples.Benchmark.Editor
+namespace TpLab.Flux.FX.Development.Benchmark.Editor
 {
     /// <summary>
     /// 同じSceneの複製で、Trailsの未組み込み・OFF・ONを順に計測します。
@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Samples.Benchmark.Editor
     [InitializeOnLoad]
     public static class FluxTrailBenchmarkRunner
     {
-        const string SourceScene = "Assets/FluxFX/Samples/Benchmark/GPUBenchmarkScene.unity";
+        const string SourceScene = "Assets/FluxFX/Development/Benchmark/GPUBenchmarkScene.unity";
         const string SessionKey = "FluxFX.TrailBenchmark";
         const float WarmupSeconds = 20;
         const float MeasureSeconds = 10;
@@ -91,13 +91,13 @@ namespace TpLab.Flux.FX.Samples.Benchmark.Editor
             var id = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             state = new RunState
             {
-                folder = "Assets/FluxFX/Samples/Benchmark/Run-" + id,
+                folder = "Assets/FluxFX/Development/Benchmark/Run-" + id,
                 output = "Temp/FluxFXBenchmarks/Trails-" + id,
                 scenes = scenes.Select(scene => new SavedScene { path = scene.path, loaded = scene.isLoaded, active = scene.isActive }).ToArray(),
                 phase = "Prepare"
             };
             Directory.CreateDirectory(state.output);
-            AssetDatabase.CreateFolder("Assets/FluxFX/Samples/Benchmark", "Run-" + id);
+            AssetDatabase.CreateFolder("Assets/FluxFX/Development/Benchmark", "Run-" + id);
             Save();
             Prepare();
         }

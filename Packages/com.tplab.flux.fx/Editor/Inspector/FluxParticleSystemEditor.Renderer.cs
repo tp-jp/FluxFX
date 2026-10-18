@@ -37,6 +37,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             }
 
             EditorGUILayout.PropertyField(_render.FindPropertyRelative("intensity"), new GUIContent(L10n.Tr("Intensity")));
+            EditorGUILayout.PropertyField(_render.FindPropertyRelative("intensityMask"), new GUIContent(L10n.Tr("Intensity Mask"),
+                L10n.Tr("Uses the red channel and Texture UVs. White applies Intensity; black preserves the original brightness.")));
 
             EditorGUILayout.PropertyField(
                 _render.FindPropertyRelative("texture"),

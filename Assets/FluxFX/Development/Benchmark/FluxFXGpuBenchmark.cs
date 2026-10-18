@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
-namespace TpLab.Flux.FX.Samples
+namespace TpLab.Flux.FX.Development.Benchmark
 {
     public class FluxFXGpuBenchmark : MonoBehaviour
     {
@@ -158,7 +158,7 @@ namespace TpLab.Flux.FX.Samples
             var cpuP95 = Percentile(_cpuSamples, 0.95);
 
             var directory = Path.Combine(
-                Application.persistentDataPath, "FluxFXBenchmarks");
+                Application.dataPath, "../Temp/FluxFXBenchmarks");
 
             Directory.CreateDirectory(directory);
 
