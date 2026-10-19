@@ -28,7 +28,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         string _backendPreviewSignature;
         string _backendPreviewError;
         FluxParticleEditorPreview _particlePreview;
-        bool _previewPlaying = true;
+        bool _previewPlaying;
         double _lastPreviewTime;
         bool _unityFocused;
         bool _previewRefreshAfterSave;
