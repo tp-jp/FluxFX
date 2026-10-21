@@ -76,8 +76,10 @@ namespace TpLab.Flux.FX.Tests.Editor
             var nextAttempt = type.GetField("_nextAttempt", flags);
             var previousPending = pending.GetValue(null);
             var previousAttempt = nextAttempt.GetValue(null);
+            var automatic = FluxParticleGenerationCleanup.AutomaticCleanupEnabled;
             try
             {
+                FluxParticleGenerationCleanup.AutomaticCleanupEnabled = true;
                 var before = EditorApplication.timeSinceStartup;
                 FluxParticleGenerationCleanup.Request();
                 Assert.IsTrue((bool)pending.GetValue(null));
@@ -89,8 +91,35 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             finally
             {
+                FluxParticleGenerationCleanup.AutomaticCleanupEnabled = automatic;
                 pending.SetValue(null, previousPending);
                 nextAttempt.SetValue(null, previousAttempt);
+            }
+        }
+
+        [Test]
+        public void DisabledAutomaticCleanupDoesNotScheduleButAllowsManualCollection()
+        {
+            var automatic = FluxParticleGenerationCleanup.AutomaticCleanupEnabled;
+            try
+            {
+                FluxParticleGenerationCleanup.AutomaticCleanupEnabled = false;
+                session.Dispose();
+                FluxParticleGenerationCleanup.Request();
+                var type = typeof(FluxParticleGenerationCleanup);
+                var flags = BindingFlags.Static | BindingFlags.NonPublic;
+                type.GetMethod("OnProjectChanged", flags).Invoke(null, null);
+                type.GetMethod("Update", flags).Invoke(null, null);
+                Assert.IsFalse((bool)type.GetField("_pending", flags).GetValue(null));
+                AssertAssetsRemain();
+                type.GetMethod("CleanFromMenu", flags).Invoke(null, null);
+                Assert.IsTrue((bool)type.GetField("_pending", flags).GetValue(null));
+                Assert.IsTrue((bool)type.GetField("_manual", flags).GetValue(null));
+                Assert.AreEqual(2, FluxParticleGenerationCleanup.Collect(root));
+            }
+            finally
+            {
+                FluxParticleGenerationCleanup.AutomaticCleanupEnabled = automatic;
             }
         }
 

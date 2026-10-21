@@ -18,11 +18,51 @@ namespace TpLab.Flux.FX.Editor.Build
         const double QuietSeconds = 60;
         const double CollectionInterval = 300;
         const double MaintenanceInterval = 3600;
+        const string AutomaticCleanupKey = "TpLab.Flux.FX.AutomaticGenerationCleanup";
+        const string AutomaticCleanupMenu = "Tools/FluxFX/Automatic Generated Asset Cleanup";
         static bool _pending;
         static bool _manual;
         static double _nextAttempt;
         static double _nextCollection;
         static double _nextMaintenance;
+
+        /// <summary>
+        /// 自動クリーンアップの有効状態。既定は無効で、設定はEditor全体で共有
+        /// </summary>
+        public static bool AutomaticCleanupEnabled
+        {
+            get => EditorPrefs.GetBool(AutomaticCleanupKey, false);
+            set
+            {
+                EditorPrefs.SetBool(AutomaticCleanupKey, value);
+                _pending = false;
+                _manual = false;
+                if (value)
+                {
+                    Request();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 終了済みセッションの未使用Assetを削除します。
+        /// </summary>
+        /// <param name="root">生成先のルート</param>
+        /// <returns>削除したAssetの数</returns>
+        public static int Collect(string root = FluxParticleGenerationSession.DefaultRoot)
+        {
+            return CollectCore(root, null);
+        }
+
+        /// <summary>
+        /// 自動整理が有効な場合に、クリーンアップを予約します。
+        /// </summary>
+        public static void Request()
+        {
+            if (!AutomaticCleanupEnabled) return;
+            _pending = true;
+            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
+        }
 
         static FluxParticleGenerationCleanup()
         {
@@ -32,17 +72,9 @@ namespace TpLab.Flux.FX.Editor.Build
             UnityEditor.SceneManagement.EditorSceneManager.sceneClosed += scene => Request();
         }
 
-        /// <summary>
-        /// Editorが待機状態になった後のクリーンアップを予約します。
-        /// </summary>
-        public static void Request()
-        {
-            _pending = true;
-            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
-        }
-
         static void OnProjectChanged()
         {
+            if (!AutomaticCleanupEnabled) return;
             // 削除自身の通知では新しい整理を予約しません。
             _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
         }
@@ -53,6 +85,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void Update()
         {
+            if (!_manual && !AutomaticCleanupEnabled) return;
             var now = EditorApplication.timeSinceStartup;
             if (IsBusy)
             {
@@ -88,18 +121,21 @@ namespace TpLab.Flux.FX.Editor.Build
         [MenuItem("Tools/FluxFX/Clean Unused Generated Assets")]
         static void CleanFromMenu()
         {
-            Request();
+            _pending = true;
             _manual = true;
         }
 
-        /// <summary>
-        /// 終了済みセッションの未使用Assetを削除します。
-        /// </summary>
-        /// <param name="root">生成先のルート</param>
-        /// <returns>削除したAssetの数</returns>
-        public static int Collect(string root = FluxParticleGenerationSession.DefaultRoot)
+        [MenuItem(AutomaticCleanupMenu)]
+        static void ToggleAutomaticCleanup()
         {
-            return CollectCore(root, null);
+            AutomaticCleanupEnabled = !AutomaticCleanupEnabled;
+        }
+
+        [MenuItem(AutomaticCleanupMenu, true)]
+        static bool ValidateAutomaticCleanup()
+        {
+            Menu.SetChecked(AutomaticCleanupMenu, AutomaticCleanupEnabled);
+            return true;
         }
 
         static int CollectCore(string root, DateTime? cacheCutoff)
