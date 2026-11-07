@@ -35,7 +35,7 @@ FluxFX requires Flux to be installed in the project.
 
 ## About Flux
 
-FluxFX is built on [Flux](<FLUX_REPOSITORY_URL>), a lightweight GPGPU framework for Unity.
+FluxFX is built on [Flux](https://github.com/tp-jp/Flux), a lightweight GPGPU framework for Unity.
 
 Flux provides the low-level GPU processing foundation, while FluxFX provides higher-level particle and effects functionality.
 
