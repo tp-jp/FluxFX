@@ -8,6 +8,13 @@ It provides a reusable foundation for creating and controlling GPU-driven partic
 > FluxFX is currently in early development.
 > APIs and package structure may change without notice.
 
+## Documentation
+
+| | 日本語 | English |
+| --- | --- | --- |
+| Flux | [利用ガイド](https://tp-jp.github.io/flux-docs/flux/) | [User guide](https://tp-jp.github.io/flux-docs/en/flux/) |
+| FluxFX | [利用ガイド](https://tp-jp.github.io/flux-docs/fluxfx/) | [User guide](https://tp-jp.github.io/flux-docs/en/fluxfx/) |
+
 ## Features
 
 - GPU-based particle simulation
