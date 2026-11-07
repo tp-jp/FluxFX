@@ -34,7 +34,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
         const int Capacity = 2048;
         static readonly Color Background = new Color(0.035f, 0.055f, 0.09f, 0.98f);
         static readonly Color Accent = new Color(0.2f, 0.85f, 0.75f);
-        static DefaultControls.Resources Resources => new DefaultControls.Resources
+        internal static DefaultControls.Resources Resources => new DefaultControls.Resources
         {
             standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"),
             background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd"),
@@ -318,7 +318,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
         }
 
-        static RectTransform Rect(string name, Transform parent, float x, float y, float width, float height)
+        internal static RectTransform Rect(string name, Transform parent, float x, float y, float width, float height)
         {
             var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
             rect.SetParent(parent, false);
@@ -326,7 +326,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             return rect;
         }
 
-        static void Place(RectTransform rect, float x, float y, float width, float height)
+        internal static void Place(RectTransform rect, float x, float y, float width, float height)
         {
             rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
             rect.pivot = new Vector2(0, 1);
@@ -334,7 +334,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             rect.sizeDelta = new Vector2(width, height);
         }
 
-        static Text Label(Transform parent, string content, float x, float y, float width, float height, int size = 18)
+        internal static Text Label(Transform parent, string content, float x, float y, float width, float height, int size = 18)
         {
             var text = Rect(content, parent, x, y, width, height).gameObject.AddComponent<Text>();
             text.font = Font;
@@ -346,7 +346,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             return text;
         }
 
-        static Button Button(Transform parent, string label, float x, float y, float width, UdonBehaviour target, string action)
+        internal static Button Button(Transform parent, string label, float x, float y, float width, UdonBehaviour target, string action)
         {
             var rect = Rect(label, parent, x, y, width, 40);
             rect.gameObject.AddComponent<Image>().color = new Color(0.12f, 0.23f, 0.3f);

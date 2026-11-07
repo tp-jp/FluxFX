@@ -119,34 +119,144 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
     {
         [SerializeField]
         FluxParticleSystem[] systems;
+
         [SerializeField]
         Slider[] controls;
+
         [SerializeField]
         Text[] values;
+
         [SerializeField]
         Toggle[] moduleToggles;
+
         [SerializeField]
         CanvasGroup[] moduleParameterGroups;
+
         [SerializeField]
         Toggle loopToggle;
+
         [SerializeField]
         Dropdown shapeSelector;
+
         [SerializeField]
         GameObject[] pages;
+
         [SerializeField]
         Text status;
+
         [SerializeField]
         Text message;
+
         [SerializeField]
         Text playLabel;
+
+        [SerializeField]
+        bool startPaused;
 
         FluxParticleSystem _target;
         bool _ready;
         float _nextStatus;
 
-        void Start()
+        /// <summary>
+        /// UIとSystemの初期化完了状態
+        /// </summary>
+        public bool IsReady => _ready;
+
+        /// <summary>
+        /// 選択中の形状番号
+        /// </summary>
+        public int SelectedShape => shapeSelector.value;
+
+        /// <summary>
+        /// UIで指定されたループ状態
+        /// </summary>
+        public bool Loop => loopToggle.isOn;
+
+        /// <summary>
+        /// 現在のスライダー値を複製します。
+        /// </summary>
+        public float[] CaptureValues()
         {
-            SendCustomEventDelayedFrames(nameof(InitializeSample), 2);
+            var snapshot = new float[controls.Length];
+            for (var i = 0; i < controls.Length; i++)
+            {
+                snapshot[i] = controls[i].value;
+            }
+            return snapshot;
+        }
+
+        /// <summary>
+        /// 現在のModule有効状態を複製します。
+        /// </summary>
+        public bool[] CaptureModules()
+        {
+            var snapshot = new bool[moduleToggles.Length];
+            for (var i = 0; i < moduleToggles.Length; i++)
+            {
+                snapshot[i] = moduleToggles[i].isOn;
+            }
+            return snapshot;
+        }
+
+        /// <summary>
+        /// 共有設定をUIとRuntimeへ反映します。開始値は確定済みの値だけを適用します。
+        /// </summary>
+        public void ApplySharedState(float[] snapshot, bool[] enabledModules, bool loop, int shape,
+            float[] initialValues, bool resetInitial, bool restart, int playback, float burstTime, int burstCount)
+        {
+            if (!_ready || snapshot == null || snapshot.Length != controls.Length ||
+                enabledModules == null || enabledModules.Length != moduleToggles.Length ||
+                initialValues == null || initialValues.Length != controls.Length || shape < 0 || shape >= systems.Length) return;
+            var changeShape = shape != shapeSelector.value;
+            if (resetInitial || changeShape)
+            {
+                RestoreControls(initialValues, enabledModules, loop, shape);
+                if (changeShape)
+                {
+                    OnShapeChanged();
+                }
+                else
+                {
+                    ApplyInitialValues();
+                }
+            }
+            RestoreControls(snapshot, enabledModules, loop, shape);
+            OnControlsChanged();
+            if (restart || resetInitial || changeShape)
+            {
+                // 未確定のBurst編集値は表示だけを復元し、最後にRestartした設定で再生する。
+                var draftTime = controls[(int)SampleControl.BurstTime].value;
+                var draftCount = controls[(int)SampleControl.BurstCount].value;
+                controls[(int)SampleControl.BurstTime].SetValueWithoutNotify(burstTime);
+                controls[(int)SampleControl.BurstCount].SetValueWithoutNotify(burstCount);
+                ApplyBursts();
+                controls[(int)SampleControl.BurstTime].SetValueWithoutNotify(draftTime);
+                controls[(int)SampleControl.BurstCount].SetValueWithoutNotify(draftCount);
+                _target.Clear();
+                _target.Restart();
+            }
+            SetPlaybackState(playback);
+        }
+
+        /// <summary>
+        /// 再生状態を変更します。
+        /// </summary>
+        /// <param name="playback">0は再生、1は一時停止、2は発生停止</param>
+        public void SetPlaybackState(int playback)
+        {
+            if (!_ready) return;
+            if (playback == 1)
+            {
+                _target.Pause();
+            }
+            else if (playback == 2)
+            {
+                _target.Stop();
+            }
+            else
+            {
+                _target.Play();
+            }
         }
 
         public void InitializeSample()
@@ -157,24 +267,12 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
             }
             _ready = true;
             OnShapeChanged();
+            if (startPaused)
+            {
+                _target.Pause();
+            }
             ShowMain();
         }
-
-        void Update()
-        {
-            if (!_ready || Time.time < _nextStatus) return;
-            _nextStatus = Time.time + 0.2f;
-            _target.RequestAliveCount();
-            var alive = _target.AliveCount;
-            status.text = shapeSelector.captionText.text + "  /  Alive " + (alive < 0 ? "--" : alive.ToString()) +
-                " / " + _target.Main.GetParticleCount() + " slots\n" +
-                "Playback  " + _target.PlaybackTime.ToString("F1") + " s";
-            playLabel.text = _target.IsPaused || !_target.IsEmitting ? "Play" : "Pause";
-        }
-
-        float Value(SampleControl control) => controls[(int)control].value;
-        Vector3 Vector(SampleControl first) => new Vector3(controls[(int)first].value, controls[(int)first + 1].value, controls[(int)first + 2].value);
-        Color Tint(SampleControl first) => new Color(controls[(int)first].value, controls[(int)first + 1].value, controls[(int)first + 2].value, controls[(int)first + 3].value);
 
         public void OnShapeChanged()
         {
@@ -220,6 +318,97 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
             }
         }
 
+        /// <summary>
+        /// GPU実行環境を再初期化し、Static Parameterを設定して再生成します。
+        /// </summary>
+        public void ApplyInitialValues()
+        {
+            if (!_ready) return;
+            _target.Pause();
+            _target.Executor.Release();
+            if (!_target.Executor.Initialize(_target.ParticleCount))
+            {
+                message.text = "Initialization failed. Check the Unity Console.";
+                return;
+            }
+            var accepted = _target.Main.SetStartLifetime(Value(SampleControl.Lifetime));
+            accepted &= _target.Main.SetStartSize(Value(SampleControl.StartSize));
+            accepted &= _target.Main.SetStartColor(Tint(SampleControl.StartR));
+            accepted &= _target.Main.SetStartRotation(new Vector3(0, 0, Value(SampleControl.StartRotation)));
+            if (_target.Modules.TextureSheetAnimation != null)
+            {
+                accepted &= _target.Modules.TextureSheetAnimation.SetTiles((int)Value(SampleControl.TilesX), (int)Value(SampleControl.TilesY));
+            }
+            ApplyLiveValues();
+            ApplyBursts();
+            _target.Restart();
+            OnControlsChanged();
+            message.text = accepted ? "Initial values applied. Particles restarted." : "Some initial values were rejected.";
+        }
+
+        public void TogglePlay()
+        {
+            if (!_ready) return;
+            if (_target.IsPaused || !_target.IsEmitting)
+            {
+                _target.Play();
+            }
+            else
+            {
+                _target.Pause();
+            }
+        }
+
+        public void Stop()
+        {
+            if (!_ready) return;
+            _target.Stop();
+            message.text = "Emission stopped. Existing particles continue.";
+        }
+
+        public void Restart()
+        {
+            if (!_ready) return;
+            ApplyLiveValues();
+            ApplyBursts();
+            _target.Clear();
+            _target.Restart();
+            message.text = "Playback settings applied. Particles restarted.";
+        }
+
+        public void ShowMain() => ShowPage(0);
+
+        public void ShowEmission() => ShowPage(1);
+
+        public void ShowShape() => ShowPage(2);
+
+        public void ShowMotion() => ShowPage(3);
+
+        public void ShowRender() => ShowPage(4);
+
+        void Start()
+        {
+            SendCustomEventDelayedFrames(nameof(InitializeSample), 2);
+        }
+
+        void Update()
+        {
+            if (!_ready || Time.time < _nextStatus) return;
+            _nextStatus = Time.time + 0.2f;
+            _target.RequestAliveCount();
+            var alive = _target.AliveCount;
+            status.text = shapeSelector.captionText.text + "  /  Alive " + (alive < 0 ? "--" : alive.ToString()) +
+                " / " + _target.Main.GetParticleCount() + " slots\n" +
+                "Playback  " + _target.PlaybackTime.ToString("F1") + " s";
+            playLabel.text = _target.IsPaused || !_target.IsEmitting ? "Play" : "Pause";
+        }
+
+        float Value(SampleControl control) => controls[(int)control].value;
+
+        Vector3 Vector(SampleControl first) => new Vector3(controls[(int)first].value, controls[(int)first + 1].value, controls[(int)first + 2].value);
+
+        Color Tint(SampleControl first) => new Color(controls[(int)first].value, controls[(int)first + 1].value, controls[(int)first + 2].value, controls[(int)first + 3].value);
+
         FluxParticleModuleHandle GetModule(SampleModule module)
         {
             var modules = _target.Modules;
@@ -242,7 +431,6 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 default: return null;
             }
         }
-
 
         void ApplyLiveValues()
         {
@@ -379,70 +567,6 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 count == 0 ? new int[0] : new[] { count });
         }
 
-        /// <summary>
-        /// GPU実行環境を再初期化し、Static Parameterを設定して再生成します。
-        /// </summary>
-        public void ApplyInitialValues()
-        {
-            if (!_ready) return;
-            _target.Pause();
-            _target.Executor.Release();
-            if (!_target.Executor.Initialize(_target.ParticleCount))
-            {
-                message.text = "Initialization failed. Check the Unity Console.";
-                return;
-            }
-            var accepted = _target.Main.SetStartLifetime(Value(SampleControl.Lifetime));
-            accepted &= _target.Main.SetStartSize(Value(SampleControl.StartSize));
-            accepted &= _target.Main.SetStartColor(Tint(SampleControl.StartR));
-            accepted &= _target.Main.SetStartRotation(new Vector3(0, 0, Value(SampleControl.StartRotation)));
-            if (_target.Modules.TextureSheetAnimation != null)
-            {
-                accepted &= _target.Modules.TextureSheetAnimation.SetTiles((int)Value(SampleControl.TilesX), (int)Value(SampleControl.TilesY));
-            }
-            ApplyLiveValues();
-            ApplyBursts();
-            _target.Restart();
-            OnControlsChanged();
-            message.text = accepted ? "Initial values applied. Particles restarted." : "Some initial values were rejected.";
-        }
-
-        public void TogglePlay()
-        {
-            if (!_ready) return;
-            if (_target.IsPaused || !_target.IsEmitting)
-            {
-                _target.Play();
-            }
-            else
-            {
-                _target.Pause();
-            }
-        }
-
-        public void Stop()
-        {
-            if (!_ready) return;
-            _target.Stop();
-            message.text = "Emission stopped. Existing particles continue.";
-        }
-
-        public void Restart()
-        {
-            if (!_ready) return;
-            ApplyLiveValues();
-            ApplyBursts();
-            _target.Clear();
-            _target.Restart();
-            message.text = "Playback settings applied. Particles restarted.";
-        }
-
-        public void ShowMain() => ShowPage(0);
-        public void ShowEmission() => ShowPage(1);
-        public void ShowShape() => ShowPage(2);
-        public void ShowMotion() => ShowPage(3);
-        public void ShowRender() => ShowPage(4);
-
         void ShowPage(int index)
         {
             for (var i = 0; i < pages.Length; i++)
@@ -450,6 +574,22 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 pages[i].SetActive(i == index);
             }
         }
+
+        void RestoreControls(float[] snapshot, bool[] enabledModules, bool loop, int shape)
+        {
+            for (var i = 0; i < controls.Length; i++)
+            {
+                controls[i].SetValueWithoutNotify(snapshot[i]);
+            }
+            for (var i = 0; i < moduleToggles.Length; i++)
+            {
+                moduleToggles[i].SetIsOnWithoutNotify(enabledModules[i]);
+            }
+            loopToggle.SetIsOnWithoutNotify(loop);
+            shapeSelector.SetValueWithoutNotify(shape);
+            shapeSelector.RefreshShownValue();
+        }
+
     }
 }
 
