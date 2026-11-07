@@ -13,16 +13,20 @@ namespace TpLab.Flux.FX.Udon
     public class FluxParticleSystem : UdonSharpBehaviour
     {
         [SerializeField]
+        [HideInInspector]
         [Min(1)]
         int particleCount = 64;
 
         [SerializeField]
+        [HideInInspector]
         bool playOnAwake = true;
 
         [SerializeField]
+        [HideInInspector]
         FluxParticleEmitter particleEmitter;
 
         [SerializeField]
+        [HideInInspector]
         FluxParticleRenderer particleRenderer;
 
         [SerializeField]
@@ -30,12 +34,28 @@ namespace TpLab.Flux.FX.Udon
         FluxParticleExecutor particleExecutor;
 
         [SerializeField]
+        [HideInInspector]
         FluxParticleModules modules;
 
-        /// <summary>
-        /// 組み込み済みModuleへの操作入口
-        /// </summary>
-        public FluxParticleModules Modules => modules;
+        [SerializeField]
+        [HideInInspector]
+        int[] mainParameterSlots;
+
+        [SerializeField]
+        [HideInInspector]
+        int[] shapeParameterSlots;
+
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleSimulationSpace simulationSpace;
+
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleShapeType shapeType;
+
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleRenderMode renderMode;
 
         bool _programReady;
         bool _isPlaying;
@@ -44,16 +64,10 @@ namespace TpLab.Flux.FX.Udon
         object _main;
         object _shape;
 
-        [SerializeField]
-        int[] mainParameterSlots;
-        [SerializeField]
-        int[] shapeParameterSlots;
-        [SerializeField]
-        FluxParticleSimulationSpace simulationSpace;
-        [SerializeField]
-        FluxParticleShapeType shapeType;
-        [SerializeField]
-        FluxParticleRenderMode renderMode;
+        /// <summary>
+        /// 組み込み済みModuleへの操作入口
+        /// </summary>
+        public FluxParticleModules Modules => modules;
 
         /// <summary>
         /// Emissionの管理先

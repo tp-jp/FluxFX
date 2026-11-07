@@ -7,8 +7,20 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Scripts
 {
     [DisallowMultipleComponent]
+    [AddComponentMenu("Flux FX/Flux FX Settings")]
     public class FluxParticleAuthoring : MonoBehaviour
     {
+        [SerializeField]
+        [Min(1)]
+        int particleCount = 64;
+
+        [SerializeField]
+        bool playOnAwake = true;
+
+        [SerializeField]
+        [HideInInspector]
+        int settingsVersion;
+
         [SerializeField]
         FluxParticleSimulationSpace simulationSpace;
 
@@ -33,6 +45,16 @@ namespace TpLab.Flux.FX.Scripts
         [SerializeReference]
         List<FluxParticleModule> modules = new List<FluxParticleModule>();
 
+        /// <summary>
+        /// Particle Slot数
+        /// </summary>
+        public int ParticleCount => particleCount;
+
+        /// <summary>
+        /// 起動時の自動再生
+        /// </summary>
+        public bool PlayOnAwake => playOnAwake;
+
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public PlaybackSettings Playback => playback;
         public EmissionSettings Emission => emission;
@@ -41,6 +63,11 @@ namespace TpLab.Flux.FX.Scripts
         public InitialVelocitySettings InitialVelocity => initialVelocity;
         public RenderSettings Render => render;
         public IReadOnlyList<FluxParticleModule> Modules => modules;
+
+        void Reset()
+        {
+            settingsVersion = 1;
+        }
     }
 
     public enum FluxParticleStartSizeMode

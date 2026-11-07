@@ -51,6 +51,15 @@ namespace TpLab.Flux.FX.Tests.Editor
                 "TpLab.Flux.FX.Tests.Editor.FluxParticleRegressionRunnerTests.", StringComparison.Ordinal));
         }
 
+        [MenuItem("Tools/FluxFX/Tests/Run Prefab Deletion Tests")]
+        public static void RunPrefabDeletion()
+        {
+            Run("PrefabDeletion", test => test.FullName.StartsWith(
+                "TpLab.Flux.FX.Tests.Editor.FluxParticlePrefabDeletionTests.", StringComparison.Ordinal) ||
+                test.Name == "PrefabAssetInspectorDoesNotCreatePreviewOrRestoreDeletedAsset" ||
+                test.Name == "PrefabVariantInspectorDoesNotCreatePreviewOrRestoreDeletedAsset");
+        }
+
         [MenuItem("Tools/FluxFX/Tests/Run Live Inspector Tests")]
         public static void RunLiveInspector()
         {
@@ -65,6 +74,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [MenuItem("Tools/FluxFX/Tests/Run Full Regression", true)]
         [MenuItem("Tools/FluxFX/Tests/Run Scale Tests", true)]
         [MenuItem("Tools/FluxFX/Tests/Run Runner Lifecycle Tests", true)]
+        [MenuItem("Tools/FluxFX/Tests/Run Prefab Deletion Tests", true)]
         [MenuItem("Tools/FluxFX/Tests/Run Live Inspector Tests", true)]
         static bool CanRun()
         {

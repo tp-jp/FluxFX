@@ -24,9 +24,9 @@ namespace TpLab.Flux.FX.Editor.Build
     /// </summary>
     public static class FluxParticleProgramBuild
     {
-        const string PagePrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticlePage.prefab";
-        const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
-        const string ReadbackPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleReadback.prefab";
+        const string PagePrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/Internal/FluxParticlePage.prefab";
+        const string StepPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/Internal/FluxParticleStep.prefab";
+        const string ReadbackPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/Internal/FluxParticleReadback.prefab";
 
         /// <summary>
         /// SceneFlowのBuild/Play前処理でParticleの実行環境を構成します。
@@ -48,7 +48,10 @@ namespace TpLab.Flux.FX.Editor.Build
             {
                 throw new InvalidOperationException($"FluxParticleExecutor is missing in prefab '{authoring.name}'. Run Tools/FluxFX/Setup Program Backend Prefabs.");
             }
-            Configure(runtime, compiled, authoring, session, system.ParticleCount);
+            FluxParticleSettingsMigration.Read(authoring, out var particleCount, out var playOnAwake);
+            Configure(runtime, compiled, authoring, session, particleCount);
+            system.SetProgramVariable("particleCount", particleCount);
+            system.SetProgramVariable("playOnAwake", playOnAwake);
             system.SetProgramVariable("particleExecutor", runtime);
             renderer.SetProgramVariable("sourceMesh", authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null);
             renderer.SetProgramVariable("cullingBounds", authoring.Render.CullingBounds);

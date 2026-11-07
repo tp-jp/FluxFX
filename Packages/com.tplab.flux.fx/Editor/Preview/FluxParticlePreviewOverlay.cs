@@ -14,13 +14,13 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <summary>
         /// Particle SystemのInspectorを表示しているか
         /// </summary>
-        public bool visible => FluxParticleSystemEditor.PreviewEditor != null &&
-            FluxParticleSystemEditor.PreviewEditor.HasScenePreview;
+        public bool visible => FluxParticleAuthoringEditor.PreviewEditor != null &&
+            FluxParticleAuthoringEditor.PreviewEditor.HasScenePreview;
 
         public override void OnGUI()
         {
             if (!visible) return;
-            FluxParticleSystemEditor.PreviewEditor.DrawScenePreviewControls();
+            FluxParticleAuthoringEditor.PreviewEditor.DrawScenePreviewControls();
         }
     }
 }

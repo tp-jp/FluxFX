@@ -1,4 +1,5 @@
 using TpLab.Flux.FX.Editor.Localization;
+using TpLab.Flux.FX.Editor.Authoring;
 using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
@@ -8,8 +9,8 @@ using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
 
 namespace TpLab.Flux.FX.Editor.Inspector
 {
-    [CustomEditor(typeof(FluxParticleSystem))]
-    public partial class FluxParticleSystemEditor : UnityEditor.Editor
+    [CustomEditor(typeof(FluxParticleAuthoring))]
+    public partial class FluxParticleAuthoringEditor : UnityEditor.Editor
     {
         const float SectionHeaderHeight = 30.0f;
         const float SectionSpacing = 6.0f;
@@ -47,6 +48,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         FluxParticleInspectorModuleRegistry _moduleRegistry;
 
         SerializedObject _authoringObject;
+        bool _needsSettingsMigration;
 
         SerializedProperty _simulationSpace;
         SerializedProperty _playback;
@@ -65,17 +67,17 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         static bool CanEditAuthoring => !EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode;
 
+        FluxParticleSystem ParticleSystem => ((FluxParticleAuthoring)target).GetComponent<FluxParticleSystem>();
+
         void OnEnable()
         {
             LoadExpandedStates();
 
             _moduleRegistry = new FluxParticleInspectorModuleRegistry();
 
-            var particleSystem = (FluxParticleSystem)target;
-            var authoring = particleSystem.GetComponent<FluxParticleAuthoring>();
-            if (authoring == null) return;
-
-            _authoringObject = new SerializedObject(authoring);
+            _authoringObject = serializedObject;
+            _needsSettingsMigration = !EditorApplication.isPlaying &&
+                FluxParticleSettingsMigration.NeedsMigration((FluxParticleAuthoring)target);
 
             _simulationSpace = _authoringObject.FindProperty("simulationSpace");
             _playback = _authoringObject.FindProperty("playback");
@@ -94,16 +96,32 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         public override void OnInspectorGUI()
         {
-            serializedObject.Update();
-
-            if (_authoringObject == null)
+            if (ParticleSystem == null)
             {
-                EditorGUILayout.HelpBox(L10n.Tr("FluxParticleAuthoring is required on the same GameObject."), MessageType.Error);
-                serializedObject.ApplyModifiedProperties();
+                EditorGUILayout.HelpBox("FluxParticleSystem is required on the same GameObject.", MessageType.Error);
                 return;
             }
 
             _authoringObject.Update();
+            EditorGUILayout.LabelField("Flux FX Settings", EditorStyles.boldLabel);
+            if (CanEditAuthoring && _needsSettingsMigration)
+            {
+                _needsSettingsMigration = FluxParticleSettingsMigration.NeedsMigration((FluxParticleAuthoring)target);
+                if (!_needsSettingsMigration)
+                {
+                    InitializeBackendPreview();
+                    Repaint();
+                    return;
+                }
+                EditorGUILayout.HelpBox("Move Particle Count and Play On Awake from the legacy System to Settings before editing. Prefab inheritance is preserved.", MessageType.Info);
+                if (GUILayout.Button("Migrate Settings"))
+                {
+                    FluxParticleSettingsMigration.MigrateTarget((FluxParticleAuthoring)target);
+                    _authoringObject.Update();
+                    InvalidatePreviewSettings();
+                }
+                return;
+            }
 
             DrawLanguage();
             RefreshLiveInspector();
@@ -124,14 +142,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (canEdit)
             {
                 _authoringObject.ApplyModifiedProperties();
-                serializedObject.ApplyModifiedProperties();
             }
             DrawBackendInfo();
         }
 
         void OnSceneGUI()
         {
-            if (_authoringObject == null) return;
+            if (_authoringObject == null || _needsSettingsMigration || ParticleSystem == null) return;
 
             _authoringObject.Update();
 

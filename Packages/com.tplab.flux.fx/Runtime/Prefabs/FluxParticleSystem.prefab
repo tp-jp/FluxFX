@@ -76,6 +76,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -215,6 +216,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -296,6 +298,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -381,6 +384,12 @@ MonoBehaviour:
   parameterTypes: 
   staticParameters: 
   parameterValues: []
+  parameterConstraintFlags: 
+  parameterMinimum: []
+  parameterMaximum: []
+  parameterMaximumProduct: []
+  parameterAllowedValueOffsets: 
+  parameterAllowedValues: []
   deltaTimeProperty: 
   simulationTimeProperty: 
   emitterTransform: {fileID: 0}
@@ -389,6 +398,13 @@ MonoBehaviour:
   allocationKernels: []
   allocationBuffers: []
   allocationLookupProperties: []
+  aliveCountReadback: {fileID: 0}
+  trailKernel: {fileID: 0}
+  trailCapacity: 0
+  trailBuffers: []
+  trailMaterials: []
+  trailRenderers: []
+  trailWorldSpace: 0
 --- !u!114 &8132146096100554088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,6 +421,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -423,9 +440,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8373982803532082789}
+  - component: {fileID: 9154446177020115970}
   - component: {fileID: 3011812459262992520}
   - component: {fileID: 3665951349089362475}
-  - component: {fileID: 9154446177020115970}
   m_Layer: 0
   m_Name: FluxParticleSystem
   m_TagString: Untagged
@@ -452,6 +469,72 @@ Transform:
   - {fileID: 6551418362270804361}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9154446177020115970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6110645425195456592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 571358e415308e2448dcad23a70cd1f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  particleCount: 128
+  playOnAwake: 1
+  settingsVersion: 1
+  simulationSpace: 0
+  playback:
+    startDelay: 0
+    duration: 4
+    loop: 1
+  emission:
+    rate: 8
+    bursts: []
+  lifetime:
+    lifetime: 4
+    mode: 0
+    min: 1
+    max: 5
+  shape:
+    type: 5
+    radius: 0.5
+    angle: 25
+    size: {x: 2, y: 1, z: 3}
+  initialVelocity:
+    speed: 1
+    mode: 0
+    min: 0.5
+    max: 3
+  render:
+    mode: 0
+    mesh: {fileID: 0}
+    texture: {fileID: 0}
+    tiling: {x: 1, y: 1}
+    offset: {x: 0, y: 0}
+    blendMode: 0
+    intensity: 1
+    intensityMask: {fileID: 0}
+    cullingBounds:
+      m_Center: {x: 0, y: 0, z: 0}
+      m_Extent: {x: 500, y: 500, z: 500}
+    startColor: {r: 1, g: 1, b: 1, a: 1}
+    startColorMode: 0
+    startColorMin: {r: 1, g: 0, b: 0, a: 1}
+    startColorMax: {r: 0, g: 0, b: 1, a: 1}
+    startSize: 1
+    startSizeMode: 0
+    startSizeMin: 0.02
+    startSizeMax: 0.2
+    startRotation: {x: 0, y: 0, z: 0}
+    startRotationMode: 0
+    startRotationMin: {x: 0, y: 0, z: 0}
+    startRotationMax: {x: 0, y: 0, z: 360}
+  modules: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &3011812459262992520
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -501,6 +584,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -513,67 +597,6 @@ MonoBehaviour:
   - {fileID: 6288512494526562354}
   - {fileID: 4876580894953398945}
   publicVariablesSerializationDataFormat: 0
---- !u!114 &9154446177020115970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6110645425195456592}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 571358e415308e2448dcad23a70cd1f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationSpace: 0
-  playback:
-    startDelay: 0
-    duration: 4
-    loop: 1
-  emission:
-    rate: 8
-    bursts: []
-  lifetime:
-    lifetime: 4
-    mode: 0
-    min: 1
-    max: 5
-  shape:
-    type: 5
-    radius: 0.5
-    angle: 25
-    size: {x: 2, y: 1, z: 3}
-  initialVelocity:
-    speed: 1
-    mode: 0
-    min: 0.5
-    max: 3
-  render:
-    mode: 0
-    mesh: {fileID: 0}
-    texture: {fileID: 0}
-    tiling: {x: 1, y: 1}
-    offset: {x: 0, y: 0}
-    blendMode: 0
-    cullingBounds:
-      m_Center: {x: 0, y: 0, z: 0}
-      m_Extent: {x: 500, y: 500, z: 500}
-    startColor: {r: 1, g: 1, b: 1, a: 1}
-    startColorMode: 0
-    startColorMin: {r: 1, g: 0, b: 0, a: 1}
-    startColorMax: {r: 0, g: 0, b: 1, a: 1}
-    startSize: 1
-    startSizeMode: 0
-    startSizeMin: 0.02
-    startSizeMax: 0.2
-    startRotation: {x: 0, y: 0, z: 0}
-    startRotationMode: 0
-    startRotationMin: {x: 0, y: 0, z: 0}
-    startRotationMax: {x: 0, y: 0, z: 360}
-  modules: []
-  references:
-    version: 2
-    RefIds: []
 --- !u!1 &8080322500867124689
 GameObject:
   m_ObjectHideFlags: 0
@@ -651,6 +674,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
@@ -765,6 +789,7 @@ MonoBehaviour:
   interactText: Use
   interactTextGO: {fileID: 0}
   proximity: 2
+  OutlineRenderers: []
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0

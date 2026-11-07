@@ -18,6 +18,7 @@ namespace TpLab.Flux.FX.Udon
     public class FluxParticleModules : UdonSharpBehaviour
     {
         [SerializeField]
+        [HideInInspector]
         FluxParticleExecutor executor;
         DataDictionary handles;
 
@@ -92,12 +93,19 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleTrailsHandle Trails => FluxParticleTrailsHandle.Get(this);
 
         [SerializeField]
+        [HideInInspector]
         string[] bindingIds;
+
         [SerializeField]
+        [HideInInspector]
         int[] bindingOffsets;
+
         [SerializeField]
+        [HideInInspector]
         int[] bindingSlots;
+
         [SerializeField]
+        [HideInInspector]
         int[] enabledSlots;
 
         /// <summary>

@@ -195,9 +195,13 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
                     instance.name = "Particles - " + (FluxParticleShapeType)i;
                     instance.transform.position = new Vector3(1.7f, 1.8f, 1.5f);
                     var system = instance.GetComponent<FluxParticleSystem>();
-                    system.SetProgramVariable("particleCount", Capacity);
-                    system.SetProgramVariable("playOnAwake", false);
+
+
                     var authoring = instance.GetComponent<FluxParticleAuthoring>();
+                    var settings = new SerializedObject(authoring);
+                    settings.FindProperty("particleCount").intValue = Capacity;
+                    settings.FindProperty("playOnAwake").boolValue = false;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
                     ConfigureAuthoring(authoring, i, texture);
                     systems[i] = system;
                 }

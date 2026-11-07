@@ -16,7 +16,7 @@ using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
 
 namespace TpLab.Flux.FX.Editor.Inspector
 {
-    public partial class FluxParticleSystemEditor
+    public partial class FluxParticleAuthoringEditor
     {
         const string BackendExpandedKey = SessionStatePrefix + "BackendExpanded";
         FluxParticleBuildResult _backendPreview;
@@ -32,12 +32,31 @@ namespace TpLab.Flux.FX.Editor.Inspector
         double _lastPreviewTime;
         bool _unityFocused;
         bool _previewRefreshAfterSave;
+        bool _previewInitialized;
 
-        internal static FluxParticleSystemEditor PreviewEditor { get; private set; }
-        internal bool HasScenePreview => target != null && _authoringObject != null && !EditorApplication.isPlayingOrWillChangePlaymode;
+        internal static FluxParticleAuthoringEditor PreviewEditor { get; private set; }
+        internal bool HasScenePreview => IsScenePreviewTarget && !EditorApplication.isPlayingOrWillChangePlaymode;
+
+        bool IsScenePreviewTarget
+        {
+            get
+            {
+                if (!(target is FluxParticleAuthoring system) || system == null ||
+                    EditorUtility.IsPersistent(system) || PrefabUtility.IsPartOfPrefabAsset(system) ||
+                    _authoringObject == null || _authoringObject.targetObject == null) return false;
+                if (_needsSettingsMigration || ParticleSystem == null) return false;
+                var scene = system.gameObject.scene;
+                return scene.IsValid() && scene.isLoaded;
+            }
+        }
 
         void DrawBackendInfo()
         {
+            if (!IsScenePreviewTarget)
+            {
+                DisposeParticlePreview();
+                return;
+            }
             var expanded = SessionState.GetBool(BackendExpandedKey, false);
             var showDetails = DrawSectionHeader(L10n.Tr("BACKEND"), expanded, BackendExpandedKey);
             if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -51,7 +70,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 return;
             }
             EnsureParticlePreview();
-            var count = ((FluxParticleSystem)target).ParticleCount;
+            var count = ((FluxParticleAuthoring)target).ParticleCount;
             if (!showDetails) return;
             if (_backendPreviewError != null)
             {
@@ -118,9 +137,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void EnsureParticlePreview()
         {
-            if (!HasScenePreview) return;
+            if (!HasScenePreview)
+            {
+                DisposeParticlePreview();
+                return;
+            }
             var authoring = (FluxParticleAuthoring)_authoringObject.targetObject;
-            var count = ((FluxParticleSystem)target).ParticleCount;
+            var count = ((FluxParticleAuthoring)target).ParticleCount;
             var dirtyCount = EditorUtility.GetDirtyCount(authoring);
             if (_backendPreviewSignature != null && dirtyCount == _previewAuthoringDirtyCount && count == _previewParticleCount &&
                 (_particlePreview != null || _backendPreviewError != null)) return;
@@ -151,6 +174,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void InitializeBackendPreview()
         {
+            if (_previewInitialized || !IsScenePreviewTarget) return;
+            _previewInitialized = true;
             _backendPreviewSignature = null;
             _unityFocused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
             _lastPreviewTime = EditorApplication.timeSinceStartup;
@@ -166,6 +191,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void OnDisable()
         {
+            _previewInitialized = false;
             EditorApplication.update -= UpdateParticlePreview;
             Undo.undoRedoPerformed -= InvalidatePreviewSettings;
             Camera.onPreCull -= DrawParticlePreviewInSceneView;
@@ -188,7 +214,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void UpdateParticlePreview()
         {
-            if (!HasScenePreview) return;
+            if (!HasScenePreview)
+            {
+                DisposeParticlePreview();
+                _previewRefreshAfterSave = false;
+                return;
+            }
             RefreshPreviewAfterSave();
             EnsureParticlePreview();
             if (_particlePreview == null) return;
@@ -231,6 +262,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void InvalidatePreviewSettings()
         {
+            if (!EditorApplication.isPlaying)
+            {
+                _needsSettingsMigration = FluxParticleSettingsMigration.NeedsMigration((FluxParticleAuthoring)target);
+                if (!_needsSettingsMigration) InitializeBackendPreview();
+            }
             _previewAuthoringDirtyCount = -1;
             Repaint();
         }
@@ -256,7 +292,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void OnPreviewSceneSaved(Scene scene)
         {
-            if (target == null || ((FluxParticleSystem)target).gameObject.scene != scene) return;
+            if (!HasScenePreview || ((FluxParticleAuthoring)target).gameObject.scene != scene) return;
             _previewRefreshAfterSave = true;
             Repaint();
         }
@@ -298,6 +334,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         internal void DrawScenePreviewControls()
         {
+            if (!HasScenePreview) return;
             if (_particlePreview == null)
             {
                 EditorGUILayout.HelpBox(_backendPreviewError ?? L10n.Tr("Preparing preview"), MessageType.Info);
@@ -354,9 +391,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawParticlePreviewInSceneView(Camera camera)
         {
-            if (_particlePreview == null || camera.cameraType != CameraType.SceneView ||
-                EditorApplication.isPlayingOrWillChangePlaymode || target == null) return;
-            var particleSystem = (FluxParticleSystem)target;
+            if (!HasScenePreview || _particlePreview == null || camera.cameraType != CameraType.SceneView) return;
+            var particleSystem = ParticleSystem;
             if (!particleSystem.gameObject.activeInHierarchy ||
                 SceneVisibilityManager.instance.IsHidden(particleSystem.gameObject)) return;
             try

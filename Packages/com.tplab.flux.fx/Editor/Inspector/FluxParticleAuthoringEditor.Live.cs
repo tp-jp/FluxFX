@@ -13,7 +13,7 @@ using VRC.Udon;
 
 namespace TpLab.Flux.FX.Editor.Inspector
 {
-    public partial class FluxParticleSystemEditor
+    public partial class FluxParticleAuthoringEditor
     {
         sealed class LiveField
         {
@@ -60,8 +60,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         public override VisualElement CreateInspectorGUI()
         {
-            // UdonSharpのIMGUIラッパーは描画後にProxy全体をVMへ書き戻すため、
-            // 独自UIの経路を使い、Live操作の反映先をVMに限定する。
+            // 外部のRuntime操作による変更もInspectorへ反映する。
             var inspector = new IMGUIContainer(OnInspectorGUI);
             inspector.schedule.Execute(() =>
             {
@@ -87,7 +86,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _liveWasPlaying = true;
                 _nextLivePoll = 0;
             }
-            var system = UdonSharpEditorUtility.GetBackingUdonBehaviour((FluxParticleSystem)target);
+            var system = UdonSharpEditorUtility.GetBackingUdonBehaviour(ParticleSystem);
             var executor = system == null ? null : system.GetProgramVariable("particleExecutor") as UdonBehaviour;
             var emitter = system == null ? null : system.GetProgramVariable("particleEmitter") as UdonBehaviour;
             if (_liveExecutor != executor || _liveEmitter != emitter || EditorApplication.timeSinceStartup >= _nextLivePoll)

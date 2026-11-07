@@ -11,8 +11,8 @@ namespace TpLab.Flux.FX.Editor.Build
     /// </summary>
     internal static class FluxParticleSpawnAllocationBuilder
     {
-        const string BufferPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleBuffer.prefab";
-        const string KernelPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleStep.prefab";
+        const string BufferPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/Internal/FluxParticleBuffer.prefab";
+        const string KernelPrefabPath = "Packages/com.tplab.flux.fx/Runtime/Prefabs/Internal/FluxParticleStep.prefab";
 
         internal static void ValidateTemplates()
         {

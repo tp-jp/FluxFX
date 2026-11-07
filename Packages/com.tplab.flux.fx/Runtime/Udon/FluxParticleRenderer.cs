@@ -13,15 +13,19 @@ namespace TpLab.Flux.FX.Udon
         const int MaxUInt16VertexCount = 65535;
 
         [SerializeField]
+        [HideInInspector]
         MeshFilter meshFilter;
 
         [SerializeField]
+        [HideInInspector]
         MeshRenderer meshRenderer;
 
         [SerializeField]
+        [HideInInspector]
         Mesh sourceMesh;
 
         [SerializeField]
+        [HideInInspector]
         Bounds cullingBounds = new Bounds(Vector3.zero, Vector3.one * 1000);
 
         Mesh _programMesh;

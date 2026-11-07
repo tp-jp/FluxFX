@@ -31,16 +31,27 @@ namespace TpLab.Flux.FX.Udon
         const int SpawnSeedPeriod = 1048576;
 
         [SerializeField]
+        [HideInInspector]
         float rate;
+
         [SerializeField]
+        [HideInInspector]
         float startDelay;
+
         [SerializeField]
+        [HideInInspector]
         float duration = 5;
+
         [SerializeField]
+        [HideInInspector]
         bool loop = true;
+
         [SerializeField]
+        [HideInInspector]
         float[] burstTimes = new float[0];
+
         [SerializeField]
+        [HideInInspector]
         int[] burstCounts = new int[0];
 
         float[] _burstTimes;

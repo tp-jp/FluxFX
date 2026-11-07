@@ -38,88 +38,167 @@ namespace TpLab.Flux.FX.Udon
         }
 
         [SerializeField]
+        [HideInInspector]
         FluxKernel[] stepKernels;
+
         [SerializeField]
+        [HideInInspector]
         FluxKernel[] clearKernels;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer[] pageBuffersA;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer[] pageBuffersB;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer spawnMaskBuffer;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer spawnKeyBuffer;
+
         [SerializeField]
+        [HideInInspector]
         Material renderMaterial;
+
         [SerializeField]
+        [HideInInspector]
         int[] outputPages;
+
         [SerializeField]
+        [HideInInspector]
         bool[] spawnOnly;
+
         [SerializeField]
+        [HideInInspector]
         int[] readOffsets;
+
         [SerializeField]
+        [HideInInspector]
         int[] readPages;
+
         [SerializeField]
+        [HideInInspector]
         bool[] readUpdated;
+
         [SerializeField]
+        [HideInInspector]
         string[] readProperties;
+
         [SerializeField]
+        [HideInInspector]
         string[] renderPageProperties;
+
         [SerializeField]
+        [HideInInspector]
         string[] parameterIds;
+
         [SerializeField]
+        [HideInInspector]
         string[] moduleIds;
+
         [SerializeField]
+        [HideInInspector]
         string[] parameterProperties;
+
         [SerializeField]
+        [HideInInspector]
         int[] parameterTypes;
+
         [SerializeField]
+        [HideInInspector]
         bool[] staticParameters;
+
         [SerializeField]
+        [HideInInspector]
         Vector4[] parameterValues;
+
         [SerializeField]
+        [HideInInspector]
         int[] parameterConstraintFlags;
+
         [SerializeField]
+        [HideInInspector]
         Vector4[] parameterMinimum;
+
         [SerializeField]
+        [HideInInspector]
         Vector4[] parameterMaximum;
+
         [SerializeField]
+        [HideInInspector]
         float[] parameterMaximumProduct;
+
         [SerializeField]
+        [HideInInspector]
         int[] parameterAllowedValueOffsets;
+
         [SerializeField]
+        [HideInInspector]
         float[] parameterAllowedValues;
+
         [SerializeField]
+        [HideInInspector]
         string deltaTimeProperty;
+
         [SerializeField]
+        [HideInInspector]
         string simulationTimeProperty;
+
         [SerializeField]
+        [HideInInspector]
         Transform emitterTransform;
+
         [SerializeField]
+        [HideInInspector]
         string[] emitterRowProperties;
+
         [SerializeField]
+        [HideInInspector]
         string spawnKeyProperty;
 
         [SerializeField]
+        [HideInInspector]
         FluxKernel[] allocationKernels;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer[] allocationBuffers;
+
         [SerializeField]
+        [HideInInspector]
         string[] allocationLookupProperties;
+
         [SerializeField]
+        [HideInInspector]
         FluxReadback aliveCountReadback;
 
         [SerializeField]
+        [HideInInspector]
         FluxKernel trailKernel;
+
         [SerializeField]
+        [HideInInspector]
         int trailCapacity;
+
         [SerializeField]
+        [HideInInspector]
         FluxBuffer[] trailBuffers;
+
         [SerializeField]
+        [HideInInspector]
         Material[] trailMaterials;
+
         [SerializeField]
+        [HideInInspector]
         MeshRenderer[] trailRenderers;
+
         [SerializeField]
+        [HideInInspector]
         bool trailWorldSpace;
         float[] _trailState;
         bool _trailsEnabled;

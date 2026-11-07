@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Inspector
 {
-    public partial class FluxParticleSystemEditor
+    public partial class FluxParticleAuthoringEditor
     {
         const float ConeGizmoLength = 2.0f;
 
         void DrawPointShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var position = particleSystem.transform.position;
             var size = HandleUtility.GetHandleSize(position) * 0.08f;
 
@@ -24,7 +24,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawSphereShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
@@ -55,7 +55,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawHemisphereShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
@@ -92,7 +92,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawCircleShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
@@ -127,7 +127,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawBoxShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var size = _shape.FindPropertyRelative("size");
             var previousMatrix = Handles.matrix;
 
@@ -184,7 +184,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawConeShapeGizmo()
         {
-            var particleSystem = (FluxParticleSystem)target;
+            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var angle = _shape.FindPropertyRelative("angle");
             var previousMatrix = Handles.matrix;
