@@ -26,7 +26,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [SetUp]
         public void SetUp()
         {
-            temporaryFolder = "Assets/FluxFX/Tests/Phase2Temporary_" + Guid.NewGuid().ToString("N");
+            temporaryFolder = FluxParticleTestPaths.TemporaryRoot + "/Phase2Temporary_" + Guid.NewGuid().ToString("N");
         }
 
         [TearDown]
@@ -570,7 +570,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         void EnsureTemporaryFolder()
         {
             if (AssetDatabase.IsValidFolder(temporaryFolder)) return;
-            AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(temporaryFolder));
+            AssetDatabase.CreateFolder(FluxParticleTestPaths.TemporaryRoot, Path.GetFileName(temporaryFolder));
         }
 
         Shader Import(string name, string source, bool expectSuccess = true)

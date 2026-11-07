@@ -40,7 +40,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             root = new GameObject("Particle Executor Test");
             authoring = root.AddComponent<FluxParticleAuthoring>();
-            folder = "Assets/FluxFX/Tests/ParticleExecutor_" + Guid.NewGuid().ToString("N");
+            folder = FluxParticleTestPaths.TemporaryRoot + "/ParticleExecutor_" + Guid.NewGuid().ToString("N");
             generationSession = FluxParticleGenerationSession.Begin("Test", folder);
         }
 
@@ -388,7 +388,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RendererTransfersTextureSettingsToGeneratedMaterial(bool useTexture)
         {
             RequireGraphics();
-            AssetDatabase.CreateFolder("Assets/FluxFX/Tests", folder.Substring(folder.LastIndexOf('/') + 1));
+            AssetDatabase.CreateFolder(FluxParticleTestPaths.TemporaryRoot, folder.Substring(folder.LastIndexOf('/') + 1));
             var texture = new Texture2D(2, 2);
             texture.SetPixels(new[] { Color.red, Color.green, Color.blue, Color.white });
             texture.Apply();
@@ -1372,7 +1372,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             public const string Rate = "test.rate";
             public const string Strength = "test.strength";
             const string Id = "fluxfx.tests.state";
-            const string Hlsl = "Assets/FluxFX/Tests/Editor/Hlsl/";
+            static string Hlsl => FluxParticleTestPaths.HlslRoot;
 
             public Type ModuleType => typeof(TestStateModule);
             public string ModuleId => Id;

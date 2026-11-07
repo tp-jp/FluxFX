@@ -29,7 +29,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             _root = new GameObject("Sphere Shape Test");
             _authoring = _root.AddComponent<FluxParticleAuthoring>();
-            _temporaryFolder = "Assets/FluxFX/Tests/ShapeTemporary_" + Guid.NewGuid().ToString("N");
+            _temporaryFolder = FluxParticleTestPaths.TemporaryRoot + "/ShapeTemporary_" + Guid.NewGuid().ToString("N");
         }
 
         [TearDown]
@@ -754,7 +754,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             if (!AssetDatabase.IsValidFolder(_temporaryFolder))
             {
-                AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(_temporaryFolder));
+                AssetDatabase.CreateFolder(FluxParticleTestPaths.TemporaryRoot, Path.GetFileName(_temporaryFolder));
             }
             var path = _temporaryFolder + "/" + name + ".shader";
             File.WriteAllText(path, source.Replace("\r\n", "\n").Replace("\r", "\n"));

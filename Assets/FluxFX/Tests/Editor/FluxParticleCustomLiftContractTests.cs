@@ -18,19 +18,19 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void CustomLiftContractPreservesEnabledAndSharesHandleValidation(bool enabled)
         {
             RequireGraphics();
-            var definition = new FluxParticleModuleRegistry().GetAll().Single(item => item.ModuleId == "custom.fluxfx.lift");
+            var definition = RequireCustomLiftDefinition();
             var module = (FluxParticleModule)Activator.CreateInstance(definition.ModuleType);
             typeof(FluxParticleModule).GetField("enabled", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(module, enabled);
             SetModules(module);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var binding = compiled.ModuleBindings.Single(item => item.ModuleId == definition.ModuleId);
-            var keys = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.CustomModules.CustomLiftParameter", true);
+            var keys = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftParameter", true);
             Assert.AreEqual("custom-lift.strength", binding.Parameters[(int)Enum.Parse(keys, "Strength")].Id);
             Assert.AreEqual("custom-lift.direction", binding.Parameters[(int)Enum.Parse(keys, "Direction")].Id);
             Assert.IsTrue(binding.Parameters.All(parameter => parameter.Contract != null));
             var runtime = CreateRuntime(compiled);
             var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
-            var extensions = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.CustomModules.CustomLiftHandleExtensions", true);
+            var extensions = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftHandleExtensions", true);
             var handle = (FluxParticleModuleHandle)extensions.GetMethod("CustomLift").Invoke(null, new object[] { modules });
             Assert.AreSame(handle, extensions.GetMethod("CustomLift").Invoke(null, new object[] { modules }));
             Assert.AreEqual(enabled, handle.GetEnabled());
@@ -61,12 +61,24 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase("direction")]
         public void CustomLiftContractRejectsInvalidAuthoringValues(string field)
         {
-            var definition = new FluxParticleModuleRegistry().GetAll().Single(item => item.ModuleId == "custom.fluxfx.lift");
+            var definition = RequireCustomLiftDefinition();
             var module = (FluxParticleModule)Activator.CreateInstance(definition.ModuleType);
             definition.ModuleType.GetField(field, BindingFlags.NonPublic | BindingFlags.Instance)
                 .SetValue(module, field == "strength" ? (object)float.NaN : new Vector3(float.PositiveInfinity, 0, 0));
             SetModules(module);
             Assert.Throws<InvalidOperationException>(() => FluxParticleBuildPipeline.Build(authoring));
+        }
+
+        static IFluxParticleModuleDefinition RequireCustomLiftDefinition()
+        {
+            var definition = new FluxParticleModuleRegistry().GetAll().SingleOrDefault(item => item.ModuleId == "custom.fluxfx.lift");
+            if (definition == null)
+            {
+                Assert.Ignore("Import the Runtime API and Custom Lift sample to run Custom Lift integration tests.");
+            }
+            var expected = typeof(FluxParticleModuleDefinition<>).MakeGenericType(definition.ModuleType);
+            Assert.IsTrue(expected.IsAssignableFrom(definition.GetType()), definition.GetType().FullName);
+            return definition;
         }
     }
 }

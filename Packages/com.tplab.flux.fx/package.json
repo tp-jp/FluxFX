@@ -1,19 +1,26 @@
 {
   "name": "com.tplab.flux.fx",
   "displayName": "FluxFX",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "unity": "2022.3",
   "description": "GPU particle and visual effects framework powered by Flux.",
   "gitDependencies": {},
   "vpmDependencies": {
     "com.vrchat.worlds": "^3.10.5",
     "com.tplab.sceneflow": "^2.1.0",
-    "com.tplab.flux": "^0.0.4"
+    "com.tplab.flux": "^0.0.5"
   },
   "author": {
     "name": "tp.jp",
     "url": "https://github.com/tp-jp"
   },
   "legacyFolders": {},
-  "legacyFiles": {}
+  "legacyFiles": {},
+  "samples": [
+    {
+      "displayName": "Runtime API and Custom Lift",
+      "description": "An interactive Runtime API playground and the Custom Lift module extension it uses. Import both examples together.",
+      "path": "Samples~/Examples"
+    }
+  ]
 }

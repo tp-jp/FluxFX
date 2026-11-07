@@ -76,3 +76,7 @@ Assets/PackageMakerWindowData.asset*
 
 # FluxFX build-generated lifetime LUTs
 /Assets/FluxFX/Generated/
+
+# Temporary assets created by Editor regression tests
+/Assets/FluxFXTestTemp/
+/Assets/FluxFXTestTemp.meta

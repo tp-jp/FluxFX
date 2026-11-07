@@ -53,6 +53,19 @@ jobs:
           echo "unityPackage=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.unitypackage" >> $GITHUB_ENV
           echo "version=${{ steps.version.outputs.value }}" >> $GITHUB_ENV
 
+      # Keep the interdependent examples together and include Editor regression tests.
+      - name: Stage Samples and Tests
+        run: |
+          test ! -e "${{ env.packagePath }}/Samples~/Examples"
+          test ! -e "${{ env.packagePath }}/Samples~/Examples.meta"
+          test ! -e "${{ env.packagePath }}/Tests"
+          test ! -e "${{ env.packagePath }}/Tests.meta"
+          mkdir -p "${{ env.packagePath }}/Samples~"
+          cp -a Assets/FluxFX/Samples/Examples "${{ env.packagePath }}/Samples~/Examples"
+          cp Assets/FluxFX/Samples/Examples.meta "${{ env.packagePath }}/Samples~/Examples.meta"
+          cp -a Assets/FluxFX/Tests "${{ env.packagePath }}/Tests"
+          cp Assets/FluxFX/Tests.meta "${{ env.packagePath }}/Tests.meta"
+
       # Zip the Package for release
       - name: Create Package Zip
         working-directory: "${{ env.packagePath }}"

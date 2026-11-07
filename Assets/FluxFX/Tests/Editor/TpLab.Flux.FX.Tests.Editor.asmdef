@@ -13,17 +13,29 @@
         "GUID:28373e42c234a0a4ebd98b79c443c600",
         "GUID:14682e84e3abd37459b8323b30bd7771",
         "GUID:54fe7253c20f9f34c888f39a17ff2087",
-        "GUID:d072f380036207448987049b4a6f1a84"
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
     ],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "VRCSDK3.dll",
+        "VRCSDKBase.dll",
+        "VRC.Udon.Common.dll",
+        "VRC.Udon.VM.dll",
+        "VRCSDK3-Editor.dll",
+        "VRCSDKBase-Editor.dll",
+        "System.Collections.Immutable.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

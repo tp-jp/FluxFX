@@ -29,7 +29,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             root = new GameObject("Texture Sheet Test");
             authoring = root.AddComponent<FluxParticleAuthoring>();
-            folder = "Assets/FluxFX/Tests/SheetTemporary_" + Guid.NewGuid().ToString("N");
+            folder = FluxParticleTestPaths.TemporaryRoot + "/SheetTemporary_" + Guid.NewGuid().ToString("N");
         }
 
         [TearDown]
@@ -166,7 +166,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
         Shader Import(string name, string source)
         {
-            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder("Assets/FluxFX/Tests", Path.GetFileName(folder));
+            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder(FluxParticleTestPaths.TemporaryRoot, Path.GetFileName(folder));
             var path = folder + "/" + name + ".shader";
             File.WriteAllText(path, source.Replace("\r\n", "\n").Replace("\r", "\n"));
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);

@@ -22,7 +22,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [SetUp]
         public void SetUp()
         {
-            root = "Assets/FluxFX/Tests/Cleanup_" + Guid.NewGuid().ToString("N");
+            root = FluxParticleTestPaths.TemporaryRoot + "/Cleanup_" + Guid.NewGuid().ToString("N");
             session = FluxParticleGenerationSession.Begin("Test", root);
             FluxParticleGenerationSession.EnsureFolder(session.MaterialRoot);
             FluxParticleGenerationSession.EnsureFolder(session.LookupRoot);

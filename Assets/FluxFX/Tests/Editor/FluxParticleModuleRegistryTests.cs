@@ -34,12 +34,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void StandardAndCustomLiftDefinitionsUseTypedBaseAndAreDiscovered()
+        public void StandardDefinitionsUseTypedBaseAndAreDiscovered()
         {
             var definitions = new FluxParticleModuleRegistry().GetAll()
-                .Where(definition => definition.GetType().Namespace.StartsWith("TpLab.Flux.FX.Editor.Modules.") ||
-                    definition.GetType().FullName == "TpLab.Flux.FX.CustomModules.Editor.CustomLiftDefinition").ToArray();
-            Assert.AreEqual(14, definitions.Length);
+                .Where(definition => definition.GetType().Namespace.StartsWith("TpLab.Flux.FX.Editor.Modules.")).ToArray();
+            Assert.AreEqual(13, definitions.Length);
             foreach (var definition in definitions)
             {
                 var expected = typeof(FluxParticleModuleDefinition<>).MakeGenericType(definition.ModuleType);
@@ -71,7 +70,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(program.Operations.Any(value => value.Id == "test.render-tint"));
 
             var shader = new FluxParticleProgramShaderGenerator().Generate(program, "Hidden/FluxFX/Tests/Module", FluxParticleCoreDefinitions.CreateLifecycle());
-            StringAssert.Contains("Assets/FluxFX/Tests/Editor/Hlsl/TestRenderTint.hlsl", shader.RenderSource);
+            StringAssert.Contains(FluxParticleTestPaths.HlslRoot + "TestRenderTint.hlsl", shader.RenderSource);
             StringAssert.Contains("FluxFX_TestRenderTint", shader.RenderSource);
         }
 
@@ -156,7 +155,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 context.AddOperation(new FluxParticleOperationDefinition("test.render-tint", Id, FluxParticlePhase.Render,
                     Array.Empty<FluxParticleValueRead>(),
                     new[] { new FluxParticleValueWrite("render.test-tint", FluxParticleWriteKind.Replace) }, null,
-                    "Assets/FluxFX/Tests/Editor/Hlsl/TestRenderTint.hlsl", "FluxFX_TestRenderTint", new[] { "test.tint" }));
+                    FluxParticleTestPaths.HlslRoot + "TestRenderTint.hlsl", "FluxFX_TestRenderTint", new[] { "test.tint" }));
             }
         }
 
@@ -179,7 +178,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 context.AddOperation(new FluxParticleOperationDefinition("test.invalid-owner", "fluxfx.core", FluxParticlePhase.Render,
                     Array.Empty<FluxParticleValueRead>(), Array.Empty<FluxParticleValueWrite>(), null,
-                    "Assets/FluxFX/Tests/Editor/Hlsl/TestRenderTint.hlsl", "FluxFX_TestRenderTint"));
+                    FluxParticleTestPaths.HlslRoot + "TestRenderTint.hlsl", "FluxFX_TestRenderTint"));
             }
         }
     }

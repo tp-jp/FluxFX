@@ -52,7 +52,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void SharedCacheAndSessionMaterialsHaveSeparateLifetimesWithoutDeletingAssets()
         {
-            var root = "Assets/FluxFX/Tests/Generation_" + Guid.NewGuid().ToString("N");
+            var root = FluxParticleTestPaths.TemporaryRoot + "/Generation_" + Guid.NewGuid().ToString("N");
             var first = FluxParticleGenerationSession.Begin("Test", root);
             var second = FluxParticleGenerationSession.Begin("Test", root);
             try
