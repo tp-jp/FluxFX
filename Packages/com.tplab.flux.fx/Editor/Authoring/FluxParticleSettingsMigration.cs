@@ -35,8 +35,10 @@ namespace TpLab.Flux.FX.Editor.Authoring
                 if (system == null) return false;
                 using (var legacy = new SerializedObject(system))
                 {
-                    return _properties.Any(name => legacy.FindProperty(name).prefabOverride);
+                    if (_properties.Any(name => legacy.FindProperty(name).prefabOverride)) return true;
                 }
+                var source = PrefabUtility.GetCorrespondingObjectFromSource(authoring);
+                return source != null && NeedsMigration(source);
             }
         }
 
@@ -56,6 +58,19 @@ namespace TpLab.Flux.FX.Editor.Authoring
             using (var legacy = new SerializedObject(system))
             {
                 var unversioned = settings.FindProperty(VersionProperty).intValue < CurrentVersion;
+                var source = PrefabUtility.GetCorrespondingObjectFromSource(authoring);
+                if (source != null && NeedsMigration(source))
+                {
+                    Read(source, out var inheritedCount, out var inheritedPlay);
+                    if (!settings.FindProperty("particleCount").prefabOverride)
+                    {
+                        particleCount = inheritedCount;
+                    }
+                    if (!settings.FindProperty("playOnAwake").prefabOverride)
+                    {
+                        playOnAwake = inheritedPlay;
+                    }
+                }
                 if (UseLegacy(settings, legacy, "particleCount", unversioned))
                 {
                     particleCount = legacy.FindProperty("particleCount").intValue;

@@ -231,6 +231,72 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(reloaded.PlayOnAwake);
         }
 
+        [UnityTest]
+        public IEnumerator UpdatedPackageDetectsLegacyVariantThroughSceneAndNestedPrefab()
+        {
+            // 更新済みPackageと同じく、親のAuthoringは既にversion 1。
+            yield return FluxParticleEditorTestWait.ForDelayCall();
+            var basePath = _folder + "/UpdatedPackage.prefab";
+            var variantPath = _folder + "/LegacyVariant.prefab";
+            var outerPath = _folder + "/Outer.prefab";
+            var baseAsset = PrefabUtility.SaveAsPrefabAsset(_root, basePath);
+            var variantObject = (GameObject)PrefabUtility.InstantiatePrefab(baseAsset, _scene);
+            SetSystem(variantObject, 512, false);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(variantObject.GetComponent<FluxParticleSystem>());
+            yield return FluxParticleEditorTestWait.ForDelayCall();
+            var variantAsset = PrefabUtility.SaveAsPrefabAsset(variantObject, variantPath);
+            var holder = new GameObject("Outer");
+            SceneManager.MoveGameObjectToScene(holder, _scene);
+            var inner = (GameObject)PrefabUtility.InstantiatePrefab(variantAsset, _scene);
+            inner.transform.SetParent(holder.transform, false);
+            var direct = inner.GetComponent<FluxParticleAuthoring>();
+            Assert.IsTrue(FluxParticleSettingsMigration.NeedsMigration(direct), "Inherited legacy Variant settings require migration.");
+            FluxParticleSettingsMigration.Read(direct, out var directCount, out var directPlay);
+            Assert.AreEqual(512, directCount);
+            Assert.IsFalse(directPlay);
+            yield return FluxParticleEditorTestWait.ForDelayCall();
+            var outerAsset = PrefabUtility.SaveAsPrefabAsset(holder, outerPath);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(outerAsset, _scene);
+            var authoring = instance.GetComponentInChildren<FluxParticleAuthoring>();
+            var system = authoring.GetComponent<FluxParticleSystem>();
+            Assert.IsFalse(new SerializedObject(system).FindProperty("particleCount").prefabOverride,
+                "Scene instance has no local legacy override.");
+            Assert.AreEqual(1, new SerializedObject(authoring).FindProperty("settingsVersion").intValue);
+            Assert.IsTrue(FluxParticleSettingsMigration.NeedsMigration(authoring));
+            var inspector = UnityEditor.Editor.CreateEditor(authoring);
+            try
+            {
+                Assert.IsTrue((bool)typeof(FluxParticleAuthoringEditor)
+                    .GetField("_needsSettingsMigration", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(inspector),
+                    "Inspector must show the migration action for inherited legacy settings.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(inspector);
+            }
+            FluxParticleSettingsMigration.Read(authoring, out var count, out var play);
+            Assert.AreEqual(512, count);
+            Assert.IsFalse(play);
+            Assert.AreEqual(128, authoring.ParticleCount, "Reading must not migrate saved settings.");
+
+            var settings = new SerializedObject(authoring);
+            settings.FindProperty("particleCount").intValue = 777;
+            settings.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.RecordPrefabInstancePropertyModifications(authoring);
+            FluxParticleSettingsMigration.Read(authoring, out count, out play);
+            Assert.AreEqual(777, count, "Explicit Authoring edits take precedence over inherited legacy settings.");
+            Assert.IsFalse(play);
+            FluxParticleSettingsMigration.MigrateTarget(authoring);
+            yield return FluxParticleEditorTestWait.ForDelayCall();
+            Assert.IsFalse(FluxParticleSettingsMigration.NeedsMigration(authoring));
+            Assert.AreEqual(777, authoring.ParticleCount);
+            Assert.IsFalse(authoring.PlayOnAwake);
+            var migratedVariant = Load(variantPath).GetComponent<FluxParticleAuthoring>();
+            Assert.AreEqual(512, migratedVariant.ParticleCount);
+            Assert.IsFalse(migratedVariant.PlayOnAwake);
+            Assert.IsFalse(FluxParticleSettingsMigration.NeedsMigration(migratedVariant));
+        }
+
         [Test]
         public void RuntimeSerializedSettingsAreHiddenAndSystemRemainsReferenceable()
         {
