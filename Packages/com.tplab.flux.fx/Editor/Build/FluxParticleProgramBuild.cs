@@ -426,6 +426,8 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal static Shader SaveShader(string source, FluxParticleGenerationSession session, string owner)
         {
+            var snapshot = FluxParticleShaderIncludeStore.Save(source, session, owner);
+            source = snapshot.Source;
             FluxParticleGenerationSession.EnsureFolder(session.ShaderRoot);
             var path = session.ShaderRoot + "/" + Hash128.Compute(source) + ".shader";
             if (!File.Exists(path))
@@ -442,7 +444,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
                 shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             }
-            session.Record(path, "Shader", owner);
+            session.Record(path, "Shader", owner, snapshot.IncludeSources.Keys);
             if (shader == null || ShaderUtil.ShaderHasError(shader))
             {
                 throw new InvalidOperationException($"Program Shader failed to compile: {path}");

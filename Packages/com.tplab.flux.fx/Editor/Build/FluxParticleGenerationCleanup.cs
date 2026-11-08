@@ -195,9 +195,15 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             // 保護したMaterialから参照されるShader・Lookupも残します。
             protectedPaths.UnionWith(AssetDatabase.GetDependencies(protectedPaths.ToArray(), true));
+            var recordedDependencies = owned.SelectMany(session => session.Assets)
+                .Where(asset => asset != null && asset.dependencies != null)
+                .GroupBy(asset => asset.path)
+                .ToDictionary(group => group.Key, group => group.SelectMany(asset => asset.dependencies).Distinct().ToArray());
+            ProtectRecordedDependencies(protectedPaths, recordedDependencies);
 
             var deleted = 0;
-            foreach (var path in candidates.Keys.OrderBy(path => path.EndsWith(".mat", StringComparison.Ordinal) ? 0 : 1))
+            foreach (var path in candidates.Keys.OrderBy(path => path.EndsWith(".mat", StringComparison.Ordinal) ? 0 :
+                path.EndsWith(".hlsl", StringComparison.Ordinal) ? 2 : 1))
             {
                 if (protectedPaths.Contains(path)) continue;
                 if (IsBusy) break;
@@ -208,7 +214,9 @@ namespace TpLab.Flux.FX.Editor.Build
                 }
                 else
                 {
+                    protectedPaths.Add(path);
                     protectedPaths.UnionWith(dependencies);
+                    ProtectRecordedDependencies(protectedPaths, recordedDependencies);
                 }
             }
             foreach (var session in owned)
@@ -219,6 +227,20 @@ namespace TpLab.Flux.FX.Editor.Build
             return deleted;
         }
 
+        // UnityのAsset依存一覧に現れないShader includeも、利用中のShaderから辿って保護します。
+        static void ProtectRecordedDependencies(HashSet<string> protectedPaths, Dictionary<string, string[]> dependencies)
+        {
+            var pending = new Queue<string>(protectedPaths);
+            while (pending.Count != 0)
+            {
+                if (!dependencies.TryGetValue(pending.Dequeue(), out var children)) continue;
+                foreach (var child in children)
+                {
+                    if (protectedPaths.Add(child)) pending.Enqueue(child);
+                }
+            }
+        }
+
         static bool IsOwnedAsset(FluxParticleGenerationSession session, FluxParticleGenerationSession.AssetRecord asset)
         {
             if (asset == null || string.IsNullOrEmpty(asset.guid) || string.IsNullOrEmpty(asset.path)) return false;
@@ -226,6 +248,7 @@ namespace TpLab.Flux.FX.Editor.Build
             var type = AssetDatabase.GetMainAssetTypeAtPath(asset.path);
             return asset.kind == "Material" && directory == session.MaterialRoot && type == typeof(Material) ||
                 asset.kind == "Shader" && directory == session.ShaderRoot && type == typeof(Shader) ||
+                asset.kind == "ShaderInclude" && directory == session.ShaderRoot && type == typeof(ShaderInclude) ||
                 asset.kind == "Lookup" && directory == session.LookupRoot && type == typeof(Texture2D) ||
                 asset.kind == "Mesh" && directory == session.MeshRoot && type == typeof(Mesh);
         }

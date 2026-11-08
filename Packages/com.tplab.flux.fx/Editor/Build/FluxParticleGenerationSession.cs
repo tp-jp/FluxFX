@@ -23,6 +23,7 @@ namespace TpLab.Flux.FX.Editor.Build
             public string kind;
             public string lastUsedUtc;
             public List<string> owners = new List<string>();
+            public List<string> dependencies = new List<string>();
         }
 
         [Serializable]
@@ -137,7 +138,11 @@ namespace TpLab.Flux.FX.Editor.Build
         /// <summary>
         /// セッションが使用するAssetと利用元を記録します。
         /// </summary>
-        public void Record(string path, string kind, string owner)
+        /// <param name="path">記録する生成Assetのパス</param>
+        /// <param name="kind">生成Assetの種類</param>
+        /// <param name="owner">生成物の利用元</param>
+        /// <param name="dependencies">Unityの依存取得では得られない固定include等の参照先</param>
+        public void Record(string path, string kind, string owner, IEnumerable<string> dependencies = null)
         {
             RequireRunning();
             if (path != ValidateRoot(path)) throw new ArgumentException("Asset path must be normalized.", nameof(path));
@@ -156,6 +161,10 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             record.guid = AssetDatabase.AssetPathToGUID(path);
             record.lastUsedUtc = DateTime.UtcNow.ToString("O");
+            if (dependencies != null)
+            {
+                record.dependencies = dependencies.Distinct(StringComparer.Ordinal).ToList();
+            }
             if (!record.owners.Contains(owner))
             {
                 record.owners.Add(owner);
