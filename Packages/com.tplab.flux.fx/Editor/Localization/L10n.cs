@@ -5,7 +5,10 @@ using UnityEditor;
 
 namespace TpLab.Flux.FX.Editor.Localization
 {
-    internal enum Language
+    /// <summary>
+    /// FluxFX Inspectorの表示言語
+    /// </summary>
+    public enum Language
     {
         English,
         Japanese

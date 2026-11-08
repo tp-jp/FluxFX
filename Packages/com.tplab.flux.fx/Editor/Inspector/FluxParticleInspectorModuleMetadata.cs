@@ -1,4 +1,5 @@
 using System;
+using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Scripts.Modules;
 
 namespace TpLab.Flux.FX.Editor.Inspector
@@ -8,6 +9,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
     /// </summary>
     public sealed class FluxParticleInspectorModuleMetadata
     {
+        readonly IFluxParticleModuleLocalization _localization;
+
         public Type ModuleType { get; }
 
         public string DisplayName { get; }
@@ -25,7 +28,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             string displayName,
             int displayOrder,
             string expandedKey,
-            bool isCustom = false)
+            bool isCustom = false,
+            IFluxParticleModuleLocalization localization = null)
         {
             if (moduleType == null) throw new ArgumentNullException(nameof(moduleType));
 
@@ -47,9 +51,22 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DisplayOrder = displayOrder;
             ExpandedKey = expandedKey;
             IsCustom = isCustom;
+            _localization = localization;
 
             var module = (FluxParticleModule)Activator.CreateInstance(moduleType);
             Stage = module.Stage;
+        }
+
+        /// <summary>
+        /// 現在のInspector言語でModule固有の翻訳を解決します。
+        /// </summary>
+        /// <param name="text">翻訳前の表示文言</param>
+        /// <returns>Moduleの翻訳、標準の翻訳、または元の文言</returns>
+        public string Translate(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            var translated = _localization?.Translate(text, L10n.Language);
+            return string.IsNullOrEmpty(translated) ? L10n.Tr(text) : translated;
         }
     }
 }

@@ -8,31 +8,38 @@ namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleAuthoringEditor
     {
-        void DrawProperty(SerializedProperty property, bool includeChildren = false)
+        void DrawProperty(SerializedProperty property, bool includeChildren = false,
+            FluxParticleInspectorModuleMetadata metadata = null)
         {
-            if (TryDrawLiveProperty(property)) return;
-            var tooltip = GetTooltip(property.displayName);
+            if (TryDrawLiveProperty(property, metadata: metadata)) return;
+            var tooltip = string.IsNullOrEmpty(property.tooltip)
+                ? GetTooltip(property.displayName)
+                : TranslateModuleText(property.tooltip, metadata);
 
             EditorGUILayout.PropertyField(
                 property,
-                new GUIContent(L10n.Tr(property.displayName), tooltip),
+                new GUIContent(TranslateModuleText(property.displayName, metadata), tooltip),
                 includeChildren);
         }
 
-        void DrawEnum(SerializedProperty property, string label = null, string tooltip = null)
+        void DrawEnum(SerializedProperty property, string label = null, string tooltip = null,
+            FluxParticleInspectorModuleMetadata metadata = null)
         {
-            if (TryDrawLiveProperty(property)) return;
+            if (TryDrawLiveProperty(property, labelOverride: label, metadata: metadata)) return;
             var names = property.enumDisplayNames;
             var localizedNames = new string[names.Length];
             var displayName = label ?? property.displayName;
 
             for (var i = 0; i < names.Length; i++)
             {
-                localizedNames[i] = L10n.Tr(names[i]);
+                localizedNames[i] = TranslateModuleText(names[i], metadata);
             }
 
             var selectedIndex = EditorGUILayout.Popup(
-                new GUIContent(L10n.Tr(displayName), tooltip == null ? GetTooltip(displayName) : L10n.Tr(tooltip)),
+                new GUIContent(TranslateModuleText(displayName, metadata),
+                    tooltip == null && string.IsNullOrEmpty(property.tooltip)
+                        ? GetTooltip(displayName)
+                        : TranslateModuleText(tooltip ?? property.tooltip, metadata)),
                 property.enumValueIndex,
                 localizedNames);
 
@@ -40,6 +47,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
             {
                 property.enumValueIndex = selectedIndex;
             }
+        }
+
+        static string TranslateModuleText(string text, FluxParticleInspectorModuleMetadata metadata)
+        {
+            return metadata == null ? L10n.Tr(text) : metadata.Translate(text);
         }
 
         string GetTooltip(string label)
@@ -172,7 +184,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             SerializedProperty module,
             bool expanded,
             string sessionStateKey,
-            Action onRemove = null)
+            Action onRemove = null,
+            FluxParticleInspectorModuleMetadata metadata = null)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -200,11 +213,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
                         if (property.propertyType == SerializedPropertyType.Enum)
                         {
-                            DrawEnum(property);
+                            DrawEnum(property, metadata: metadata);
                         }
                         else
                         {
-                            DrawProperty(property, true);
+                            DrawProperty(property, true, metadata);
                         }
                     }
 

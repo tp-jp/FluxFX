@@ -1,12 +1,31 @@
 using TpLab.Flux.FX.Udon;
 using UnityEditor;
 using UnityEngine;
+using L10n = TpLab.Flux.FX.Editor.Localization.L10n;
 
 namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleAuthoringEditor
     {
         const float ConeGizmoLength = 2.0f;
+
+        /// <summary>
+        /// Simulation SpaceにかかわらずRendererのローカル座標でカリング範囲を表示します。
+        /// </summary>
+        void DrawCullingBoundsGizmo()
+        {
+            if (Event.current.type != EventType.Repaint) return;
+
+            var renderer = ParticleSystem.GetComponentInChildren<FluxParticleRenderer>(true);
+            if (renderer == null) return;
+
+            var bounds = _render.FindPropertyRelative("cullingBounds").boundsValue;
+            using (new Handles.DrawingScope(new Color(1.0f, 0.65f, 0.15f), renderer.transform.localToWorldMatrix))
+            {
+                Handles.DrawWireCube(bounds.center, bounds.size);
+                Handles.Label(bounds.center + Vector3.up * bounds.extents.y, L10n.Tr("Culling Bounds"));
+            }
+        }
 
         void DrawPointShapeGizmo()
         {

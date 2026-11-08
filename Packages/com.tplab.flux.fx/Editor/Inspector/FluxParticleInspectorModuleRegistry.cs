@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
@@ -128,7 +129,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     ObjectNames.NicifyVariableName(type.Name),
                     1000,
                     SessionStatePrefix + "CustomModule." + type.FullName,
-                    true);
+                    true,
+                    definition as IFluxParticleModuleLocalization);
 
 
                 Register(metadata);

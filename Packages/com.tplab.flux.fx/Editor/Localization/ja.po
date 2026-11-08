@@ -469,3 +469,6 @@ msgstr "Runtimeの値。変更はPlay終了時に破棄されます。"
 
 msgid "Change rejected. Check the input constraints and Runtime state."
 msgstr "変更できません。入力制約またはRuntimeの状態を確認してください。"
+
+msgid "Custom"
+msgstr "カスタム"

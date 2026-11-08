@@ -108,7 +108,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             return field.Binding.Target == FluxParticleLiveTarget.Emitter ? _liveEmitter : _liveExecutor;
         }
 
-        bool TryDrawLiveProperty(SerializedProperty property, Rect? toggleRect = null, string labelOverride = null)
+        bool TryDrawLiveProperty(SerializedProperty property, Rect? toggleRect = null, string labelOverride = null,
+            FluxParticleInspectorModuleMetadata metadata = null)
         {
             if (!EditorApplication.isPlaying || !_liveFields.TryGetValue(property.propertyPath, out var field)) return false;
             var previousEnabled = GUI.enabled;
@@ -116,7 +117,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             {
                 GUI.enabled = field.Available && !EditorApplication.isCompiling;
                 var value = field.Value;
-                var label = new GUIContent(L10n.Tr(labelOverride ?? property.displayName),
+                var label = new GUIContent(TranslateModuleText(labelOverride ?? property.displayName, metadata),
                     L10n.Tr("Runtime value. Changes are discarded when Play Mode ends."));
                 EditorGUI.BeginChangeCheck();
                 if (field.Binding.Component >= 0)
@@ -126,7 +127,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 else if (field.Contract.Kind == FluxParticleParameterKind.Enum)
                 {
                     var options = field.Contract.EnumConstraint.AllowedValues;
-                    var names = options.Select(option => L10n.Tr(ObjectNames.NicifyVariableName(option.ToString()))).ToArray();
+                    var names = options.Select(option => TranslateModuleText(ObjectNames.NicifyVariableName(option.ToString()), metadata)).ToArray();
                     var selected = -1;
                     for (var i = 0; i < options.Count; i++)
                     {

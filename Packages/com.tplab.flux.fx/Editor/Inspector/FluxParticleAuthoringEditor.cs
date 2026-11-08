@@ -141,7 +141,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             if (canEdit)
             {
-                _authoringObject.ApplyModifiedProperties();
+                if (_authoringObject.ApplyModifiedProperties())
+                {
+                    SceneView.RepaintAll();
+                }
             }
             DrawBackendInfo();
         }
@@ -151,6 +154,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (_authoringObject == null || _needsSettingsMigration || ParticleSystem == null) return;
 
             _authoringObject.Update();
+
+            DrawCullingBoundsGizmo();
 
             var type = (FluxParticleShapeType)_shape.FindPropertyRelative("type").enumValueIndex;
 

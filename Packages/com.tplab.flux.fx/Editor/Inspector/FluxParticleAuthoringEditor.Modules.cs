@@ -130,11 +130,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var expanded = SessionState.GetBool(definition.ExpandedKey, false);
 
             DrawModule(
-                L10n.Tr(definition.DisplayName),
+                definition.Translate(definition.DisplayName),
                 module,
                 expanded,
                 definition.ExpandedKey,
-                () => ShowRemoveModuleMenu(type));
+                () => ShowRemoveModuleMenu(type),
+                definition);
         }
 
         void DrawAddModuleButton(
@@ -171,8 +172,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
                 var selectedDefinition = definition;
                 var label = definition.IsCustom
-                    ? "Custom/" + definition.DisplayName
-                    : L10n.Tr(definition.DisplayName);
+                    ? L10n.Tr("Custom") + "/" + definition.Translate(definition.DisplayName)
+                    : definition.Translate(definition.DisplayName);
 
                 menu.AddItem(
                     new GUIContent(label),
