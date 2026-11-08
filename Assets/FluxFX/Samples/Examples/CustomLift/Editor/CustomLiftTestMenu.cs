@@ -1,3 +1,4 @@
+using TpLab.Flux.FX.Samples.CustomLift.Scripts;
 using TpLab.Flux.FX.Samples.CustomLift.Udon;
 using TpLab.Flux.FX.Scripts;
 using UnityEditor;

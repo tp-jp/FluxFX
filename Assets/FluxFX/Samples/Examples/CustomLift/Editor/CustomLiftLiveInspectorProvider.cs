@@ -1,6 +1,7 @@
 using TpLab.Flux.FX.Samples.CustomLift.Udon;
 using System.Collections.Generic;
 using TpLab.Flux.FX.Editor.Inspector;
+using TpLab.Flux.FX.Samples.CustomLift.Scripts;
 
 namespace TpLab.Flux.FX.Samples.CustomLift.Editor
 {

@@ -2509,7 +2509,7 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332382806]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}

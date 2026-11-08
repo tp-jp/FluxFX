@@ -1,0 +1,21 @@
+{
+    "name": "TpLab.Flux.FX.Samples.CustomLift.Editor",
+    "rootNamespace": "TpLab.Flux.FX.Samples.CustomLift.Editor",
+    "references": [
+        "GUID:14682e84e3abd37459b8323b30bd7771",
+        "GUID:28373e42c234a0a4ebd98b79c443c600",
+        "GUID:b1bd625b3df3433c9911e1ce8949c8c8",
+        "GUID:f324083ceffdb2b48a597479d32db5e6"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

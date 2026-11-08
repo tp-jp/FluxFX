@@ -2,6 +2,7 @@ using TpLab.Flux.FX.Samples.CustomLift.Udon;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Modules;
 using TpLab.Flux.FX.Editor.Modules.Shared;
+using TpLab.Flux.FX.Samples.CustomLift.Scripts;
 using UnityEditor;
 
 namespace TpLab.Flux.FX.Samples.CustomLift.Editor

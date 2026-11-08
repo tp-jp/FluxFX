@@ -1,7 +1,0 @@
-{
-    "name": "TpLab.Flux.FX.Editor.Contracts",
-    "rootNamespace": "TpLab.Flux.FX.Editor.Contracts",
-    "references": [],
-    "includePlatforms": ["Editor"],
-    "autoReferenced": true
-}

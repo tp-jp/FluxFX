@@ -25662,17 +25662,47 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382854
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 8074038579332383419
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 8074038579332383488
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].strength
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -25728,11 +25758,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382853]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382854]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -25931,11 +25956,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382854].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383419].enabled
       value: 0
       objectReference: {fileID: 0}
@@ -26016,11 +26036,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382854].strength
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383419].timeMode
       value: 0
       objectReference: {fileID: 0}
@@ -26092,21 +26107,6 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332383419].smoothness
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382854].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382854].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382854].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -27763,17 +27763,47 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382806
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 8074038579332383415
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 8074038579332383484
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].strength
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -27829,11 +27859,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382805]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382806]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -28032,11 +28057,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382806].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383415].enabled
       value: 0
       objectReference: {fileID: 0}
@@ -28117,11 +28137,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382806].strength
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383415].timeMode
       value: 0
       objectReference: {fileID: 0}
@@ -28193,21 +28208,6 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332383415].smoothness
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382806].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382806].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382806].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -32962,17 +32962,47 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382818
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 8074038579332383416
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 8074038579332383485
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].strength
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -33028,11 +33058,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382817]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382818]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -33231,11 +33256,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382818].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383416].enabled
       value: 0
       objectReference: {fileID: 0}
@@ -33316,11 +33336,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382818].strength
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383416].timeMode
       value: 0
       objectReference: {fileID: 0}
@@ -33392,21 +33407,6 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332383416].smoothness
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382818].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382818].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382818].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -42574,17 +42574,47 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382830
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 8074038579332383417
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 8074038579332383486
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].strength
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -42640,11 +42670,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382829]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382830]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -42843,11 +42868,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382830].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383417].enabled
       value: 0
       objectReference: {fileID: 0}
@@ -42928,11 +42948,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382830].strength
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383417].timeMode
       value: 0
       objectReference: {fileID: 0}
@@ -43004,21 +43019,6 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332383417].smoothness
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382830].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382830].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382830].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -53085,17 +53085,47 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382842
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 8074038579332383418
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 8074038579332383487
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].strength
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].direction.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -53151,11 +53181,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382841]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382842]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -53354,11 +53379,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382842].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383418].enabled
       value: 0
       objectReference: {fileID: 0}
@@ -53439,11 +53459,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382842].strength
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332383418].timeMode
       value: 0
       objectReference: {fileID: 0}
@@ -53515,21 +53530,6 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[8074038579332383418].smoothness
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382842].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382842].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382842].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -58306,17 +58306,17 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: modules.Array.data[11]
-      value: 8074038579332382794
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: modules.Array.data[12]
       value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: modules.Array.data[13]
+      propertyPath: modules.Array.data[12]
       value: 1001
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: modules.Array.data[13]
+      value: 1002
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -58327,6 +58327,11 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[1001]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTrailsModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1002]
+      value: TpLab.Flux.FX.Samples.CustomLift.Scripts TpLab.Flux.FX.Samples.CustomLift.Scripts.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -58380,6 +58385,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+      propertyPath: managedReferences[1002].enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
       propertyPath: managedReferences[1000].timeMode
       value: 1
       objectReference: {fileID: 0}
@@ -58387,6 +58397,11 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[1001].duration
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1002].strength
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -58406,6 +58421,21 @@ PrefabInstance:
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
       propertyPath: managedReferences[1000].randomPhase
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1002].direction.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1002].direction.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1002].direction.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
@@ -58467,11 +58497,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382793]
       value: TpLab.Flux.FX.Scripts TpLab.Flux.FX.Scripts.Modules.FluxParticleTextureSheetAnimationModule
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382794]
-      value: TpLab.Flux.FX.Samples.CustomLift.Udon TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftModule
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -58650,11 +58675,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
-      propertyPath: managedReferences[8074038579332382794].enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
       propertyPath: managedReferences[8074038579332382786].strength
       value: 1
       objectReference: {fileID: 0}
@@ -58697,11 +58717,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382789].offset.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382794].strength
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
@@ -58752,21 +58767,6 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[8074038579332382790].endColor.r
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382794].direction.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382794].direction.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
-        type: 3}
-      propertyPath: managedReferences[8074038579332382794].direction.z
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}

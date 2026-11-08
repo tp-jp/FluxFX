@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using TpLab.Flux.FX.Samples.CustomLift.Scripts;
 using TpLab.Flux.FX.Samples.RuntimeApi.Udon;
 
 using TpLab.Flux.FX.Scripts;

@@ -1,11 +1,9 @@
 using System;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEngine;
-using UnityEngine.Scripting.APIUpdating;
 
-namespace TpLab.Flux.FX.Samples.CustomLift.Udon
+namespace TpLab.Flux.FX.Samples.CustomLift.Scripts
 {
-    [MovedFrom(true, sourceNamespace: "TpLab.Flux.FX.CustomModules", sourceAssembly: "TpLab.Flux.FX.Samples.CustomLift", sourceClassName: "CustomLiftModule")]
     [Serializable]
     public sealed class CustomLiftModule : FluxParticleModule
     {
