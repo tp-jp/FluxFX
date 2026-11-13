@@ -237,7 +237,7 @@ namespace TpLab.Flux.FX.Editor.Build
             runtime.SetProgramVariable("trailWorldSpace", authoring.SimulationSpace == FluxParticleSimulationSpace.World);
             ConfigureManifest(runtime, program, parameters, parameterValues);
             runtime.SetProgramVariable("moduleIds", moduleIds);
-            var modules = runtime.GetComponentInParent<FluxParticleSystem>()?.Modules;
+            var modules = runtime.GetComponentInParent<FluxParticleSystem>(true)?.Modules;
             if (modules != null)
             {
                 modules.SetProgramVariable("executor", runtime);

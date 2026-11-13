@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Build
     {
         public static void Configure(FluxParticleExecutor executor, FluxParticleAuthoring authoring, FluxParticleParameterDefinition[] parameters)
         {
-            var system = executor.GetComponentInParent<FluxParticleSystem>();
+            var system = executor.GetComponentInParent<FluxParticleSystem>(true);
             if (system == null) return;
             var emitter = system.GetComponentInChildren<FluxParticleEmitter>(true);
             if (emitter == null)
