@@ -87,6 +87,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void RegisterStandardModules()
         {
+            RegisterStandard<FluxParticleAudioInputModule>("Audio Input", 90, "AudioInputExpanded");
+            RegisterStandard<FluxParticleDistanceFadeModule>("Distance Fade", 600, "DistanceFadeExpanded");
             RegisterStandard<FluxParticleGravityModule>("Gravity", 100, "GravityExpanded");
             RegisterStandard<FluxParticleForceModule>("Force", 200, "ForceExpanded");
             RegisterStandard<FluxParticleNoiseModule>("Noise", 300, "NoiseExpanded");

@@ -59,7 +59,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             var handles = typeof(FluxParticleModules).GetProperties()
                 .Where(property => typeof(FluxParticleModuleHandle).IsAssignableFrom(property.PropertyType));
-            Assert.AreEqual(13, handles.Count());
+            Assert.AreEqual(15, handles.Count());
             foreach (var property in handles)
             {
                 Assert.IsNull(property.PropertyType.GetMethod("Get", flags), property.Name);

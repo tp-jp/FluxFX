@@ -171,7 +171,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 standardCount++;
             }
 
-            Assert.AreEqual(13, standardCount);
+            Assert.AreEqual(15, standardCount);
         }
 
         [Test]

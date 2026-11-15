@@ -472,3 +472,72 @@ msgstr "変更できません。入力制約またはRuntimeの状態を確認�
 
 msgid "Custom"
 msgstr "カスタム"
+
+msgid "Audio Input"
+msgstr "音声入力"
+
+msgid "AudioLink is not installed. Audio Input outputs remain zero. Install the AudioLink package to use audio input."
+msgstr "AudioLinkが導入されていません。音声入力の出力は0のままになります。音声入力を利用するにはAudioLinkパッケージを導入してください。"
+
+msgid "Distance Fade"
+msgstr "距離フェード"
+
+msgid "Band"
+msgstr "音域"
+
+msgid "Bass"
+msgstr "低音"
+
+msgid "Low Mid"
+msgstr "中低音"
+
+msgid "High Mid"
+msgstr "中高音"
+
+msgid "Treble"
+msgstr "高音"
+
+msgid "Gain"
+msgstr "入力感度"
+
+msgid "Noise Floor"
+msgstr "無音閾値"
+
+msgid "Attack"
+msgstr "立ち上がり時間"
+
+msgid "Release"
+msgstr "減衰時間"
+
+msgid "Slow Response"
+msgstr "遅い応答の追従時間"
+
+msgid "Average Gain"
+msgstr "全音域平均の入力感度"
+
+msgid "Timeout"
+msgstr "入力停止の判定時間"
+
+msgid "Start Distance"
+msgstr "開始距離"
+
+msgid "End Distance"
+msgstr "終了距離"
+
+msgid "AudioLink is optional. Outputs are zero without input; this module alone does not change appearance."
+msgstr "AudioLinkは任意です。入力がない場合の出力はゼロとなり、このModule単独では見た目を変更しません。"
+
+msgid "Response time in seconds."
+msgstr "応答にかかる時間（秒）。"
+
+msgid "Seconds without a new AudioLink frame before outputs decay to zero."
+msgstr "AudioLinkのフレーム更新が止まってから、出力をゼロへ減衰させるまでの秒数。"
+
+msgid "Distance from the system origin in local units, scaled by its uniform world scale. Orthographic cameras do not fade."
+msgstr "システム原点からのローカル単位の距離。親を含む一様Scaleに追従します。正投影カメラではフェードしません。"
+
+msgid "No fade when End Distance is less than or equal to Start Distance. Non-uniform scale is not supported."
+msgstr "終了距離が開始距離以下ならフェードしません。非一様Scaleは非対応です。"
+
+msgid "RGB attenuates emitted light; Alpha attenuates opacity. Choose for the renderer blend mode."
+msgstr "RGBは放射する光、Alphaは不透明度を減衰させます。RendererのBlend方式に応じて選択してください。"

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using TpLab.Flux.FX.Editor.Localization;
+using TpLab.Flux.FX.Editor.Modules.AudioInput;
 using TpLab.Flux.FX.Scripts.Modules;
 using UnityEditor;
 using UnityEngine;
@@ -136,6 +137,12 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 definition.ExpandedKey,
                 () => ShowRemoveModuleMenu(type),
                 definition);
+
+            if (type == typeof(FluxParticleAudioInputModule) && !FluxParticleAudioInputDefinition.IsAudioLinkInstalled)
+            {
+                EditorGUILayout.HelpBox(L10n.Tr("AudioLink is not installed. Audio Input outputs remain zero. Install the AudioLink package to use audio input."),
+                    MessageType.Warning);
+            }
         }
 
         void DrawAddModuleButton(

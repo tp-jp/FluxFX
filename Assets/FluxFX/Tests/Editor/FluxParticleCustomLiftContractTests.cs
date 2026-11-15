@@ -24,13 +24,15 @@ namespace TpLab.Flux.FX.Tests.Editor
             SetModules(module);
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var binding = compiled.ModuleBindings.Single(item => item.ModuleId == definition.ModuleId);
-            var keys = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftParameter", true);
+            var udonAssembly = AppDomain.CurrentDomain.GetAssemblies()
+                .Single(assembly => assembly.GetName().Name == "TpLab.Flux.FX.Samples.CustomLift.Udon");
+            var keys = udonAssembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftParameter", true);
             Assert.AreEqual("custom-lift.strength", binding.Parameters[(int)Enum.Parse(keys, "Strength")].Id);
             Assert.AreEqual("custom-lift.direction", binding.Parameters[(int)Enum.Parse(keys, "Direction")].Id);
             Assert.IsTrue(binding.Parameters.All(parameter => parameter.Contract != null));
             var runtime = CreateRuntime(compiled);
             var modules = runtime.GetComponentInParent<FluxParticleSystem>().Modules;
-            var extensions = definition.ModuleType.Assembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftHandleExtensions", true);
+            var extensions = udonAssembly.GetType("TpLab.Flux.FX.Samples.CustomLift.Udon.CustomLiftHandleExtensions", true);
             var handle = (FluxParticleModuleHandle)extensions.GetMethod("CustomLift").Invoke(null, new object[] { modules });
             Assert.AreSame(handle, extensions.GetMethod("CustomLift").Invoke(null, new object[] { modules }));
             Assert.AreEqual(enabled, handle.GetEnabled());

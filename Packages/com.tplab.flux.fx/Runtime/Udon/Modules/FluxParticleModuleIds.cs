@@ -6,6 +6,16 @@ namespace TpLab.Flux.FX.Udon.Modules
     public static class FluxParticleModuleIds
     {
         /// <summary>
+        /// AudioInputの識別子
+        /// </summary>
+        public const string AudioInput = "tplab.fluxfx.audio-input";
+
+        /// <summary>
+        /// DistanceFadeの識別子
+        /// </summary>
+        public const string DistanceFade = "tplab.fluxfx.distance-fade";
+
+        /// <summary>
         /// Blinkの識別子
         /// </summary>
         public const string Blink = "tplab.fluxfx.blink";

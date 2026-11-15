@@ -38,7 +38,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             var definitions = new FluxParticleModuleRegistry().GetAll()
                 .Where(definition => definition.GetType().Namespace.StartsWith("TpLab.Flux.FX.Editor.Modules.")).ToArray();
-            Assert.AreEqual(13, definitions.Length);
+            Assert.AreEqual(15, definitions.Length);
             foreach (var definition in definitions)
             {
                 var expected = typeof(FluxParticleModuleDefinition<>).MakeGenericType(definition.ModuleType);

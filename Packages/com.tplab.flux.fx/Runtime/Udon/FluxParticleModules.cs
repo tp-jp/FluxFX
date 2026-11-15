@@ -28,6 +28,16 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleExecutor Executor => executor;
 
         /// <summary>
+        /// 音声入力の設定ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleAudioInputHandle AudioInput => FluxParticleAudioInputHandle.Get(this);
+
+        /// <summary>
+        /// 距離フェードの設定ハンドル。未組み込みの場合はnull
+        /// </summary>
+        public FluxParticleDistanceFadeHandle DistanceFade => FluxParticleDistanceFadeHandle.Get(this);
+
+        /// <summary>
         /// Gravityの操作ハンドル。未組み込みの場合はnull
         /// </summary>
         public FluxParticleGravityHandle Gravity => FluxParticleGravityHandle.Get(this);

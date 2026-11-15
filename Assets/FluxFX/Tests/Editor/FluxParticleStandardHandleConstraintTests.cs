@@ -20,7 +20,8 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void AllStandardHandlesAndDirectUpdatesShareConstraints(bool initialized)
         {
             RequireGraphics();
-            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBlinkModule(), new FluxParticleTrailsModule() }).ToArray());
+            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBlinkModule(), new FluxParticleTrailsModule(),
+                new FluxParticleAudioInputModule(), new FluxParticleDistanceFadeModule() }).ToArray());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             if (initialized) Assert.IsTrue(runtime.Initialize(4));
