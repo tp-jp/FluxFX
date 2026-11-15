@@ -1,0 +1,34 @@
+using TpLab.Flux.FX.Udon;
+using TpLab.Flux.FX.Udon.Modules;
+using TpLab.Flux.FX.Udon.Parameters;
+
+namespace {{ROOT}}.Udon
+{
+    /// <summary>
+    /// Thin Runtime API; validation is performed by the Executor.
+    /// </summary>
+    public class {{NAME}}Handle : FluxParticleModuleHandle { }
+
+    public static class {{NAME}}HandleExtensions
+    {
+        /// <summary>
+        /// Returns the cached handle, or null if the module was not built.
+        /// </summary>
+        public static {{NAME}}Handle {{NAME}}(this FluxParticleModules modules)
+        {
+#if COMPILER_UDONSHARP
+            return ({{NAME}}Handle)FluxParticleModuleHandleFactory.Get(modules, "{{ID}}");
+#else
+            return FluxParticleModuleHandleFactory.Get<{{NAME}}Handle>(modules, "{{ID}}");
+#endif
+        }
+
+        public static float GetStrength(this {{NAME}}Handle handle) => handle.GetValue((int){{NAME}}Parameter.Strength).x;
+        public static bool SetStrength(this {{NAME}}Handle handle, float value) =>
+            handle.SetValue((int){{NAME}}Parameter.Strength, FluxParticleValueType.Float, new global::UnityEngine.Vector4(value, 0, 0, 0));
+
+        public static global::UnityEngine.Vector3 GetDirection(this {{NAME}}Handle handle) => handle.GetValue((int){{NAME}}Parameter.Direction);
+        public static bool SetDirection(this {{NAME}}Handle handle, global::UnityEngine.Vector3 value) =>
+            handle.SetValue((int){{NAME}}Parameter.Direction, FluxParticleValueType.Float3, value);
+    }
+}

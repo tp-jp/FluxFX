@@ -1,0 +1,19 @@
+using System.Collections.Generic;
+using TpLab.Flux.FX.Editor.Inspector;
+using {{ROOT}}.Scripts;
+
+namespace {{ROOT}}.Editor
+{
+    /// <summary>
+    /// Keeps the Inspector connected to live Runtime settings.
+    /// </summary>
+    public sealed class {{NAME}}LiveInspectorProvider : FluxParticleLiveInspectorProvider
+    {
+        public override IEnumerable<FluxParticleLiveBinding> Bindings => new[]
+        {
+            new FluxParticleLiveBinding(typeof({{NAME}}Module), "enabled", {{NAME}}Contract.Module.Enabled),
+            new FluxParticleLiveBinding(typeof({{NAME}}Module), "strength", {{NAME}}Contract.Strength),
+            new FluxParticleLiveBinding(typeof({{NAME}}Module), "direction", {{NAME}}Contract.Direction)
+        };
+    }
+}

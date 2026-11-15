@@ -1,0 +1,40 @@
+using System.Linq;
+using TpLab.Flux.FX.Editor.Compilation.Definitions;
+using TpLab.Flux.FX.Editor.Modules;
+using TpLab.Flux.FX.Editor.Modules.Shared;
+using {{ROOT}}.Scripts;
+using UnityEditor;
+
+namespace {{ROOT}}.Editor
+{
+    /// <summary>
+    /// Connects authoring settings to the GPU acceleration operation.
+    /// </summary>
+    public sealed class {{NAME}}Definition : FluxParticleModuleDefinition<{{NAME}}Module>
+    {
+        public override string ModuleId => {{NAME}}Contract.ModuleId;
+
+        public override void Contribute({{NAME}}Module module, FluxParticleProgramContribution context)
+        {
+            var contribution = new FluxParticleModuleContribution(context, {{NAME}}Contract.Module, module.Enabled);
+            var strength = contribution.Bind({{NAME}}Contract.Strength, module.Strength);
+            var direction = contribution.Bind({{NAME}}Contract.Direction, module.Direction);
+            // Follow existing velocity writers, including other generated modules.
+            var predecessors = context.Operations.Values
+                .Where(operation => operation.Phase == FluxParticlePhase.Update &&
+                    operation.Writes.Any(write => write.ValueId == "particle.velocity"))
+                .Select(operation => operation.Id)
+                .Concat(new[] { "gravity", "force", "noise", "vortex", "drag", "limit-velocity" }).Distinct().ToArray();
+            contribution.Operation({{NAME}}Contract.OperationId, FluxParticlePhase.Update,
+                reads: new[]
+                {
+                    new FluxParticleValueRead("particle.velocity", FluxParticleReadVersion.StepPrevious),
+                    new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
+                },
+                writes: new[] { new FluxParticleValueWrite("particle.velocity", FluxParticleWriteKind.Modify) },
+                hlslPath: AssetDatabase.GUIDToAssetPath("{{HLSL_GUID}}"), entryPoint: "{{ENTRY}}",
+                switchable: true, parameters: new[] { strength, direction }, optionalDependencies: predecessors);
+            contribution.Complete();
+        }
+    }
+}

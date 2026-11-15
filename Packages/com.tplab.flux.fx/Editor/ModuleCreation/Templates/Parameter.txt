@@ -1,0 +1,11 @@
+namespace {{ROOT}}.Udon
+{
+    /// <summary>
+    /// Shared parameter slots for the contract and Runtime handle.
+    /// </summary>
+    public enum {{NAME}}Parameter
+    {
+        Strength = 0,
+        Direction = 1
+    }
+}

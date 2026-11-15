@@ -1,0 +1,6 @@
+void {{ENTRY}}(inout {{CONTEXT}} ctx)
+{
+    // Edit this expression first. Direction is not normalized: its length scales acceleration.
+    float3 acceleration = ctx.{{DIRECTION}} * ctx.{{STRENGTH}};
+    ctx.valueParticleVelocity += acceleration * ctx.valueStepDeltaTime;
+}

@@ -476,6 +476,33 @@ msgstr "カスタム"
 msgid "Audio Input"
 msgstr "音声入力"
 
+msgid "Create Custom Module"
+msgstr "カスタムモジュールを作成"
+
+msgid "Create an editable module that accelerates particles upward. After compilation, add it from Authoring > Add Module > Custom and start Preview."
+msgstr "粒子を上方向へ加速する編集可能なモジュールを生成します。コンパイル後、Authoringの「モジュールを追加」→「カスタム」から追加し、プレビューを再生してください。"
+
+msgid "Module Name"
+msgstr "モジュール名"
+
+msgid "Parent Folder"
+msgstr "生成先の親フォルダー"
+
+msgid "Generate Runtime API"
+msgstr "Runtime APIを生成"
+
+msgid "Destination"
+msgstr "生成先"
+
+msgid "A new folder is required. Existing files are never overwritten. Runtime API adds an optional Udon handle; it is not required for Preview or normal playback."
+msgstr "新しいフォルダーへ生成します。既存ファイルは上書きしません。Runtime APIはUdon用ハンドルを追加するオプションで、プレビューや通常再生には不要です。"
+
+msgid "Create Module"
+msgstr "モジュールを作成"
+
+msgid "Sources created. Wait for compilation, then add the module from Add Module > Custom."
+msgstr "ソースを生成しました。コンパイル完了後、「モジュールを追加」→「カスタム」から追加してください。"
+
 msgid "AudioLink is not installed. Audio Input outputs remain zero. Install the AudioLink package to use audio input."
 msgstr "AudioLinkが導入されていません。音声入力の出力は0のままになります。音声入力を利用するにはAudioLinkパッケージを導入してください。"
 

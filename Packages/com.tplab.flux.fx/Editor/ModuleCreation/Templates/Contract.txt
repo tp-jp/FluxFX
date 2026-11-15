@@ -1,0 +1,29 @@
+using TpLab.Flux.FX.Editor.Contracts;
+{{UDON_USING}}
+namespace {{ROOT}}.Editor
+{
+    /// <summary>
+    /// Parameter validation and Live editing contract.
+    /// </summary>
+    public static class {{NAME}}Contract
+    {
+        public const string ModuleId = "{{ID}}";
+        public const string OperationId = "{{PREFIX}}.accelerate";
+
+        public static FluxParticleParameterContract<float> Strength { get; } =
+            FluxParticleParameter.Float("{{PREFIX}}.strength").ApiName("Strength")
+                .Policy(FluxParticleParameterPolicy.Live).Build();
+
+        public static FluxParticleParameterContract<global::UnityEngine.Vector3> Direction { get; } =
+            FluxParticleParameter.Vector3("{{PREFIX}}.direction").ApiName("Direction")
+                .Policy(FluxParticleParameterPolicy.Live).Build();
+
+        // Handle/Accessor are contract metadata; a Handle class is optional.
+        public static FluxParticleModuleContract Module { get; } =
+            new FluxParticleModuleContractBuilder(ModuleId)
+                .Handle("{{NAME}}Handle").Accessor("{{NAME}}")
+                .Enabled("{{PREFIX}}.enabled")
+                {{PARAMETERS}}
+                .Build();
+    }
+}
