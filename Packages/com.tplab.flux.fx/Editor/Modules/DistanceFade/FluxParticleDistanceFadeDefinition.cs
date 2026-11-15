@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Editor.Modules.DistanceFade
             var predecessors = context.Operations.Values
                 .Where(operation => operation.Phase == FluxParticlePhase.Render &&
                     operation.Writes.Any(write => write.ValueId == "render.color"))
-                .Select(operation => operation.Id).Concat(new[] { "render.color", "render.blink" }).Distinct().ToArray();
+                .Select(operation => operation.Id).Concat(new[] { "render.color" }).Distinct().ToArray();
             contribution.Operation(RenderOperation, FluxParticlePhase.Render,
                 new[] { new FluxParticleValueRead("render.color", FluxParticleReadVersion.AfterOperation, "render.start") },
                 new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },

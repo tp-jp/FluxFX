@@ -410,9 +410,6 @@ msgstr "テクスチャ"
 msgid "Tiling"
 msgstr "タイリング"
 
-msgid "Blink"
-msgstr "点滅"
-
 msgid "Intensity"
 msgstr "強度"
 
@@ -568,3 +565,48 @@ msgstr "終了距離が開始距離以下ならフェードしません。非一
 
 msgid "RGB attenuates emitted light; Alpha attenuates opacity. Choose for the renderer blend mode."
 msgstr "RGBは放射する光、Alphaは不透明度を減衰させます。RendererのBlend方式に応じて選択してください。"
+
+msgid "Brightness"
+msgstr "明るさ"
+
+msgid "Base Minimum"
+msgstr "基準倍率の下限"
+
+msgid "Base Maximum"
+msgstr "基準倍率の上限"
+
+msgid "Waveform"
+msgstr "時間変化"
+
+msgid "Off"
+msgstr "OFF"
+
+msgid "Sine"
+msgstr "正弦波"
+
+msgid "Pulse"
+msgstr "パルス"
+
+msgid "Period"
+msgstr "周期（秒）"
+
+msgid "Period Minimum"
+msgstr "周期倍率の下限"
+
+msgid "Period Maximum"
+msgstr "周期倍率の上限"
+
+msgid "Audio Enabled"
+msgstr "音声増光を組み込む"
+
+msgid "Audio Boost"
+msgstr "音声増光量"
+
+msgid "Audio Attack"
+msgstr "音声の立ち上がり（秒）"
+
+msgid "Audio Release"
+msgstr "音声の減衰（秒）"
+
+msgid "Add Audio Input to use Brightness audio boost."
+msgstr "音声増光を使うには音声入力モジュールを追加してください。"

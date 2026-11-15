@@ -43,17 +43,17 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void LiveInspectorColorAndEnumChangesUseRuntimeConstraints()
         {
             RequireGraphics();
-            SetModules(new FluxParticleBlinkModule(), new FluxParticleColorOverLifetimeModule());
+            SetModules(new FluxParticleBrightnessModule(), new FluxParticleColorOverLifetimeModule());
             var runtime = CreateRuntime(FluxParticleBuildPipeline.Build(authoring));
             Assert.IsTrue(runtime.Initialize(4));
             var color = new Vector4(2, 0.5f, 0.25f, 1);
             Assert.IsTrue(InspectorRequest(runtime, "color.end", 4, true, ref color));
             Assert.AreEqual(color, runtime.GetParameterValue(runtime.ResolveParameter("color.end", 4)));
-            var value = new Vector4((float)(int)FluxParticleBlinkTarget.Alpha, 0, 0, 0);
-            Assert.IsTrue(InspectorRequest(runtime, "blink.target", 1, true, ref value));
+            var value = new Vector4((float)(int)FluxParticleBrightnessTarget.Alpha, 0, 0, 0);
+            Assert.IsTrue(InspectorRequest(runtime, "brightness.target", 1, true, ref value));
             value.x = 99;
-            Assert.IsFalse(InspectorRequest(runtime, "blink.target", 1, true, ref value));
-            Assert.AreEqual((float)(int)FluxParticleBlinkTarget.Alpha, value.x);
+            Assert.IsFalse(InspectorRequest(runtime, "brightness.target", 1, true, ref value));
+            Assert.AreEqual((float)(int)FluxParticleBrightnessTarget.Alpha, value.x);
         }
 
         [Test]

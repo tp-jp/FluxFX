@@ -6,6 +6,11 @@ namespace TpLab.Flux.FX.Udon.Modules
     public static class FluxParticleModuleIds
     {
         /// <summary>
+        /// Brightnessの識別子
+        /// </summary>
+        public const string Brightness = "tplab.fluxfx.brightness";
+
+        /// <summary>
         /// AudioInputの識別子
         /// </summary>
         public const string AudioInput = "tplab.fluxfx.audio-input";
@@ -14,11 +19,6 @@ namespace TpLab.Flux.FX.Udon.Modules
         /// DistanceFadeの識別子
         /// </summary>
         public const string DistanceFade = "tplab.fluxfx.distance-fade";
-
-        /// <summary>
-        /// Blinkの識別子
-        /// </summary>
-        public const string Blink = "tplab.fluxfx.blink";
 
         /// <summary>
         /// ColorOverLifetimeの識別子

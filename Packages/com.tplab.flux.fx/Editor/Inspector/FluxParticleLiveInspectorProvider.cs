@@ -1,4 +1,3 @@
-using TpLab.Flux.FX.Editor.Modules.Blink;
 using TpLab.Flux.FX.Editor.Modules.TextureSheetAnimation;
 using TpLab.Flux.FX.Editor.Modules.RotationOverLifetime;
 using TpLab.Flux.FX.Editor.Modules.SizeOverLifetime;
@@ -111,14 +110,6 @@ namespace TpLab.Flux.FX.Editor.Inspector
             new FluxParticleLiveBinding(typeof(FluxParticleRotationOverLifetimeModule), "endRotation", FluxParticleRotationOverLifetimeContract.EndRotation),
             new FluxParticleLiveBinding(typeof(FluxParticleTextureSheetAnimationModule), "enabled", FluxParticleTextureSheetAnimationContract.Module.Enabled),
             new FluxParticleLiveBinding(typeof(FluxParticleTextureSheetAnimationModule), "cycles", FluxParticleTextureSheetAnimationContract.Cycles),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "enabled", FluxParticleBlinkContract.Module.Enabled),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "frequency", FluxParticleBlinkContract.Frequency),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "duty", FluxParticleBlinkContract.Duty),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "minimum", FluxParticleBlinkContract.Minimum),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "smoothness", FluxParticleBlinkContract.Smoothness),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "randomPhase", FluxParticleBlinkContract.RandomPhase),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "timeMode", FluxParticleBlinkContract.TimeMode),
-            new FluxParticleLiveBinding(typeof(FluxParticleBlinkModule), "target", FluxParticleBlinkContract.Target),
             new FluxParticleLiveBinding(null, "render.intensity", FluxParticleRendererContract.Intensity)
         };
     }

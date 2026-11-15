@@ -21,7 +21,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
         SizeOverLifetime,
         RotationOverLifetime,
         TextureSheetAnimation,
-        Blink,
+        Brightness,
         Trails,
         CustomLift,
         Count
@@ -90,13 +90,13 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
         Cycles = 58,
         TilesX = 59,
         TilesY = 60,
-        BlinkFrequency = 61,
-        BlinkDuty = 62,
-        BlinkMinimum = 63,
-        BlinkSmoothness = 64,
-        BlinkRandomPhase = 65,
-        BlinkTimeMode = 66,
-        BlinkTarget = 67,
+        BrightnessPeriod = 61,
+        BrightnessDuty = 62,
+        BrightnessMinimum = 63,
+        BrightnessSmoothness = 64,
+        BrightnessRandomPhase = 65,
+        BrightnessTimeMode = 66,
+        BrightnessTarget = 67,
         Intensity = 68,
         TrailWidth = 69,
         TrailR = 70,
@@ -108,7 +108,13 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
         LiftDirectionX = 76,
         LiftDirectionY = 77,
         LiftDirectionZ = 78,
-        Count = 79
+        BrightnessBaseMinimum = 79,
+        BrightnessBaseMaximum = 80,
+        BrightnessWaveform = 81,
+        BrightnessPeriodMinimum = 82,
+        BrightnessPeriodMaximum = 83,
+        BrightnessMaximum = 84,
+        Count = 85
     }
 
     /// <summary>
@@ -298,9 +304,11 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
             {
                 values[i].text = controls[i].value.ToString(controls[i].wholeNumbers ? "F0" : "F2");
             }
-            values[(int)SampleControl.BlinkTimeMode].text = Value(SampleControl.BlinkTimeMode) < 0.5f ? "System" : "Age";
-            var blinkTarget = Value(SampleControl.BlinkTarget);
-            values[(int)SampleControl.BlinkTarget].text = blinkTarget < 0.5f ? "RGB" : blinkTarget < 1.5f ? "Alpha" : "Both";
+            values[(int)SampleControl.BrightnessTimeMode].text = Value(SampleControl.BrightnessTimeMode) < 0.5f ? "System" : "Age";
+            var brightnessTarget = Value(SampleControl.BrightnessTarget);
+            values[(int)SampleControl.BrightnessTarget].text = brightnessTarget < 0.5f ? "RGB" : brightnessTarget < 1.5f ? "Alpha" : "Both";
+            var waveform = Value(SampleControl.BrightnessWaveform);
+            values[(int)SampleControl.BrightnessWaveform].text = waveform < 0.5f ? "Off" : waveform < 1.5f ? "Sine" : "Pulse";
             if (!_ready) return;
             ApplyLiveValues();
             message.text = "Live values applied. Initial values need Apply & Restart.";
@@ -316,6 +324,17 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 moduleParameterGroups[i].interactable = enabled;
                 moduleParameterGroups[i].alpha = enabled ? 1f : 0.35f;
             }
+            var waveform = Value(SampleControl.BrightnessWaveform);
+            var temporal = waveform > 0.5f;
+            controls[(int)SampleControl.BrightnessPeriod].interactable = temporal;
+            controls[(int)SampleControl.BrightnessPeriodMinimum].interactable = temporal;
+            controls[(int)SampleControl.BrightnessPeriodMaximum].interactable = temporal;
+            controls[(int)SampleControl.BrightnessRandomPhase].interactable = temporal;
+            controls[(int)SampleControl.BrightnessTimeMode].interactable = temporal;
+            controls[(int)SampleControl.BrightnessMinimum].interactable = temporal;
+            controls[(int)SampleControl.BrightnessMaximum].interactable = temporal;
+            controls[(int)SampleControl.BrightnessDuty].interactable = waveform > 1.5f;
+            controls[(int)SampleControl.BrightnessSmoothness].interactable = waveform > 1.5f;
         }
 
         /// <summary>
@@ -425,7 +444,7 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 case SampleModule.SizeOverLifetime: return modules.SizeOverLifetime;
                 case SampleModule.RotationOverLifetime: return modules.RotationOverLifetime;
                 case SampleModule.TextureSheetAnimation: return modules.TextureSheetAnimation;
-                case SampleModule.Blink: return modules.Blink;
+                case SampleModule.Brightness: return modules.Brightness;
                 case SampleModule.Trails: return modules.Trails;
                 case SampleModule.CustomLift: return modules.CustomLift();
                 default: return null;
@@ -522,18 +541,24 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Udon
                 modules.TextureSheetAnimation.SetCycles(Value(SampleControl.Cycles));
                 modules.TextureSheetAnimation.SetEnabled(moduleToggles[(int)SampleModule.TextureSheetAnimation].isOn);
             }
-            if (modules.Blink != null)
+            if (modules.Brightness != null)
             {
-                var blink = modules.Blink;
-                blink.SetFrequency(Value(SampleControl.BlinkFrequency));
-                blink.SetDuty(Value(SampleControl.BlinkDuty));
-                blink.SetMinimum(Value(SampleControl.BlinkMinimum));
-                blink.SetSmoothness(Value(SampleControl.BlinkSmoothness));
-                blink.SetRandomPhase(Value(SampleControl.BlinkRandomPhase));
-                blink.SetTimeMode(Value(SampleControl.BlinkTimeMode) < 0.5f ? FluxParticleBlinkTimeMode.SystemTime : FluxParticleBlinkTimeMode.ParticleAge);
-                var target = Value(SampleControl.BlinkTarget);
-                blink.SetTarget(target < 0.5f ? FluxParticleBlinkTarget.Rgb : target < 1.5f ? FluxParticleBlinkTarget.Alpha : FluxParticleBlinkTarget.Both);
-                blink.SetEnabled(moduleToggles[(int)SampleModule.Blink].isOn);
+                var brightness = modules.Brightness;
+                brightness.SetBaseMinimum(Value(SampleControl.BrightnessBaseMinimum));
+                brightness.SetBaseMaximum(Value(SampleControl.BrightnessBaseMaximum));
+                brightness.SetWaveform((FluxParticleBrightnessWaveform)(int)Value(SampleControl.BrightnessWaveform));
+                brightness.SetPeriod(Value(SampleControl.BrightnessPeriod));
+                brightness.SetPeriodMinimum(Value(SampleControl.BrightnessPeriodMinimum));
+                brightness.SetPeriodMaximum(Value(SampleControl.BrightnessPeriodMaximum));
+                brightness.SetMaximum(Value(SampleControl.BrightnessMaximum));
+                brightness.SetDuty(Value(SampleControl.BrightnessDuty));
+                brightness.SetMinimum(Value(SampleControl.BrightnessMinimum));
+                brightness.SetSmoothness(Value(SampleControl.BrightnessSmoothness));
+                brightness.SetRandomPhase(Value(SampleControl.BrightnessRandomPhase));
+                brightness.SetTimeMode(Value(SampleControl.BrightnessTimeMode) < 0.5f ? FluxParticleBrightnessTimeMode.SystemTime : FluxParticleBrightnessTimeMode.ParticleAge);
+                var target = Value(SampleControl.BrightnessTarget);
+                brightness.SetTarget(target < 0.5f ? FluxParticleBrightnessTarget.Rgb : target < 1.5f ? FluxParticleBrightnessTarget.Alpha : FluxParticleBrightnessTarget.Both);
+                brightness.SetEnabled(moduleToggles[(int)SampleModule.Brightness].isOn);
             }
             var lift = modules.CustomLift();
             if (lift != null)

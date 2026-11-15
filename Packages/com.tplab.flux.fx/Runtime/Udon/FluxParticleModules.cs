@@ -93,9 +93,9 @@ namespace TpLab.Flux.FX.Udon
         public FluxParticleTextureSheetAnimationHandle TextureSheetAnimation => FluxParticleTextureSheetAnimationHandle.Get(this);
 
         /// <summary>
-        /// Blinkの操作ハンドル。未組み込みの場合はnull
+        /// Brightnessの操作ハンドル。未組み込みの場合はnull
         /// </summary>
-        public FluxParticleBlinkHandle Blink => FluxParticleBlinkHandle.Get(this);
+        public FluxParticleBrightnessHandle Brightness => FluxParticleBrightnessHandle.Get(this);
 
         /// <summary>
         /// Trailsの操作ハンドル。未組み込みの場合はnull

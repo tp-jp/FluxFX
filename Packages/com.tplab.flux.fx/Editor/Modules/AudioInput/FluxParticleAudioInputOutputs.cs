@@ -10,6 +10,34 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
     public static class FluxParticleAudioInputOutputs
     {
         /// <summary>
+        /// 未平滑化のFloat3入力。x=選択音域、y=全4音域平均、z=更新カウンター（未取得は-1）。
+        /// Gain・NoiseFloor・Strength・AverageGain適用後、Attack／Release適用前の値。
+        /// </summary>
+        public const string Sample = "audio-input.sample";
+
+        /// <summary>
+        /// Float2の入力鮮度。x=最後のカウンター、y=変化がない秒数。
+        /// 利用側はEnabled、x >= 0、y &lt; Timeoutを合わせて判定します。
+        /// </summary>
+        public const string Freshness = "audio-input.freshness";
+
+        /// <summary>
+        /// 入力鮮度を確定するOperation ID
+        /// </summary>
+        public const string UpdateFreshness = "audio-input.update-freshness";
+
+        /// <summary>
+        /// Updateで独立した応答を計算するための未平滑化入力の読み取り契約
+        /// </summary>
+        public static FluxParticleValueRead ReadSample() => new FluxParticleValueRead(Sample, FluxParticleReadVersion.Provided);
+
+        /// <summary>
+        /// 当該Stepの鮮度を読み取り、更新Operationへの依存を宣言します。
+        /// </summary>
+        public static FluxParticleValueRead ReadFreshness() => new FluxParticleValueRead(Freshness,
+            FluxParticleReadVersion.AfterOperation, UpdateFreshness);
+
+        /// <summary>
         /// 平滑化したFloat3応答のValue ID
         /// </summary>
         public const string Response = "audio-input.response";

@@ -131,13 +131,19 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             new ControlSpec(4, SampleControl.TilesX, "Texture sheet / columns [initial]", 1f, 4f, 2f, true),
             new ControlSpec(4, SampleControl.TilesY, "Texture sheet / rows [initial]", 1f, 4f, 2f, true),
             new ControlSpec(4, SampleControl.Intensity, "Renderer / intensity", 0f, 10f, 1f, false),
-            new ControlSpec(4, SampleControl.BlinkFrequency, "Frequency (Hz)", 0f, 10f, 2f, false),
-            new ControlSpec(4, SampleControl.BlinkDuty, "Duty", 0f, 1f, 0.5f, false),
-            new ControlSpec(4, SampleControl.BlinkMinimum, "Minimum", 0f, 1f, 0f, false),
-            new ControlSpec(4, SampleControl.BlinkSmoothness, "Smoothness", 0f, 1f, 0f, false),
-            new ControlSpec(4, SampleControl.BlinkRandomPhase, "Random phase", 0f, 1f, 0f, false),
-            new ControlSpec(4, SampleControl.BlinkTimeMode, "Time / System or Particle age", 0f, 1f, 0f, true),
-            new ControlSpec(4, SampleControl.BlinkTarget, "Target / RGB, Alpha or Both", 0f, 2f, 1f, true),
+            new ControlSpec(4, SampleControl.BrightnessBaseMinimum, "Base multiplier / minimum", 0f, 10f, 1f, false),
+            new ControlSpec(4, SampleControl.BrightnessBaseMaximum, "Base multiplier / maximum", 0f, 10f, 1f, false),
+            new ControlSpec(4, SampleControl.BrightnessWaveform, "Waveform / Off, Sine or Pulse", 0f, 2f, 2f, true),
+            new ControlSpec(4, SampleControl.BrightnessPeriod, "Period (s) / 0 disables oscillation", 0f, 20f, 0.5f, false),
+            new ControlSpec(4, SampleControl.BrightnessPeriodMinimum, "Period multiplier / minimum", 0.1f, 2f, 1f, false),
+            new ControlSpec(4, SampleControl.BrightnessPeriodMaximum, "Period multiplier / maximum", 0.1f, 2f, 1f, false),
+            new ControlSpec(4, SampleControl.BrightnessDuty, "Duty", 0f, 1f, 0.5f, false),
+            new ControlSpec(4, SampleControl.BrightnessMinimum, "Temporal multiplier / minimum", 0f, 4f, 0f, false),
+            new ControlSpec(4, SampleControl.BrightnessMaximum, "Temporal multiplier / maximum", 0f, 4f, 1f, false),
+            new ControlSpec(4, SampleControl.BrightnessSmoothness, "Smoothness", 0f, 1f, 0f, false),
+            new ControlSpec(4, SampleControl.BrightnessRandomPhase, "Random phase", 0f, 1f, 0f, false),
+            new ControlSpec(4, SampleControl.BrightnessTimeMode, "Time / System or Particle age", 0f, 1f, 0f, true),
+            new ControlSpec(4, SampleControl.BrightnessTarget, "Target / RGB, Alpha or Both", 0f, 2f, 1f, true),
             new ControlSpec(3, SampleControl.LiftStrength, "Strength", -8f, 8f, 2f, false),
             new ControlSpec(3, SampleControl.LiftDirectionX, "Direction / X", -1f, 1f, 0f, false),
             new ControlSpec(3, SampleControl.LiftDirectionY, "Direction / Y", -1f, 1f, 1f, false),
@@ -272,7 +278,7 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
                 new FluxParticleNoiseModule(), new FluxParticleVortexModule(), new FluxParticleLimitVelocityModule(),
                 new FluxParticleVelocityOverLifetimeModule(), new FluxParticleColorOverLifetimeModule(),
                 new FluxParticleSizeOverLifetimeModule(), new FluxParticleRotationOverLifetimeModule(),
-                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBlinkModule(), new FluxParticleTrailsModule(), new CustomLiftModule()
+                new FluxParticleTextureSheetAnimationModule(), new FluxParticleBrightnessModule(), new FluxParticleTrailsModule(), new CustomLiftModule()
             };
             var modules = serialized.FindProperty("modules");
             modules.arraySize = definitions.Length;
@@ -282,6 +288,13 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
                 if (definitions[i] is CustomLiftModule)
                 {
                     modules.GetArrayElementAtIndex(i).FindPropertyRelative("enabled").boolValue = false;
+                }
+                if (definitions[i] is FluxParticleBrightnessModule)
+                {
+                    var brightness = modules.GetArrayElementAtIndex(i);
+                    brightness.FindPropertyRelative("waveform").intValue = (int)FluxParticleBrightnessWaveform.Pulse;
+                    brightness.FindPropertyRelative("period").floatValue = 0.5f;
+                    brightness.FindPropertyRelative("target").intValue = (int)FluxParticleBrightnessTarget.Alpha;
                 }
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -384,14 +397,14 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
         static readonly string[] ModuleNames =
         {
             "Gravity", "Drag", "Force", "Noise", "Vortex", "Limit Velocity", "Velocity over Lifetime",
-            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Blink", "Trails", "Custom Lift"
+            "Color over Lifetime", "Size over Lifetime", "Rotation over Lifetime", "Texture Sheet Animation", "Brightness", "Trails", "Custom Lift"
         };
 
         static readonly SampleControl[] ModuleStarts =
         {
             SampleControl.GravityX, SampleControl.Drag, SampleControl.ForceX, SampleControl.NoiseStrength,
             SampleControl.VortexStrength, SampleControl.MaxSpeed, SampleControl.VelocityStartX,
-            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BlinkFrequency, SampleControl.TrailWidth, SampleControl.LiftStrength, SampleControl.Count
+            SampleControl.EndR, SampleControl.EndSize, SampleControl.EndRotation, SampleControl.Cycles, SampleControl.BrightnessPeriod, SampleControl.TrailWidth, SampleControl.LiftStrength, SampleControl.Count
         };
 
         static void BuildSlider(Transform body, ControlSpec spec, float offset, Slider[] controls, Text[] values, UdonBehaviour target)
@@ -426,13 +439,16 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
             {
                 var motion = module < (int)SampleModule.ColorOverLifetime || module == (int)SampleModule.CustomLift;
                 if (motion != (page == MotionPage)) continue;
-                var specs = Specs.Where(spec => spec.Id != SampleControl.Intensity && spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]).ToArray();
+                var specs = Specs.Where(spec => spec.Id != SampleControl.Intensity &&
+                    (spec.Id < SampleControl.BrightnessBaseMinimum
+                        ? spec.Id >= ModuleStarts[module] && spec.Id < ModuleStarts[module + 1]
+                        : module == (int)SampleModule.Brightness)).ToArray();
                 var height = 48 + specs.Length * 72;
                 var section = Rect(ModuleNames[module], scroll.content, 8, y, 438, height);
                 var header = Rect("Header", section, 0, 0, 438, 36);
                 header.gameObject.AddComponent<Image>().color = new Color(0.1f, 0.18f, 0.23f);
                 toggles[module] = Toggle(header, ModuleNames[module], 10, 5,
-                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Blink && module != (int)SampleModule.Trails && module != (int)SampleModule.CustomLift, target);
+                    module == (int)SampleModule.Noise || module >= (int)SampleModule.ColorOverLifetime && module != (int)SampleModule.Brightness && module != (int)SampleModule.Trails && module != (int)SampleModule.CustomLift, target);
                 Place((RectTransform)toggles[module].transform, 10, 5, 418, 30);
                 toggles[module].GetComponentInChildren<Text>().fontStyle = FontStyle.Bold;
                 var body = Rect("Parameters", section, 0, 44, 438, specs.Length * 72);

@@ -28,7 +28,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 var authoring = root.AddComponent<FluxParticleAuthoring>();
                 var baseline = FluxParticleBuildPipeline.Build(authoring);
-                var modules = new FluxParticleModule[] { new FluxParticleColorOverLifetimeModule(), new FluxParticleBlinkModule(), new FluxParticleDistanceFadeModule() };
+                var modules = new FluxParticleModule[] { new FluxParticleColorOverLifetimeModule(), new FluxParticleBrightnessModule(), new FluxParticleDistanceFadeModule() };
                 typeof(FluxParticleAuthoring).GetField("modules", BindingFlags.Instance | BindingFlags.NonPublic)
                     .SetValue(authoring, (reverse ? modules.Reverse() : modules).ToList());
                 var build = FluxParticleBuildPipeline.Build(authoring);
@@ -36,7 +36,9 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var operations = build.Shaders.Compilation.Operations.Where(operation => operation.Phase ==
                     TpLab.Flux.FX.Editor.Compilation.Definitions.FluxParticlePhase.Render).ToArray();
                 Assert.Greater(Array.FindIndex(operations, operation => operation.Id == FluxParticleDistanceFadeDefinition.RenderOperation),
-                    Array.FindIndex(operations, operation => operation.Id == "render.blink"));
+                    Array.FindIndex(operations, operation => operation.Id == "render.color"));
+                Assert.Greater(Array.FindIndex(operations, operation => operation.Id == "render.brightness"),
+                    Array.FindIndex(operations, operation => operation.Id == "render.color"));
                 shader = ShaderUtil.CreateShaderAsset(build.RendererSource, true);
                 Assert.IsFalse(ShaderUtil.ShaderHasError(shader), ShaderErrors(shader));
             }

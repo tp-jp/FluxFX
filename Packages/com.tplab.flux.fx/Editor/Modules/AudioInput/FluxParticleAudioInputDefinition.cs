@@ -14,8 +14,8 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
     {
         const string Root = "Packages/com.tplab.flux.fx/Editor/Modules/AudioInput/";
         const string AudioLinkInclude = "Packages/com.llealloo.audiolink/Runtime/Shaders/AudioLink.cginc";
-        internal const string Freshness = "audio-input.freshness";
-        internal const string Sample = "audio-input.sample";
+        internal const string Freshness = FluxParticleAudioInputOutputs.Freshness;
+        internal const string Sample = FluxParticleAudioInputOutputs.Sample;
 
         /// <inheritdoc />
         public override string ModuleId => FluxParticleAudioInputContract.Module.Id;

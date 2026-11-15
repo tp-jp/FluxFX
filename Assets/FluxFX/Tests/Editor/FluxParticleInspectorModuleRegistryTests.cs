@@ -194,7 +194,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleSizeOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleRotationOverLifetimeModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleTextureSheetAnimationModule)));
-            Assert.IsTrue(Contains(rendering, typeof(FluxParticleBlinkModule)));
+            Assert.IsTrue(Contains(rendering, typeof(FluxParticleBrightnessModule)));
             Assert.IsTrue(Contains(rendering, typeof(FluxParticleTrailsModule)));
         }
 

@@ -1,4 +1,18 @@
-void FluxFX_Blink(inout FluxRenderBlinkContext ctx)
+// Frozen pre-Brightness Pulse reference, used only for visual regression tests.
+struct FluxFX_TestLegacyPulseContext {
+float parameterBlinkDuty;
+float parameterBlinkFrequency;
+float parameterBlinkMinimum;
+float parameterBlinkRandomPhase;
+float parameterBlinkSmoothness;
+float parameterBlinkTarget;
+float parameterBlinkTimeMode;
+float valueParticleAge;
+uint valueParticleSpawnKey;
+float4 valueRenderColor;
+float valueStepTime;
+};
+void FluxFX_TestLegacyPulse(inout FluxFX_TestLegacyPulseContext ctx)
 {
     float multiplier = 1;
     float frequency = ctx.parameterBlinkFrequency;

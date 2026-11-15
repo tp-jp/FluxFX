@@ -221,66 +221,70 @@ namespace TpLab.Flux.FX.Tests.Editor
             runtime.Step(0.5f, 0, 0, 2);
             AssertVector(new Vector4(0, 2, 0, 0), ReadValue(runtime, compiled, "particle.velocity", 0));
         }
-        [TestCase(FluxParticleBlinkTimeMode.SystemTime, 0f, 0f)]
-        [TestCase(FluxParticleBlinkTimeMode.ParticleAge, 0f, 1f)]
-        [TestCase(FluxParticleBlinkTimeMode.ParticleAge, 1f, 0f)]
-        public void BlinkUsesSimulationClockAndDeterministicSpawnPhase(FluxParticleBlinkTimeMode timeMode, float randomPhase, float alpha)
+        [TestCase(FluxParticleBrightnessTimeMode.SystemTime, 0f, 0f)]
+        [TestCase(FluxParticleBrightnessTimeMode.ParticleAge, 0f, 1f)]
+        [TestCase(FluxParticleBrightnessTimeMode.ParticleAge, 1f, 0f)]
+        public void BrightnessUsesSimulationClockAndDeterministicSpawnPhase(FluxParticleBrightnessTimeMode timeMode, float randomPhase, float alpha)
         {
             RequireGraphics();
-            SetModules(new FluxParticleBlinkModule());
+            SetModules(new FluxParticleBrightnessModule());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
-            var blink = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Blink;
-            Assert.IsTrue(blink.SetFrequency(1));
-            Assert.IsTrue(blink.SetTimeMode(timeMode));
-            Assert.IsTrue(blink.SetRandomPhase(randomPhase));
+            var brightness = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Brightness;
+            Assert.IsTrue(brightness.SetWaveform(FluxParticleBrightnessWaveform.Pulse));
+            Assert.IsTrue(brightness.SetTarget(FluxParticleBrightnessTarget.Alpha));
+            Assert.IsTrue(brightness.SetDuty(0.4f));
+            Assert.IsTrue(brightness.SetPeriod(1));
+            Assert.IsTrue(brightness.SetTimeMode(timeMode));
+            Assert.IsTrue(brightness.SetRandomPhase(randomPhase));
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0.75f, 0, 0, 0);
             runtime.Step(0, 0, 1, 1);
             AssertCustomRender(runtime, compiled, new Color(1, 1, 1, alpha), 1);
         }
 
-        [TestCase(FluxParticleBlinkTarget.Rgb)]
-        [TestCase(FluxParticleBlinkTarget.Alpha)]
-        [TestCase(FluxParticleBlinkTarget.Both)]
-        public void BlinkAndIntensityUpdateGpuRendering(FluxParticleBlinkTarget target)
+        [TestCase(FluxParticleBrightnessTarget.Rgb)]
+        [TestCase(FluxParticleBrightnessTarget.Alpha)]
+        [TestCase(FluxParticleBrightnessTarget.Both)]
+        public void BrightnessAndIntensityUpdateGpuRendering(FluxParticleBrightnessTarget target)
         {
             RequireGraphics();
-            SetModules(new FluxParticleBlinkModule());
+            SetModules(new FluxParticleBrightnessModule());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             var system = runtime.GetComponentInParent<FluxParticleSystem>();
-            var blink = system.Modules.Blink;
-            Assert.IsNotNull(blink);
+            var brightness = system.Modules.Brightness;
+            Assert.IsNotNull(brightness);
             Assert.IsTrue(system.SetRenderIntensity(2));
             Assert.IsFalse(system.SetRenderIntensity(float.PositiveInfinity));
             Assert.AreEqual(2, system.GetRenderIntensity());
-            Assert.IsTrue(blink.SetTarget(target));
-            Assert.IsTrue(blink.SetFrequency(1));
-            Assert.IsTrue(blink.SetMinimum(0.25f));
-            Assert.IsFalse(blink.SetDuty(2));
+            Assert.IsTrue(brightness.SetWaveform(FluxParticleBrightnessWaveform.Pulse));
+            Assert.IsTrue(brightness.SetTarget(target));
+            Assert.IsTrue(brightness.SetPeriod(1));
+            Assert.IsTrue(brightness.SetMinimum(0.25f));
+            Assert.IsFalse(brightness.SetDuty(2));
             PrepareCustomRenderShader(compiled);
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0, 0, 1, 1);
             AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
             runtime.Step(0.75f, 0, 0, 2);
             Assert.AreEqual(0.75f, ReadValue(runtime, compiled, "particle.age", 0).x, 0.0001f, "Particle must remain alive after stepping.");
-            Assert.AreEqual(0.25f, blink.GetMinimum());
+            Assert.AreEqual(0.25f, brightness.GetMinimum());
             Assert.AreEqual(2f, system.GetRenderIntensity());
-            var rgb = target == FluxParticleBlinkTarget.Alpha ? 2 : 0.5f;
-            var alpha = target == FluxParticleBlinkTarget.Rgb ? 1 : 0.25f;
+            var rgb = target == FluxParticleBrightnessTarget.Alpha ? 2 : 0.5f;
+            var alpha = target == FluxParticleBrightnessTarget.Rgb ? 1 : 0.25f;
             AssertCustomRender(runtime, compiled, new Color(rgb, rgb, rgb, alpha), 1);
-            Assert.IsTrue(blink.SetEnabled(false));
+            Assert.IsTrue(brightness.SetEnabled(false));
             AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
-            Assert.IsTrue(blink.SetEnabled(true));
-            Assert.IsTrue(blink.SetFrequency(0));
-            Assert.IsTrue(blink.SetDuty(0));
+            Assert.IsTrue(brightness.SetEnabled(true));
+            Assert.IsTrue(brightness.SetPeriod(0));
+            Assert.IsTrue(brightness.SetDuty(0));
             AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
-            Assert.IsTrue(blink.SetFrequency(1));
+            Assert.IsTrue(brightness.SetPeriod(1));
             AssertCustomRender(runtime, compiled, new Color(rgb, rgb, rgb, alpha), 1);
-            Assert.IsTrue(blink.SetDuty(1));
+            Assert.IsTrue(brightness.SetDuty(1));
             AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
-            Assert.IsTrue(blink.SetDuty(0.5f));
+            Assert.IsTrue(brightness.SetDuty(0.5f));
             runtime.Clear();
             runtime.Step(0, 0, 1, 1);
             AssertCustomRender(runtime, compiled, new Color(2, 2, 2, 1), 1);
@@ -288,13 +292,13 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         [TestCase(false)]
         [TestCase(true)]
-        public void BlinkComposesWithColorAndIntensityRegardlessOfModuleOrder(bool reverse)
+        public void BrightnessComposesWithColorAndIntensityRegardlessOfModuleOrder(bool reverse)
         {
-            var modules = new FluxParticleModule[] { new FluxParticleBlinkModule(), new FluxParticleColorOverLifetimeModule() };
+            var modules = new FluxParticleModule[] { new FluxParticleBrightnessModule(), new FluxParticleColorOverLifetimeModule() };
             SetModules(reverse ? modules.Reverse().ToArray() : modules);
             var build = FluxParticleBuildPipeline.Build(authoring);
             var operations = build.Shaders.Compilation.Operations.Select(operation => operation.Id).ToList();
-            Assert.Less(operations.IndexOf("render.color"), operations.IndexOf("render.blink"));
+            Assert.Less(operations.IndexOf("render.color"), operations.IndexOf("render.brightness"));
             Assert.IsFalse(operations.Contains("render.intensity"));
             StringAssert.Contains("lerp(1.0, " + FluxParticleHlslNames.ParameterProperty("render.intensity"), build.RendererSource);
             Assert.AreEqual(2, build.Shaders.Compilation.StateLayout.Pages.Count);

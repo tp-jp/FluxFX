@@ -8,7 +8,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleContractTests
     {
-        enum BlinkTime
+        enum TestTime
         {
             Simulation = 0,
             ParticleAge = 3,
@@ -48,11 +48,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void SizeAndBlinkConstraintsHaveTypedValuesAndExplicitPolicies()
+        public void NumericAndEnumConstraintsHaveTypedValuesAndExplicitPolicies()
         {
             var size = Float("size.end", "EndSize").Minimum(0).Build();
-            var duty = Float("blink.duty", "Duty").Range(0, 1).Build();
-            var time = FluxParticleParameter.Enum<BlinkTime>("blink.time-mode").ApiName("TimeMode")
+            var duty = Float("test.duty", "Duty").Range(0, 1).Build();
+            var time = FluxParticleParameter.Enum<TestTime>("test.time-mode").ApiName("TimeMode")
                 .Policy(FluxParticleParameterPolicy.Static).Build();
             var spawn = Float("spawn.speed", "Speed").Policy(FluxParticleParameterPolicy.SpawnLocked).Build();
 
@@ -61,8 +61,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(duty.IsValid(0));
             Assert.IsTrue(duty.IsValid(1));
             Assert.IsFalse(duty.IsValid(1.01f));
-            Assert.IsTrue(time.IsValid(BlinkTime.ParticleAge));
-            Assert.IsFalse(time.IsValid((BlinkTime)1));
+            Assert.IsTrue(time.IsValid(TestTime.ParticleAge));
+            Assert.IsFalse(time.IsValid((TestTime)1));
             Assert.AreEqual(FluxParticleParameterPolicy.Static, time.Policy);
             Assert.AreEqual(FluxParticleParameterPolicy.SpawnLocked, spawn.Policy);
         }
@@ -100,16 +100,16 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             var numeric = Float("test.value", "Value").Range(0, 1).Build();
             var module = Module("test.module").Parameter(numeric).Build();
-            var enumeration = FluxParticleParameter.Enum<BlinkTime>("test.enum").ApiName("Mode")
+            var enumeration = FluxParticleParameter.Enum<TestTime>("test.enum").ApiName("Mode")
                 .Policy(FluxParticleParameterPolicy.Live).Build();
 
             Assert.Throws<NotSupportedException>(() => ((IList<float>)numeric.NumericConstraint.Minimum)[0] = -1);
             Assert.Throws<NotSupportedException>(() => ((IList<float>)numeric.NumericConstraint.Maximum).Clear());
             Assert.Throws<NotSupportedException>(() => ((IList<FluxParticleParameterContract>)module.Parameters).Clear());
-            Assert.Throws<NotSupportedException>(() => ((IList<BlinkTime>)enumeration.AllowedValues)[0] = (BlinkTime)99);
+            Assert.Throws<NotSupportedException>(() => ((IList<TestTime>)enumeration.AllowedValues)[0] = (TestTime)99);
             FluxParticleParameterContract untyped = enumeration;
-            Assert.AreEqual(typeof(BlinkTime), untyped.EnumConstraint.EnumType);
-            Assert.AreEqual(BlinkTime.ParticleAge, untyped.EnumConstraint.AllowedValues[1]);
+            Assert.AreEqual(typeof(TestTime), untyped.EnumConstraint.EnumType);
+            Assert.AreEqual(TestTime.ParticleAge, untyped.EnumConstraint.AllowedValues[1]);
             Assert.Throws<NotSupportedException>(() => ((IList<Enum>)untyped.EnumConstraint.AllowedValues).Clear());
             Assert.AreEqual(2, enumeration.AllowedValues.Count);
             Assert.IsNull(module.Enabled);
@@ -118,26 +118,26 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void EnumInputArraysAndLaterBuilderChangesCannotChangeContracts()
         {
-            var input = new[] { BlinkTime.Simulation };
-            var builder = FluxParticleParameter.Enum<BlinkTime>("test.enum").ApiName("Mode")
+            var input = new[] { TestTime.Simulation };
+            var builder = FluxParticleParameter.Enum<TestTime>("test.enum").ApiName("Mode")
                 .Policy(FluxParticleParameterPolicy.Live).AllowedValues(input);
-            input[0] = BlinkTime.ParticleAge;
+            input[0] = TestTime.ParticleAge;
             var contract = builder.Build();
-            builder.AllowedValues(BlinkTime.ParticleAge);
+            builder.AllowedValues(TestTime.ParticleAge);
 
-            Assert.IsTrue(contract.IsValid(BlinkTime.Simulation));
-            Assert.IsFalse(contract.IsValid(BlinkTime.ParticleAge));
-            Assert.IsTrue(builder.Build().IsValid(BlinkTime.ParticleAge));
+            Assert.IsTrue(contract.IsValid(TestTime.Simulation));
+            Assert.IsFalse(contract.IsValid(TestTime.ParticleAge));
+            Assert.IsTrue(builder.Build().IsValid(TestTime.ParticleAge));
         }
 
         [Test]
         public void EnumConstraintsRejectUnknownEmptyDuplicateAndUndeclaredFlagCombinations()
         {
-            var builder = FluxParticleParameter.Enum<BlinkTime>("test.enum").ApiName("Mode")
+            var builder = FluxParticleParameter.Enum<TestTime>("test.enum").ApiName("Mode")
                 .Policy(FluxParticleParameterPolicy.Live);
-            Assert.Throws<InvalidOperationException>(() => builder.AllowedValues((BlinkTime)2).Build());
+            Assert.Throws<InvalidOperationException>(() => builder.AllowedValues((TestTime)2).Build());
             Assert.Throws<InvalidOperationException>(() => builder.AllowedValues().Build());
-            Assert.Throws<InvalidOperationException>(() => builder.AllowedValues(BlinkTime.ParticleAge, BlinkTime.AgeAlias).Build());
+            Assert.Throws<InvalidOperationException>(() => builder.AllowedValues(TestTime.ParticleAge, TestTime.AgeAlias).Build());
             Assert.Throws<InvalidOperationException>(() => FluxParticleParameter.Enum<Empty>("test.empty")
                 .ApiName("Empty").Policy(FluxParticleParameterPolicy.Live).Build());
             var flags = FluxParticleParameter.Enum<Flags>("test.flags").ApiName("Flags")

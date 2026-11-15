@@ -211,6 +211,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
                             continue;
                         }
 
+                        if (module.managedReferenceValue is TpLab.Flux.FX.Scripts.Modules.FluxParticleBrightnessModule &&
+                            !IsBrightnessPropertyVisible(module, property.name)) continue;
+
                         if (property.propertyType == SerializedPropertyType.Enum)
                         {
                             DrawEnum(property, metadata: metadata);
@@ -225,9 +228,26 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 }
             }
 
+            if (module.managedReferenceValue is TpLab.Flux.FX.Scripts.Modules.FluxParticleBrightnessModule &&
+                module.FindPropertyRelative("audioEnabled").boolValue &&
+                FindModuleIndex(typeof(TpLab.Flux.FX.Scripts.Modules.FluxParticleAudioInputModule)) < 0)
+            {
+                EditorGUILayout.HelpBox(L10n.Tr("Add Audio Input to use Brightness audio boost."), MessageType.Warning);
+            }
             EditorGUILayout.EndVertical();
 
             return expanded;
+        }
+
+        static bool IsBrightnessPropertyVisible(SerializedProperty module, string name)
+        {
+            var waveform = module.FindPropertyRelative("waveform").intValue;
+            if (name == "duty" || name == "smoothness") return waveform == 2;
+            if (name == "period" || name == "periodMinimum" || name == "periodMaximum" ||
+                name == "randomPhase" || name == "timeMode" || name == "minimum" || name == "maximum") return waveform != 0;
+            if (name == "audioBoost" || name == "audioAttack" || name == "audioRelease")
+                return module.FindPropertyRelative("audioEnabled").boolValue;
+            return true;
         }
 
         bool DrawModuleHeader(

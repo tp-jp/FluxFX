@@ -20,7 +20,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void AllStandardHandlesAndDirectUpdatesShareConstraints(bool initialized)
         {
             RequireGraphics();
-            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBlinkModule(), new FluxParticleTrailsModule(),
+            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBrightnessModule(), new FluxParticleTrailsModule(),
                 new FluxParticleAudioInputModule(), new FluxParticleDistanceFadeModule() }).ToArray());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
@@ -70,8 +70,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             Assert.IsTrue(modules.Drag.SetDrag(-1));
             Assert.IsTrue(runtime.SetFloat("drag", -1));
-            Assert.IsFalse(runtime.SetFloat("blink.target", 0.5f));
-            Assert.IsFalse(runtime.SetFloat("blink.time-mode", 0.5f));
+            Assert.IsFalse(runtime.SetFloat("brightness.target", 0.5f));
+            Assert.IsFalse(runtime.SetFloat("brightness.time-mode", 0.5f));
             Assert.IsFalse(runtime.SetVector("texture-sheet.tiles", new Vector4(1.5f, 1, 0, 0)));
             Assert.IsFalse(modules.TextureSheetAnimation.SetTiles(16777217, 1));
             if (!initialized)
@@ -130,25 +130,25 @@ namespace TpLab.Flux.FX.Tests.Editor
         public void RuntimeAllowedValuesPreserveSparseEnumContract()
         {
             RequireGraphics();
-            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBlinkModule() }).ToArray());
+            SetModules(CreateStandardModules().Concat(new FluxParticleModule[] { new FluxParticleBrightnessModule() }).ToArray());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
             var runtime = CreateRuntime(compiled);
             var parameters = compiled.Shaders.Compilation.Parameters.Values.OrderBy(parameter => parameter.Id, StringComparer.Ordinal).ToArray();
-            var slot = runtime.ResolveParameter("blink.target", 1);
-            var contract = FluxParticleParameter.Enum<FluxParticleBlinkTarget>("blink.target").ApiName("Target")
+            var slot = runtime.ResolveParameter("brightness.target", 1);
+            var contract = FluxParticleParameter.Enum<FluxParticleBrightnessTarget>("brightness.target").ApiName("Target")
                 .Policy(TpLab.Flux.FX.Editor.Contracts.FluxParticleParameterPolicy.Live)
-                .AllowedValues(FluxParticleBlinkTarget.Rgb, FluxParticleBlinkTarget.Both).Build();
+                .AllowedValues(FluxParticleBrightnessTarget.Rgb, FluxParticleBrightnessTarget.Both).Build();
             parameters[slot] = FluxParticleParameterContractCompiler.Compile(contract);
             var constraints = new FluxParticleRuntimeParameterConstraints(parameters);
             runtime.SetProgramVariable("parameterConstraintFlags", constraints.Flags);
             runtime.SetProgramVariable("parameterAllowedValueOffsets", constraints.AllowedValueOffsets);
             runtime.SetProgramVariable("parameterAllowedValues", constraints.AllowedValues);
-            var handle = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Blink;
-            Assert.IsTrue(handle.SetTarget(FluxParticleBlinkTarget.Both));
-            Assert.IsFalse(handle.SetTarget(FluxParticleBlinkTarget.Alpha));
-            Assert.IsFalse(runtime.SetFloat("blink.target", 1));
-            Assert.AreEqual(FluxParticleBlinkTarget.Both, handle.GetTarget());
-            Assert.IsTrue(runtime.SetFloat("blink.target", 0));
+            var handle = runtime.GetComponentInParent<FluxParticleSystem>().Modules.Brightness;
+            Assert.IsTrue(handle.SetTarget(FluxParticleBrightnessTarget.Both));
+            Assert.IsFalse(handle.SetTarget(FluxParticleBrightnessTarget.Alpha));
+            Assert.IsFalse(runtime.SetFloat("brightness.target", 1));
+            Assert.AreEqual(FluxParticleBrightnessTarget.Both, handle.GetTarget());
+            Assert.IsTrue(runtime.SetFloat("brightness.target", 0));
         }
     }
 }

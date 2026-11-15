@@ -13,7 +13,7 @@ using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Compilation.Definitions;
 using TpLab.Flux.FX.Editor.Contracts;
 using TpLab.Flux.FX.Editor.Modules;
-using TpLab.Flux.FX.Editor.Modules.Blink;
+using TpLab.Flux.FX.Editor.Modules.Brightness;
 using TpLab.Flux.FX.Scripts.Modules;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [TestCase("VelocityOverLifetime")]
         [TestCase("TextureSheetAnimation")]
         [TestCase("Trails")]
-        [TestCase("Blink")]
+        [TestCase("Brightness")]
         public void ContractPreservesIdentityEnabledAndHandleSlots(string name)
         {
             var contract = Contract(name);
@@ -75,7 +75,9 @@ namespace TpLab.Flux.FX.Tests.Editor
         {
             foreach (var parameter in new[] { FluxParticleLimitVelocityContract.MaxSpeed, FluxParticleNoiseContract.Strength,
                 FluxParticleNoiseContract.Scale, FluxParticleNoiseContract.Speed, FluxParticleVortexContract.Strength,
-                FluxParticleTextureSheetAnimationContract.Cycles, FluxParticleTrailsContract.Width, FluxParticleBlinkContract.Frequency })
+                FluxParticleTextureSheetAnimationContract.Cycles, FluxParticleTrailsContract.Width, FluxParticleBrightnessContract.Period,
+                FluxParticleBrightnessContract.BaseMinimum, FluxParticleBrightnessContract.BaseMaximum,
+                FluxParticleBrightnessContract.Minimum, FluxParticleBrightnessContract.Maximum, FluxParticleBrightnessContract.AudioBoost })
             {
                 Assert.IsTrue(parameter.IsValid(0), parameter.Id);
                 Assert.IsTrue(parameter.IsValid(float.MaxValue), parameter.Id);
@@ -83,8 +85,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.IsFalse(parameter.IsValid(float.NaN), parameter.Id);
                 Assert.IsFalse(parameter.IsValid(float.PositiveInfinity), parameter.Id);
             }
-            foreach (var parameter in new[] { FluxParticleBlinkContract.Duty, FluxParticleBlinkContract.Minimum,
-                FluxParticleBlinkContract.Smoothness, FluxParticleBlinkContract.RandomPhase })
+            foreach (var parameter in new[] { FluxParticleBrightnessContract.Duty,
+                FluxParticleBrightnessContract.Smoothness, FluxParticleBrightnessContract.RandomPhase })
             {
                 Assert.IsTrue(parameter.IsValid(0), parameter.Id);
                 Assert.IsTrue(parameter.IsValid(1), parameter.Id);
@@ -106,21 +108,21 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void BlinkContractsUsePublicEnumsAndPreserveShaderEncoding()
+        public void BrightnessContractsUsePublicEnumsAndPreserveShaderEncoding()
         {
-            var settings = new FluxParticleBlinkModule();
-            typeof(FluxParticleBlinkModule).GetField("timeMode", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(settings, FluxParticleBlinkTimeMode.ParticleAge);
-            typeof(FluxParticleBlinkModule).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(settings, FluxParticleBlinkTarget.Both);
+            var settings = new FluxParticleBrightnessModule();
+            typeof(FluxParticleBrightnessModule).GetField("timeMode", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(settings, FluxParticleBrightnessTimeMode.ParticleAge);
+            typeof(FluxParticleBrightnessModule).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(settings, FluxParticleBrightnessTarget.Both);
             var context = new FluxParticleProgramContribution(new FluxParticleDefinitionBuilder());
-            new FluxParticleBlinkDefinition().Contribute(settings, context);
-            Assert.AreEqual(typeof(FluxParticleBlinkTimeMode), FluxParticleBlinkContract.TimeMode.ValueType);
-            Assert.AreEqual(typeof(FluxParticleBlinkTarget), FluxParticleBlinkContract.Target.ValueType);
-            Assert.AreEqual(1, context.InitialValues["blink.time-mode"].x);
-            Assert.AreEqual(2, context.InitialValues["blink.target"].x);
-            Assert.AreEqual(FluxParticleValueType.Float, context.Parameters["blink.time-mode"].Type);
-            Assert.AreEqual(FluxParticleValueType.Float, context.Parameters["blink.target"].Type);
-            Assert.IsFalse(FluxParticleBlinkContract.TimeMode.IsValid((FluxParticleBlinkTimeMode)99));
-            Assert.IsFalse(FluxParticleBlinkContract.Target.IsValid((FluxParticleBlinkTarget)(-1)));
+            new FluxParticleBrightnessDefinition().Contribute(settings, context);
+            Assert.AreEqual(typeof(FluxParticleBrightnessTimeMode), FluxParticleBrightnessContract.TimeMode.ValueType);
+            Assert.AreEqual(typeof(FluxParticleBrightnessTarget), FluxParticleBrightnessContract.Target.ValueType);
+            Assert.AreEqual(1, context.InitialValues["brightness.time-mode"].x);
+            Assert.AreEqual(2, context.InitialValues["brightness.target"].x);
+            Assert.AreEqual(FluxParticleValueType.Float, context.Parameters["brightness.time-mode"].Type);
+            Assert.AreEqual(FluxParticleValueType.Float, context.Parameters["brightness.target"].Type);
+            Assert.IsFalse(FluxParticleBrightnessContract.TimeMode.IsValid((FluxParticleBrightnessTimeMode)99));
+            Assert.IsFalse(FluxParticleBrightnessContract.Target.IsValid((FluxParticleBrightnessTarget)(-1)));
         }
 
         static FluxParticleModuleContract Contract(string name)
@@ -135,7 +137,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 case "VelocityOverLifetime": return FluxParticleVelocityOverLifetimeContract.Module;
                 case "TextureSheetAnimation": return FluxParticleTextureSheetAnimationContract.Module;
                 case "Trails": return FluxParticleTrailsContract.Module;
-                case "Blink": return FluxParticleBlinkContract.Module;
+                case "Brightness": return FluxParticleBrightnessContract.Module;
                 default: throw new ArgumentOutOfRangeException(nameof(name));
             }
         }
@@ -152,7 +154,10 @@ namespace TpLab.Flux.FX.Tests.Editor
                 case "VelocityOverLifetime": return new[] { "velocity-over-lifetime.start", "velocity-over-lifetime.end", "velocity-over-lifetime.orbital", "velocity-over-lifetime.offset", "velocity-over-lifetime.radial" };
                 case "TextureSheetAnimation": return new[] { "texture-sheet.tiles", "texture-sheet.cycles" };
                 case "Trails": return new[] { "trails.width", "trails.color", "trails.duration" };
-                case "Blink": return new[] { "blink.frequency", "blink.duty", "blink.minimum", "blink.smoothness", "blink.random-phase", "blink.time-mode", "blink.target" };
+                case "Brightness": return new[] { "brightness.base-minimum", "brightness.base-maximum", "brightness.waveform", "brightness.period",
+                    "brightness.period-minimum", "brightness.period-maximum", "brightness.random-phase", "brightness.time-mode",
+                    "brightness.minimum", "brightness.maximum", "brightness.duty", "brightness.smoothness", "brightness.target",
+                    "brightness.audio-boost", "brightness.audio-attack", "brightness.audio-release" };
                 default: throw new ArgumentOutOfRangeException(nameof(name));
             }
         }
