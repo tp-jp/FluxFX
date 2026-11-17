@@ -106,8 +106,8 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.nuget.mono-cecil": {
-      "version": "1.11.4",
-      "depth": 2,
+      "version": "1.11.6",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -242,6 +242,17 @@
         "com.unity.inputsystem": "1.2.0",
         "com.unity.ai.navigation": "1.1.5"
       }
+    },
+    "io.github.hatayama.uloopmcp": {
+      "version": "https://github.com/hatayama/unity-cli-loop.git?path=/Packages/src",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.nuget.mono-cecil": "1.11.6"
+      },
+      "hash": "c8d564a68a95e62cb81c84288b23d37e111a4219"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",
