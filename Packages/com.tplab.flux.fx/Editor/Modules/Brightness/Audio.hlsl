@@ -4,7 +4,9 @@ void FluxFX_BrightnessUpdate(inout FluxBrightnessUpdateContext ctx)
     bool active = ctx.parameterBrightnessEnabled > 0.5 && ctx.parameterAudioInputEnabled > 0.5
         && ctx.valueAudioInputFreshness.x >= 0.0
         && ctx.valueAudioInputFreshness.y < ctx.parameterAudioInputTimeout;
-    float target = active ? saturate(ctx.valueAudioInputSample.y) : 0.0;
+    float level = ctx.parameterBrightnessAudioSource < 0.5 ? ctx.valueAudioInputSample.y
+        : ctx.valueAudioInputBands[(uint)ctx.parameterBrightnessAudioSource - 1];
+    float target = active ? saturate(level) : 0.0;
     ctx.valueBrightnessAudio = FluxFX_BrightnessResponse(ctx.valueBrightnessAudio, target,
         ctx.valueStepDeltaTime, ctx.parameterBrightnessAudioAttack, ctx.parameterBrightnessAudioRelease);
 }

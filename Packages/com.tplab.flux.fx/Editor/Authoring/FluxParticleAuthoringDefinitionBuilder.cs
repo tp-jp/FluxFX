@@ -251,7 +251,7 @@ namespace TpLab.Flux.FX.Editor.Authoring
                 new FluxParticleValueRead("emitter.row" + row, FluxParticleReadVersion.Provided)));
             definitions.AddOperation(new FluxParticleOperationDefinition(operation.Id, operation.OwnerId, operation.Phase,
                 reads, operation.Writes, operation.Dependencies, operation.HlslPath.Replace(".hlsl", "World.hlsl"),
-                operation.EntryPoint, operation.Parameters, operation.EnabledParameterId));
+                operation.EntryPoint, operation.Parameters, operation.EnabledParameterId, operation.UseValueArguments));
         }
     }
 }

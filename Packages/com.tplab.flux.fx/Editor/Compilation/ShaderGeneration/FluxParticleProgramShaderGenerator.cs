@@ -296,14 +296,19 @@ float4 FluxFX_Availability(float2 inputUV)
                     {
                         body.AppendLine($"        {local}.{FluxParticleHlslNames.Parameter(id)} = {FluxParticleHlslNames.ParameterProperty(id)};");
                     }
+                    var arguments = op.UseValueArguments
+                        ? string.Join(", ", op.Reads.Select(read => read.ValueId).Concat(op.Writes.Select(write => write.ValueId))
+                            .Distinct().Select(id => local + "." + Field(id))
+                            .Concat(op.Parameters.Select(id => local + "." + FluxParticleHlslNames.Parameter(id))))
+                        : local;
                     if (op.EnabledParameterId != null)
                     {
                         body.AppendLine($"        if ({FluxParticleHlslNames.ParameterProperty(op.EnabledParameterId)} > 0.5)");
-                        body.AppendLine("        {").AppendLine($"            {op.EntryPoint}({local});").AppendLine("        }");
+                        body.AppendLine("        {").AppendLine($"            {op.EntryPoint}({arguments});").AppendLine("        }");
                     }
                     else
                     {
-                        body.AppendLine($"        {op.EntryPoint}({local});");
+                        body.AppendLine($"        {op.EntryPoint}({arguments});");
                     }
                     localOperations.Add(op.Id);
                 }

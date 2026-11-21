@@ -122,6 +122,15 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
                 .ApiName("AudioRelease").Policy(FluxParticleParameterPolicy.Live).Build();
 
         /// <summary>
+        /// 独立した音声応答の入力元の契約
+        /// </summary>
+        public static FluxParticleParameterContract<FluxParticleAudioSource> AudioSource { get; } =
+            FluxParticleParameter.Enum<FluxParticleAudioSource>("brightness.audio-source")
+                .AllowedValues(FluxParticleAudioSource.Average, FluxParticleAudioSource.Bass, FluxParticleAudioSource.LowMid,
+                    FluxParticleAudioSource.HighMid, FluxParticleAudioSource.Treble)
+                .ApiName("AudioSource").Policy(FluxParticleParameterPolicy.Live).Build();
+
+        /// <summary>
         /// Moduleの契約
         /// </summary>
         public static FluxParticleModuleContract Module { get; } =
@@ -143,6 +152,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
                 .Parameter(FluxParticleBrightnessParameter.AudioBoost, AudioBoost)
                 .Parameter(FluxParticleBrightnessParameter.AudioAttack, AudioAttack)
                 .Parameter(FluxParticleBrightnessParameter.AudioRelease, AudioRelease)
+                .Parameter(FluxParticleBrightnessParameter.AudioSource, AudioSource)
                 .Build();
     }
 }

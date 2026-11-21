@@ -34,6 +34,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void InitializeLiveInspector()
         {
             _liveFields.Clear();
+            InitializeAudioChannelLiveInspector();
             foreach (var type in TypeCache.GetTypesDerivedFrom<FluxParticleLiveInspectorProvider>().OrderBy(type => type.FullName))
             {
                 if (type.IsAbstract) continue;

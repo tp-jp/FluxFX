@@ -20,6 +20,7 @@ namespace TpLab.Flux.FX.Udon.Modules
         Target = 12,
         AudioBoost = 13,
         AudioAttack = 14,
-        AudioRelease = 15
+        AudioRelease = 15,
+        AudioSource = 16
     }
 }

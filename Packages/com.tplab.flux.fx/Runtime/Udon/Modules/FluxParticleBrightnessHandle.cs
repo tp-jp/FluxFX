@@ -27,6 +27,19 @@ namespace TpLab.Flux.FX.Udon.Modules
     public static class FluxParticleBrightnessHandleExtensions
     {
         /// <summary>
+        /// 未平滑化の入力元を取得します。
+        /// </summary>
+        public static FluxParticleAudioSource GetAudioSource(this FluxParticleBrightnessHandle handle) =>
+            (FluxParticleAudioSource)(int)handle.GetValue((int)FluxParticleBrightnessParameter.AudioSource).x;
+
+        /// <summary>
+        /// 独立した応答へ渡す入力元を変更します。
+        /// </summary>
+        public static bool SetAudioSource(this FluxParticleBrightnessHandle handle, FluxParticleAudioSource value) =>
+            handle.SetValue((int)FluxParticleBrightnessParameter.AudioSource, FluxParticleValueType.Float,
+                new Vector4(System.Convert.ToSingle((int)value), 0, 0, 0));
+
+        /// <summary>
         /// 基準倍率の下限を取得します。
         /// </summary>
         public static float GetBaseMinimum(this FluxParticleBrightnessHandle handle) => handle.GetValue((int)FluxParticleBrightnessParameter.BaseMinimum).x;

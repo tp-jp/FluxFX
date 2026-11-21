@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TpLab.Flux.FX.Udon;
 using UnityEngine;
 
@@ -49,6 +50,14 @@ namespace TpLab.Flux.FX.Scripts.Modules
         [Min(0.01f)]
         [Tooltip("Seconds without a new AudioLink frame before outputs decay to zero.")]
         float timeout = 1;
+
+        [SerializeField]
+        FluxParticleAudioChannel[] channels = Array.Empty<FluxParticleAudioChannel>();
+
+        /// <summary>
+        /// 追加の独立した音声応答。配列の構成変更には再構築が必要
+        /// </summary>
+        public IReadOnlyList<FluxParticleAudioChannel> Channels => channels ?? Array.Empty<FluxParticleAudioChannel>();
 
         /// <summary>
         /// 音域

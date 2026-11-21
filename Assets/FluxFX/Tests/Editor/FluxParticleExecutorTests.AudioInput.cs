@@ -70,7 +70,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             SetModules(new FluxParticleAudioInputModule());
             var compiled = FluxParticleBuildPipeline.Build(authoring);
-            Assert.That(compiled.Shaders.Compilation.Providers["audio-input.sample"].HlslPath, Does.EndWith("/AudioLinkInput.hlsl"));
+            Assert.That(compiled.Shaders.Compilation.Providers[FluxParticleAudioInputOutputs.RawBands].HlslPath, Does.EndWith("/AudioLinkInput.hlsl"));
             var runtime = CreateRuntime(compiled);
             Assert.IsTrue(runtime.Initialize(4));
             var handle = runtime.GetComponentInParent<FluxParticleSystem>().Modules.AudioInput;
@@ -239,7 +239,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(modules.DistanceFade.SetTarget((FluxParticleDistanceFadeTarget)2));
         }
 
-        FluxParticleBuildResult BuildAudioProbe(bool consumer = false)
+        FluxParticleBuildResult BuildAudioProbe(bool consumer = false, bool rawSources = false, bool noAudioLink = false)
         {
             // Replace only the external sample source; all shipping state/update operations remain intact.
             var original = FluxParticleAuthoringDefinitionBuilder.Create(authoring, out var initial, out var bindings);
@@ -248,7 +248,14 @@ namespace TpLab.Flux.FX.Tests.Editor
             foreach (var parameter in original.Parameters.Values) definitions.AddParameter(parameter);
             foreach (var provider in original.Providers.Values)
             {
-                definitions.AddProvider(provider.ValueId == "audio-input.sample"
+                if (noAudioLink)
+                {
+                    definitions.AddProvider(provider.HlslPath != null && provider.HlslPath.EndsWith("/AudioLinkInput.hlsl")
+                        ? new FluxParticleValueProvider(provider.ValueId, provider.Kind, provider.Inputs, provider.Parameters,
+                            provider.HlslPath.Replace("AudioLinkInput.hlsl", "NoAudioInput.hlsl"), provider.EntryPoint) : provider);
+                    continue;
+                }
+                definitions.AddProvider((rawSources ? provider.ValueId == FluxParticleAudioInputOutputs.RawBands || provider.ValueId == FluxParticleAudioInputOutputs.Frame : provider.ValueId == "audio-input.sample")
                     ? new FluxParticleValueProvider(provider.ValueId, FluxParticleProviderKind.Uniform) : provider);
             }
             foreach (var id in original.OperationOrder) definitions.AddOperation(original.Operations[id]);

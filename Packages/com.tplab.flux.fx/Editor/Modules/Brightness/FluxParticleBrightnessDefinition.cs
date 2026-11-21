@@ -41,13 +41,14 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
             };
             var attack = contribution.Bind(FluxParticleBrightnessContract.AudioAttack, module.AudioAttack);
             var release = contribution.Bind(FluxParticleBrightnessContract.AudioRelease, module.AudioRelease);
+            var source = contribution.Bind(FluxParticleBrightnessContract.AudioSource, module.AudioSource);
             if (!context.Providers.ContainsKey("step.time"))
             {
                 context.AddProvider(new FluxParticleValueProvider("step.time", FluxParticleProviderKind.Uniform));
             }
             context.AddValue(new FluxParticleValueDefinition("brightness.audio", FluxParticleValueType.Float,
-                module.AudioEnabled ? FluxParticleWritePolicy.OwnerManaged : FluxParticleWritePolicy.ReadOnly, ModuleId));
-            if (module.AudioEnabled)
+                module.AudioEnabled && string.IsNullOrEmpty(module.AudioChannel) ? FluxParticleWritePolicy.OwnerManaged : FluxParticleWritePolicy.ReadOnly, ModuleId));
+            if (module.AudioEnabled && string.IsNullOrEmpty(module.AudioChannel))
             {
                 // References are resolved after all modules contribute, regardless of AudioInput registration order.
                 contribution.Operation("brightness.initialize", FluxParticlePhase.Spawn,
@@ -58,13 +59,20 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
                     new[]
                     {
                         new FluxParticleValueRead("brightness.audio", FluxParticleReadVersion.StepPrevious),
-                        FluxParticleAudioInputOutputs.ReadSample(), FluxParticleAudioInputOutputs.ReadFreshness(),
+                        FluxParticleAudioInputOutputs.ReadSample(), FluxParticleAudioInputOutputs.ReadBands(), FluxParticleAudioInputOutputs.ReadFreshness(),
                         new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
                     },
                     new[] { new FluxParticleValueWrite("brightness.audio", FluxParticleWriteKind.Modify) },
                     Root + "Audio.hlsl", "FluxFX_BrightnessUpdate", false,
-                    new[] { attack, release, FluxParticleBrightnessContract.Module.Enabled.Id,
+                    new[] { attack, release, source, FluxParticleBrightnessContract.Module.Enabled.Id,
                         FluxParticleAudioInputContract.Module.Enabled.Id, FluxParticleAudioInputContract.Timeout.Id });
+            }
+            else if (module.AudioEnabled)
+            {
+                // A channel already owns its response envelope. Do not filter it a second time.
+                context.AddProvider(new FluxParticleValueProvider("brightness.audio", FluxParticleProviderKind.Derived,
+                    new[] { FluxParticleAudioInputOutputs.ChannelResponse(module.AudioChannel) },
+                    hlslPath: Root + "Channel.hlsl", entryPoint: "FluxFX_BrightnessChannel"));
             }
             else
             {
@@ -81,7 +89,7 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
                     new FluxParticleValueRead("particle.spawn-key", FluxParticleReadVersion.Committed),
                     new FluxParticleValueRead("particle.age", FluxParticleReadVersion.Committed),
                     new FluxParticleValueRead("step.time", FluxParticleReadVersion.Provided),
-                    new FluxParticleValueRead("brightness.audio", module.AudioEnabled ? FluxParticleReadVersion.Committed : FluxParticleReadVersion.Provided)
+                    new FluxParticleValueRead("brightness.audio", module.AudioEnabled && string.IsNullOrEmpty(module.AudioChannel) ? FluxParticleReadVersion.Committed : FluxParticleReadVersion.Provided)
                 }, new[] { new FluxParticleValueWrite("render.color", FluxParticleWriteKind.Modify) },
                 Root + "Render.hlsl", module.PreserveBlinkPhase ? "FluxFX_BrightnessRenderWithBlinkPhase" : "FluxFX_BrightnessRender",
                 true, renderParameters, optionalDependencies: predecessors);

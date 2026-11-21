@@ -559,7 +559,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Compiler
                 operation.HlslPath,
                 operation.EntryPoint,
                 operation.Parameters,
-                operation.EnabledParameterId);
+                operation.EnabledParameterId, operation.UseValueArguments);
         }
 
         static void AddProviderReads(

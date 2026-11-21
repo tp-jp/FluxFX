@@ -57,7 +57,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 Assert.AreEqual(migrated ? "FluxFX_BrightnessRenderWithBlinkPhase" : "FluxFX_BrightnessRender", operation.EntryPoint);
                 shader = ShaderUtil.CreateShaderAsset(build.RendererSource, true);
                 Assert.IsFalse(ShaderUtil.ShaderHasError(shader), string.Join("\n", ShaderUtil.GetShaderMessages(shader).Select(m => m.message)));
-                Assert.AreEqual(16, FluxParticleBrightnessContract.Module.Parameters.Count);
+                Assert.AreEqual(17, FluxParticleBrightnessContract.Module.Parameters.Count);
             }
             finally
             {

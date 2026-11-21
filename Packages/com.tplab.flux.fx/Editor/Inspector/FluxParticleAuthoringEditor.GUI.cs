@@ -214,7 +214,15 @@ namespace TpLab.Flux.FX.Editor.Inspector
                         if (module.managedReferenceValue is TpLab.Flux.FX.Scripts.Modules.FluxParticleBrightnessModule &&
                             !IsBrightnessPropertyVisible(module, property.name)) continue;
 
-                        if (property.propertyType == SerializedPropertyType.Enum)
+                        if (module.managedReferenceValue is TpLab.Flux.FX.Scripts.Modules.FluxParticleAudioInputModule && property.name == "channels")
+                        {
+                            DrawAudioChannels(property);
+                        }
+                        else if (module.managedReferenceValue is TpLab.Flux.FX.Scripts.Modules.FluxParticleBrightnessModule && property.name == "audioChannel")
+                        {
+                            DrawBrightnessAudioChannel(property);
+                        }
+                        else if (property.propertyType == SerializedPropertyType.Enum)
                         {
                             DrawEnum(property, metadata: metadata);
                         }
@@ -245,8 +253,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (name == "duty" || name == "smoothness") return waveform == 2;
             if (name == "period" || name == "periodMinimum" || name == "periodMaximum" ||
                 name == "randomPhase" || name == "timeMode" || name == "minimum" || name == "maximum") return waveform != 0;
-            if (name == "audioBoost" || name == "audioAttack" || name == "audioRelease")
-                return module.FindPropertyRelative("audioEnabled").boolValue;
+            if (name == "audioSource" || name == "audioAttack" || name == "audioRelease")
+                return module.FindPropertyRelative("audioEnabled").boolValue && string.IsNullOrEmpty(module.FindPropertyRelative("audioChannel").stringValue);
+            if (name == "audioBoost" || name == "audioChannel") return module.FindPropertyRelative("audioEnabled").boolValue;
             return true;
         }
 

@@ -51,10 +51,24 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
                 FluxParticleWritePolicy.OwnerManaged, ModuleId));
             context.AddValue(new FluxParticleValueDefinition(FluxParticleAudioInputOutputs.Response, FluxParticleValueType.Float3,
                 FluxParticleWritePolicy.OwnerManaged, ModuleId));
-            context.AddProvider(new FluxParticleValueProvider(Sample, FluxParticleProviderKind.Derived,
+            var inputPath = Root + (IsAudioLinkInstalled ? "AudioLinkInput.hlsl" : "NoAudioInput.hlsl");
+            context.AddValue(new FluxParticleValueDefinition(FluxParticleAudioInputOutputs.RawBands, FluxParticleValueType.Float4,
+                FluxParticleWritePolicy.ReadOnly, ModuleId));
+            context.AddValue(new FluxParticleValueDefinition(FluxParticleAudioInputOutputs.Frame, FluxParticleValueType.Float,
+                FluxParticleWritePolicy.ReadOnly, ModuleId));
+            context.AddValue(new FluxParticleValueDefinition(FluxParticleAudioInputOutputs.Bands, FluxParticleValueType.Float4,
+                FluxParticleWritePolicy.ReadOnly, ModuleId));
+            context.AddProvider(new FluxParticleValueProvider(FluxParticleAudioInputOutputs.RawBands, FluxParticleProviderKind.Derived,
+                hlslPath: inputPath, entryPoint: "FluxFX_AudioInputRawBands"));
+            context.AddProvider(new FluxParticleValueProvider(FluxParticleAudioInputOutputs.Frame, FluxParticleProviderKind.Derived,
+                hlslPath: inputPath, entryPoint: "FluxFX_AudioInputFrame"));
+            var rawInputs = new[] { FluxParticleAudioInputOutputs.RawBands, FluxParticleAudioInputOutputs.Frame };
+            context.AddProvider(new FluxParticleValueProvider(Sample, FluxParticleProviderKind.Derived, rawInputs,
                 parameters: new[] { band, gain, noiseFloor, strength, averageGain },
-                hlslPath: Root + (IsAudioLinkInstalled ? "AudioLinkInput.hlsl" : "NoAudioInput.hlsl"),
-                entryPoint: "FluxFX_AudioInputSample"));
+                hlslPath: Root + "Sample.hlsl", entryPoint: "FluxFX_AudioInputSample"));
+            context.AddProvider(new FluxParticleValueProvider(FluxParticleAudioInputOutputs.Bands, FluxParticleProviderKind.Derived, rawInputs,
+                parameters: new[] { gain, noiseFloor, strength },
+                hlslPath: Root + "Sample.hlsl", entryPoint: "FluxFX_AudioInputBands"));
             contribution.Operation("audio-input.initialize", FluxParticlePhase.Spawn,
                 new FluxParticleValueRead[0],
                 new[]
@@ -83,6 +97,7 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
                 new[] { new FluxParticleValueWrite(FluxParticleAudioInputOutputs.Response, FluxParticleWriteKind.Modify) },
                 Root + "Response.hlsl", "FluxFX_AudioInputResponse", false,
                 new[] { attack, release, slowResponse, timeout, FluxParticleAudioInputContract.Module.Enabled.Id });
+            FluxParticleAudioChannelBuilder.Contribute(module, context);
             contribution.Complete();
         }
     }

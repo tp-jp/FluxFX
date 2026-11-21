@@ -16,6 +16,27 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
         public const string Sample = "audio-input.sample";
 
         /// <summary>
+        /// 共通入力処理後・平滑化前の4帯域。xyzw= Bass／LowMid／HighMid／Treble。
+        /// 有効性はSample.zとFreshness、Enabled、Timeoutで判定します。
+        /// </summary>
+        public const string Bands = "audio-input.bands";
+
+        /// <summary>
+        /// AudioLinkから取得した未加工の4帯域。通常の利用側はBandsまたはSampleを使います。
+        /// </summary>
+        public const string RawBands = "audio-input.raw-bands";
+
+        /// <summary>
+        /// 共通更新カウンター。入力未取得時は-1
+        /// </summary>
+        public const string Frame = "audio-input.frame";
+
+        /// <summary>
+        /// 共通入力処理後・平滑化前の4帯域を読み取ります。
+        /// </summary>
+        public static FluxParticleValueRead ReadBands() => new FluxParticleValueRead(Bands, FluxParticleReadVersion.Provided);
+
+        /// <summary>
         /// Float2の入力鮮度。x=最後のカウンター、y=変化がない秒数。
         /// 利用側はEnabled、x >= 0、y &lt; Timeoutを合わせて判定します。
         /// </summary>
@@ -41,6 +62,41 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
         /// 平滑化したFloat3応答のValue ID
         /// </summary>
         public const string Response = "audio-input.response";
+
+        /// <summary>
+        /// 固定IDに対応するチャンネルの平滑化済みFloat応答
+        /// </summary>
+        public static string ChannelResponse(string id)
+        {
+            FluxParticleAudioChannelContract.RequireId(id);
+            return "audio-input.channel." + id + ".response";
+        }
+
+        /// <summary>
+        /// チャンネル感度適用後・平滑化前のFloat入力
+        /// </summary>
+        public static string ChannelSample(string id)
+        {
+            FluxParticleAudioChannelContract.RequireId(id);
+            return "audio-input.channel." + id + ".sample";
+        }
+
+        /// <summary>
+        /// チャンネルの更新Operation ID
+        /// </summary>
+        public static string ChannelUpdate(string id) => ChannelResponse(id) + ".update";
+
+        /// <summary>
+        /// Updateでは当該Stepの応答、Renderでは確定済み応答を読み取ります。
+        /// 存在しないIDはビルドエラーとなり、別チャンネルへの置換は行いません。
+        /// </summary>
+        public static FluxParticleValueRead ReadChannel(string id, FluxParticlePhase phase)
+        {
+            var response = ChannelResponse(id);
+            if (phase == FluxParticlePhase.Render) return new FluxParticleValueRead(response, FluxParticleReadVersion.Committed);
+            if (phase == FluxParticlePhase.Update) return new FluxParticleValueRead(response, FluxParticleReadVersion.AfterOperation, ChannelUpdate(id));
+            throw new ArgumentOutOfRangeException(nameof(phase), "Audio response is initialized to zero at Spawn.");
+        }
 
         /// <summary>
         /// 当該Stepの応答を確定するUpdate Operation ID

@@ -610,3 +610,45 @@ msgstr "音声の減衰（秒）"
 
 msgid "Add Audio Input to use Brightness audio boost."
 msgstr "音声増光を使うには音声入力モジュールを追加してください。"
+
+msgid "Audio Source"
+msgstr "音声の入力元"
+
+msgid "Average"
+msgstr "全帯域平均"
+
+msgid "Channels"
+msgstr "チャンネル"
+
+msgid "Channel ID"
+msgstr "チャンネルID"
+
+msgid "Source"
+msgstr "入力元"
+
+msgid "Add Channel"
+msgstr "チャンネルを追加"
+
+msgid "Remove Channel"
+msgstr "チャンネルを削除"
+
+msgid "Move Up"
+msgstr "上へ移動"
+
+msgid "Move Down"
+msgstr "下へ移動"
+
+msgid "Independent Response"
+msgstr "独立した応答"
+
+msgid "Audio Channel"
+msgstr "音声チャンネル"
+
+msgid "Channels share input gain and noise floor, then apply their own gain and response times. References use the fixed ID, not the name or order."
+msgstr "共通の入力感度・無音閾値を適用した後、チャンネルごとの感度と応答時間を適用します。参照には名前や並び順ではなく固定IDを使います。"
+
+msgid "The selected audio channel is missing. Select a valid channel or Independent Response."
+msgstr "選択した音声チャンネルが見つかりません。有効なチャンネルか「独立した応答」を選んでください。"
+
+msgid "Uses the channel response directly. Brightness does not apply a second Attack or Release."
+msgstr "チャンネルの応答を直接使います。Brightness側では立ち上がり・減衰の平滑化を重ねて適用しません。"

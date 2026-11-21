@@ -157,7 +157,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 case "Brightness": return new[] { "brightness.base-minimum", "brightness.base-maximum", "brightness.waveform", "brightness.period",
                     "brightness.period-minimum", "brightness.period-maximum", "brightness.random-phase", "brightness.time-mode",
                     "brightness.minimum", "brightness.maximum", "brightness.duty", "brightness.smoothness", "brightness.target",
-                    "brightness.audio-boost", "brightness.audio-attack", "brightness.audio-release" };
+                    "brightness.audio-boost", "brightness.audio-attack", "brightness.audio-release", "brightness.audio-source" };
                 default: throw new ArgumentOutOfRangeException(nameof(name));
             }
         }

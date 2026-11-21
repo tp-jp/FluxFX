@@ -28,7 +28,8 @@ namespace TpLab.Flux.FX.Editor.Modules.Brightness
             new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "target", FluxParticleBrightnessContract.Target),
             new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "audioBoost", FluxParticleBrightnessContract.AudioBoost),
             new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "audioAttack", FluxParticleBrightnessContract.AudioAttack),
-            new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "audioRelease", FluxParticleBrightnessContract.AudioRelease)
+            new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "audioRelease", FluxParticleBrightnessContract.AudioRelease),
+            new FluxParticleLiveBinding(typeof(FluxParticleBrightnessModule), "audioSource", FluxParticleBrightnessContract.AudioSource)
         };
     }
 }

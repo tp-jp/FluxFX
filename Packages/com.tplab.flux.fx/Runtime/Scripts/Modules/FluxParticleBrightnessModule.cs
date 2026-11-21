@@ -63,6 +63,12 @@ namespace TpLab.Flux.FX.Scripts.Modules
         bool audioEnabled = false;
 
         [SerializeField]
+        FluxParticleAudioSource audioSource = FluxParticleAudioSource.Average;
+
+        [SerializeField]
+        string audioChannel = "";
+
+        [SerializeField]
         [Min(0)]
         float audioBoost = 2;
 
@@ -152,6 +158,17 @@ namespace TpLab.Flux.FX.Scripts.Modules
         /// 音声応答の組み込み。変更には再構築が必要
         /// </summary>
         public bool AudioEnabled => audioEnabled;
+
+        /// <summary>
+        /// 独立したAttack／Releaseへ渡す未平滑化の音声入力元
+        /// </summary>
+        public FluxParticleAudioSource AudioSource => audioSource;
+
+        /// <summary>
+        /// チャンネルの固定ID。空ならAudioSourceと独立したAttack／Releaseを使用。
+        /// 指定時はチャンネル応答を直接使用し、二重の平滑化を行いません。変更には再構築が必要
+        /// </summary>
+        public string AudioChannel => audioChannel;
 
         /// <summary>
         /// 音声増光量

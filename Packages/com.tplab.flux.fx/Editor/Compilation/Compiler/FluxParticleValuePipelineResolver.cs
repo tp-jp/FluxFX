@@ -31,7 +31,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Compiler
                 if (previous != null && !dependencies.Contains(previous)) dependencies.Add(previous);
                 definitions.ReplaceOperation(new FluxParticleOperationDefinition(writer.Id, writer.OwnerId,
                     writer.Phase, reads, writer.Writes, dependencies, writer.HlslPath, writer.EntryPoint,
-                    writer.Parameters, writer.EnabledParameterId));
+                    writer.Parameters, writer.EnabledParameterId, writer.UseValueArguments));
                 previous = writer.Id;
             }
             return previous;
@@ -61,7 +61,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Compiler
             if (finalWriterId != null && !dependencies.Contains(finalWriterId)) dependencies.Add(finalWriterId);
             return new FluxParticleOperationDefinition(consumer.Id, consumer.OwnerId, consumer.Phase, reads,
                 consumer.Writes, dependencies, consumer.HlslPath, consumer.EntryPoint,
-                consumer.Parameters, consumer.EnabledParameterId);
+                consumer.Parameters, consumer.EnabledParameterId, consumer.UseValueArguments);
         }
     }
 }

@@ -60973,6 +60973,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}
+      propertyPath: managedReferences[1000].audioSource
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
       propertyPath: managedReferences[1000].baseMaximum
       value: 1
       objectReference: {fileID: 0}
@@ -61000,6 +61005,11 @@ PrefabInstance:
         type: 3}
       propertyPath: managedReferences[1002].direction.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
+        type: 3}
+      propertyPath: managedReferences[1000].audioChannel
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 9154446177020115970, guid: f2a56eb888362ac4590f468133e62e5a,
         type: 3}

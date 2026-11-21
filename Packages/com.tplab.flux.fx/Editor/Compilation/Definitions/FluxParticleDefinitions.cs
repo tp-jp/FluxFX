@@ -542,6 +542,12 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         public string EnabledParameterId { get; }
 
         /// <summary>
+        /// Contextの代わりに、Reads、ReadsにないWrites、Parametersの宣言順で値を渡す呼び出し方式。
+        /// 書き込むValueはHLSL側でoutまたはinoutとして宣言します。
+        /// </summary>
+        public bool UseValueArguments { get; }
+
+        /// <summary>
         /// Operationの入出力・依存関係・HLSL実装を設定します。
         /// </summary>
         /// <param name="id">識別子</param>
@@ -554,6 +560,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
         /// <param name="entryPoint">HLSL関数名</param>
         /// <param name="parameters">Contextに供給するParameter ID一覧</param>
         /// <param name="enabledParameterId">実行条件となるFloat Parameter ID</param>
+        /// <param name="useValueArguments">値を引数として渡す場合はtrue</param>
         public FluxParticleOperationDefinition(
             string id,
             string ownerId,
@@ -564,7 +571,8 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
             string hlslPath,
             string entryPoint,
             IEnumerable<string> parameters = null,
-            string enabledParameterId = null)
+            string enabledParameterId = null,
+            bool useValueArguments = false)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Operation ID is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(ownerId)) throw new ArgumentException("Owner ID is required.", nameof(ownerId));
@@ -582,6 +590,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.Definitions
             EntryPoint = entryPoint;
             Parameters = new List<string>(parameters ?? Array.Empty<string>()).AsReadOnly();
             EnabledParameterId = enabledParameterId;
+            UseValueArguments = useValueArguments;
         }
     }
 }
