@@ -25,6 +25,9 @@ namespace TpLab.Flux.FX.Scripts
         FluxParticleSimulationSpace simulationSpace;
 
         [SerializeField]
+        float effectScale = 1;
+
+        [SerializeField]
         PlaybackSettings playback = new PlaybackSettings();
 
         [SerializeField]
@@ -54,6 +57,42 @@ namespace TpLab.Flux.FX.Scripts
         /// 起動時の自動再生
         /// </summary>
         public bool PlayOnAwake => playOnAwake;
+
+        /// <summary>
+        /// 表示倍率の正式な保存値。停止中のみ変更でき、Transformには書き込みません。
+        /// </summary>
+        public float EffectScale => effectScale;
+
+        /// <summary>
+        /// 表示倍率を設定します。非有限値・非正値、Play中、World空間の非1は拒否します。
+        /// </summary>
+        public bool SetEffectScale(float value)
+        {
+            if (Application.isPlaying || !FluxParticleCoordinates.IsValidScale(value) ||
+                (simulationSpace == FluxParticleSimulationSpace.World && value != 1)) return false;
+            effectScale = value;
+            return true;
+        }
+
+        /// <summary>
+        /// 基準位置からワールド位置への変換
+        /// </summary>
+        public Vector3 ReferenceToWorld(Vector3 position) => FluxParticleCoordinates.ReferenceToWorld(position, transform, effectScale, simulationSpace);
+
+        /// <summary>
+        /// 外部ワールド位置から基準位置への変換
+        /// </summary>
+        public Vector3 WorldToReference(Vector3 position) => FluxParticleCoordinates.WorldToReference(position, transform, effectScale, simulationSpace);
+
+        /// <summary>
+        /// 基準長さから表示ローカル長さへの変換
+        /// </summary>
+        public float ReferenceLengthToDisplay(float length) => FluxParticleCoordinates.ReferenceLengthToDisplay(length, effectScale);
+
+        /// <summary>
+        /// 表示倍率を適用したローカルカリング範囲
+        /// </summary>
+        public Bounds DisplayCullingBounds => FluxParticleCoordinates.BoundsToDisplay(render.CullingBounds, effectScale);
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public PlaybackSettings Playback => playback;

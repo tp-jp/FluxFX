@@ -51,7 +51,7 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             var materials = new Material[module.PointsPerTrail - 1];
             var renderers = new MeshRenderer[preview ? 0 : materials.Length];
-            var bounds = authoring.Render.CullingBounds;
+            var bounds = authoring.DisplayCullingBounds;
             Mesh mesh;
             if (preview)
             {
@@ -89,6 +89,7 @@ namespace TpLab.Flux.FX.Editor.Build
                     else AssetDatabase.CreateAsset(material, path);
                 }
                 material.shader = renderShader;
+                material.SetFloat("_FluxEffectScale", authoring.EffectScale);
                 materials[segment] = material;
                 if (!preview) session.Record(path, "Material", owner);
                 if (!preview)

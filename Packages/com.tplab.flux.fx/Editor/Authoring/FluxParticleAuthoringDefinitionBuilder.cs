@@ -47,6 +47,12 @@ namespace TpLab.Flux.FX.Editor.Authoring
                     definitions.AddProvider(new FluxParticleValueProvider(id, FluxParticleProviderKind.Uniform));
                 }
             }
+            definitions.AddValue(new FluxParticleValueDefinition(FluxParticleCoordinateContract.EffectScale,
+                FluxParticleValueType.Float, FluxParticleWritePolicy.ReadOnly, "fluxfx.core"));
+            definitions.AddParameter(FluxParticleCoordinateContract.CreateScaleParameter(authoring.EffectScale));
+            definitions.AddProvider(new FluxParticleValueProvider(FluxParticleCoordinateContract.EffectScale,
+                FluxParticleProviderKind.Derived, parameters: new[] { FluxParticleCoordinateContract.EffectScale },
+                hlslPath: "Packages/com.tplab.flux.fx/Editor/Core/Hlsl/EffectScale.hlsl", entryPoint: "FluxFX_EffectScale"));
             var moduleContext = new FluxParticleProgramContribution(definitions, authoring.Render.Mode);
             new FluxParticleModuleRegistry().Contribute(authoring.Modules, moduleContext);
             var hasRotation = authoring.Render.StartRotationMode == FluxParticleStartRotationMode.RandomBetweenTwoConstants ||

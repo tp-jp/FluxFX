@@ -57,6 +57,10 @@ namespace TpLab.Flux.FX.Udon
         [HideInInspector]
         FluxParticleRenderMode renderMode;
 
+        [SerializeField]
+        [HideInInspector]
+        float effectScale = 1;
+
         bool _programReady;
         bool _isPlaying;
         bool _isPaused;
@@ -73,6 +77,26 @@ namespace TpLab.Flux.FX.Udon
         /// Emissionの管理先
         /// </summary>
         public FluxParticleEmitter Emitter => particleEmitter;
+        /// <summary>
+        /// ビルド時に確定した表示倍率。実行中は変更できません。
+        /// </summary>
+        public float EffectScale => effectScale;
+
+        /// <summary>
+        /// 基準位置からワールド位置への変換
+        /// </summary>
+        public Vector3 ReferenceToWorld(Vector3 position) => FluxParticleCoordinates.ReferenceToWorld(position, transform, effectScale, simulationSpace);
+
+        /// <summary>
+        /// 外部ワールド位置から基準位置への変換
+        /// </summary>
+        public Vector3 WorldToReference(Vector3 position) => FluxParticleCoordinates.WorldToReference(position, transform, effectScale, simulationSpace);
+
+        /// <summary>
+        /// 基準長さから表示ローカル長さへの変換
+        /// </summary>
+        public float ReferenceLengthToDisplay(float length) => FluxParticleCoordinates.ReferenceLengthToDisplay(length, effectScale);
+
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
         public FluxParticleShapeType ShapeType => shapeType;
         public FluxParticleRenderMode RenderMode => renderMode;

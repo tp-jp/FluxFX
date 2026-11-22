@@ -54,7 +54,7 @@ namespace TpLab.Flux.FX.Editor.Build
             system.SetProgramVariable("playOnAwake", playOnAwake);
             system.SetProgramVariable("particleExecutor", runtime);
             renderer.SetProgramVariable("sourceMesh", authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null);
-            renderer.SetProgramVariable("cullingBounds", authoring.Render.CullingBounds);
+            renderer.SetProgramVariable("cullingBounds", authoring.DisplayCullingBounds);
             EditorUtility.SetDirty(renderer);
             system.SetProgramVariable("particleRenderer", renderer);
             system.SetProgramVariable("particleEmitter", emitter);

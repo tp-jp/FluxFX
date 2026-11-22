@@ -7,6 +7,7 @@ Shader "Hidden/FluxFX/Trail"
         _TrailMetadata ("Generation", 2D) = "black" {}
         _TrailEnabled ("Enabled", Float) = 1
         _TrailDuration ("Duration", Float) = 0.5
+        _FluxEffectScale ("Effect Scale", Float) = 1
         _TrailWidth ("Width", Float) = 0.05
         _TrailColor ("Color", Vector) = (1,1,1,1)
     }
@@ -26,7 +27,7 @@ Shader "Hidden/FluxFX/Trail"
             #include "UnityCG.cginc"
             sampler2D _TrailFirst, _TrailSecond, _TrailMetadata;
             float4 _TrailSize, _TrailAges, _TrailColor;
-            float _TrailWidth, _TrailEnabled, _TrailDuration;
+            float _FluxEffectScale, _TrailWidth, _TrailEnabled, _TrailDuration;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -66,7 +67,7 @@ Shader "Hidden/FluxFX/Trail"
                 float sideLength = dot(side, side);
                 side = sideLength > 1e-12 ? side * rsqrt(max(sideLength, 1e-12)) : UNITY_MATRIX_I_V._m00_m10_m20;
                 float fade = saturate(1 - lerp(firstAge, secondAge, v.uv.x) / _TrailDuration);
-                position += side * (v.uv.y - 0.5) * _TrailWidth * fade;
+                position += side * (v.uv.y - 0.5) * _TrailWidth * _FluxEffectScale * fade;
                 o.vertex = UnityWorldToClipPos(position);
                 o.alpha = fade;
                 o.valid = _TrailEnabled > 0.5 && v.trail.x < _TrailSize.z && meta.y > 0.5 &&

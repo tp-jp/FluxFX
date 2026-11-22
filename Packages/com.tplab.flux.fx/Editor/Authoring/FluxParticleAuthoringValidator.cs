@@ -22,6 +22,9 @@ namespace TpLab.Flux.FX.Editor.Authoring
             }
             Require(authoring.SimulationSpace == FluxParticleSimulationSpace.Local ||
                 authoring.SimulationSpace == FluxParticleSimulationSpace.World, "Supported simulation space");
+            Require(FluxParticleCoordinates.IsValidScale(authoring.EffectScale), "Effect Scale must be positive and finite");
+            Require(authoring.SimulationSpace != FluxParticleSimulationSpace.World || authoring.EffectScale == 1,
+                "World simulation currently requires Effect Scale 1");
             Require(authoring.Shape.Type == FluxParticleShapeType.Point || authoring.Shape.Type == FluxParticleShapeType.Sphere ||
                 authoring.Shape.Type == FluxParticleShapeType.Hemisphere || authoring.Shape.Type == FluxParticleShapeType.Circle ||
                 authoring.Shape.Type == FluxParticleShapeType.Box || authoring.Shape.Type == FluxParticleShapeType.Cone, "Supported shape");

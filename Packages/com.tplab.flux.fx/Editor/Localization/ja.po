@@ -652,3 +652,24 @@ msgstr "選択した音声チャンネルが見つかりません。有効なチ
 
 msgid "Uses the channel response directly. Brightness does not apply a second Attack or Release."
 msgstr "チャンネルの応答を直接使います。Brightness側では立ち上がり・減衰の平滑化を重ねて適用しません。"
+
+msgid "Effect Scale"
+msgstr "表示倍率"
+
+msgid "Scales positions, particle sizes and effect-relative distances without changing Transform Scale or simulation time. Editable only outside Play Mode."
+msgstr "TransformのScaleや時間を変更せず、位置・粒径・追従する距離を拡大縮小します。Play停止中のみ変更できます。"
+
+msgid "World simulation currently requires Effect Scale 1."
+msgstr "Worldシミュレーションでは現在、表示倍率1のみ使用できます。"
+
+msgid "Distance Mode"
+msgstr "距離の基準"
+
+msgid "Follow Effect"
+msgstr "エフェクトに追従"
+
+msgid "Fixed World"
+msgstr "固定ワールド距離"
+
+msgid "Distance from the system origin. Follow Effect includes Effect Scale and uniform Transform Scale; Fixed World uses meters. Orthographic cameras do not fade."
+msgstr "システム原点からの距離です。エフェクト追従では表示倍率と一様なTransform Scaleを適用し、固定ワールド距離ではメートルとして扱います。平行投影カメラではフェードしません。"

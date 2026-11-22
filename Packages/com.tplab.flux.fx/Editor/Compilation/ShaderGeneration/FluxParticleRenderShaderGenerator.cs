@@ -47,6 +47,8 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
                     @" (""Lookup Table"", 2D) = ""white"" {}";
             }
             var renderCode = extra + program.RenderSource;
+            var scale = program.Compilation.Parameters.ContainsKey("system.effect-scale")
+                ? FluxParticleHlslNames.ParameterProperty("system.effect-scale") : "1.0";
             var rotationCode = program.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start")
                 ? "float angle = radians(render." + FluxParticleHlslNames.Value("render.rotation") + ".z);\n" +
                   "float s;\n" +
@@ -56,7 +58,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
                 : "float2 quad = input.vertex.xy;";
             var vertexCode = "float3 center = " + (worldSpace ? "position" : "mul(unity_ObjectToWorld, float4(position, 1.0)).xyz") + ";\n" +
                 "float3 right = UNITY_MATRIX_I_V._m00_m10_m20;\nfloat3 up = UNITY_MATRIX_I_V._m01_m11_m21;\n" +
-                rotationCode + "\nfloat3 vertex = center + (right * quad.x + up * quad.y) * render." + FluxParticleHlslNames.Value("render.size") + ";";
+                rotationCode + "\nfloat3 vertex = center + (right * quad.x + up * quad.y) * render." + FluxParticleHlslNames.Value("render.size") + " * " + scale + ";";
             if (mode == FluxParticleRenderMode.Mesh)
             {
                 var hasRotation = program.Compilation.Operations.Any(operation => operation.Id == "render.rotation-start");
@@ -68,7 +70,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
                         "local.yz = float2(local.y * c.x - local.z * s.x, local.y * s.x + local.z * c.x);\n" +
                         "local.xz = float2(local.x * c.y + local.z * s.y, -local.x * s.y + local.z * c.y);\n";
                 }
-                vertexCode += "float3 vertex = position + local * render." + FluxParticleHlslNames.Value("render.size") + ";\n";
+                vertexCode += "float3 vertex = position + local * render." + FluxParticleHlslNames.Value("render.size") + " * " + scale + ";\n";
                 if (!worldSpace)
                 {
                     vertexCode += "vertex = mul(unity_ObjectToWorld, float4(vertex, 1.0)).xyz;\n";
@@ -81,7 +83,7 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
                 ["PageProperties"] = pageProperties,
                 ["ParameterProperties"] = FluxParticleProgramShaderGenerator.GenerateParameterProperties(program.Compilation),
                 ["RenderCode"] = renderCode,
-                ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels}",
+                ["Position"] = $"tex2Dlod({sampler}, float4(stateUV, 0.0, 0.0)).{channels} * {scale}",
                 ["Intensity"] = program.Compilation.Parameters.ContainsKey("render.intensity")
                     ? FluxParticleHlslNames.ParameterProperty("render.intensity") : "1.0",
                 ["Color"] = "render." + FluxParticleHlslNames.Value("render.color"),

@@ -5,14 +5,14 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Scripts.Modules
 {
     /// <summary>
-    /// システム原点とカメラの距離に応じて描画を薄くします。距離は親を含む一様Scaleに追従するローカル単位です。
+    /// システム原点とカメラの距離に応じて描画を薄くします。距離の基準をエフェクト追従または固定ワールド単位から選択できます。
     /// </summary>
     [Serializable]
     public sealed class FluxParticleDistanceFadeModule : FluxParticleModule
     {
         [SerializeField]
         [Min(0)]
-        [Tooltip("Distance from the system origin in local units, scaled by its uniform world scale. Orthographic cameras do not fade.")]
+        [Tooltip("Distance from the system origin. Follow Effect includes Effect Scale and uniform Transform Scale; Fixed World uses meters. Orthographic cameras do not fade.")]
         float startDistance = 5;
 
         [SerializeField]
@@ -23,6 +23,14 @@ namespace TpLab.Flux.FX.Scripts.Modules
         [SerializeField]
         [Tooltip("RGB attenuates emitted light; Alpha attenuates opacity. Choose for the renderer blend mode.")]
         FluxParticleDistanceFadeTarget target = FluxParticleDistanceFadeTarget.Rgb;
+
+        [SerializeField]
+        FluxParticleDistanceMode distanceMode;
+
+        /// <summary>
+        /// 距離設定の単位と倍率への追従方針
+        /// </summary>
+        public FluxParticleDistanceMode DistanceMode => distanceMode;
 
         /// <summary>
         /// フェード開始距離

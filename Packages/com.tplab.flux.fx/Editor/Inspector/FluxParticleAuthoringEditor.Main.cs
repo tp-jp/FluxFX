@@ -21,6 +21,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 "Simulation Space",
                 "Determines whether particle positions and movement are simulated in local or world space.");
 
+            DrawEffectScale();
             EditorGUILayout.Space(4);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent(L10n.Tr("Play On Awake")));
@@ -42,6 +43,28 @@ namespace TpLab.Flux.FX.Editor.Inspector
             DrawStartSize();
 
             DrawStartRotation();
+        }
+
+        void DrawEffectScale()
+        {
+            var property = serializedObject.FindProperty("effectScale");
+            var rect = EditorGUILayout.GetControlRect();
+            var label = new GUIContent(L10n.Tr("Effect Scale"),
+                L10n.Tr("Scales positions, particle sizes and effect-relative distances without changing Transform Scale or simulation time. Editable only outside Play Mode."));
+            EditorGUI.BeginProperty(rect, label, property);
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUI.DelayedFloatField(rect, label, property.floatValue);
+            if (EditorGUI.EndChangeCheck() && FluxParticleCoordinates.IsValidScale(value) &&
+                (_simulationSpace.intValue != (int)FluxParticleSimulationSpace.World || value == 1))
+            {
+                property.floatValue = value;
+            }
+            EditorGUI.EndProperty();
+            if (_simulationSpace.intValue == (int)FluxParticleSimulationSpace.World)
+            {
+                EditorGUILayout.HelpBox(L10n.Tr("World simulation currently requires Effect Scale 1."),
+                    property.floatValue == 1 ? MessageType.Info : MessageType.Error);
+            }
         }
 
         void DrawStartRotation()

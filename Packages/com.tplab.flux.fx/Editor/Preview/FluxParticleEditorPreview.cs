@@ -58,6 +58,23 @@ namespace TpLab.Flux.FX.Editor.Preview
         public int Count { get; }
 
         /// <summary>
+        /// プレビュー構築時に確定した表示倍率
+        /// </summary>
+        public float EffectScale { get; }
+
+        /// <summary>
+        /// プレビューの基準位置からワールド位置への変換
+        /// </summary>
+        public Vector3 ReferenceToWorld(Vector3 position) => FluxParticleCoordinates.ReferenceToWorld(position,
+            authoring.transform, EffectScale, authoring.SimulationSpace);
+
+        /// <summary>
+        /// 外部ワールド位置からプレビューの基準位置への変換
+        /// </summary>
+        public Vector3 WorldToReference(Vector3 position) => FluxParticleCoordinates.WorldToReference(position,
+            authoring.transform, EffectScale, authoring.SimulationSpace);
+
+        /// <summary>
         /// 再生開始からSimulationを進めた累計秒数
         /// </summary>
         public double PlaybackTime { get; private set; }
@@ -84,6 +101,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             }
             this.authoring = authoring;
             Count = count;
+            EffectScale = build.InitialValues["system.effect-scale"].x;
             var bursts = authoring.Emission.Bursts.OrderBy(burst => burst.Time).ToArray();
             burstTimes = bursts.Select(burst => burst.Time).ToArray();
             burstCounts = bursts.Select(burst => burst.Count).ToArray();
@@ -394,7 +412,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             result.uv = uv;
             result.uv2 = indices;
             result.triangles = triangles;
-            result.bounds = authoring.Render.CullingBounds;
+            result.bounds = authoring.DisplayCullingBounds;
             return result;
         }
 
@@ -433,7 +451,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             result.uv = uv;
             result.uv2 = indices;
             result.triangles = triangles;
-            result.bounds = authoring.Render.CullingBounds;
+            result.bounds = authoring.DisplayCullingBounds;
             return result;
         }
         T Own<T>(T value) where T : Object

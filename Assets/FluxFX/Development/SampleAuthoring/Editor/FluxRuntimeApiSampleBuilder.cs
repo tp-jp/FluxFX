@@ -303,18 +303,26 @@ namespace TpLab.Flux.FX.Development.SampleAuthoring.Editor
         static Texture2D CreateParticleTexture()
         {
             const int size = 128;
+            const int cellSize = size / 2;
+            const int padding = 4;
+            const float edgeFade = 2;
             var atlas = new Texture2D(size, size, TextureFormat.RGBA32, false);
             var pixels = new Color[size * size];
             for (var y = 0; y < size; y++)
             {
                 for (var x = 0; x < size; x++)
                 {
-                    var uv = new Vector2((x % 64 + 0.5f) / 32 - 1, (y % 64 + 0.5f) / 32 - 1);
-                    var cell = x / 64 + y / 64 * 2;
+                    var cellX = x % cellSize;
+                    var cellY = y % cellSize;
+                    var uv = new Vector2((cellX + 0.5f) / (cellSize / 2) - 1, (cellY + 0.5f) / (cellSize / 2) - 1);
+                    var cell = x / cellSize + y / cellSize * 2;
                     var radius = uv.magnitude;
                     var distance = cell == 0 ? radius : cell == 1 ? Mathf.Abs(radius - 0.55f) * 4
                         : cell == 2 ? Mathf.Abs(uv.x) + Mathf.Abs(uv.y) : Mathf.Min(Mathf.Abs(uv.x), Mathf.Abs(uv.y)) * 4 + radius * 0.4f;
-                    pixels[x + y * size] = new Color(1, 1, 1, Mathf.Clamp01((0.8f - distance) * 12));
+                    // Keep bilinear sampling at cell boundaries away from neighboring shapes.
+                    var edge = Mathf.Min(Mathf.Min(cellX, cellSize - 1 - cellX), Mathf.Min(cellY, cellSize - 1 - cellY));
+                    var borderAlpha = Mathf.Clamp01((edge - padding + 0.5f) / edgeFade);
+                    pixels[x + y * size] = new Color(1, 1, 1, Mathf.Clamp01((0.8f - distance) * 12) * borderAlpha);
                 }
             }
             atlas.SetPixels(pixels);

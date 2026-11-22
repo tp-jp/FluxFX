@@ -18,7 +18,8 @@ namespace TpLab.Flux.FX.Editor.Compilation.ShaderGeneration
             var code = FluxParticleProgramShaderGenerator.ExpandTemplate("TrailCapture.hlsl.template", new Dictionary<string, string>
             {
                 ["RenderCode"] = source,
-                ["Position"] = "tex2D(" + sampler + ", uv)." + "rgba".Substring(position.ChannelOffset, position.ComponentCount)
+                ["Position"] = "tex2D(" + sampler + ", uv)." + "rgba".Substring(position.ChannelOffset, position.ComponentCount) +
+                    (program.Compilation.Parameters.ContainsKey("system.effect-scale") ? " * " + FluxParticleHlslNames.ParameterProperty("system.effect-scale") : "")
             });
             return FluxParticleProgramShaderGenerator.ExpandTemplate("Shader.shader.template", new Dictionary<string, string>
             {

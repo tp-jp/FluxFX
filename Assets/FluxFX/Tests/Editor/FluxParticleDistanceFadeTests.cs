@@ -115,12 +115,15 @@ namespace TpLab.Flux.FX.Tests.Editor
                 material = new Material(shader);
                 target.Create();
                 foreach (var scale in new[] { 0.5f, 1f, 3f })
+                foreach (var effectScale in new[] { 1f, 200f })
+                foreach (var fixedWorld in new[] { false, true })
                 foreach (var distance in new[] { 2f, 5f, 7.5f, 10f, 12f })
                 foreach (var orthographic in new[] { false, true })
                 foreach (var alpha in new[] { false, true })
                 {
                     var origin = new Vector3(3, 4, 5);
-                    var camera = origin + Vector3.forward * distance * scale;
+                    var camera = origin + Vector3.forward * distance * (fixedWorld ? 1 : scale * effectScale);
+                    material.SetVector("_ProbeScaleSettings", new Vector4(effectScale, fixedWorld ? 1 : 0, 0, 0));
                     material.SetMatrix("_ProbeTransform", Matrix4x4.TRS(origin, Quaternion.Euler(10, 30, 20), Vector3.one * scale));
                     material.SetVector("_ProbeCamera", camera);
                     // A wide eye separation makes accidental per-eye fading observable.
@@ -173,7 +176,7 @@ CGPROGRAM
 #pragma target 3.0
 #include ""UnityCG.cginc""
 float4x4 _ProbeTransform;
-float4 _ProbeCamera, _ProbeOrtho, _ProbeSettings;
+float4 _ProbeCamera, _ProbeOrtho, _ProbeSettings, _ProbeScaleSettings;
 float4 _ProbeEyes[2];
 #define unity_ObjectToWorld _ProbeTransform
 #define _WorldSpaceCameraPos _ProbeCamera.xyz
@@ -182,12 +185,14 @@ float4 _ProbeEyes[2];
                 (intrinsic ? "#define FLUXFX_INTRINSIC_RENDER\n" : "") + @"
 struct FluxRenderDistanceFadeContext {
     float4 valueRenderColor;
+    float valueSystemEffectScale, parameterDistanceFadeDistanceMode;
     float parameterDistanceFadeStartDistance, parameterDistanceFadeEndDistance, parameterDistanceFadeTarget;
 };
 #include ""Packages/com.tplab.flux.fx/Editor/Modules/DistanceFade/DistanceFade.hlsl""
 float4 frag(v2f_img i) : SV_Target {
     FluxRenderDistanceFadeContext ctx;
     ctx.valueRenderColor = float4(2, 4, 6, 0.8);
+    ctx.valueSystemEffectScale = _ProbeScaleSettings.x; ctx.parameterDistanceFadeDistanceMode = _ProbeScaleSettings.y;
     ctx.parameterDistanceFadeStartDistance = _ProbeSettings.x;
     ctx.parameterDistanceFadeEndDistance = _ProbeSettings.y;
     ctx.parameterDistanceFadeTarget = _ProbeSettings.z;
