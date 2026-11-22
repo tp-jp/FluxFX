@@ -1,5 +1,8 @@
 using System;
+using System.IO;
+using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace TpLab.Flux.FX.Editor.Build
@@ -10,25 +13,20 @@ namespace TpLab.Flux.FX.Editor.Build
     [InitializeOnLoad]
     public static class FluxParticleGenerationCleanup
     {
-        const double QuietSeconds = 60;
         const string AutomaticCleanupKey = "TpLab.Flux.FX.AutomaticGenerationCleanup";
         const string AutomaticCleanupMenu = "Tools/FluxFX/Automatic Generated Asset Cleanup";
-        static double _nextAttempt;
         static bool _quitting;
-        static bool _scheduleError;
         static FluxParticleGenerationCleanupSchedule _schedule;
 
         /// <summary>
-        /// 自動整理の有効状態。既定OFFで、既存のEditor設定を維持します。
+        /// 自動整理の有効状態。既定ONで、既存のEditor設定を維持します。
         /// </summary>
         public static bool AutomaticCleanupEnabled
         {
-            get => EditorPrefs.GetBool(AutomaticCleanupKey, false);
+            get => EditorPrefs.GetBool(AutomaticCleanupKey, true);
             set
             {
                 EditorPrefs.SetBool(AutomaticCleanupKey, value);
-                _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
-                _scheduleError = false;
                 _schedule = null;
             }
         }
@@ -75,12 +73,14 @@ namespace TpLab.Flux.FX.Editor.Build
         }
 
         /// <summary>
-        /// 未走査の生成完了記録がある場合に限り、待機時間を設定します。生成変更や走査は行いません。
+        /// 次回起動時の再確認を予約します。このEditor実行中には自動走査しません。
         /// </summary>
         public static void Request()
         {
-            if (!AutomaticCleanupEnabled || _quitting) return;
-            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
+            var schedule = GetSchedule();
+            if (schedule.Pending) return;
+            schedule.completedRevision++;
+            schedule.Save();
         }
 
         internal static bool IsBusy => _quitting || EditorApplication.isCompiling || EditorApplication.isUpdating ||
@@ -93,28 +93,42 @@ namespace TpLab.Flux.FX.Editor.Build
             schedule.completedRevision++;
             schedule.nextCandidateCheckUtc = null;
             schedule.Save();
-            Request();
         }
 
         internal static void FullScanStarted(string root)
         {
-            _scheduleError = false;
             var schedule = GetSchedule();
             schedule.lastFullScanUtc = DateTime.UtcNow.ToString("O");
-            if (root == FluxParticleGenerationSession.DefaultRoot)
-            {
-                schedule.scannedRevision = schedule.completedRevision;
-            }
-            // 走査が途中で失敗した場合も、繰り返し自動走査しません。
             schedule.Save();
+        }
+
+        // 起動の機会判定はStartup側で一度だけ行い、ここでは永続的な頻度制限と結果を扱います。
+        internal static FluxParticleGenerationCleanupReport CollectAtStartup(string root, Func<string, float, bool> progress)
+        {
+            var schedule = GetSchedule();
+            if (!AutomaticCleanupEnabled || !schedule.IsDue(DateTime.UtcNow)) return null;
+            var revision = schedule.completedRevision;
+            var report = FluxParticleGenerationCleanupAnalysis.Run(root, DateTime.UtcNow.AddDays(-1), true, null, progress, () =>
+            {
+                // 途中失敗やキャンセルでも、開始した全体走査を24時間以内に繰り返しません。
+                schedule.lastAutomaticScanUtc = DateTime.UtcNow.ToString("O");
+                schedule.Save();
+            });
+            if (!report.blocked && !report.failed && report.items.All(item => item.status != "Failed"))
+            {
+                schedule.scannedRevision = revision;
+                schedule.nextCandidateCheckUtc = NextRetentionCheck(root, DateTime.UtcNow);
+                schedule.Save();
+            }
+            return report;
         }
 
         static FluxParticleGenerationCleanup()
         {
-            EditorApplication.update += Update;
             EditorApplication.projectChanged += OnProjectChanged;
+            EditorSceneManager.sceneSaved += _ => OnProjectChanged();
+            EditorSceneManager.sceneClosed += _ => OnProjectChanged();
             EditorApplication.quitting += () => _quitting = true;
-            _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
         }
 
         static FluxParticleGenerationCleanupSchedule GetSchedule()
@@ -124,52 +138,40 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void OnProjectChanged()
         {
-            // Scene保存やAsset編集は走査を予約せず、処理中のImportとの競合だけを避けます。
-            if (AutomaticCleanupEnabled)
+            // 記録があるプロジェクトだけ予約します。イベント内でAsset全体を走査しません。
+            if (!File.Exists(FluxParticleGenerationLedger.PathFor(FluxParticleGenerationSession.DefaultRoot))) return;
+            try { Request(); }
+            catch (Exception error)
             {
-                _nextAttempt = EditorApplication.timeSinceStartup + QuietSeconds;
+                Debug.LogWarning("[FluxFX] Could not schedule generated asset cleanup: " + error.Message);
             }
         }
 
-        static void Update()
+        static string NextRetentionCheck(string root, DateTime now)
         {
-            if (!AutomaticCleanupEnabled || _scheduleError || _quitting) return;
-            var now = EditorApplication.timeSinceStartup;
-            if (IsBusy)
+            var next = DateTime.MaxValue;
+            foreach (var asset in FluxParticleGenerationLedger.Load(root).assets)
             {
-                _nextAttempt = now + QuietSeconds;
-                return;
-            }
-            if (now < _nextAttempt) return;
-            try
-            {
-                if (!GetSchedule().IsDue(DateTime.UtcNow)) return;
-                _nextAttempt = now + QuietSeconds;
-                var report = FluxParticleGenerationCleanupAnalysis.Run(FluxParticleGenerationSession.DefaultRoot,
-                    DateTime.UtcNow.AddDays(-1), true);
-                if (!report.fullScan && !report.blocked)
+                var until = asset.kind == "Material" ? DateTime.MinValue :
+                    FluxParticleGenerationLedger.ParseUtc(asset.lastUsedUtc);
+                if (until != DateTime.MinValue && until < DateTime.MaxValue.AddDays(-1))
                 {
-                    // 保持期間内のCacheしかない場合も、履歴の読み直しを毎分繰り返しません。
-                    var schedule = GetSchedule();
-                    schedule.nextCandidateCheckUtc = DateTime.UtcNow.AddDays(1).ToString("O");
-                    schedule.Save();
+                    until = until.AddDays(1);
                 }
-                if (report.DeletedCount > 0)
+                if (!string.IsNullOrEmpty(asset.retainUntilUtc))
                 {
-                    Debug.Log("[FluxFX] Removed unused generated assets: " + report.DeletedCount + "\n" + report.logPath);
+                    var failureUntil = FluxParticleGenerationLedger.ParseUtc(asset.retainUntilUtc);
+                    if (failureUntil > until)
+                    {
+                        until = failureUntil;
+                    }
                 }
-                if (report.failed)
+                if (until > now && until < next)
                 {
-                    _scheduleError = true;
-                    Debug.LogWarning("[FluxFX] Automatic cleanup is deferred. Open Clean Unused Generated Assets for diagnostics.\n" +
-                        string.Join("\n", report.diagnostics));
+                    next = until;
                 }
             }
-            catch (Exception error)
-            {
-                _scheduleError = true;
-                Debug.LogWarning("[FluxFX] Automatic cleanup is deferred: " + error.Message);
-            }
+            return next == DateTime.MaxValue ? null : next.ToString("O");
         }
 
         static int CollectCore(string root, DateTime? cacheCutoff)

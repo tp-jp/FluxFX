@@ -44,7 +44,7 @@ namespace TpLab.Flux.FX.Editor.Build
             {
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = automatic;
             }
-            EditorGUILayout.LabelField(L10n.Tr("Automatic cleanup: default root only, after generation ends and 60 seconds of idle time, at most once per 24 hours. Recent cache is retained."), EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField(L10n.Tr("Automatic cleanup is ON by default. Pending cleanup runs only when opening the project, after initial import and compilation, at most once per 24 hours. No delayed cleanup runs while editing."), EditorStyles.wordWrappedMiniLabel);
             using (new EditorGUI.DisabledScope(FluxParticleGenerationCleanup.IsBusy))
             {
                 EditorGUILayout.BeginHorizontal();

@@ -69,7 +69,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void RequestsAndProjectNotificationsDoNotCreatePendingGeneration()
+        public void RequestsAndProjectNotificationsOnlyReserveNextStartup()
         {
             const string schedulePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
             var saved = File.Exists(schedulePath) ? File.ReadAllText(schedulePath) : null;
@@ -77,17 +77,18 @@ namespace TpLab.Flux.FX.Tests.Editor
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(schedulePath));
-                File.WriteAllText(schedulePath, "{\"version\":1,\"completedRevision\":0,\"scannedRevision\":0}");
+                File.WriteAllText(schedulePath, "{\"version\":2,\"completedRevision\":0,\"scannedRevision\":0}");
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = true;
                 var type = typeof(FluxParticleGenerationCleanup);
                 var flags = BindingFlags.Static | BindingFlags.NonPublic;
                 var before = File.ReadAllText(schedulePath);
                 FluxParticleGenerationCleanup.Request();
-                Assert.GreaterOrEqual((double)type.GetField("_nextAttempt", flags).GetValue(null), EditorApplication.timeSinceStartup + 59);
                 type.GetMethod("OnProjectChanged", flags).Invoke(null, null);
-                type.GetField("_nextAttempt", flags).SetValue(null, 0d);
-                type.GetMethod("Update", flags).Invoke(null, null);
-                Assert.AreEqual(before, File.ReadAllText(schedulePath));
+                Assert.AreNotEqual(before, File.ReadAllText(schedulePath));
+                var pending = File.ReadAllText(schedulePath);
+                FluxParticleGenerationCleanup.Request();
+                Assert.AreEqual(pending, File.ReadAllText(schedulePath), "Repeated requests are coalesced");
+                Assert.IsNull(type.GetMethod("Update", flags), "Cleanup has no periodic executor");
                 AssertAssetsRemain();
             }
             finally
@@ -107,8 +108,6 @@ namespace TpLab.Flux.FX.Tests.Editor
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = false;
                 session.Dispose();
                 FluxParticleGenerationCleanup.Request();
-                var flags = BindingFlags.Static | BindingFlags.NonPublic;
-                typeof(FluxParticleGenerationCleanup).GetMethod("Update", flags).Invoke(null, null);
                 AssertAssetsRemain();
                 Assert.AreEqual(2, FluxParticleGenerationCleanup.Collect(root));
             }

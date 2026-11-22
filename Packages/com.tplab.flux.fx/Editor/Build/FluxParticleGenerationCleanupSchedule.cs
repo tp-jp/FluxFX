@@ -9,28 +9,42 @@ namespace TpLab.Flux.FX.Editor.Build
     internal sealed class FluxParticleGenerationCleanupSchedule
     {
         internal const string FilePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
-        public int version = 1;
+        public int version = 2;
         public long completedRevision;
         public long scannedRevision;
         public string lastFullScanUtc;
+        public string lastAutomaticScanUtc;
         public string nextCandidateCheckUtc;
 
         internal bool Pending => completedRevision > scannedRevision;
 
-        internal bool IsDue(DateTime now) => Pending && (string.IsNullOrEmpty(nextCandidateCheckUtc) ||
-            now >= FluxParticleGenerationLedger.ParseUtc(nextCandidateCheckUtc)) && (string.IsNullOrEmpty(lastFullScanUtc) ||
-            now - FluxParticleGenerationLedger.ParseUtc(lastFullScanUtc) >= TimeSpan.FromDays(1));
+        internal bool IsDue(DateTime now) => (Pending || !string.IsNullOrEmpty(nextCandidateCheckUtc) &&
+            now >= FluxParticleGenerationLedger.ParseUtc(nextCandidateCheckUtc)) && (string.IsNullOrEmpty(lastAutomaticScanUtc) ||
+            now - FluxParticleGenerationLedger.ParseUtc(lastAutomaticScanUtc) >= TimeSpan.FromDays(1));
 
         internal static FluxParticleGenerationCleanupSchedule Load()
         {
-            if (!File.Exists(FilePath)) return new FluxParticleGenerationCleanupSchedule();
+            if (!File.Exists(FilePath))
+            {
+                var existing = File.Exists(FluxParticleGenerationLedger.PathFor(FluxParticleGenerationSession.DefaultRoot)) ||
+                    Directory.Exists(FluxParticleGenerationSession.ManifestRoot);
+                return new FluxParticleGenerationCleanupSchedule { completedRevision = existing ? 1 : 0 };
+            }
             var value = JsonUtility.FromJson<FluxParticleGenerationCleanupSchedule>(File.ReadAllText(FilePath));
-            if (value == null || value.version != 1 || value.completedRevision < value.scannedRevision ||
+            if (value == null || (value.version != 1 && value.version != 2) || value.completedRevision < value.scannedRevision ||
                 value.scannedRevision < 0 || (!string.IsNullOrEmpty(value.lastFullScanUtc) &&
                     FluxParticleGenerationLedger.ParseUtc(value.lastFullScanUtc) == DateTime.MaxValue) ||
+                (!string.IsNullOrEmpty(value.lastAutomaticScanUtc) && FluxParticleGenerationLedger.ParseUtc(value.lastAutomaticScanUtc) == DateTime.MaxValue) ||
                 (!string.IsNullOrEmpty(value.nextCandidateCheckUtc) && FluxParticleGenerationLedger.ParseUtc(value.nextCandidateCheckUtc) == DateTime.MaxValue))
             {
                 throw new InvalidOperationException("Invalid cleanup schedule: " + FilePath);
+            }
+            if (value.version == 1)
+            {
+                value.version = 2;
+                value.lastAutomaticScanUtc = value.lastFullScanUtc;
+                // 旧版で走査済みにした保持中Cacheも、次回起動で一度再評価します。
+                value.completedRevision++;
             }
             return value;
         }

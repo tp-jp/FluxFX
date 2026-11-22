@@ -11,7 +11,8 @@ namespace TpLab.Flux.FX.Editor.Build
     internal static class FluxParticleGenerationCleanupAnalysis
     {
         internal static FluxParticleGenerationCleanupReport Run(string root, DateTime? cutoff, bool delete,
-            FluxParticleGenerationCleanupReport review = null)
+            FluxParticleGenerationCleanupReport review = null, Func<string, float, bool> progress = null,
+            Action onFullScan = null)
         {
             root = FluxParticleGenerationSession.ValidateRoot(root);
             var report = new FluxParticleGenerationCleanupReport { root = root, createdUtc = DateTime.UtcNow.ToString("O") };
@@ -23,6 +24,7 @@ namespace TpLab.Flux.FX.Editor.Build
                     report.diagnostics.Add("Play, Build, compilation or asset import is active.");
                     return report;
                 }
+                CheckProgress(progress, "Checking generation records", 0);
                 var sessions = LoadSessions();
                 var ledger = FluxParticleGenerationLedger.Migrate(root, sessions);
                 var ledgers = FluxParticleGenerationLedger.LoadAll();
@@ -75,6 +77,8 @@ namespace TpLab.Flux.FX.Editor.Build
                     return report;
                 }
 
+                CheckProgress(progress, "Checking generated asset references", 0.15f);
+                onFullScan?.Invoke();
                 FluxParticleGenerationCleanup.FullScanStarted(root);
                 report.fullScan = true;
                 var candidates = report.items.Where(item => item.status == "Candidate").ToDictionary(item => item.path, StringComparer.Ordinal);
@@ -89,18 +93,26 @@ namespace TpLab.Flux.FX.Editor.Build
                     dependencies[path] = AssetDatabase.GetDependencies(path, false).Concat(children ?? Array.Empty<string>())
                         .Where(child => child != path).Distinct().ToArray();
                 }
+                CheckProgress(progress, "Checking saved asset references", 0.3f);
                 var allPaths = AssetDatabase.GetAllAssetPaths().Where(path => !AssetDatabase.IsValidFolder(path)).ToArray();
                 var external = allPaths.Where(path => !candidates.ContainsKey(path)).ToArray();
                 var protectedPaths = new HashSet<string>(AssetDatabase.GetDependencies(external, true), StringComparer.Ordinal);
                 var references = new Dictionary<string, string>(StringComparer.Ordinal);
                 var needingSource = new HashSet<string>(candidates.Keys.Where(protectedPaths.Contains));
-                FindReferences(external, needingSource, values => AssetDatabase.GetDependencies(values, true), path => "Asset: " + path, references);
+                if (onFullScan == null)
+                {
+                    FindReferences(external, needingSource, values => AssetDatabase.GetDependencies(values, true), path => "Asset: " + path, references);
+                }
+                CheckProgress(progress, "Checking open scenes and live objects", 0.55f);
                 var liveObjects = Resources.FindObjectsOfTypeAll<Object>().Where(value => value != null && !EditorUtility.IsPersistent(value)).ToArray();
                 var livePaths = new HashSet<string>(EditorUtility.CollectDependencies(liveObjects).Select(AssetDatabase.GetAssetPath)
                     .Where(path => !string.IsNullOrEmpty(path)), StringComparer.Ordinal);
                 needingSource = new HashSet<string>(candidates.Keys.Where(path => livePaths.Contains(path) && !references.ContainsKey(path)));
-                FindReferences(liveObjects, needingSource, values => EditorUtility.CollectDependencies(values).Select(AssetDatabase.GetAssetPath),
-                    value => "Object: " + value.GetType().Name + " / " + value.name + " (#" + value.GetInstanceID() + ")", references);
+                if (onFullScan == null)
+                {
+                    FindReferences(liveObjects, needingSource, values => EditorUtility.CollectDependencies(values).Select(AssetDatabase.GetAssetPath),
+                        value => "Object: " + value.GetType().Name + " / " + value.name + " (#" + value.GetInstanceID() + ")", references);
+                }
                 protectedPaths.UnionWith(livePaths);
                 protectedPaths.UnionWith(AssetDatabase.GetDependencies(protectedPaths.ToArray(), true));
                 Protect(protectedPaths, recorded, references);
@@ -119,7 +131,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 var order = Order(report, dependencies);
                 if (delete)
                 {
-                    Delete(report, order, dependencies, assets, AssetDatabase.DeleteAsset);
+                    DeleteWithProgress(report, order, dependencies, assets, AssetDatabase.DeleteAsset, progress);
                     FluxParticleGenerationLedger.Compact(ledger, sessions);
                     foreach (var session in sessions.Where(value => value.Root == root && value.State != "Running"))
                     {
@@ -127,6 +139,13 @@ namespace TpLab.Flux.FX.Editor.Build
                         RemoveEmptyFolder(root + "/Sessions/" + session.Id);
                     }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                report.blocked = true;
+                report.cancelled = true;
+                report.diagnostics.Add("Cleanup cancelled; remaining assets are kept.");
+                foreach (var item in report.items.Where(item => item.status == "Candidate")) Set(item, "Keep", "Cleanup cancelled");
             }
             catch (Exception error)
             {
@@ -176,10 +195,19 @@ namespace TpLab.Flux.FX.Editor.Build
         internal static void Delete(FluxParticleGenerationCleanupReport report, List<FluxParticleGenerationCleanupReport.Item> order,
             Dictionary<string, string[]> dependencies, Dictionary<string, FluxParticleGenerationLedger.Entry> assets, Func<string, bool> delete)
         {
+            DeleteWithProgress(report, order, dependencies, assets, delete, null);
+        }
+
+        static void DeleteWithProgress(FluxParticleGenerationCleanupReport report, List<FluxParticleGenerationCleanupReport.Item> order,
+            Dictionary<string, string[]> dependencies, Dictionary<string, FluxParticleGenerationLedger.Entry> assets, Func<string, bool> delete,
+            Func<string, float, bool> progress)
+        {
             var protectedPaths = new HashSet<string>();
             var references = new Dictionary<string, string>();
+            var index = 0;
             foreach (var item in order)
             {
+                CheckProgress(progress, "Removing unused generated assets", 0.75f + 0.25f * index++ / Math.Max(1, order.Count));
                 if (item.status != "Candidate") continue;
                 if (protectedPaths.Contains(item.path))
                 {
@@ -189,6 +217,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 }
                 if (FluxParticleGenerationCleanup.IsBusy)
                 {
+                    report.blocked = true;
                     foreach (var remaining in order.Where(value => value.status == "Candidate")) Set(remaining, "Keep", "Editor became busy");
                     break;
                 }
@@ -206,6 +235,11 @@ namespace TpLab.Flux.FX.Editor.Build
                     Protect(protectedPaths, dependencies, references);
                 }
             }
+        }
+
+        static void CheckProgress(Func<string, float, bool> progress, string message, float value)
+        {
+            if (progress != null && progress(message, value)) throw new OperationCanceledException();
         }
 
         static FluxParticleGenerationSession[] LoadSessions()

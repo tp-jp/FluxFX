@@ -34,6 +34,8 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         public static FluxParticleGenerationSession Current => Read(SdkKey) ?? Read(BuildKey) ?? Read(PlayKey);
 
+        internal static bool RecoveryComplete { get; private set; }
+
         public static void BeginPlayerBuild()
         {
             Begin(BuildKey, "Build");
@@ -51,6 +53,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void Begin(string key, string purpose)
         {
+            FluxParticleGenerationCleanupStartup.Skip();
             if (Read(key) != null) return;
             SessionState.SetString(key, FluxParticleGenerationSession.Begin(purpose).Id);
         }
@@ -92,9 +95,14 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static void Recover()
         {
-            FluxParticleGenerationCleanup.Request();
+            // 起動時の整理は、前回の中断セッションを復旧してから行います。
+            RecoveryComplete = false;
             var active = new[] { PlayKey, BuildKey, SdkKey }.Select(key => SessionState.GetString(key, "")).ToArray();
-            if (!Directory.Exists(FluxParticleGenerationSession.ManifestRoot)) return;
+            if (!Directory.Exists(FluxParticleGenerationSession.ManifestRoot))
+            {
+                RecoveryComplete = true;
+                return;
+            }
             foreach (var path in Directory.GetFiles(FluxParticleGenerationSession.ManifestRoot, "*.json"))
             {
                 var id = Path.GetFileNameWithoutExtension(path);
@@ -112,6 +120,7 @@ namespace TpLab.Flux.FX.Editor.Build
                     Debug.LogWarning("[FluxFX] Generation manifest could not be recovered: " + path + "\n" + error.Message);
                 }
             }
+            RecoveryComplete = true;
         }
 
         static void Update()

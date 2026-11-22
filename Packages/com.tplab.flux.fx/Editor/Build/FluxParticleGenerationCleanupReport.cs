@@ -35,6 +35,7 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         public bool fullScan;
         public bool blocked;
+        public bool cancelled;
         /// <summary>
         /// 分析・管理記録処理の失敗。個々の削除失敗はItem.statusに記録
         /// </summary>

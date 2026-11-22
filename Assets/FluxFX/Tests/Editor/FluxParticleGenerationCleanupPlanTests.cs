@@ -295,7 +295,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var now = DateTime.UtcNow;
             type.GetField("completedRevision").SetValue(schedule, 2L);
             type.GetField("scannedRevision").SetValue(schedule, 1L);
-            type.GetField("lastFullScanUtc").SetValue(schedule, now.ToString("O"));
+            type.GetField("lastAutomaticScanUtc").SetValue(schedule, now.ToString("O"));
             var due = type.GetMethod("IsDue", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsFalse((bool)due.Invoke(schedule, new object[] { now.AddHours(24).AddTicks(-1) }));
             Assert.IsTrue((bool)due.Invoke(schedule, new object[] { now.AddHours(24) }));
@@ -303,9 +303,11 @@ namespace TpLab.Flux.FX.Tests.Editor
             schedule = type.GetMethod("Load", InternalStatic).Invoke(null, null);
             Assert.IsTrue((bool)due.Invoke(schedule, new object[] { now.AddDays(2) }));
             type.GetField("nextCandidateCheckUtc").SetValue(schedule, now.AddDays(3).ToString("O"));
-            Assert.IsFalse((bool)due.Invoke(schedule, new object[] { now.AddDays(2) }));
-            Assert.IsTrue((bool)due.Invoke(schedule, new object[] { now.AddDays(3) }));
+            Assert.IsTrue((bool)due.Invoke(schedule, new object[] { now.AddDays(2) }), "New work does not wait for cache expiry");
             type.GetField("scannedRevision").SetValue(schedule, 2L);
+            Assert.IsFalse((bool)due.Invoke(schedule, new object[] { now.AddDays(2) }));
+            Assert.IsTrue((bool)due.Invoke(schedule, new object[] { now.AddDays(3) }), "Retention expiry needs no new generation");
+            type.GetField("nextCandidateCheckUtc").SetValue(schedule, null);
             Assert.IsFalse((bool)due.Invoke(schedule, new object[] { now.AddDays(100) }));
         }
 

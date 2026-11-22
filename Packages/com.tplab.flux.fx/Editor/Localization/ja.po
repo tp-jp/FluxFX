@@ -686,8 +686,29 @@ msgstr "生成先ルート"
 msgid "Automatic Cleanup"
 msgstr "自動整理"
 
-msgid "Automatic cleanup: default root only, after generation ends and 60 seconds of idle time, at most once per 24 hours. Recent cache is retained."
-msgstr "自動整理は既定の生成先が対象です。生成終了後、処理のない状態が60秒続いたときに、最大24時間に1回走査します。最近使用したキャッシュは保持します。"
+msgid "Automatic cleanup is ON by default. Pending cleanup runs only when opening the project, after initial import and compilation, at most once per 24 hours. No delayed cleanup runs while editing."
+msgstr "自動整理は既定ONです。予約された整理はプロジェクト起動時の初期Import・コンパイル後だけ、最大24時間に1回実行します。編集中の遅延実行は行いません。"
+
+msgid "FluxFX Generated Asset Cleanup"
+msgstr "FluxFX 生成物の整理"
+
+msgid "Checking generation records"
+msgstr "生成物の管理記録を確認中"
+
+msgid "Checking generated asset references"
+msgstr "生成物の参照を確認中"
+
+msgid "Checking saved asset references"
+msgstr "保存済みAssetの参照を確認中"
+
+msgid "Checking open scenes and live objects"
+msgstr "開いているSceneと使用中オブジェクトの参照を確認中"
+
+msgid "Removing unused generated assets"
+msgstr "未使用の生成物を削除中"
+
+msgid "Cleanup cancelled"
+msgstr "整理をキャンセルしたため保持しています"
 
 msgid "Analyze Generated Assets"
 msgstr "生成物を分析"

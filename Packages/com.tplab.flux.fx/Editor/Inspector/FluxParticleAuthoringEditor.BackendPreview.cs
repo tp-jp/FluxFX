@@ -343,6 +343,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     _backendPreviewSignature = null;
                     EnsureParticlePreview();
                     _previewPlaying = true;
+                    FluxParticleGenerationCleanupStartup.Skip();
                 }
                 return;
             }
@@ -364,6 +365,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.EndHorizontal();
             if (action >= 0)
             {
+                FluxParticleGenerationCleanupStartup.Skip();
                 if (action == 0)
                 {
                     _previewPlaying = !_previewPlaying;

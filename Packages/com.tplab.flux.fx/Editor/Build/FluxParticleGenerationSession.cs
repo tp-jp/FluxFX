@@ -126,6 +126,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 root = ValidateRoot(root),
                 startedUtc = DateTime.UtcNow.ToString("O")
             });
+            FluxParticleGenerationCleanupStartup.Skip();
             session.Save();
             FluxParticleGenerationLedger.Begin(session);
             return session;
