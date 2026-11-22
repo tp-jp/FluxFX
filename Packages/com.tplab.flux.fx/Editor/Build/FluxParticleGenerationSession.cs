@@ -108,6 +108,9 @@ namespace TpLab.Flux.FX.Editor.Build
         /// <summary>
         /// 生成セッションを開始します。
         /// </summary>
+        /// <param name="purpose">実行目的</param>
+        /// <param name="root">Assets配下の生成ルート。管理記録へ登録され、Collect(root)で明示的に整理する対象</param>
+        /// <returns>呼び出し元が終了を管理するセッション</returns>
         public static FluxParticleGenerationSession Begin(string purpose, string root = DefaultRoot)
         {
             if (string.IsNullOrWhiteSpace(purpose)) throw new ArgumentException("Generation purpose is required.", nameof(purpose));
@@ -159,7 +162,12 @@ namespace TpLab.Flux.FX.Editor.Build
                 record = new AssetRecord { path = path, kind = kind };
                 manifest.assets.Add(record);
             }
-            record.guid = AssetDatabase.AssetPathToGUID(path);
+            var guid = AssetDatabase.AssetPathToGUID(path);
+            if (record.kind != kind || (!string.IsNullOrEmpty(record.guid) && record.guid != guid))
+            {
+                throw new InvalidOperationException("Generated asset identity changed: " + path);
+            }
+            record.guid = guid;
             record.lastUsedUtc = DateTime.UtcNow.ToString("O");
             if (dependencies != null)
             {
@@ -244,7 +252,7 @@ namespace TpLab.Flux.FX.Editor.Build
             }
         }
 
-        static string ValidateRoot(string root)
+        internal static string ValidateRoot(string root)
         {
             if (string.IsNullOrWhiteSpace(root)) throw new ArgumentException("Output root is required.", nameof(root));
             root = root.Replace('\\', '/').TrimEnd('/');

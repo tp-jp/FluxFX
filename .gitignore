@@ -80,3 +80,5 @@ Assets/PackageMakerWindowData.asset*
 # Temporary assets created by Editor regression tests
 /Assets/FluxFXTestTemp/
 /Assets/FluxFXTestTemp.meta
+
+/.uloop/outputs

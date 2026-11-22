@@ -47,7 +47,7 @@ namespace TpLab.Flux.FX.Editor.Build
         /// <summary>
         /// 終了済みセッションの未使用Assetを削除します。
         /// </summary>
-        /// <param name="root">生成先のルート</param>
+        /// <param name="root">Beginでセッションへ登録した生成ルート。管理記録のないファイルは対象外</param>
         /// <returns>削除したAssetの数</returns>
         public static int Collect(string root = FluxParticleGenerationSession.DefaultRoot)
         {
@@ -140,6 +140,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         static int CollectCore(string root, DateTime? cacheCutoff)
         {
+            root = FluxParticleGenerationSession.ValidateRoot(root);
             if (IsBusy || !Directory.Exists(FluxParticleGenerationSession.ManifestRoot)) return 0;
             var sessions = Directory.GetFiles(FluxParticleGenerationSession.ManifestRoot, "*.json")
                 .Select(path => FluxParticleGenerationSession.Load(Path.GetFileNameWithoutExtension(path)))
@@ -195,7 +196,7 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             // 保護したMaterialから参照されるShader・Lookupも残します。
             protectedPaths.UnionWith(AssetDatabase.GetDependencies(protectedPaths.ToArray(), true));
-            var recordedDependencies = owned.SelectMany(session => session.Assets)
+            var recordedDependencies = sessions.SelectMany(session => session.Assets)
                 .Where(asset => asset != null && asset.dependencies != null)
                 .GroupBy(asset => asset.path)
                 .ToDictionary(group => group.Key, group => group.SelectMany(asset => asset.dependencies).Distinct().ToArray());

@@ -1,7 +1,6 @@
 using TpLab.Flux.FX.Editor.Compilation.Contracts;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TpLab.Flux.FX.Editor.Authoring;
 using TpLab.Flux.FX.Editor.Compilation.Compiler;
@@ -186,12 +185,12 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             var maskBuffer = RequireComponent<FluxBuffer>(spawn, "MaskBuffer");
             var keyBuffer = RequireComponent<FluxBuffer>(spawn, "KeyBuffer");
-            var stepShaders = program.Passes.Select(pass => SaveShader(pass.Source, session, owner)).ToArray();
-            var clearShaders = program.ClearSources.Select(source => SaveShader(source, session, owner)).ToArray();
-            var renderShader = SaveShader(compiled.RendererSource, session, owner);
+            var stepShaders = program.Passes.Select(pass => FluxParticleShaderStore.Save(pass.Source, session, owner)).ToArray();
+            var clearShaders = program.ClearSources.Select(source => FluxParticleShaderStore.Save(source, session, owner)).ToArray();
+            var renderShader = FluxParticleShaderStore.Save(compiled.RendererSource, session, owner);
             var render = SaveRenderMaterial(runtime, compiled, authoring, renderShader, session, owner);
 
-            var allocationShaders = new[] { SaveShader(program.AvailabilitySource, session, owner),
+            var allocationShaders = new[] { FluxParticleShaderStore.Save(program.AvailabilitySource, session, owner),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeReduction.shader"),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleFreeRanks.shader"),
                 AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleAllocatedSpawnKey.shader") };
@@ -422,34 +421,6 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             session.Record(path, "Lookup", owner);
             return texture;
-        }
-
-        internal static Shader SaveShader(string source, FluxParticleGenerationSession session, string owner)
-        {
-            var snapshot = FluxParticleShaderIncludeStore.Save(source, session, owner);
-            source = snapshot.Source;
-            FluxParticleGenerationSession.EnsureFolder(session.ShaderRoot);
-            var path = session.ShaderRoot + "/" + Hash128.Compute(source) + ".shader";
-            if (!File.Exists(path))
-            {
-                File.WriteAllText(path, source);
-            }
-            else if (File.ReadAllText(path) != source)
-            {
-                throw new InvalidOperationException($"Generated Shader was modified: {path}");
-            }
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
-            if (shader == null)
-            {
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
-            }
-            session.Record(path, "Shader", owner, snapshot.IncludeSources.Keys);
-            if (shader == null || ShaderUtil.ShaderHasError(shader))
-            {
-                throw new InvalidOperationException($"Program Shader failed to compile: {path}");
-            }
-            return shader;
         }
 
     }

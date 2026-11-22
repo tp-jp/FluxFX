@@ -16,9 +16,10 @@ namespace TpLab.Flux.FX.Editor.Build
     public sealed class FluxParticleShaderSnapshot
     {
         static readonly Regex _includes = new Regex(
-            @"^[ \t]*#[ \t]*include(?:_with_pragmas)?\b[^\r\n]*", RegexOptions.Multiline);
+            @"^[ \t]*#[ \t]*include\w*\b[^\r\n]*", RegexOptions.Multiline);
         static readonly Regex _includePath = new Regex(
-            "^[ \\t]*#[ \\t]*include(?:_with_pragmas)?[ \\t]+[\"<](?<path>[^\">]+)[\">][ \\t]*$");
+            "^[ \\t]*#[ \\t]*include(?:_with_pragmas)?[ \\t]+(?:\"(?<path>[^\"<>]+)\"|<(?<path>[^\"<>]+)>)[ \\t]*$");
+        static readonly Regex _continuedDirectives = new Regex(@"^[ \t]*#(?:[^\n]*\\\n)+[^\n]*", RegexOptions.Multiline);
         static readonly HashSet<string> _externalIncludes = new HashSet<string>(StringComparer.Ordinal)
         {
             "UnityCG.cginc", "UnityShaderVariables.cginc", "UnityInstancing.cginc",
@@ -35,10 +36,23 @@ namespace TpLab.Flux.FX.Editor.Build
         /// </summary>
         public IReadOnlyDictionary<string, string> IncludeSources { get; }
 
-        FluxParticleShaderSnapshot(string source, IDictionary<string, string> includes)
+        /// <summary>
+        /// 依存元Assetパスと固定先の対応
+        /// </summary>
+        public IReadOnlyDictionary<string, string> OriginalPaths { get; }
+
+        /// <summary>
+        /// 固定includeごとの直接依存先
+        /// </summary>
+        public IReadOnlyDictionary<string, IReadOnlyList<string>> IncludeDependencies { get; }
+
+        FluxParticleShaderSnapshot(string source, IDictionary<string, string> includes,
+            IDictionary<string, string> paths, IDictionary<string, IReadOnlyList<string>> dependencies)
         {
             Source = source;
             IncludeSources = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(includes));
+            OriginalPaths = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(paths));
+            IncludeDependencies = new ReadOnlyDictionary<string, IReadOnlyList<string>>(dependencies);
         }
 
         /// <summary>
@@ -60,12 +74,20 @@ namespace TpLab.Flux.FX.Editor.Build
             }
             var paths = new Dictionary<string, string>(StringComparer.Ordinal);
             var files = new Dictionary<string, string>(StringComparer.Ordinal);
+            var dependencies = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
             var stack = new List<string>();
 
-            string Freeze(string text, string sourcePath)
+            string Freeze(string text, string sourcePath, out IReadOnlyList<string> children)
             {
                 text = text.Replace("\r\n", "\n").Replace('\r', '\n');
                 var visible = WithoutComments(text);
+                foreach (Match directive in _continuedDirectives.Matches(visible))
+                {
+                    if (Regex.IsMatch(directive.Value.Replace("\\\n", ""), @"^[ \t]*#[ \t]*include"))
+                    {
+                        throw new InvalidOperationException($"Unsupported continued Shader include in {sourcePath}: {directive.Value}");
+                    }
+                }
                 var replacements = new List<(int start, int length, string path)>();
                 foreach (Match directive in _includes.Matches(visible))
                 {
@@ -86,7 +108,16 @@ namespace TpLab.Flux.FX.Editor.Build
                     if (!paths.TryGetValue(path, out var frozenPath))
                     {
                         stack.Add(path);
-                        var frozen = Freeze(readSource(path), path);
+                        string dependencySource;
+                        try
+                        {
+                            dependencySource = readSource(path);
+                        }
+                        catch (Exception error)
+                        {
+                            throw new FileNotFoundException($"Cannot read Shader dependency '{path}', included by '{sourcePath}': {error.Message}", path, error);
+                        }
+                        var frozen = Freeze(dependencySource, path, out var childDependencies);
                         stack.RemoveAt(stack.Count - 1);
                         using (var sha = SHA256.Create())
                         {
@@ -94,7 +125,12 @@ namespace TpLab.Flux.FX.Editor.Build
                             frozenPath = directory + "/Include-" + hash + ".hlsl";
                         }
                         paths.Add(path, frozenPath);
+                        if (files.TryGetValue(frozenPath, out var existing) && existing != frozen)
+                        {
+                            throw new InvalidOperationException($"Shader include content collision: {path} -> {frozenPath}");
+                        }
                         files[frozenPath] = frozen;
+                        dependencies[frozenPath] = childDependencies;
                     }
                     replacements.Add((directive.Index + group.Index, group.Length, frozenPath));
                 }
@@ -102,11 +138,12 @@ namespace TpLab.Flux.FX.Editor.Build
                 {
                     text = text.Substring(0, replacement.start) + replacement.path + text.Substring(replacement.start + replacement.length);
                 }
+                children = Array.AsReadOnly(replacements.Select(value => value.path).Distinct().ToArray());
                 return text;
             }
 
-            var result = Freeze(source, "Assets/FluxFXGenerated.shader");
-            return new FluxParticleShaderSnapshot(result, files);
+            var result = Freeze(source, "Assets/FluxFXGenerated.shader", out _);
+            return new FluxParticleShaderSnapshot(result, files, paths, dependencies);
         }
 
         static string NormalizePath(string path)

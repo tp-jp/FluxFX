@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
 using TpLab.Flux.FX.Editor.Build;
 using UnityEditor;
@@ -108,8 +107,7 @@ namespace TpLab.Flux.FX.Tests.Editor
 
         Shader SaveShader()
         {
-            var method = typeof(FluxParticleProgramBuild).GetMethod("SaveShader", BindingFlags.Static | BindingFlags.NonPublic);
-            return (Shader)method.Invoke(null, new object[] { _source, _session, "test" });
+            return FluxParticleShaderStore.Save(_source, _session, "test");
         }
     }
 }

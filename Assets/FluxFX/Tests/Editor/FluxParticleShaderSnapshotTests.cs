@@ -96,7 +96,11 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [TestCase("#include MACRO")]
+        [TestCase("#include_next \"Assets/Child.hlsl\"")]
         [TestCase("#include \"../Outside.hlsl\"")]
+        [TestCase("#include <Assets/Child.hlsl\"")]
+        [TestCase("#inc\\\nlude \"Assets/Child.hlsl\"")]
+        [TestCase("#include \\\n\"Assets/Child.hlsl\"")]
         public void UnresolvedOrEscapingIncludeIsRejected(string source)
         {
             Assert.Throws<InvalidOperationException>(() => Build(source));

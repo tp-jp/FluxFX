@@ -30,7 +30,7 @@ namespace TpLab.Flux.FX.Editor.Build
             if (tracked < 1 || tracked > maximum) throw new InvalidOperationException("Trail capacity exceeds Texture or Mesh limits.");
             var preview = session == null;
             var source = FluxParticleTrailShaderGenerator.Generate(build.Shaders);
-            var shader = preview ? ShaderUtil.CreateShaderAsset(source, true) : FluxParticleProgramBuild.SaveShader(source, session, owner);
+            var shader = preview ? ShaderUtil.CreateShaderAsset(source, true) : FluxParticleShaderStore.Save(source, session, owner);
             if (preview) own(shader);
             if (ShaderUtil.ShaderHasError(shader)) throw new InvalidOperationException("Trail capture Shader failed to compile.");
             var renderShader = AssetDatabase.LoadAssetAtPath<Shader>("Packages/com.tplab.flux.fx/Runtime/Shaders/FluxParticleTrail.shader");
