@@ -35,6 +35,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             if (_instance != null) Object.DestroyImmediate(_instance);
             _session?.Dispose();
             AssetDatabase.DeleteAsset(_root);
+            FluxParticleTestPaths.RemoveEmptyGenerationLedger(_root);
         }
 
         [Test]

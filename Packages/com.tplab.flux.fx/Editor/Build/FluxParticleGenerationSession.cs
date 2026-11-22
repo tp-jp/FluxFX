@@ -16,7 +16,7 @@ namespace TpLab.Flux.FX.Editor.Build
         public const string ManifestRoot = "Library/FluxFX/GenerationSessions";
 
         [Serializable]
-        public sealed class AssetRecord
+        public class AssetRecord
         {
             public string path;
             public string guid;
@@ -85,6 +85,10 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal string EditorSessionId => manifest.editorSessionId;
 
+        internal string Root => manifest.root;
+
+        internal DateTime EndedUtc => FluxParticleGenerationLedger.ParseUtc(manifest.endedUtc);
+
         internal IReadOnlyList<AssetRecord> Assets => manifest.assets;
 
         internal static string CurrentEditorSessionId
@@ -123,6 +127,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 startedUtc = DateTime.UtcNow.ToString("O")
             });
             session.Save();
+            FluxParticleGenerationLedger.Begin(session);
             return session;
         }
 
@@ -134,6 +139,11 @@ namespace TpLab.Flux.FX.Editor.Build
             if (!Guid.TryParseExact(id, "N", out _)) throw new ArgumentException("Invalid generation session ID.", nameof(id));
             var record = JsonUtility.FromJson<Manifest>(File.ReadAllText(ManifestRoot + "/" + id + ".json"));
             if (record == null || record.version != 1 || record.id != id) throw new InvalidOperationException("Invalid generation manifest.");
+            if (record.assets == null || record.assets.Any(asset => asset == null) ||
+                (record.state != "Running" && record.state != "Completed" && record.state != "Failed" && record.state != "Interrupted"))
+            {
+                throw new InvalidOperationException("Invalid generation manifest state or assets: " + id);
+            }
             record.root = ValidateRoot(record.root);
             return new FluxParticleGenerationSession(record);
         }
@@ -178,6 +188,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 record.owners.Add(owner);
             }
             Save();
+            FluxParticleGenerationLedger.Record(this, record);
         }
 
         /// <summary>
@@ -214,14 +225,16 @@ namespace TpLab.Flux.FX.Editor.Build
 
         void Finish(string state)
         {
+            if (State != "Running") return;
             manifest = Load(Id).manifest;
             if (State != "Running") return;
             manifest.state = state ?? (string.IsNullOrEmpty(manifest.error) ? "Completed" : "Failed");
             manifest.endedUtc = DateTime.UtcNow.ToString("O");
             Save();
-            if (manifest.root == DefaultRoot)
+            FluxParticleGenerationLedger.Finish(this);
+            if (manifest.root == DefaultRoot && manifest.assets.Count != 0)
             {
-                FluxParticleGenerationCleanup.Request();
+                FluxParticleGenerationCleanup.NotifyCompleted();
             }
         }
 

@@ -673,3 +673,84 @@ msgstr "固定ワールド距離"
 
 msgid "Distance from the system origin. Follow Effect includes Effect Scale and uniform Transform Scale; Fixed World uses meters. Orthographic cameras do not fade."
 msgstr "システム原点からの距離です。エフェクト追従では表示倍率と一様なTransform Scaleを適用し、固定ワールド距離ではメートルとして扱います。平行投影カメラではフェードしません。"
+
+msgid "Generated Asset Cleanup"
+msgstr "生成物の整理"
+
+msgid "Analyze generated assets to see what can be deleted and why other assets are kept. References are checked again before deletion."
+msgstr "削除できる生成物と、保持する理由を分析します。削除の直前に参照を再確認します。"
+
+msgid "Generation Root"
+msgstr "生成先ルート"
+
+msgid "Automatic Cleanup"
+msgstr "自動整理"
+
+msgid "Automatic cleanup: default root only, after generation ends and 60 seconds of idle time, at most once per 24 hours. Recent cache is retained."
+msgstr "自動整理は既定の生成先が対象です。生成終了後、処理のない状態が60秒続いたときに、最大24時間に1回走査します。最近使用したキャッシュは保持します。"
+
+msgid "Analyze Generated Assets"
+msgstr "生成物を分析"
+
+msgid "Delete Reviewed Unused Assets"
+msgstr "確認した未使用生成物を削除"
+
+msgid "Candidates"
+msgstr "削除候補"
+
+msgid "Deleted"
+msgstr "削除済み"
+
+msgid "Kept"
+msgstr "保持"
+
+msgid "Candidate"
+msgstr "削除候補"
+
+msgid "Keep"
+msgstr "保持"
+
+msgid "Missing"
+msgstr "ファイルなし"
+
+msgid "Failed"
+msgstr "失敗"
+
+msgid "Unreferenced managed asset"
+msgstr "参照されていない管理対象"
+
+msgid "File is absent"
+msgstr "ファイルが存在しません"
+
+msgid "GUID, asset kind or shader content differs from the ownership record"
+msgstr "GUID・生成物の種類・Shaderの内容が管理記録と一致しません"
+
+msgid "Not in the reviewed selection"
+msgstr "事前に確認した削除候補に含まれていません"
+
+msgid "Cache was used within the last 24 hours"
+msgstr "24時間以内に使用したキャッシュです"
+
+msgid "Failed or interrupted generation is retained for diagnosis"
+msgstr "失敗・中断した生成物を診断のため保持しています"
+
+msgid "Generation session is running"
+msgstr "生成セッションが実行中です"
+
+msgid "Referenced asset or object"
+msgstr "Assetまたは使用中オブジェクトから参照されています"
+
+msgid "No ownership record"
+msgstr "所有の管理記録がありません"
+
+msgid "Analysis or cleanup failed"
+msgstr "分析または整理に失敗しました"
+
+msgid "Dependency cycle or dependency of a cycle"
+msgstr "循環参照、または循環参照から使用される依存先です"
+
+msgid "A referring asset could not be deleted"
+msgstr "参照元を削除できなかったため保持しています"
+
+msgid "Editor became busy"
+msgstr "Editorが別の処理を開始したため保持しています"

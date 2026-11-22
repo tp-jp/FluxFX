@@ -94,6 +94,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 {
                     AssetDatabase.DeleteAsset(root);
                 }
+                FluxParticleTestPaths.RemoveEmptyGenerationLedger(root);
             }
         }
 

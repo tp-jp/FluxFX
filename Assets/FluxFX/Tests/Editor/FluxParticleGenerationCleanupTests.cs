@@ -46,6 +46,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             }
             session?.Dispose();
             AssetDatabase.DeleteAsset(root);
+            FluxParticleTestPaths.RemoveEmptyGenerationLedger(root);
         }
 
         void CreateRenderer()
@@ -68,37 +69,37 @@ namespace TpLab.Flux.FX.Tests.Editor
         }
 
         [Test]
-        public void RequestsWaitAndProjectNotificationsDoNotScheduleAnotherCollection()
+        public void RequestsAndProjectNotificationsDoNotCreatePendingGeneration()
         {
-            var type = typeof(FluxParticleGenerationCleanup);
-            var flags = BindingFlags.Static | BindingFlags.NonPublic;
-            var pending = type.GetField("_pending", flags);
-            var nextAttempt = type.GetField("_nextAttempt", flags);
-            var previousPending = pending.GetValue(null);
-            var previousAttempt = nextAttempt.GetValue(null);
+            const string schedulePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
+            var saved = File.Exists(schedulePath) ? File.ReadAllText(schedulePath) : null;
             var automatic = FluxParticleGenerationCleanup.AutomaticCleanupEnabled;
             try
             {
+                Directory.CreateDirectory(Path.GetDirectoryName(schedulePath));
+                File.WriteAllText(schedulePath, "{\"version\":1,\"completedRevision\":0,\"scannedRevision\":0}");
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = true;
-                var before = EditorApplication.timeSinceStartup;
+                var type = typeof(FluxParticleGenerationCleanup);
+                var flags = BindingFlags.Static | BindingFlags.NonPublic;
+                var before = File.ReadAllText(schedulePath);
                 FluxParticleGenerationCleanup.Request();
-                Assert.IsTrue((bool)pending.GetValue(null));
-                Assert.GreaterOrEqual((double)nextAttempt.GetValue(null), before + 60);
-                AssertAssetsRemain();
-                pending.SetValue(null, false);
+                Assert.GreaterOrEqual((double)type.GetField("_nextAttempt", flags).GetValue(null), EditorApplication.timeSinceStartup + 59);
                 type.GetMethod("OnProjectChanged", flags).Invoke(null, null);
-                Assert.IsFalse((bool)pending.GetValue(null));
+                type.GetField("_nextAttempt", flags).SetValue(null, 0d);
+                type.GetMethod("Update", flags).Invoke(null, null);
+                Assert.AreEqual(before, File.ReadAllText(schedulePath));
+                AssertAssetsRemain();
             }
             finally
             {
+                if (saved == null) File.Delete(schedulePath);
+                else File.WriteAllText(schedulePath, saved);
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = automatic;
-                pending.SetValue(null, previousPending);
-                nextAttempt.SetValue(null, previousAttempt);
             }
         }
 
         [Test]
-        public void DisabledAutomaticCleanupDoesNotScheduleButAllowsManualCollection()
+        public void DisabledAutomaticCleanupDoesNotDeleteButAllowsManualCollection()
         {
             var automatic = FluxParticleGenerationCleanup.AutomaticCleanupEnabled;
             try
@@ -106,15 +107,9 @@ namespace TpLab.Flux.FX.Tests.Editor
                 FluxParticleGenerationCleanup.AutomaticCleanupEnabled = false;
                 session.Dispose();
                 FluxParticleGenerationCleanup.Request();
-                var type = typeof(FluxParticleGenerationCleanup);
                 var flags = BindingFlags.Static | BindingFlags.NonPublic;
-                type.GetMethod("OnProjectChanged", flags).Invoke(null, null);
-                type.GetMethod("Update", flags).Invoke(null, null);
-                Assert.IsFalse((bool)type.GetField("_pending", flags).GetValue(null));
+                typeof(FluxParticleGenerationCleanup).GetMethod("Update", flags).Invoke(null, null);
                 AssertAssetsRemain();
-                type.GetMethod("CleanFromMenu", flags).Invoke(null, null);
-                Assert.IsTrue((bool)type.GetField("_pending", flags).GetValue(null));
-                Assert.IsTrue((bool)type.GetField("_manual", flags).GetValue(null));
                 Assert.AreEqual(2, FluxParticleGenerationCleanup.Collect(root));
             }
             finally
