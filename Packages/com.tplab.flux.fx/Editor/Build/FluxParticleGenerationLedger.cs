@@ -11,7 +11,7 @@ namespace TpLab.Flux.FX.Editor.Build
     // 所有情報はLibraryの再作成を跨いで保持し、実行履歴とは別に集約します。
     internal static class FluxParticleGenerationLedger
     {
-        internal const string DirectoryPath = "ProjectSettings/FluxFXGeneration/Roots";
+        internal const string DirectoryPath = FluxParticleGenerationStorage.DirectoryPath + "/Roots";
 
         [Serializable]
         internal sealed class Entry : FluxParticleGenerationSession.AssetRecord
@@ -40,6 +40,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal static Ledger Load(string root)
         {
+            FluxParticleGenerationStorage.EnsureMigrated();
             root = FluxParticleGenerationSession.ValidateRoot(root);
             var path = PathFor(root);
             return File.Exists(path) ? Read(path) : new Ledger { root = root };
@@ -47,6 +48,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal static Ledger[] LoadAll()
         {
+            FluxParticleGenerationStorage.EnsureMigrated();
             return Directory.Exists(DirectoryPath) ? Directory.GetFiles(DirectoryPath, "*.json").Select(Read).ToArray() : Array.Empty<Ledger>();
         }
 
@@ -151,7 +153,11 @@ namespace TpLab.Flux.FX.Editor.Build
             return parts.Length == 2 && parts[1] == "Materials" && Guid.TryParseExact(parts[0], "N", out _);
         }
 
-        internal static void Save(Ledger ledger) => WriteAtomic(PathFor(ledger.root), JsonUtility.ToJson(ledger, true));
+        internal static void Save(Ledger ledger)
+        {
+            FluxParticleGenerationStorage.EnsureMigrated();
+            WriteAtomic(PathFor(ledger.root), JsonUtility.ToJson(ledger, true));
+        }
 
         internal static void Compact(Ledger ledger, IEnumerable<FluxParticleGenerationSession> sessions)
         {
@@ -206,13 +212,16 @@ namespace TpLab.Flux.FX.Editor.Build
             }
         }
 
-        static Ledger Read(string path)
+        static Ledger Read(string path) => Parse(File.ReadAllText(path), path, DirectoryPath);
+
+        // 移行元も通常の読込と同じスキーマ・生成ルート・ファイル名で検証します。
+        internal static Ledger Parse(string source, string path, string directory)
         {
             try
             {
-                var ledger = JsonUtility.FromJson<Ledger>(File.ReadAllText(path));
+                var ledger = JsonUtility.FromJson<Ledger>(source);
                 if (ledger == null || ledger.version != 1 || ledger.assets == null || ledger.activeSessions == null ||
-                    PathFor(FluxParticleGenerationSession.ValidateRoot(ledger.root)) != path.Replace('\\', '/') ||
+                    Path.GetFullPath(directory + "/" + Hash128.Compute(FluxParticleGenerationSession.ValidateRoot(ledger.root)) + ".json") != Path.GetFullPath(path) ||
                     ledger.assets.Any(asset => !HasExpectedPath(ledger.root, asset)) ||
                     ledger.assets.Select(asset => asset.path).Distinct().Count() != ledger.assets.Count ||
                     ledger.activeSessions.Any(value => value == null || !Guid.TryParseExact(value.id, "N", out _) || string.IsNullOrEmpty(value.editorSessionId)))

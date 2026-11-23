@@ -15,7 +15,7 @@ namespace TpLab.Flux.FX.Tests.Editor
     public sealed class FluxParticleGenerationCleanupPlanTests
     {
         const BindingFlags InternalStatic = BindingFlags.Static | BindingFlags.NonPublic;
-        const string SchedulePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
+        const string SchedulePath = "UserSettings/FluxFXGeneration/CleanupSchedule.json";
         string _root;
         string _materialPath;
         string _lookupPath;
@@ -24,7 +24,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         FluxParticleGenerationSession _session;
         GameObject _instance;
 
-        string LedgerPath => "ProjectSettings/FluxFXGeneration/Roots/" + Hash128.Compute(_root) + ".json";
+        string LedgerPath => "UserSettings/FluxFXGeneration/Roots/" + Hash128.Compute(_root) + ".json";
 
         [SetUp]
         public void SetUp()

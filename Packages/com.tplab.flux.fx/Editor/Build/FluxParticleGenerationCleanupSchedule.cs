@@ -8,7 +8,7 @@ namespace TpLab.Flux.FX.Editor.Build
     [Serializable]
     internal sealed class FluxParticleGenerationCleanupSchedule
     {
-        internal const string FilePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
+        internal const string FilePath = FluxParticleGenerationStorage.DirectoryPath + "/CleanupSchedule.json";
         public int version = 2;
         public long completedRevision;
         public long scannedRevision;
@@ -24,20 +24,26 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal static FluxParticleGenerationCleanupSchedule Load()
         {
+            FluxParticleGenerationStorage.EnsureMigrated();
             if (!File.Exists(FilePath))
             {
                 var existing = File.Exists(FluxParticleGenerationLedger.PathFor(FluxParticleGenerationSession.DefaultRoot)) ||
                     Directory.Exists(FluxParticleGenerationSession.ManifestRoot);
                 return new FluxParticleGenerationCleanupSchedule { completedRevision = existing ? 1 : 0 };
             }
-            var value = JsonUtility.FromJson<FluxParticleGenerationCleanupSchedule>(File.ReadAllText(FilePath));
+            return Parse(File.ReadAllText(FilePath), FilePath);
+        }
+
+        internal static FluxParticleGenerationCleanupSchedule Parse(string source, string path)
+        {
+            var value = JsonUtility.FromJson<FluxParticleGenerationCleanupSchedule>(source);
             if (value == null || (value.version != 1 && value.version != 2) || value.completedRevision < value.scannedRevision ||
                 value.scannedRevision < 0 || (!string.IsNullOrEmpty(value.lastFullScanUtc) &&
                     FluxParticleGenerationLedger.ParseUtc(value.lastFullScanUtc) == DateTime.MaxValue) ||
                 (!string.IsNullOrEmpty(value.lastAutomaticScanUtc) && FluxParticleGenerationLedger.ParseUtc(value.lastAutomaticScanUtc) == DateTime.MaxValue) ||
                 (!string.IsNullOrEmpty(value.nextCandidateCheckUtc) && FluxParticleGenerationLedger.ParseUtc(value.nextCandidateCheckUtc) == DateTime.MaxValue))
             {
-                throw new InvalidOperationException("Invalid cleanup schedule: " + FilePath);
+                throw new InvalidOperationException("Invalid cleanup schedule: " + path);
             }
             if (value.version == 1)
             {
@@ -49,6 +55,10 @@ namespace TpLab.Flux.FX.Editor.Build
             return value;
         }
 
-        internal void Save() => FluxParticleGenerationLedger.WriteAtomic(FilePath, JsonUtility.ToJson(this, true));
+        internal void Save()
+        {
+            FluxParticleGenerationStorage.EnsureMigrated();
+            FluxParticleGenerationLedger.WriteAtomic(FilePath, JsonUtility.ToJson(this, true));
+        }
     }
 }

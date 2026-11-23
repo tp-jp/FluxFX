@@ -71,7 +71,7 @@ namespace TpLab.Flux.FX.Tests.Editor
         [Test]
         public void RequestsAndProjectNotificationsOnlyReserveNextStartup()
         {
-            const string schedulePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
+            const string schedulePath = "UserSettings/FluxFXGeneration/CleanupSchedule.json";
             var saved = File.Exists(schedulePath) ? File.ReadAllText(schedulePath) : null;
             var automatic = FluxParticleGenerationCleanup.AutomaticCleanupEnabled;
             try

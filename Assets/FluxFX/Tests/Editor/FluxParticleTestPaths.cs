@@ -20,7 +20,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             {
                 throw new InvalidOperationException("Test generation root has not been removed: " + root);
             }
-            File.Delete("ProjectSettings/FluxFXGeneration/Roots/" + Hash128.Compute(root) + ".json");
+            File.Delete("UserSettings/FluxFXGeneration/Roots/" + Hash128.Compute(root) + ".json");
         }
 
         internal static string TemporaryRoot

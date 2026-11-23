@@ -12,7 +12,7 @@ namespace TpLab.Flux.FX.Tests.Editor
     {
         const BindingFlags InternalStatic = BindingFlags.Static | BindingFlags.NonPublic;
         const string Preference = "TpLab.Flux.FX.AutomaticGenerationCleanup";
-        const string SchedulePath = "ProjectSettings/FluxFXGeneration/CleanupSchedule.json";
+        const string SchedulePath = "UserSettings/FluxFXGeneration/CleanupSchedule.json";
         string _root;
         string _key;
         string _scheduleBefore;
