@@ -23,6 +23,7 @@ namespace TpLab.Flux.FX.Editor.Preview
     {
         readonly List<Object> objects = new List<Object>();
         readonly FluxParticleAuthoring authoring;
+        readonly FluxParticlePreviewFollow _follow;
         readonly FluxParticleProgramGpuSession session;
         readonly Material material;
         readonly Material availabilityMaterial;
@@ -65,14 +66,24 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <summary>
         /// プレビューの基準位置からワールド位置への変換
         /// </summary>
-        public Vector3 ReferenceToWorld(Vector3 position) => FluxParticleCoordinates.ReferenceToWorld(position,
-            authoring.transform, EffectScale, authoring.SimulationSpace);
+        public Vector3 ReferenceToWorld(Vector3 position) => authoring.SimulationSpace == FluxParticleSimulationSpace.World ?
+            position : SystemMatrix.MultiplyPoint3x4(position * EffectScale);
 
         /// <summary>
         /// 外部ワールド位置からプレビューの基準位置への変換
         /// </summary>
-        public Vector3 WorldToReference(Vector3 position) => FluxParticleCoordinates.WorldToReference(position,
-            authoring.transform, EffectScale, authoring.SimulationSpace);
+        public Vector3 WorldToReference(Vector3 position) => authoring.SimulationSpace == FluxParticleSimulationSpace.World ?
+            position : SystemMatrix.inverse.MultiplyPoint3x4(position) / EffectScale;
+
+        /// <summary>
+        /// 保存されたTransformに追従設定を反映した、Previewのローカルからワールドへの変換
+        /// </summary>
+        public Matrix4x4 SystemMatrix => _follow.Matrix;
+
+        /// <summary>
+        /// Sceneや実行時設定に保存しないPreview専用の追従操作
+        /// </summary>
+        public FluxParticlePreviewFollow Follow => _follow;
 
         /// <summary>
         /// 再生開始からSimulationを進めた累計秒数
@@ -92,6 +103,11 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <param name="authoring">Particleの設定</param>
         /// <param name="count">プレビューのParticle数</param>
         public FluxParticleEditorPreview(FluxParticleBuildResult build, FluxParticleAuthoring authoring, int count)
+            : this(build, authoring, count, new FluxParticlePreviewFollow(authoring))
+        {
+        }
+
+        internal FluxParticleEditorPreview(FluxParticleBuildResult build, FluxParticleAuthoring authoring, int count, FluxParticlePreviewFollow follow)
         {
             var sourceMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
             var maximum = FluxParticleCapacityValidator.GetMaximumCount(sourceMesh);
@@ -100,6 +116,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                 throw new ArgumentOutOfRangeException(nameof(count), $"Particle count must be in [1, {maximum}] for this GPU and render Mesh.");
             }
             this.authoring = authoring;
+            _follow = follow;
             Count = count;
             EffectScale = build.InitialValues["system.effect-scale"].x;
             var bursts = authoring.Emission.Bursts.OrderBy(burst => burst.Time).ToArray();
@@ -188,7 +205,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <returns>再生成したPreview</returns>
         public FluxParticleEditorPreview Recreate(FluxParticleBuildResult build)
         {
-            var replacement = new FluxParticleEditorPreview(build, authoring, Count);
+            var replacement = new FluxParticleEditorPreview(build, authoring, Count, _follow);
             try
             {
                 var pages = session.CurrentPages;
@@ -258,6 +275,7 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <param name="deltaTime">経過秒数</param>
         public void Step(float deltaTime)
         {
+            if (!_follow.Refresh()) return;
             var spawnCount = FluxParticleEmissionScheduler.Emit(emissionState, deltaTime, authoring.Emission.Rate,
                 authoring.Playback.Duration, authoring.Playback.Loop, burstTimes, burstCounts);
             var visible = Math.Min(Count, spawnCount);
@@ -268,7 +286,7 @@ namespace TpLab.Flux.FX.Editor.Preview
             {
                 if (authoring.SimulationSpace == FluxParticleSimulationSpace.World)
                 {
-                    var matrix = authoring.transform.localToWorldMatrix;
+                    var matrix = SystemMatrix;
                     for (var row = 0; row < 3; row++)
                     {
                         session.SetUniformVector("emitter.row" + row, matrix.GetRow(row));
@@ -292,7 +310,7 @@ namespace TpLab.Flux.FX.Editor.Preview
                     if (usesSimulationTime) session.SetUniformFloat("step.time", (float)(PlaybackTime + deltaTime));
                     session.BindRender(trailCaptureMaterial);
                     FluxParticleTrailHistory.Step(trailKernel, trailBuffers, trailMaterials, trailState,
-                        visible > 0 ? mask.Texture : null, Count, deltaTime, authoring.transform.localToWorldMatrix,
+                        visible > 0 ? mask.Texture : null, Count, deltaTime, SystemMatrix,
                         authoring.SimulationSpace == FluxParticleSimulationSpace.World, trailDuration);
                 }
             }
@@ -313,6 +331,10 @@ namespace TpLab.Flux.FX.Editor.Preview
         /// <param name="layer">描画対象のLayer</param>
         public void Draw(Camera camera, Matrix4x4 matrix, int layer)
         {
+            if (authoring.SystemFollow.Target != FluxParticleFollowTarget.Off)
+            {
+                matrix = SystemMatrix;
+            }
             if (usesSimulationTime) session.SetUniformFloat("step.time", (float)PlaybackTime);
             session.BindRender(material);
             Graphics.DrawMesh(mesh, matrix, material, layer, camera, 0, null, ShadowCastingMode.Off, false, null, LightProbeUsage.Off);

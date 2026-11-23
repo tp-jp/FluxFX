@@ -28,6 +28,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         string _backendPreviewSignature;
         string _backendPreviewError;
         FluxParticleEditorPreview _particlePreview;
+        FluxParticlePreviewFollow _previewFollow;
         bool _previewPlaying;
         double _lastPreviewTime;
         bool _unityFocused;
@@ -161,7 +162,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     _backendPreview = FluxParticleBuildPipeline.Build(authoring);
                     var renderMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
                     _backendMaximumCount = FluxParticleCapacityValidator.GetMaximumCount(renderMesh);
-                    _particlePreview = new FluxParticleEditorPreview(_backendPreview, authoring, count);
+                    if (_previewFollow == null) _previewFollow = new FluxParticlePreviewFollow(authoring);
+                    _particlePreview = new FluxParticleEditorPreview(_backendPreview, authoring, count, _previewFollow);
                     _lastPreviewTime = EditorApplication.timeSinceStartup;
                     SceneView.RepaintAll();
                 }
@@ -382,6 +384,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             GUILayout.Label(L10n.Tr("Playback Time") + ": " + _particlePreview.PlaybackTime.ToString("F2") + " s");
             var count = _particlePreview.AliveCount;
             GUILayout.Label(L10n.Tr("Alive particles") + ": " + (count < 0 ? "—" : count.ToString()));
+            DrawPreviewFollowControls();
             if (!_unityFocused) GUILayout.Label(L10n.Tr("Paused while Unity is unfocused"));
         }
         void OnPreviewPlayModeStateChanged(PlayModeStateChange state)

@@ -775,3 +775,81 @@ msgstr "参照元を削除できなかったため保持しています"
 
 msgid "Editor became busy"
 msgstr "Editorが別の処理を開始したため保持しています"
+
+msgid "System Follow"
+msgstr "Systemの追従"
+
+msgid "Local Player Position"
+msgstr "ローカルプレイヤーの位置"
+
+msgid "Local Player Head"
+msgstr "ローカルプレイヤーの頭部"
+
+msgid "Specified Transform"
+msgstr "指定Transform"
+
+msgid "Follow Transform"
+msgstr "追従先Transform"
+
+msgid "Follow Offset"
+msgstr "追従位置のオフセット"
+
+msgid "Follow Offset Space"
+msgstr "オフセットの座標系"
+
+msgid "Target Rotation"
+msgstr "追従先の向き"
+
+msgid "Follow Rotation"
+msgstr "回転の追従"
+
+msgid "Horizontal Only"
+msgstr "水平回転のみ"
+
+msgid "Full Rotation"
+msgstr "全回転"
+
+msgid "None"
+msgstr "なし"
+
+msgid "Follow Preview Target"
+msgstr "Preview用の追従先"
+
+msgid "Moves the System GameObject and its children. Scale is preserved. Configured before Play Mode."
+msgstr "SystemのGameObjectと子オブジェクトを追従させます。スケールは維持します。Play開始前に設定してください。"
+
+msgid "Choose a Follow Transform outside this System's hierarchy."
+msgstr "このSystem自身とその子以外のTransformを追従先に指定してください。"
+
+msgid "Preview starts at the placed position. Choose its follow source in the SceneView Preview controls."
+msgstr "Previewは配置位置で開始します。追従先はSceneビューのPreview操作欄で選択できます。"
+
+msgid "Preview Follow"
+msgstr "Previewの追従"
+
+msgid "Preview only. Does not change runtime settings or scene Transforms."
+msgstr "Preview専用です。実行時設定やシーンのTransformは変更しません。"
+
+msgid "Fixed at Placement"
+msgstr "配置位置で固定"
+
+msgid "Follow Scene Camera"
+msgstr "Sceneカメラに追従"
+
+msgid "Follow Specified Transform"
+msgstr "指定Transformに追従"
+
+msgid "Freeze Follow Position"
+msgstr "追従位置を固定"
+
+msgid "Release Follow Position"
+msgstr "追従位置の固定を解除"
+
+msgid "Follow position frozen; simulation continues."
+msgstr "追従位置は固定中です。粒子の再生は継続します。"
+
+msgid "Preview follow target is unavailable."
+msgstr "Previewの追従先が取得できません。"
+
+msgid "World simulation leaves emitted particles in the world; Local simulation moves them with the System. Culling Bounds must also cover particles and trails left behind."
+msgstr "World空間では発生済みの粒子をその場に残し、Local空間ではSystemと一緒に移動します。移動前の粒子やTrailsも含むようにCulling Boundsを設定してください。"

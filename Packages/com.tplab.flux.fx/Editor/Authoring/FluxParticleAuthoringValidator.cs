@@ -22,6 +22,22 @@ namespace TpLab.Flux.FX.Editor.Authoring
             }
             Require(authoring.SimulationSpace == FluxParticleSimulationSpace.Local ||
                 authoring.SimulationSpace == FluxParticleSimulationSpace.World, "Supported simulation space");
+            var follow = authoring.SystemFollow;
+            Require(follow != null && Enum.IsDefined(typeof(FluxParticleFollowTarget), follow.Target), "Supported System Follow target");
+            if (follow.Target != FluxParticleFollowTarget.Off)
+            {
+                Require(Enum.IsDefined(typeof(FluxParticleFollowRotation), follow.Rotation) &&
+                    Enum.IsDefined(typeof(FluxParticleFollowOffsetSpace), follow.OffsetSpace), "Supported System Follow rotation and offset space");
+                var offset = follow.PositionOffset;
+                Require(!float.IsNaN(offset.x) && !float.IsInfinity(offset.x) && !float.IsNaN(offset.y) &&
+                    !float.IsInfinity(offset.y) && !float.IsNaN(offset.z) && !float.IsInfinity(offset.z), "Finite System Follow offset");
+                if (follow.Target == FluxParticleFollowTarget.SpecifiedTransform)
+                {
+                    Require(follow.TargetTransform != null, "System Follow requires a target Transform");
+                    Require(follow.TargetTransform != authoring.transform && !follow.TargetTransform.IsChildOf(authoring.transform),
+                        "System Follow target cannot be the System itself or its child");
+                }
+            }
             Require(FluxParticleCoordinates.IsValidScale(authoring.EffectScale), "Effect Scale must be positive and finite");
             Require(authoring.SimulationSpace != FluxParticleSimulationSpace.World || authoring.EffectScale == 1,
                 "World simulation currently requires Effect Scale 1");

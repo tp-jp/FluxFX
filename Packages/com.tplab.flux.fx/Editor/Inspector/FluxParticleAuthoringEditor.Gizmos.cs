@@ -9,6 +9,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
     {
         const float ConeGizmoLength = 2.0f;
 
+        Matrix4x4 SystemGizmoMatrix => HasScenePreview && _particlePreview != null ?
+            _particlePreview.SystemMatrix : ParticleSystem.transform.localToWorldMatrix;
+
         /// <summary>
         /// Simulation SpaceにかかわらずRendererのローカル座標でカリング範囲を表示します。
         /// </summary>
@@ -21,7 +24,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             var bounds = FluxParticleCoordinates.BoundsToDisplay(_render.FindPropertyRelative("cullingBounds").boundsValue,
                 _authoringObject.FindProperty("effectScale").floatValue);
-            using (new Handles.DrawingScope(new Color(1.0f, 0.65f, 0.15f), renderer.transform.localToWorldMatrix))
+            var matrix = SystemGizmoMatrix * ParticleSystem.transform.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+            using (new Handles.DrawingScope(new Color(1.0f, 0.65f, 0.15f), matrix))
             {
                 Handles.DrawWireCube(bounds.center, bounds.size);
                 Handles.Label(bounds.center + Vector3.up * bounds.extents.y, L10n.Tr("Culling Bounds"));
@@ -30,8 +34,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawPointShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
-            var position = particleSystem.transform.position;
+            var position = SystemGizmoMatrix.MultiplyPoint3x4(Vector3.zero);
             var size = HandleUtility.GetHandleSize(position) * 0.08f;
 
             Handles.DotHandleCap(
@@ -44,11 +47,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawSphereShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
-            Handles.matrix = particleSystem.transform.localToWorldMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
+            Handles.matrix = SystemGizmoMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
 
             Handles.DrawWireDisc(Vector3.zero, Vector3.right, radius.floatValue);
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
@@ -75,11 +77,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawHemisphereShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
-            Handles.matrix = particleSystem.transform.localToWorldMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
+            Handles.matrix = SystemGizmoMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
 
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
             Handles.DrawWireArc(Vector3.zero, Vector3.forward, Vector3.right, 180, radius.floatValue);
@@ -112,11 +113,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawCircleShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var previousMatrix = Handles.matrix;
 
-            Handles.matrix = particleSystem.transform.localToWorldMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
+            Handles.matrix = SystemGizmoMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
 
             Handles.DrawWireDisc(Vector3.zero, Vector3.up, radius.floatValue);
 
@@ -147,11 +147,10 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawBoxShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
             var size = _shape.FindPropertyRelative("size");
             var previousMatrix = Handles.matrix;
 
-            Handles.matrix = particleSystem.transform.localToWorldMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
+            Handles.matrix = SystemGizmoMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
 
             var currentSize = size.vector3Value;
             Handles.DrawWireCube(Vector3.zero, currentSize);
@@ -204,12 +203,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void DrawConeShapeGizmo()
         {
-            var particleSystem = ParticleSystem;
             var radius = _shape.FindPropertyRelative("radius");
             var angle = _shape.FindPropertyRelative("angle");
             var previousMatrix = Handles.matrix;
 
-            Handles.matrix = particleSystem.transform.localToWorldMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
+            Handles.matrix = SystemGizmoMatrix * Matrix4x4.Scale(Vector3.one * _authoringObject.FindProperty("effectScale").floatValue);
 
             var angleRadians = angle.floatValue * Mathf.Deg2Rad;
             var directionRadius = Mathf.Sin(angleRadians) * ConeGizmoLength;

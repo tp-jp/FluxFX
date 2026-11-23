@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using TpLab.Flux.FX.Udon.Parameters;
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace TpLab.Flux.FX.Udon
 {
@@ -61,6 +62,27 @@ namespace TpLab.Flux.FX.Udon
         [HideInInspector]
         float effectScale = 1;
 
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleFollowTarget followTarget;
+
+        [SerializeField]
+        [HideInInspector]
+        Transform followTransform;
+
+        [SerializeField]
+        [HideInInspector]
+        Vector3 followPositionOffset;
+
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleFollowOffsetSpace followOffsetSpace;
+
+        [SerializeField]
+        [HideInInspector]
+        FluxParticleFollowRotation followRotation;
+
+        bool _followReady;
         bool _programReady;
         bool _isPlaying;
         bool _isPaused;
@@ -278,7 +300,53 @@ namespace TpLab.Flux.FX.Udon
 
         void Update()
         {
-            Simulate(Time.deltaTime);
+            if (followTarget == FluxParticleFollowTarget.Off)
+            {
+                Simulate(Time.deltaTime);
+            }
+        }
+
+        /// <summary>
+        /// 追従を適用してから、そのフレームの生成とSimulationを一度だけ実行します。
+        /// Pause中もTransformは追従します。追従先消失後は最後の位置を保持します。
+        /// </summary>
+        public override void PostLateUpdate()
+        {
+            if (followTarget == FluxParticleFollowTarget.Off || !_programReady) return;
+            UpdateSystemFollow();
+            // 初回の追従先取得前に、元の配置からBurstを発生させません。
+            if (_followReady) Simulate(Time.deltaTime);
+        }
+
+        void UpdateSystemFollow()
+        {
+            Vector3 position;
+            Quaternion rotation;
+            if (followTarget == FluxParticleFollowTarget.SpecifiedTransform)
+            {
+                if (followTransform == null || followTransform == transform || followTransform.IsChildOf(transform)) return;
+                position = followTransform.position;
+                rotation = followTransform.rotation;
+            }
+            else
+            {
+                var player = Networking.LocalPlayer;
+                if (!Utilities.IsValid(player)) return;
+                if (followTarget == FluxParticleFollowTarget.LocalPlayerHead)
+                {
+                    var head = player.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                    position = head.position;
+                    rotation = head.rotation;
+                }
+                else
+                {
+                    position = player.GetPosition();
+                    rotation = player.GetRotation();
+                }
+            }
+            transform.SetPositionAndRotation(FluxParticleFollow.Position(position, rotation, followPositionOffset, followOffsetSpace),
+                FluxParticleFollow.Rotation(rotation, transform.rotation, followRotation));
+            _followReady = true;
         }
 
         void Simulate(float deltaTime)

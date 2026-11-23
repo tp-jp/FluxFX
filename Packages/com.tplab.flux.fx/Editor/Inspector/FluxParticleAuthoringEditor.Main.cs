@@ -22,6 +22,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 "Determines whether particle positions and movement are simulated in local or world space.");
 
             DrawEffectScale();
+            DrawSystemFollow();
             EditorGUILayout.Space(4);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("playOnAwake"), new GUIContent(L10n.Tr("Play On Awake")));

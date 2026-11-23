@@ -46,6 +46,13 @@ namespace TpLab.Flux.FX.Editor.Build
             system.SetProgramVariable("shapeParameterSlots", shape);
             system.SetProgramVariable("simulationSpace", authoring.SimulationSpace);
             system.SetProgramVariable("effectScale", authoring.EffectScale);
+            var follow = authoring.SystemFollow;
+            system.SetProgramVariable("followTarget", follow.Target);
+            system.SetProgramVariable("followTransform", follow.TargetTransform);
+            system.SetProgramVariable("followPositionOffset", follow.PositionOffset);
+            system.SetProgramVariable("followOffsetSpace", follow.OffsetSpace);
+            system.SetProgramVariable("followRotation", follow.Rotation);
+            system.SetProgramVariable("_followReady", false);
             system.SetProgramVariable("shapeType", authoring.Shape.Type);
             system.SetProgramVariable("renderMode", authoring.Render.Mode);
             system.SetProgramVariable("_main", null);

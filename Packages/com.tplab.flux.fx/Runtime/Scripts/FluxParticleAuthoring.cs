@@ -28,6 +28,9 @@ namespace TpLab.Flux.FX.Scripts
         float effectScale = 1;
 
         [SerializeField]
+        FluxParticleFollowSettings systemFollow = new FluxParticleFollowSettings();
+
+        [SerializeField]
         PlaybackSettings playback = new PlaybackSettings();
 
         [SerializeField]
@@ -95,6 +98,11 @@ namespace TpLab.Flux.FX.Scripts
         public Bounds DisplayCullingBounds => FluxParticleCoordinates.BoundsToDisplay(render.CullingBounds, effectScale);
 
         public FluxParticleSimulationSpace SimulationSpace => simulationSpace;
+
+        /// <summary>
+        /// System全体の追従設定。Play開始・ビルド時にRuntimeへベイク
+        /// </summary>
+        public FluxParticleFollowSettings SystemFollow => systemFollow;
         public PlaybackSettings Playback => playback;
         public EmissionSettings Emission => emission;
         public LifetimeSettings Lifetime => lifetime;
