@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
 {
     /// <summary>
-    /// インポート先にあるRuntime APIサンプルシーンを開きます。
+    /// インポート先にあるFluxFXサンプルシーンを開きます。
     /// </summary>
     public static class FluxRuntimeApiSampleMenu
     {
@@ -28,12 +28,18 @@ namespace TpLab.Flux.FX.Samples.RuntimeApi.Editor
             OpenScene("MillionParticles.unity");
         }
 
-        static void OpenScene(string filename)
+        [MenuItem("Tools/FluxFX/Samples/Open Snow Follow")]
+        static void OpenSnow()
+        {
+            OpenScene("SnowFollow.unity", "SystemFollow");
+        }
+
+        static void OpenScene(string filename, string example = "RuntimeApi")
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             var original = AssetDatabase.GUIDToAssetPath("492aa7fbcf23e00459e43813f5f25b0a");
-            var path = Path.Combine(Path.GetDirectoryName(original) ?? "", filename).Replace('\\', '/');
+            var path = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(original)) ?? "", example, filename).Replace('\\', '/');
             if (!File.Exists(path))
             {
                 Debug.LogError("Sample scene is not installed: " + filename);

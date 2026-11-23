@@ -18,8 +18,8 @@
   "legacyFiles": {},
   "samples": [
     {
-      "displayName": "Runtime API and Custom Lift",
-      "description": "An interactive Runtime API playground and the Custom Lift module extension it uses. Import both examples together.",
+      "displayName": "Runtime API, Custom Lift and Snow Follow",
+      "description": "Runtime API playgrounds, the Custom Lift module, and a player-following snow example. Import these examples together.",
       "path": "Samples~/Examples"
     }
   ]
