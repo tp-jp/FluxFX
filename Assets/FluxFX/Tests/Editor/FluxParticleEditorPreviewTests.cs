@@ -22,6 +22,237 @@ namespace TpLab.Flux.FX.Tests.Editor
 {
     public sealed class FluxParticleEditorPreviewTests
     {
+        /// <summary>
+        /// 実際のIMGUIイベントでInspectorとPreview操作欄を描画する検証用Windowです。
+        /// </summary>
+        sealed class PreviewInspectorWindow : EditorWindow
+        {
+            internal UnityEditor.Editor Inspector;
+            internal int DrawCount;
+            Vector2 _scroll;
+
+            void OnGUI()
+            {
+                if (Inspector == null) return;
+                _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                Inspector.OnInspectorGUI();
+                typeof(FluxParticleAuthoringEditor).GetMethod("DrawScenePreviewControls", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(Inspector, null);
+                EditorGUILayout.EndScrollView();
+                DrawCount++;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator StoppedInspectorAndOverlayRepaintWithoutBuildingWithBackendOpenOrClosed()
+        {
+            const string expandedKey = "TpLab.FluxFX.ParticleSystemInspector.BackendExpanded";
+            var wasExpanded = SessionState.GetBool(expandedKey, false);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            PreviewInspectorWindow window = null;
+            try
+            {
+                var authoring = root.GetComponent<FluxParticleAuthoring>();
+                editor = UnityEditor.Editor.CreateEditor(authoring, typeof(FluxParticleAuthoringEditor));
+                window = ScriptableObject.CreateInstance<PreviewInspectorWindow>();
+                window.Inspector = editor;
+                window.ShowUtility();
+                var settings = new SerializedObject(authoring);
+                var type = typeof(FluxParticleAuthoringEditor);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                for (var i = 0; i < 4; i++)
+                {
+                    SessionState.SetBool(expandedKey, i % 2 == 0);
+                    settings.Update();
+                    settings.FindProperty("particleCount").intValue = 128 + i;
+                    settings.FindProperty("systemFollow.target").intValue = (int)FluxParticleFollowTarget.LocalPlayerPosition;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                    var before = window.DrawCount;
+                    var deadline = EditorApplication.timeSinceStartup + 5;
+                    while (window.DrawCount == before && EditorApplication.timeSinceStartup < deadline)
+                    {
+                        window.Repaint();
+                        yield return null;
+                    }
+                    Assert.Greater(window.DrawCount, before, "The real Inspector and overlay GUI must render.");
+                    Assert.IsNull(type.GetField("_particlePreview", flags).GetValue(editor));
+                    Assert.IsNull(type.GetField("_backendPreview", flags).GetValue(editor));
+                    Assert.IsNull(type.GetField("_backendPreviewSignature", flags).GetValue(editor));
+                    Assert.IsNull(type.GetField("_backendInfo", flags).GetValue(editor));
+                    Assert.IsNotNull(type.GetField("_previewFollow", flags).GetValue(editor), "Follow controls must work before Play.");
+                }
+            }
+            finally
+            {
+                if (window != null) window.Close();
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+                SessionState.SetBool(expandedKey, wasExpanded);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void StoppedInspectorDefersEditsUndoAndSaveUntilPlay(bool playThenStop)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            try
+            {
+                var authoring = root.GetComponent<FluxParticleAuthoring>();
+                var settings = new SerializedObject(authoring);
+                settings.FindProperty("particleCount").intValue = 128;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                editor = UnityEditor.Editor.CreateEditor(authoring, typeof(FluxParticleAuthoringEditor));
+                var type = typeof(FluxParticleAuthoringEditor);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var action = type.GetMethod("ApplyPreviewAction", flags);
+                var previewField = type.GetField("_particlePreview", flags);
+                if (playThenStop)
+                {
+                    action.Invoke(editor, new object[] { 0 });
+                    Assert.IsNotNull(previewField.GetValue(editor));
+                    action.Invoke(editor, new object[] { 2 });
+                }
+                var build = type.GetField("_backendPreview", flags).GetValue(editor);
+                var signature = type.GetField("_backendPreviewSignature", flags).GetValue(editor);
+                for (var count = 129; count <= 132; count++)
+                {
+                    settings.Update();
+                    settings.FindProperty("particleCount").intValue = count;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                    type.GetMethod("InvalidatePreviewSettings", flags).Invoke(editor, null);
+                    type.GetMethod("OnPreviewSceneSaved", flags).Invoke(editor, new object[] { root.scene });
+                    type.GetMethod("UpdateParticlePreview", flags).Invoke(editor, null);
+                    type.GetMethod("EnsureParticlePreview", flags).Invoke(editor, null);
+                    Assert.IsNull(previewField.GetValue(editor), "Stopped edits must not allocate GPU resources.");
+                    Assert.AreSame(build, type.GetField("_backendPreview", flags).GetValue(editor));
+                    Assert.AreSame(signature, type.GetField("_backendPreviewSignature", flags).GetValue(editor),
+                        "Stopped edits must not serialize settings or build shaders.");
+                }
+                action.Invoke(editor, new object[] { 0 });
+                var preview = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.IsNotNull(preview, (string)type.GetField("_backendPreviewError", flags).GetValue(editor));
+                Assert.AreEqual(132, preview.Count, "Play must use the latest edited settings.");
+                preview.Step(0.25f);
+                Assert.AreEqual(0.25, preview.PlaybackTime, 0.0001);
+            }
+            finally
+            {
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void PausedInspectorDefersRebuildAndPreservesFollowUntilResume(bool editSettings)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            try
+            {
+                var authoring = root.GetComponent<FluxParticleAuthoring>();
+                var settings = new SerializedObject(authoring);
+                settings.FindProperty("particleCount").intValue = 128;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                editor = UnityEditor.Editor.CreateEditor(authoring, typeof(FluxParticleAuthoringEditor));
+                var type = typeof(FluxParticleAuthoringEditor);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var action = type.GetMethod("ApplyPreviewAction", flags);
+                var previewField = type.GetField("_particlePreview", flags);
+                action.Invoke(editor, new object[] { 0 });
+                var first = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.IsNotNull(first);
+                first.Step(0.25f);
+                action.Invoke(editor, new object[] { 0 });
+                if (editSettings)
+                {
+                    settings.Update();
+                    settings.FindProperty("particleCount").intValue = 256;
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                }
+                type.GetMethod("UpdateParticlePreview", flags).Invoke(editor, null);
+                Assert.AreSame(first, previewField.GetValue(editor));
+                Assert.AreEqual(0.25, first.PlaybackTime, 0.0001);
+                action.Invoke(editor, new object[] { 0 });
+                var resumed = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.IsNotNull(resumed);
+                if (editSettings)
+                {
+                    Assert.AreNotSame(first, resumed);
+                    Assert.AreEqual(256, resumed.Count);
+                }
+                else
+                {
+                    Assert.AreSame(first, resumed, "Unchanged settings must resume the paused simulation.");
+                    Assert.AreEqual(0.25, resumed.PlaybackTime, 0.0001);
+                }
+                Assert.AreSame(first.Follow, resumed.Follow);
+                action.Invoke(editor, new object[] { 0 });
+                type.GetMethod("OnPreviewSceneSaved", flags).Invoke(editor, new object[] { root.scene });
+                type.GetMethod("UpdateParticlePreview", flags).Invoke(editor, null);
+                Assert.AreSame(resumed, previewField.GetValue(editor), "Saving while paused must defer GPU recreation.");
+                action.Invoke(editor, new object[] { 0 });
+                var afterSave = (FluxParticleEditorPreview)previewField.GetValue(editor);
+                Assert.AreNotSame(resumed, afterSave);
+                Assert.AreEqual(resumed.PlaybackTime, afterSave.PlaybackTime);
+                Assert.AreSame(resumed.Follow, afterSave.Follow);
+                action.Invoke(editor, new object[] { 1 });
+                Assert.AreEqual(0, ((FluxParticleEditorPreview)previewField.GetValue(editor)).PlaybackTime);
+            }
+            finally
+            {
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ManualBackendRefreshDoesNotCreateOrReplaceGpuPreview()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.tplab.flux.fx/Runtime/Prefabs/FluxParticleSystem.prefab");
+            var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            UnityEditor.Editor editor = null;
+            try
+            {
+                var authoring = root.GetComponent<FluxParticleAuthoring>();
+                var settings = new SerializedObject(authoring);
+                settings.FindProperty("particleCount").intValue = 128;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                editor = UnityEditor.Editor.CreateEditor(authoring, typeof(FluxParticleAuthoringEditor));
+                var type = typeof(FluxParticleAuthoringEditor);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var refresh = type.GetMethod("RefreshBackendInfo", flags);
+                var previewField = type.GetField("_particlePreview", flags);
+                refresh.Invoke(editor, null);
+                Assert.IsNotNull(type.GetField("_backendInfo", flags).GetValue(editor));
+                Assert.IsNull(type.GetField("_backendPreview", flags).GetValue(editor));
+                Assert.IsNull(previewField.GetValue(editor));
+                var action = type.GetMethod("ApplyPreviewAction", flags);
+                action.Invoke(editor, new object[] { 0 });
+                action.Invoke(editor, new object[] { 0 });
+                var preview = previewField.GetValue(editor);
+                var build = type.GetField("_backendPreview", flags).GetValue(editor);
+                settings.Update();
+                settings.FindProperty("particleCount").intValue = 256;
+                settings.ApplyModifiedPropertiesWithoutUndo();
+                refresh.Invoke(editor, null);
+                Assert.AreSame(preview, previewField.GetValue(editor));
+                Assert.AreSame(build, type.GetField("_backendPreview", flags).GetValue(editor));
+                Assert.AreEqual(256, type.GetField("_backendInfoCount", flags).GetValue(editor));
+            }
+            finally
+            {
+                if (editor != null) Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [UnityTest]
         public IEnumerator PrefabAssetInspectorDoesNotCreatePreviewOrRestoreDeletedAsset()
         {
@@ -64,7 +295,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 authoringObject.ApplyModifiedPropertiesWithoutUndo();
                 editor = UnityEditor.Editor.CreateEditor(system.GetComponent<FluxParticleAuthoring>(), typeof(FluxParticleAuthoringEditor));
                 var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-                typeof(FluxParticleAuthoringEditor).GetMethod("EnsureParticlePreview", flags).Invoke(editor, null);
+                typeof(FluxParticleAuthoringEditor).GetMethod("ApplyPreviewAction", flags).Invoke(editor, new object[] { 0 });
                 var preview = (FluxParticleEditorPreview)typeof(FluxParticleAuthoringEditor).GetField("_particlePreview", flags).GetValue(editor);
                 Assert.IsNotNull(preview, (string)typeof(FluxParticleAuthoringEditor).GetField("_backendPreviewError", flags).GetValue(editor));
                 Assert.AreEqual(authoring.ParticleCount, preview.Count);
@@ -188,7 +419,7 @@ namespace TpLab.Flux.FX.Tests.Editor
                 var flags = BindingFlags.Instance | BindingFlags.NonPublic;
                 var ensure = type.GetMethod("EnsureParticlePreview", flags);
                 var previewField = type.GetField("_particlePreview", flags);
-                ensure.Invoke(editor, null);
+                type.GetMethod("ApplyPreviewAction", flags).Invoke(editor, new object[] { 0 });
                 var first = (FluxParticleEditorPreview)previewField.GetValue(editor);
                 Assert.IsNotNull(first, (string)type.GetField("_backendPreviewError", flags).GetValue(editor));
                 first.Step(0.25f);
@@ -217,10 +448,12 @@ namespace TpLab.Flux.FX.Tests.Editor
                 type.GetMethod("OnDisable", flags).Invoke(editor, null);
                 type.GetMethod("OnEnable", flags).Invoke(editor, null);
                 ensure.Invoke(editor, null);
+                Assert.IsNull(previewField.GetValue(editor), "Reopening a stopped Inspector must not allocate GPU resources.");
+                type.GetMethod("ApplyPreviewAction", flags).Invoke(editor, new object[] { 0 });
                 var second = (FluxParticleEditorPreview)previewField.GetValue(editor);
                 Assert.IsNotNull(second, (string)type.GetField("_backendPreviewError", flags).GetValue(editor));
                 Assert.AreNotSame(first, second);
-                Assert.IsFalse((bool)type.GetField("_previewPlaying", flags).GetValue(editor));
+                Assert.IsTrue((bool)type.GetField("_previewPlaying", flags).GetValue(editor));
                 second.Step(0.25f);
                 second.Restart();
                 second.Step(0.25f);

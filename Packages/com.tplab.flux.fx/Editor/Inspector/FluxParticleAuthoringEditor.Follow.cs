@@ -37,7 +37,11 @@ namespace TpLab.Flux.FX.Editor.Inspector
         void DrawPreviewFollowControls()
         {
             if (((FluxParticleAuthoring)target).SystemFollow.Target == FluxParticleFollowTarget.Off) return;
-            var follow = _particlePreview.Follow;
+            if (_previewFollow == null)
+            {
+                _previewFollow = new FluxParticlePreviewFollow((FluxParticleAuthoring)target);
+            }
+            var follow = _previewFollow;
             EditorGUILayout.Space(4);
             GUILayout.Label(new GUIContent(L10n.Tr("Preview Follow"), L10n.Tr("Preview only. Does not change runtime settings or scene Transforms.")));
             var mode = (FluxParticlePreviewFollowMode)EditorGUILayout.Popup((int)follow.Mode, new[]

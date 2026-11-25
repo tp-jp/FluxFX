@@ -20,6 +20,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
     {
         const string BackendExpandedKey = SessionStatePrefix + "BackendExpanded";
         FluxParticleBuildResult _backendPreview;
+        FluxParticleBuildResult _backendInfo;
+        int _backendInfoCount;
+        string _backendInfoError;
         int _backendMaximumCount;
         int _previewAuthoringDirtyCount = -1;
         int _previewParticleCount = -1;
@@ -70,16 +73,21 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 }
                 return;
             }
-            EnsureParticlePreview();
-            var count = ((FluxParticleAuthoring)target).ParticleCount;
             if (!showDetails) return;
-            if (_backendPreviewError != null)
+            EditorGUILayout.HelpBox(L10n.Tr("Backend information reflects the last preview build or manual refresh."), MessageType.Info);
+            if (GUILayout.Button(L10n.Tr("Refresh Backend Information")))
             {
-                EditorGUILayout.HelpBox(_backendPreviewError, MessageType.Error);
+                RefreshBackendInfo();
+            }
+            if (_backendInfoError != null)
+            {
+                EditorGUILayout.HelpBox(_backendInfoError, MessageType.Error);
                 return;
             }
+            if (_backendInfo == null) return;
 
-            var shaders = _backendPreview.Shaders;
+            var count = _backendInfoCount;
+            var shaders = _backendInfo.Shaders;
             var compilation = shaders.Compilation;
             var pages = compilation.StateLayout.Pages;
             var lookups = compilation.Providers.Values.Where(provider => provider.Kind == FluxParticleProviderKind.LookupTable).ToArray();
@@ -136,6 +144,32 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.EndVertical();
         }
 
+        /// <summary>
+        /// GPUリソースを作らず、要求された時だけBackend情報を更新します。
+        /// </summary>
+        void RefreshBackendInfo()
+        {
+            if (!HasScenePreview) return;
+            try
+            {
+                var authoring = (FluxParticleAuthoring)target;
+                SetBackendInfo(FluxParticleBuildPipeline.Build(authoring), authoring);
+            }
+            catch (Exception exception)
+            {
+                _backendInfoError = exception.Message;
+            }
+        }
+
+        void SetBackendInfo(FluxParticleBuildResult build, FluxParticleAuthoring authoring)
+        {
+            _backendInfo = build;
+            _backendInfoCount = authoring.ParticleCount;
+            var renderMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
+            _backendMaximumCount = FluxParticleCapacityValidator.GetMaximumCount(renderMesh);
+            _backendInfoError = null;
+        }
+
         void EnsureParticlePreview()
         {
             if (!HasScenePreview)
@@ -143,6 +177,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 DisposeParticlePreview();
                 return;
             }
+            // 停止・一時停止中の編集は、次の再生操作まで構築しない。
+            if (!_previewPlaying) return;
             var authoring = (FluxParticleAuthoring)_authoringObject.targetObject;
             var count = ((FluxParticleAuthoring)target).ParticleCount;
             var dirtyCount = EditorUtility.GetDirtyCount(authoring);
@@ -154,14 +190,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
             if (signature != _backendPreviewSignature || (_particlePreview == null && _backendPreviewError == null))
             {
                 _backendPreviewSignature = signature;
+                _previewRefreshAfterSave = false;
                 DisposeParticlePreview();
                 _backendPreview = null;
                 _backendPreviewError = null;
                 try
                 {
                     _backendPreview = FluxParticleBuildPipeline.Build(authoring);
-                    var renderMesh = authoring.Render.Mode == FluxParticleRenderMode.Mesh ? authoring.Render.Mesh : null;
-                    _backendMaximumCount = FluxParticleCapacityValidator.GetMaximumCount(renderMesh);
+                    SetBackendInfo(_backendPreview, authoring);
                     if (_previewFollow == null) _previewFollow = new FluxParticlePreviewFollow(authoring);
                     _particlePreview = new FluxParticleEditorPreview(_backendPreview, authoring, count, _previewFollow);
                     _lastPreviewTime = EditorApplication.timeSinceStartup;
@@ -222,18 +258,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _previewRefreshAfterSave = false;
                 return;
             }
-            RefreshPreviewAfterSave();
+            if (!_previewPlaying) return;
             EnsureParticlePreview();
+            RefreshPreviewAfterSave();
             if (_particlePreview == null) return;
             if (_previewDisplayedAliveCount != _particlePreview.AliveCount)
             {
                 _previewDisplayedAliveCount = _particlePreview.AliveCount;
-                if (!_previewPlaying || !_unityFocused)
+                if (!_unityFocused)
                 {
                     RepaintRunningPreview(EditorApplication.timeSinceStartup);
                 }
             }
-            if (!_previewPlaying) return;
             var focused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
             if (focused != _unityFocused)
             {
@@ -294,14 +330,14 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void OnPreviewSceneSaved(Scene scene)
         {
-            if (!HasScenePreview || ((FluxParticleAuthoring)target).gameObject.scene != scene) return;
+            if (!HasScenePreview || _particlePreview == null || ((FluxParticleAuthoring)target).gameObject.scene != scene) return;
             _previewRefreshAfterSave = true;
             Repaint();
         }
 
         void RefreshPreviewAfterSave()
         {
-            if (!_previewRefreshAfterSave) return;
+            if (!_previewPlaying || !_previewRefreshAfterSave) return;
             _previewRefreshAfterSave = false;
             try
             {
@@ -337,17 +373,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
         internal void DrawScenePreviewControls()
         {
             if (!HasScenePreview) return;
-            if (_particlePreview == null)
+            if (_backendPreviewError != null)
             {
-                EditorGUILayout.HelpBox(_backendPreviewError ?? L10n.Tr("Preparing preview"), MessageType.Info);
-                if (GUILayout.Button(L10n.Tr("Restart"), GUILayout.Width(288)))
-                {
-                    _backendPreviewSignature = null;
-                    EnsureParticlePreview();
-                    _previewPlaying = true;
-                    FluxParticleGenerationCleanupStartup.Skip();
-                }
-                return;
+                EditorGUILayout.HelpBox(_backendPreviewError, MessageType.Error);
             }
             var action = -1;
             var buttonOptions = new[] { GUILayout.Width(96), GUILayout.Height(22) };
@@ -367,25 +395,49 @@ namespace TpLab.Flux.FX.Editor.Inspector
             EditorGUILayout.EndHorizontal();
             if (action >= 0)
             {
-                FluxParticleGenerationCleanupStartup.Skip();
-                if (action == 0)
-                {
-                    _previewPlaying = !_previewPlaying;
-                }
-                else
-                {
-                    _particlePreview.Restart();
-                    _previewPlaying = action == 1;
-                }
-                _lastPreviewTime = EditorApplication.timeSinceStartup;
-                SceneView.RepaintAll();
-                Repaint();
+                ApplyPreviewAction(action);
             }
-            GUILayout.Label(L10n.Tr("Playback Time") + ": " + _particlePreview.PlaybackTime.ToString("F2") + " s");
-            var count = _particlePreview.AliveCount;
+            GUILayout.Label(L10n.Tr("Playback Time") + ": " + (_particlePreview?.PlaybackTime ?? 0).ToString("F2") + " s");
+            var count = _particlePreview?.AliveCount ?? 0;
             GUILayout.Label(L10n.Tr("Alive particles") + ": " + (count < 0 ? "—" : count.ToString()));
             DrawPreviewFollowControls();
             if (!_unityFocused) GUILayout.Label(L10n.Tr("Paused while Unity is unfocused"));
+        }
+
+        /// <summary>
+        /// 再生操作で遅延していた設定を反映し、停止時はGPUリソースを解放します。
+        /// </summary>
+        void ApplyPreviewAction(int action)
+        {
+            if (!HasScenePreview) return;
+            FluxParticleGenerationCleanupStartup.Skip();
+            if (action == 0)
+            {
+                _previewPlaying = !_previewPlaying;
+            }
+            else
+            {
+                _previewPlaying = action == 1;
+                DisposeParticlePreview();
+                _previewRefreshAfterSave = false;
+            }
+            if (_backendPreviewError != null)
+            {
+                _backendPreviewSignature = null;
+            }
+            _backendPreviewError = null;
+            if (_previewPlaying)
+            {
+                EnsureParticlePreview();
+                RefreshPreviewAfterSave();
+                if (_particlePreview == null)
+                {
+                    _previewPlaying = false;
+                }
+            }
+            _lastPreviewTime = EditorApplication.timeSinceStartup;
+            SceneView.RepaintAll();
+            Repaint();
         }
         void OnPreviewPlayModeStateChanged(PlayModeStateChange state)
         {

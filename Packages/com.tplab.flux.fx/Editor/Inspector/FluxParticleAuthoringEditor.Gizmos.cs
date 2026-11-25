@@ -9,8 +9,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
     {
         const float ConeGizmoLength = 2.0f;
 
-        Matrix4x4 SystemGizmoMatrix => HasScenePreview && _particlePreview != null ?
-            _particlePreview.SystemMatrix : ParticleSystem.transform.localToWorldMatrix;
+        Matrix4x4 SystemGizmoMatrix => HasScenePreview && _previewFollow != null ?
+            _previewFollow.Matrix : ParticleSystem.transform.localToWorldMatrix;
 
         /// <summary>
         /// Simulation SpaceにかかわらずRendererのローカル座標でカリング範囲を表示します。

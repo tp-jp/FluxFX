@@ -356,8 +356,11 @@ msgstr "生存粒子数"
 msgid "Paused while Unity is unfocused"
 msgstr "Unityが非アクティブのため一時停止中"
 
-msgid "Preparing preview"
-msgstr "プレビューを準備中"
+msgid "Backend information reflects the last preview build or manual refresh."
+msgstr "直近のプレビュー構築または手動更新時の情報です。"
+
+msgid "Refresh Backend Information"
+msgstr "Backend情報を更新"
 
 msgid "BACKEND"
 msgstr "BACKEND"
