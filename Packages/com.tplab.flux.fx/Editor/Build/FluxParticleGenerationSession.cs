@@ -42,6 +42,8 @@ namespace TpLab.Flux.FX.Editor.Build
         }
 
         Manifest manifest;
+        static readonly Dictionary<string, (string stamp, Manifest manifest)> _loaded =
+            new Dictionary<string, (string, Manifest)>();
 
         /// <summary>
         /// セッションの識別子
@@ -138,7 +140,12 @@ namespace TpLab.Flux.FX.Editor.Build
         public static FluxParticleGenerationSession Load(string id)
         {
             if (!Guid.TryParseExact(id, "N", out _)) throw new ArgumentException("Invalid generation session ID.", nameof(id));
-            var record = JsonUtility.FromJson<Manifest>(File.ReadAllText(ManifestRoot + "/" + id + ".json"));
+            var path = ManifestRoot + "/" + id + ".json";
+            var stamp = FluxParticleGenerationStorage.Fingerprint(path);
+            if (_loaded.TryGetValue(id, out var cached) && cached.stamp == stamp)
+                return new FluxParticleGenerationSession(cached.manifest);
+            _loaded.Remove(id);
+            var record = JsonUtility.FromJson<Manifest>(File.ReadAllText(path));
             if (record == null || record.version != 1 || record.id != id) throw new InvalidOperationException("Invalid generation manifest.");
             if (record.assets == null || record.assets.Any(asset => asset == null) ||
                 (record.state != "Running" && record.state != "Completed" && record.state != "Failed" && record.state != "Interrupted"))
@@ -146,6 +153,7 @@ namespace TpLab.Flux.FX.Editor.Build
                 throw new InvalidOperationException("Invalid generation manifest state or assets: " + id);
             }
             record.root = ValidateRoot(record.root);
+            if (record.state == "Running") _loaded[id] = (stamp, record);
             return new FluxParticleGenerationSession(record);
         }
 
@@ -159,38 +167,18 @@ namespace TpLab.Flux.FX.Editor.Build
         public void Record(string path, string kind, string owner, IEnumerable<string> dependencies = null)
         {
             RequireRunning();
-            if (path != ValidateRoot(path)) throw new ArgumentException("Asset path must be normalized.", nameof(path));
-            if (!path.StartsWith(ShaderRoot + "/", StringComparison.Ordinal) &&
-                !path.StartsWith(LookupRoot + "/", StringComparison.Ordinal) &&
-                !path.StartsWith(MeshRoot + "/", StringComparison.Ordinal) &&
-                !path.StartsWith(MaterialRoot + "/", StringComparison.Ordinal))
+            try
             {
-                throw new ArgumentException("Asset is outside this generation session.", nameof(path));
+                RecordAsset(path, kind, owner, dependencies);
             }
-            var record = manifest.assets.FirstOrDefault(asset => asset.path == path);
-            if (record == null)
+            catch
             {
-                record = new AssetRecord { path = path, kind = kind };
-                manifest.assets.Add(record);
+                // 列挙・検証・保存の途中で失敗した未確定の変更を別ハンドルへ渡さない。
+                _loaded.Remove(Id);
+                throw;
             }
-            var guid = AssetDatabase.AssetPathToGUID(path);
-            if (record.kind != kind || (!string.IsNullOrEmpty(record.guid) && record.guid != guid))
-            {
-                throw new InvalidOperationException("Generated asset identity changed: " + path);
-            }
-            record.guid = guid;
-            record.lastUsedUtc = DateTime.UtcNow.ToString("O");
-            if (dependencies != null)
-            {
-                record.dependencies = dependencies.Distinct(StringComparer.Ordinal).ToList();
-            }
-            if (!record.owners.Contains(owner))
-            {
-                record.owners.Add(owner);
-            }
-            Save();
-            FluxParticleGenerationLedger.Record(this, record);
         }
+
 
         /// <summary>
         /// 処理中の失敗を記録します。セッションの終了は実行全体の終了時に行います。
@@ -224,6 +212,53 @@ namespace TpLab.Flux.FX.Editor.Build
             if (State != "Running") throw new InvalidOperationException("Generation session has already ended: " + Id);
         }
 
+        void RecordAsset(string path, string kind, string owner, IEnumerable<string> dependencies)
+        {
+            if (path != ValidateRoot(path)) throw new ArgumentException("Asset path must be normalized.", nameof(path));
+            if (!path.StartsWith(ShaderRoot + "/", StringComparison.Ordinal) &&
+                !path.StartsWith(LookupRoot + "/", StringComparison.Ordinal) &&
+                !path.StartsWith(MeshRoot + "/", StringComparison.Ordinal) &&
+                !path.StartsWith(MaterialRoot + "/", StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Asset is outside this generation session.", nameof(path));
+            }
+            var record = manifest.assets.FirstOrDefault(asset => asset.path == path);
+            var changed = record == null;
+            if (record == null)
+            {
+                record = new AssetRecord { path = path, kind = kind };
+                manifest.assets.Add(record);
+            }
+            var guid = AssetDatabase.AssetPathToGUID(path);
+            if (record.kind != kind || (!string.IsNullOrEmpty(record.guid) && record.guid != guid))
+            {
+                throw new InvalidOperationException("Generated asset identity changed: " + path);
+            }
+            changed |= record.guid != guid;
+            record.guid = guid;
+            if (dependencies != null)
+            {
+                foreach (var dependency in dependencies)
+                {
+                    if (record.dependencies.Contains(dependency)) continue;
+                    record.dependencies.Add(dependency);
+                    changed = true;
+                }
+            }
+            if (!record.owners.Contains(owner))
+            {
+                record.owners.Add(owner);
+                changed = true;
+            }
+            if (changed)
+            {
+                record.lastUsedUtc = DateTime.UtcNow.ToString("O");
+                Save();
+            }
+            // 前回の台帳保存だけが失敗した場合も、永続化済みのセッションから再試行できる。
+            FluxParticleGenerationLedger.Record(this, record);
+        }
+
         void Finish(string state)
         {
             if (State != "Running") return;
@@ -241,6 +276,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         void Save()
         {
+            _loaded.Remove(Id);
             Directory.CreateDirectory(ManifestRoot);
             var temporary = ManifestPath + ".tmp";
             File.WriteAllText(temporary, JsonUtility.ToJson(manifest, true));
@@ -257,6 +293,8 @@ namespace TpLab.Flux.FX.Editor.Build
                     {
                         File.Move(temporary, ManifestPath);
                     }
+                    if (State == "Running")
+                        _loaded[Id] = (FluxParticleGenerationStorage.Fingerprint(ManifestPath), manifest);
                     return;
                 }
                 catch (IOException) when (attempt < attempts - 1)

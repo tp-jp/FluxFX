@@ -17,6 +17,13 @@ namespace TpLab.Flux.FX.Editor.Build
         const string LegacyDirectoryPath = "ProjectSettings/FluxFXGeneration";
         static bool _migrated;
 
+        // 自前の原子的置換と外部変更を検出し、古いメモリ状態で保存しないための指紋。
+        internal static string Fingerprint(string path)
+        {
+            var file = new FileInfo(path);
+            return file.Exists ? file.Length + ":" + file.LastWriteTimeUtc.Ticks + ":" + file.CreationTimeUtc.Ticks : "missing";
+        }
+
         internal static void EnsureMigrated()
         {
             if (_migrated) return;

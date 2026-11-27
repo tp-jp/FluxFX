@@ -117,7 +117,7 @@ namespace TpLab.Flux.FX.Editor.Build
         static void ConfigureCore(FluxParticleExecutor runtime, FluxParticleBuildResult compiled, FluxParticleAuthoring authoring,
             FluxParticleGenerationSession session, int bufferCapacity)
         {
-            var owner = runtime.gameObject.scene.path + "|" + GlobalObjectId.GetGlobalObjectIdSlow(runtime.gameObject) + ":" + runtime.GetInstanceID();
+            var owner = FluxParticleGenerationOwner.GetId(authoring, session);
             if (authoring.Render.Mode == FluxParticleRenderMode.Mesh)
             {
                 var mesh = authoring.Render.Mesh;

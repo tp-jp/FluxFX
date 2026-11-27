@@ -9,7 +9,7 @@ using UnityEngine;
 namespace TpLab.Flux.FX.Editor.Build
 {
     // 所有情報はLibraryの再作成を跨いで保持し、実行履歴とは別に集約します。
-    internal static class FluxParticleGenerationLedger
+    internal static partial class FluxParticleGenerationLedger
     {
         internal const string DirectoryPath = FluxParticleGenerationStorage.DirectoryPath + "/Roots";
 
@@ -31,6 +31,9 @@ namespace TpLab.Flux.FX.Editor.Build
         internal sealed class Ledger
         {
             public int version = 1;
+            public long journalSequence;
+            [NonSerialized]
+            internal string storageStamp;
             public string root;
             public List<Entry> assets = new List<Entry>();
             public List<ActiveSession> activeSessions = new List<ActiveSession>();
@@ -43,12 +46,22 @@ namespace TpLab.Flux.FX.Editor.Build
             FluxParticleGenerationStorage.EnsureMigrated();
             root = FluxParticleGenerationSession.ValidateRoot(root);
             var path = PathFor(root);
-            return File.Exists(path) ? Read(path) : new Ledger { root = root };
+            if (!File.Exists(path) && File.Exists(JournalPath(root)))
+                throw new InvalidOperationException("Generation ledger snapshot is missing: " + path);
+            return File.Exists(path) ? Read(path) : new Ledger { root = root, storageStamp = Stamp(root) };
         }
 
         internal static Ledger[] LoadAll()
         {
             FluxParticleGenerationStorage.EnsureMigrated();
+            if (Directory.Exists(DirectoryPath))
+            {
+                foreach (var journal in Directory.GetFiles(DirectoryPath, "*.json.journal"))
+                {
+                    var snapshot = journal.Substring(0, journal.Length - ".journal".Length);
+                    if (!File.Exists(snapshot)) throw new InvalidOperationException("Generation ledger snapshot is missing: " + snapshot);
+                }
+            }
             return Directory.Exists(DirectoryPath) ? Directory.GetFiles(DirectoryPath, "*.json").Select(Read).ToArray() : Array.Empty<Ledger>();
         }
 
@@ -61,9 +74,7 @@ namespace TpLab.Flux.FX.Editor.Build
 
         internal static void Record(FluxParticleGenerationSession session, FluxParticleGenerationSession.AssetRecord asset)
         {
-            var ledger = Load(session.Root);
-            Merge(ledger, asset, false);
-            Save(ledger);
+            Append(session, asset);
         }
 
         internal static void Finish(FluxParticleGenerationSession session)
@@ -156,7 +167,13 @@ namespace TpLab.Flux.FX.Editor.Build
         internal static void Save(Ledger ledger)
         {
             FluxParticleGenerationStorage.EnsureMigrated();
+            if (ledger.storageStamp != null && ledger.storageStamp != Stamp(ledger.root))
+                throw new InvalidOperationException("Generation ledger changed before checkpoint: " + PathFor(ledger.root));
+            _records.Remove(ledger.root);
             WriteAtomic(PathFor(ledger.root), JsonUtility.ToJson(ledger, true));
+            // Snapshotを先に確定する。削除前に中断しても連番で二重適用を防ぐ。
+            File.Delete(JournalPath(ledger.root));
+            ledger.storageStamp = Stamp(ledger.root);
         }
 
         internal static void Compact(Ledger ledger, IEnumerable<FluxParticleGenerationSession> sessions)
@@ -212,7 +229,13 @@ namespace TpLab.Flux.FX.Editor.Build
             }
         }
 
-        static Ledger Read(string path) => Parse(File.ReadAllText(path), path, DirectoryPath);
+        static Ledger Read(string path)
+        {
+            var ledger = Parse(File.ReadAllText(path), path, DirectoryPath);
+            Replay(ledger);
+            ledger.storageStamp = Stamp(ledger.root);
+            return ledger;
+        }
 
         // 移行元も通常の読込と同じスキーマ・生成ルート・ファイル名で検証します。
         internal static Ledger Parse(string source, string path, string directory)
@@ -220,7 +243,7 @@ namespace TpLab.Flux.FX.Editor.Build
             try
             {
                 var ledger = JsonUtility.FromJson<Ledger>(source);
-                if (ledger == null || ledger.version != 1 || ledger.assets == null || ledger.activeSessions == null ||
+                if (ledger == null || ledger.version != 1 || ledger.journalSequence < 0 || ledger.assets == null || ledger.activeSessions == null ||
                     Path.GetFullPath(directory + "/" + Hash128.Compute(FluxParticleGenerationSession.ValidateRoot(ledger.root)) + ".json") != Path.GetFullPath(path) ||
                     ledger.assets.Any(asset => !HasExpectedPath(ledger.root, asset)) ||
                     ledger.assets.Select(asset => asset.path).Distinct().Count() != ledger.assets.Count ||
@@ -257,9 +280,10 @@ namespace TpLab.Flux.FX.Editor.Build
             entry.lastUsedUtc = Later(entry.lastUsedUtc, asset.lastUsedUtc);
             entry.owners = entry.owners.Union(asset.owners ?? new List<string>()).ToList();
             entry.dependencies = entry.dependencies.Union(asset.dependencies ?? new List<string>()).ToList();
-            if (string.IsNullOrEmpty(entry.contentId) && (asset.kind == "Shader" || asset.kind == "ShaderInclude") && File.Exists(asset.path))
+            if (string.IsNullOrEmpty(entry.contentId) && (asset.kind == "Shader" || asset.kind == "ShaderInclude"))
             {
-                entry.contentId = Hash128.Compute(File.ReadAllText(asset.path)).ToString();
+                entry.contentId = asset is Entry recorded && !string.IsNullOrEmpty(recorded.contentId)
+                    ? recorded.contentId : File.Exists(asset.path) ? Hash128.Compute(File.ReadAllText(asset.path)).ToString() : null;
             }
         }
 
