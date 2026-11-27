@@ -15,12 +15,18 @@ namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleAuthoringEditor
     {
+        sealed class LiveValue
+        {
+            public Vector4 Value;
+            public bool Available;
+            public double NextPoll;
+        }
+
         sealed class LiveField
         {
             public FluxParticleLiveBinding Binding;
             public FluxParticleParameterContract Contract => Binding.Contract;
-            public Vector4 Value;
-            public bool Available;
+            public LiveValue State;
             public string Error;
             public int Type;
         }
@@ -30,6 +36,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
         UdonBehaviour _liveExecutor;
         UdonBehaviour _liveEmitter;
         double _nextLivePoll;
+        bool _liveFieldsDrawn;
+        IVisualElementScheduledItem _liveSchedule;
 
         void InitializeLiveInspector()
         {
@@ -48,7 +56,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     {
                         var index = FindModuleIndex(binding.ModuleType);
                         if (index < 0) continue;
-                        path = _modules.GetArrayElementAtIndex(index).propertyPath + "." + path;
+                        path = GetModuleProperty(index).propertyPath + "." + path;
                     }
                     if (_authoringObject.FindProperty(path) == null)
                     {
@@ -57,24 +65,54 @@ namespace TpLab.Flux.FX.Editor.Inspector
                     _liveFields.Add(path, new LiveField { Binding = binding, Type = (int)FluxParticleParameterContractCompiler.Compile(contract).Type });
                 }
             }
+            var values = new Dictionary<(FluxParticleLiveTarget, string, int), LiveValue>();
+            foreach (var field in _liveFields.Values)
+            {
+                var key = (field.Binding.Target, field.Contract.Id, field.Type);
+                if (!values.TryGetValue(key, out var value))
+                {
+                    value = new LiveValue();
+                    values.Add(key, value);
+                }
+                field.State = value;
+            }
         }
 
         public override VisualElement CreateInspectorGUI()
         {
             // 外部のRuntime操作による変更もInspectorへ反映する。
             var inspector = new IMGUIContainer(OnInspectorGUI);
-            inspector.schedule.Execute(() =>
+            _liveSchedule?.Pause();
+            _liveSchedule = inspector.schedule.Execute(() =>
             {
-                if (EditorApplication.isPlaying && EditorApplication.timeSinceStartup >= _nextLivePoll)
+                if (_liveFieldsDrawn && EditorApplication.isPlaying && !EditorApplication.isCompiling &&
+                    UnityEditorInternal.InternalEditorUtility.GetIsInspectorExpanded(target))
                 {
                     inspector.MarkDirtyRepaint();
                 }
             }).Every(200);
+            if (!EditorApplication.isPlaying) _liveSchedule.Pause();
             return inspector;
+        }
+
+        void OnLivePlayModeStateChanged(PlayModeStateChange state)
+        {
+            _liveWasPlaying = false;
+            _liveFieldsDrawn = false;
+            if (state == PlayModeStateChange.EnteredPlayMode)
+            {
+                _liveSchedule?.Resume();
+                Repaint();
+            }
+            else
+            {
+                _liveSchedule?.Pause();
+            }
         }
 
         void RefreshLiveInspector()
         {
+            _liveFieldsDrawn = false;
             if (!EditorApplication.isPlaying)
             {
                 _liveWasPlaying = false;
@@ -87,21 +125,29 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 _liveWasPlaying = true;
                 _nextLivePoll = 0;
             }
+            if (EditorApplication.timeSinceStartup < _nextLivePoll) return;
+            _nextLivePoll = EditorApplication.timeSinceStartup + 0.2;
             var system = UdonSharpEditorUtility.GetBackingUdonBehaviour(ParticleSystem);
             var executor = system == null ? null : system.GetProgramVariable("particleExecutor") as UdonBehaviour;
             var emitter = system == null ? null : system.GetProgramVariable("particleEmitter") as UdonBehaviour;
-            if (_liveExecutor != executor || _liveEmitter != emitter || EditorApplication.timeSinceStartup >= _nextLivePoll)
+            if (_liveExecutor != executor || _liveEmitter != emitter)
             {
                 _liveExecutor = executor;
                 _liveEmitter = emitter;
-                _nextLivePoll = EditorApplication.timeSinceStartup + 0.2;
                 foreach (var field in _liveFields.Values)
                 {
-                    field.Available = FluxParticleLiveConnection.Request(LiveTarget(field), field.Contract.Id, field.Type, false,
-                        ref field.Value, out _);
+                    field.State.NextPoll = 0;
                 }
             }
 
+        }
+
+        void RefreshLiveValue(LiveField field)
+        {
+            if (EditorApplication.isCompiling || EditorApplication.timeSinceStartup < field.State.NextPoll) return;
+            field.State.NextPoll = EditorApplication.timeSinceStartup + 0.2;
+            field.State.Available = FluxParticleLiveConnection.Request(LiveTarget(field), field.Contract.Id, field.Type, false,
+                ref field.State.Value, out _);
         }
 
         UdonBehaviour LiveTarget(LiveField field)
@@ -113,11 +159,13 @@ namespace TpLab.Flux.FX.Editor.Inspector
             FluxParticleInspectorModuleMetadata metadata = null)
         {
             if (!EditorApplication.isPlaying || !_liveFields.TryGetValue(property.propertyPath, out var field)) return false;
+            _liveFieldsDrawn = true;
+            RefreshLiveValue(field);
             var previousEnabled = GUI.enabled;
             try
             {
-                GUI.enabled = field.Available && !EditorApplication.isCompiling;
-                var value = field.Value;
+                GUI.enabled = field.State.Available && !EditorApplication.isCompiling;
+                var value = field.State.Value;
                 var label = new GUIContent(TranslateModuleText(labelOverride ?? property.displayName, metadata),
                     L10n.Tr("Runtime value. Changes are discarded when Play Mode ends."));
                 EditorGUI.BeginChangeCheck();
@@ -173,16 +221,16 @@ namespace TpLab.Flux.FX.Editor.Inspector
                         var current = Vector4.zero;
                         if (!FluxParticleLiveConnection.Request(LiveTarget(field), field.Contract.Id, field.Type, false, ref current, out _))
                         {
-                            field.Available = false;
+                            field.State.Available = false;
                             return true;
                         }
                         current[field.Binding.Component] = value[field.Binding.Component];
                         value = current;
                     }
-                    field.Available = FluxParticleLiveConnection.Request(LiveTarget(field), field.Contract.Id, field.Type, true,
+                    field.State.Available = FluxParticleLiveConnection.Request(LiveTarget(field), field.Contract.Id, field.Type, true,
                         ref value, out var accepted);
-                    field.Error = field.Available && accepted ? null : L10n.Tr("Change rejected. Check the input constraints and Runtime state.");
-                    if (field.Available) field.Value = value;
+                    field.Error = field.State.Available && accepted ? null : L10n.Tr("Change rejected. Check the input constraints and Runtime state.");
+                    if (field.State.Available) field.State.Value = value;
                 }
             }
             finally

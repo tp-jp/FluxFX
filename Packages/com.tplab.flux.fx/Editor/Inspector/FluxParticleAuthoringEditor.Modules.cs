@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using TpLab.Flux.FX.Scripts;
 using TpLab.Flux.FX.Editor.Localization;
 using TpLab.Flux.FX.Editor.Modules.AudioInput;
 using TpLab.Flux.FX.Scripts.Modules;
@@ -11,6 +13,48 @@ namespace TpLab.Flux.FX.Editor.Inspector
 {
     public partial class FluxParticleAuthoringEditor
     {
+        readonly List<FluxParticleModule> _indexedModules = new List<FluxParticleModule>();
+        readonly List<SerializedProperty> _moduleProperties = new List<SerializedProperty>();
+        readonly Dictionary<Type, int> _moduleIndices = new Dictionary<Type, int>();
+
+        // SerializedPropertyの配列走査はPlay中に高コストになるため、構成が変わるまで再利用する。
+        void RefreshModuleIndex()
+        {
+            var modules = ((FluxParticleAuthoring)target).Modules;
+            var unchanged = modules.Count == _indexedModules.Count;
+            for (var i = 0; unchanged && i < modules.Count; i++)
+            {
+                unchanged = ReferenceEquals(modules[i], _indexedModules[i]);
+            }
+            if (unchanged) return;
+
+            DisposeModuleIndex();
+            for (var i = 0; i < modules.Count; i++)
+            {
+                var module = modules[i];
+                _indexedModules.Add(module);
+                _moduleProperties.Add(null);
+                if (module != null && !_moduleIndices.ContainsKey(module.GetType()))
+                {
+                    _moduleIndices.Add(module.GetType(), i);
+                }
+            }
+        }
+
+        SerializedProperty GetModuleProperty(int index)
+        {
+            RefreshModuleIndex();
+            return _moduleProperties[index] ?? (_moduleProperties[index] = _modules.GetArrayElementAtIndex(index));
+        }
+
+        void DisposeModuleIndex()
+        {
+            foreach (var property in _moduleProperties) property?.Dispose();
+            _moduleProperties.Clear();
+            _indexedModules.Clear();
+            _moduleIndices.Clear();
+        }
+
         void DrawModules()
         {
             _modulesExpanded = DrawSectionHeader(L10n.Tr("MODULES"), _modulesExpanded, ModulesExpandedKey);
@@ -37,7 +81,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             for (var i = 0; i < _modules.arraySize; i++)
             {
-                var property = _modules.GetArrayElementAtIndex(i);
+                var property = GetModuleProperty(i);
                 var value = property.managedReferenceValue;
                 if (value != null && _moduleRegistry.TryGet(value.GetType(), out _)) continue;
 
@@ -127,7 +171,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 return;
             }
 
-            var module = _modules.GetArrayElementAtIndex(index);
+            var module = GetModuleProperty(index);
             var expanded = SessionState.GetBool(definition.ExpandedKey, false);
 
             DrawModule(
@@ -213,16 +257,8 @@ namespace TpLab.Flux.FX.Editor.Inspector
         int FindModuleIndex(Type moduleType)
         {
             if (_modules == null) return -1;
-
-            for (var i = 0; i < _modules.arraySize; i++)
-            {
-                var module = _modules.GetArrayElementAtIndex(i);
-                if (module.managedReferenceValue == null) continue;
-
-                if (module.managedReferenceValue.GetType() == moduleType) return i;
-            }
-
-            return -1;
+            RefreshModuleIndex();
+            return _moduleIndices.TryGetValue(moduleType, out var index) ? index : -1;
         }
 
         void AddModule(FluxParticleInspectorModuleMetadata definition)

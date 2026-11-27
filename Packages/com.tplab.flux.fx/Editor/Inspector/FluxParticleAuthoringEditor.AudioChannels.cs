@@ -15,7 +15,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
         {
             var index = FindModuleIndex(typeof(FluxParticleAudioInputModule));
             if (index < 0) return;
-            var module = _modules.GetArrayElementAtIndex(index);
+            var module = GetModuleProperty(index);
             var channels = module.FindPropertyRelative("channels");
             for (var i = 0; i < channels.arraySize; i++)
             {
@@ -81,7 +81,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
                 if (GUILayout.Button(L10n.Tr("Add Channel"))) AddAudioChannel(channels);
             }
             var index = FindModuleIndex(typeof(FluxParticleAudioInputModule));
-            if (index >= 0 && _modules.GetArrayElementAtIndex(index).managedReferenceValue is FluxParticleAudioInputModule input)
+            if (index >= 0 && GetModuleProperty(index).managedReferenceValue is FluxParticleAudioInputModule input)
             {
                 try { FluxParticleAudioChannelContract.Validate(input.Channels); }
                 catch (Exception exception) { EditorGUILayout.HelpBox(exception.Message, MessageType.Error); }
@@ -107,7 +107,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var index = FindModuleIndex(typeof(FluxParticleAudioInputModule));
             if (index >= 0)
             {
-                var channels = _modules.GetArrayElementAtIndex(index).FindPropertyRelative("channels");
+                var channels = GetModuleProperty(index).FindPropertyRelative("channels");
                 for (var i = 0; i < channels.arraySize; i++)
                 {
                     var channel = channels.GetArrayElementAtIndex(i);

@@ -90,7 +90,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
             InitializeBurstList();
             InitializeBackendPreview();
-            InitializeLiveInspector();
+            EditorApplication.playModeStateChanged += OnLivePlayModeStateChanged;
 
         }
 

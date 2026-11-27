@@ -108,7 +108,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var moduleIndex = FindModuleIndex(typeof(FluxParticleColorOverLifetimeModule));
             if (moduleIndex < 0) return;
 
-            var module = _modules.GetArrayElementAtIndex(moduleIndex);
+            var module = GetModuleProperty(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -151,7 +151,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var moduleIndex = FindModuleIndex(typeof(FluxParticleSizeOverLifetimeModule));
             if (moduleIndex < 0) return;
 
-            var module = _modules.GetArrayElementAtIndex(moduleIndex);
+            var module = GetModuleProperty(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -194,7 +194,7 @@ namespace TpLab.Flux.FX.Editor.Inspector
             var moduleIndex = FindModuleIndex(typeof(FluxParticleRotationOverLifetimeModule));
             if (moduleIndex < 0) return;
 
-            var module = _modules.GetArrayElementAtIndex(moduleIndex);
+            var module = GetModuleProperty(moduleIndex);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 

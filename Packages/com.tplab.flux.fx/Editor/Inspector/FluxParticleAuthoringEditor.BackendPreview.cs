@@ -229,6 +229,9 @@ namespace TpLab.Flux.FX.Editor.Inspector
 
         void OnDisable()
         {
+            EditorApplication.playModeStateChanged -= OnLivePlayModeStateChanged;
+            _liveSchedule?.Pause();
+            DisposeModuleIndex();
             _previewInitialized = false;
             EditorApplication.update -= UpdateParticlePreview;
             Undo.undoRedoPerformed -= InvalidatePreviewSettings;

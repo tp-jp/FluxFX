@@ -207,6 +207,8 @@ namespace TpLab.Flux.FX.Tests.Editor
             var editor = UnityEditor.Editor.CreateEditor(authoring);
             try
             {
+                editor.GetType().GetMethod("InitializeLiveInspector", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(editor, null);
                 var fields = (System.Collections.IDictionary)editor.GetType().GetField("_liveFields", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(editor);
                 for (var i = 0; i < 2; i++)
                 {
