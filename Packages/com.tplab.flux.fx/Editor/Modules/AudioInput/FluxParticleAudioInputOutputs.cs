@@ -37,7 +37,9 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
         public static FluxParticleValueRead ReadBands() => new FluxParticleValueRead(Bands, FluxParticleReadVersion.Provided);
 
         /// <summary>
-        /// Float2の入力鮮度。x=最後のカウンター、y=変化がない秒数。
+        /// Float2の入力鮮度。更新確認後のx=最後のカウンター、y=変化がない秒数。
+        /// x=-1は未取得、x &lt; -1は初回観測後の更新確認待ち（-(カウンター+2)）。
+        /// 初回観測だけでは入力を有効にしません。入力未取得・OFF時は確認状態をリセットします。
         /// 利用側はEnabled、x >= 0、y &lt; Timeoutを合わせて判定します。
         /// </summary>
         public const string Freshness = "audio-input.freshness";

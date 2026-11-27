@@ -30,6 +30,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var runtime = CreateRuntime(compiled);
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0, 0, 1, 1);
+            ObserveAudioBaseline(runtime);
             foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))
             {
                 kernel.SetVector(FluxParticleHlslNames.ProviderProperty("audio-input.sample"), new Vector4(1, 0.5f, 1, 0));
@@ -102,6 +103,10 @@ namespace TpLab.Flux.FX.Tests.Editor
                     Assert.IsTrue(handle.SetAverageGain(1.5f));
                     foreach (var kernel in kernels) kernel.SetTexture("_AudioTexture", texture);
                     runtime.Step(0, 0, 1, 1);
+                    runtime.Step(0, 0, 0, 1);
+                    data[22 * 128 + 1].r++;
+                    texture.SetPixels(data);
+                    texture.Apply();
                     runtime.Step(0.2f, 0, 0, 1);
                     var expectedBand = Mathf.Clamp01((bands[band] - 0.1f) / 0.9f * gain) * strength;
                     var expectedAverage = Mathf.Clamp01((bands.Average() - 0.1f) / 0.9f * gain * 1.5f) * strength;
@@ -158,6 +163,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(handle.SetSlowResponse(0.2f));
             Assert.IsTrue(handle.SetTimeout(0.2f));
             runtime.Step(0, 0, 1, 1);
+            ObserveAudioBaseline(runtime);
             var property = FluxParticleHlslNames.ProviderProperty("audio-input.sample");
             var kernels = runtime.GetComponentsInChildren<FluxKernel>(true);
             var expected = Vector3.zero;
@@ -185,7 +191,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                 }
                 foreach (var kernel in kernels) kernel.SetVector(property, sample);
                 runtime.Step(0.1f, 0, 0, 1);
-                var muted = interrupted && (interruption != "stalled" || frame >= 5);
+                var muted = interrupted && (interruption != "stalled" || frame >= 5)
+                    || frame == 24 && (interruption == "off" || interruption == "unavailable");
                 var target = muted ? Vector2.zero : new Vector2(0.8f, 0.4f);
                 var attack = frame >= 24 ? 0.05f : 0.1f;
                 expected.x = AudioExpected(expected.x, target.x, target.x > expected.x ? attack : 0.1f);
@@ -279,6 +286,22 @@ namespace TpLab.Flux.FX.Tests.Editor
             var shaders = new FluxParticleProgramShaderGenerator().Generate(compilation, "Hidden/FluxFX/AudioProbe", FluxParticleCoreDefinitions.CreateLifecycle());
             return new FluxParticleBuildResult(shaders, initial,
                 FluxParticleRenderShaderGenerator.Generate(shaders, authoring.Render.Mode), bindings);
+        }
+
+        static void ObserveAudioBaseline(FluxParticleExecutor runtime, bool rawSources = false)
+        {
+            foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))
+            {
+                if (rawSources)
+                {
+                    kernel.SetFloat(FluxParticleHlslNames.ProviderProperty(FluxParticleAudioInputOutputs.Frame), 0);
+                }
+                else
+                {
+                    kernel.SetVector(FluxParticleHlslNames.ProviderProperty(FluxParticleAudioInputOutputs.Sample), Vector4.zero);
+                }
+            }
+            runtime.Step(0, 0, 0, 1);
         }
 
         static float AudioExpected(float value, float target, float seconds)

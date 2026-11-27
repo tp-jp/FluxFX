@@ -92,6 +92,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0, 0, 1, 1);
             var bands = new Vector4(0.05f, 0.3f, 0.6f, 1.2f);
+            ObserveAudioBaseline(runtime, true);
             var maximumError = 0f;
             var expectedBrightness = 0f;
             var state = new float[5];
@@ -155,6 +156,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             Assert.IsFalse(fast.SetSource((FluxParticleAudioSource)5));
             var fastValue = 0f;
             var slowValue = 0f;
+            ObserveAudioBaseline(runtime, true);
             for (var frame = 1; frame <= 28; frame++)
             {
                 var interrupted = frame >= 4 && frame <= 23;
@@ -169,10 +171,11 @@ namespace TpLab.Flux.FX.Tests.Editor
                     Assert.IsTrue(fast.SetRelease(0.15f));
                 }
                 runtime.Step(0.1f, 0, 0, 1);
-                var muted = interrupted && (interruption != "stalled" || frame >= 5);
+                var muted = interrupted && (interruption != "stalled" || frame >= 5)
+                    || frame == 24 && (interruption == "off" || interruption == "unavailable");
                 var target = muted ? 0 : 0.8f;
-                var fastTarget = frame >= 24 ? 0.3f : target;
-                fastValue = AudioExpected(fastValue, fastTarget, fastTarget > fastValue ? (frame >= 24 ? 0.02f : 0.05f) : 0.2f);
+                var fastTarget = muted ? 0 : frame >= 24 ? 0.3f : target;
+                fastValue = AudioExpected(fastValue, fastTarget, fastTarget > fastValue ? (frame >= 24 ? 0.02f : 0.05f) : (frame >= 24 ? 0.15f : 0.2f));
                 slowValue = AudioExpected(slowValue, target, target > slowValue ? 0.5f : 0.2f);
                 Assert.AreEqual(fastValue, ReadValue(runtime, build, FluxParticleAudioInputOutputs.ChannelResponse("fast"), 0).x, 0.0001f, "fast frame " + frame);
                 Assert.AreEqual(slowValue, ReadValue(runtime, build, FluxParticleAudioInputOutputs.ChannelResponse("slow"), 0).x, 0.0001f, "slow frame " + frame);

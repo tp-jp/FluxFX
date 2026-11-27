@@ -48,7 +48,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var channel = Channel("preview", FluxParticleAudioSource.Average, 0.025f);
             JsonUtility.FromJsonOverwrite("{\"release\":0.12}", channel);
             SetChannels(input, channel);
-            JsonUtility.FromJsonOverwrite("{\"audioEnabled\":true}", brightness);
+            JsonUtility.FromJsonOverwrite("{\"audioEnabled\":true,\"baseMinimum\":6,\"baseMaximum\":10}", brightness);
             SetModules(input, brightness);
             ConfigureAudioPreview();
             var independent = CaptureAudioPreview(BuildAudioProbe(rawSources: true), 1, false, "independent");

@@ -29,6 +29,7 @@ namespace TpLab.Flux.FX.Tests.Editor
             var runtime = CreateRuntime(build);
             Assert.IsTrue(runtime.Initialize(4));
             runtime.Step(0, 0, 1, 1);
+            ObserveAudioBaseline(runtime);
             foreach (var kernel in runtime.GetComponentsInChildren<FluxKernel>(true))
             {
                 kernel.SetVector(FluxParticleHlslNames.ProviderProperty("audio-input.sample"), new Vector4(1, 1, 1, 0));
@@ -91,7 +92,8 @@ namespace TpLab.Flux.FX.Tests.Editor
                 }
                 stale = sampleFrame >= 0 && sampleFrame != previousFrame ? 0 : Mathf.Min(stale + 0.1f, 1);
                 previousFrame = sampleFrame;
-                var target = inputEnabled && brightnessEnabled && sampleFrame >= 0 && stale < 1 ? level : 0;
+                var awaitingUpdate = frame == 0 || frame == 40 && (interruption == "missing" || interruption == "input-off");
+                var target = !awaitingUpdate && inputEnabled && brightnessEnabled && sampleFrame >= 0 && stale < 1 ? level : 0;
                 expected = AudioExpected(expected, target, target > expected ? 0.025f : 0.12f);
                 runtime.Step(0.1f, 0, 0, 1);
                 var actual = ReadValue(runtime, build, "brightness.audio", 0).x;

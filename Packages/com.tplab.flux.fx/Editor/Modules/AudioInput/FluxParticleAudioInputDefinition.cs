@@ -85,7 +85,8 @@ namespace TpLab.Flux.FX.Editor.Modules.AudioInput
                     new FluxParticleValueRead("step.delta-time", FluxParticleReadVersion.Provided)
                 },
                 new[] { new FluxParticleValueWrite(Freshness, FluxParticleWriteKind.Modify) },
-                Root + "Freshness.hlsl", "FluxFX_AudioInputFreshness", false, new[] { timeout });
+                Root + "Freshness.hlsl", "FluxFX_AudioInputFreshness", false,
+                new[] { timeout, FluxParticleAudioInputContract.Module.Enabled.Id });
             contribution.Operation(FluxParticleAudioInputOutputs.UpdateOperation, FluxParticlePhase.Update,
                 new[]
                 {
